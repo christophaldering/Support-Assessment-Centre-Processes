@@ -19,7 +19,8 @@ export const varexiaData = {
       employees: 190000,
       tension: "Price leadership vs. profitability",
       kpis: ["Like-for-like sales", "Gross margin", "Working capital"],
-      financials: { revenue: 24.5, ebitda: 1.8, margin: 7.3, employees: 190000 }
+      financials: { revenue: 24.5, ebitda: 1.8, margin: 7.3, employees: 190000 },
+      yoy: { revenue: 23.82, ebitda: 1.65, deltaRevenue: 0.68, deltaEbitda: 0.15 }
     },
     {
       id: "logistics",
@@ -30,7 +31,8 @@ export const varexiaData = {
       employees: 55000,
       tension: "Speed & reliability vs. cost efficiency",
       kpis: ["Service level (OTIF)", "Cost per case/delivery", "Warehouse utilization"],
-      financials: { revenue: 8.0, ebitda: 0.55, margin: 6.9, employees: 55000 }
+      financials: { revenue: 8.0, ebitda: 0.55, margin: 6.9, employees: 55000 },
+      yoy: { revenue: 7.6, ebitda: 0.7, deltaRevenue: 0.4, deltaEbitda: -0.15 }
     },
     {
       id: "energy",
@@ -41,7 +43,8 @@ export const varexiaData = {
       employees: 25000,
       tension: "Long-term assets vs. short-term returns",
       kpis: ["CAPEX intensity", "ROI/IRR (portfolio)", "Regulatory compliance risk"],
-      financials: { revenue: 6.5, ebitda: 0.75, margin: 11.5, employees: 25000 }
+      financials: { revenue: 6.5, ebitda: 0.75, margin: 11.5, employees: 25000 },
+      yoy: { revenue: 6.2, ebitda: 0.75, deltaRevenue: 0.3, deltaEbitda: 0 }
     },
     {
       id: "digital",
@@ -52,7 +55,8 @@ export const varexiaData = {
       employees: 15000,
       tension: "Scalability vs. people dependency",
       kpis: ["Utilization rate", "Project margin", "Talent retention (key roles)"],
-      financials: { revenue: 3.0, ebitda: 0.5, margin: 16.7, employees: 15000 }
+      financials: { revenue: 3.0, ebitda: 0.5, margin: 16.7, employees: 15000 },
+      yoy: { revenue: 2.7, ebitda: 0.43, deltaRevenue: 0.3, deltaEbitda: 0.07 }
     }
   ],
   detailedBalanceSheet: {

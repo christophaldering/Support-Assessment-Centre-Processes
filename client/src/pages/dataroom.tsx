@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { varexiaData } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,8 +50,51 @@ export default function DataRoom() {
         </TabsList>
 
         <TabsContent value="financials" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <Card>
+              <CardHeader className="bg-slate-50 border-b border-slate-100">
+                <CardTitle className="font-serif">Year-over-Year Performance (2024 vs 2025)</CardTitle>
+                <CardDescription>Comparative analysis of revenue and EBITDA growth across all business units</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Business Unit</TableHead>
+                      <TableHead className="text-right">FY 2024 (€ bn)</TableHead>
+                      <TableHead className="text-right">FY 2025 (€ bn)</TableHead>
+                      <TableHead className="text-right">Delta YoY (€ bn)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.businessUnits.map((bu) => (
+                      <React.Fragment key={bu.id}>
+                        <TableRow className="bg-slate-50/50">
+                          <TableCell className="font-bold text-slate-900" colSpan={4}>{bu.name}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="pl-8 text-slate-600">Revenue</TableCell>
+                          <TableCell className="text-right font-mono">{bu.yoy?.revenue}</TableCell>
+                          <TableCell className="text-right font-mono font-bold">{bu.financials.revenue}</TableCell>
+                          <TableCell className="text-right font-mono text-green-600">+{bu.yoy?.deltaRevenue}</TableCell>
+                        </TableRow>
+                        <TableRow className="border-b-2">
+                          <TableCell className="pl-8 text-slate-600">EBITDA</TableCell>
+                          <TableCell className="text-right font-mono">{bu.yoy?.ebitda}</TableCell>
+                          <TableCell className="text-right font-mono font-bold">{bu.financials.ebitda}</TableCell>
+                          <TableCell className={`text-right font-mono ${bu.yoy?.deltaEbitda && bu.yoy.deltaEbitda < 0 ? 'text-red-600' : (bu.yoy?.deltaEbitda === 0 ? 'text-slate-400' : 'text-green-600')}`}>
+                            {bu.yoy?.deltaEbitda && bu.yoy.deltaEbitda > 0 ? `+${bu.yoy.deltaEbitda}` : bu.yoy?.deltaEbitda}
+                          </TableCell>
+                        </TableRow>
+                      </React.Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
               <CardHeader className="bg-slate-50 border-b border-slate-100">
                 <CardTitle className="font-serif">Assets</CardTitle>
                 <CardDescription>Consolidated Balance Sheet FY 2025 (€ Millions)</CardDescription>
