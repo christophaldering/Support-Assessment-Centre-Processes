@@ -292,7 +292,7 @@ export default function CustomerPortal() {
         </div>
       </div>
 
-      <footer className="bg-[#1a1a1a] text-white/50 py-8 mt-auto">
+      <footer className="bg-copper text-white/70 py-8 mt-auto">
         <div className="max-w-6xl mx-auto px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img src={aestimamusLogo} alt="aestimamus" className="h-5 object-contain opacity-50 invert" />

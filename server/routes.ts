@@ -8,14 +8,14 @@ import bcrypt from "bcryptjs";
 async function seedAccessCodes() {
   const globalCodes = await storage.getAccessCodesByScope("global");
   if (globalCodes.length === 0) {
-    const globalHash = await bcrypt.hash("aestimamus2026", 10);
+    const globalHash = await bcrypt.hash("Christoph", 10);
     await storage.createAccessCode({ scope: "global", customerId: null, codeHash: globalHash, label: "Global Portal Access" });
   }
 
   const customers = [
-    { id: "rewe", label: "REWE Group", defaultCode: "rewe-ac2026" },
-    { id: "ruv", label: "R+V Versicherung", defaultCode: "ruv-ac2026" },
-    { id: "materna", label: "Materna SE", defaultCode: "materna-ac2026" },
+    { id: "rewe", label: "REWE Group", defaultCode: "Christoph" },
+    { id: "ruv", label: "R+V Versicherung", defaultCode: "Christoph" },
+    { id: "materna", label: "Materna SE", defaultCode: "Christoph" },
   ];
 
   for (const customer of customers) {
