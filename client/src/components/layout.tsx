@@ -1,5 +1,5 @@
 import { Link, useLocation, useRoute } from "wouter";
-import { LayoutDashboard, FileText, BarChart3, ClipboardList, Database, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, FileText, BarChart3, ClipboardList, Database, ArrowLeft, Briefcase } from "lucide-react";
 import aestimamusLogo from "@assets/Bildschirmfoto_2026-02-15_um_02.45.11_1771120072465.png";
 import { varexiaData } from "@/lib/data";
 
@@ -30,11 +30,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border shadow-2xl z-10">
         <div className="p-6 border-b border-sidebar-border/50 bg-sidebar-accent/10">
-          <Link href="/">
-            <a className="flex items-center gap-2 mb-6 text-sidebar-foreground/60 hover:text-white transition-colors text-xs uppercase tracking-widest font-medium group">
+          <Link href="/" className="flex items-center gap-2 mb-6 text-sidebar-foreground/60 hover:text-white transition-colors text-xs uppercase tracking-widest font-medium group">
               <ArrowLeft className="h-3 w-3 group-hover:-translate-x-1 transition-transform" />
               Return to Suite
-            </a>
           </Link>
           <div className="flex flex-col gap-4">
             <img src={aestimamusLogo} alt="Aestimamus" className="h-8 object-contain self-start opacity-90 invert brightness-0 grayscale" />
@@ -53,8 +51,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             // Exact match for root, partial for others to handle sub-routes if any
             const isActive = location === item.href; 
             return (
-              <Link key={item.href} href={item.href}>
-                <a className={`
+              <Link key={item.href} href={item.href} className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200
                   ${isActive 
                     ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md translate-x-1" 
@@ -62,7 +59,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 `}>
                   <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-sidebar-foreground/50"}`} />
                   {item.label}
-                </a>
               </Link>
             );
           })}
