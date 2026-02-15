@@ -354,6 +354,320 @@ Varexia declined to comment on the McKinsey report but pointed to its published 
     { name: "Equity", value: 21.90, type: "liability" },
     { name: "Non-current Liabilities", value: 43.85, type: "liability" },
     { name: "Current Liabilities", value: 13.98, type: "liability" }
+  ],
+  cashFlow: {
+    operating: [
+      { item: "EBITDA", value: 3.612 },
+      { item: "Depreciation & amortization", value: 2.184 },
+      { item: "Provisions (pensions, others)", value: 0.248 },
+      { item: "Working capital", value: -1.396 },
+      { item: "Income taxes paid", value: -0.862 },
+      { item: "Net cash from operating activities", value: 3.786, isSubtotal: true }
+    ],
+    investing: [
+      { item: "Capital expenditure (PP&E)", value: -1.482 },
+      { item: "Capital expenditure (ROU assets)", value: -0.846 },
+      { item: "Proceeds from asset disposals", value: 0.318 },
+      { item: "Investments in associates & JVs", value: -0.214 },
+      { item: "Net cash from investing activities", value: -2.224, isSubtotal: true }
+    ],
+    financing: [
+      { item: "Net change in financial debt", value: 0.742 },
+      { item: "Net change in lease liabilities", value: 0.391 },
+      { item: "Dividends paid", value: -0.624 },
+      { item: "Interest paid", value: -0.518 },
+      { item: "Net cash from financing activities", value: -0.009, isSubtotal: true }
+    ],
+    cashBridge: [
+      { item: "Opening cash balance", value: 5.812 },
+      { item: "Net change in cash", value: 1.553 },
+      { item: "Closing cash balance", value: 7.365, isSubtotal: true }
+    ]
+  },
+  stressScenario: {
+    title: "Cashflow Stress Scenario 2026",
+    subtitle: "Liquidity pressure caused by operational shifts, investment timing and working capital dynamics",
+    items: [
+      { item: "EBITDA (plan)", value: 3.70, comment: "Broadly in line with expectations" },
+      { item: "Delta working capital", value: -1.40, comment: "Inventory build-up & delayed receivables" },
+      { item: "CAPEX (incl. IFRS 16)", value: -2.30, comment: "Timing shift into H1 2026" },
+      { item: "Cash taxes & pensions", value: -0.90, comment: "One-off effects" },
+      { item: "Operating Free Cash Flow", value: -0.90, comment: "Negative earlier than planned", isSubtotal: true },
+      { item: "Net financing effects", value: 0.40, comment: "Short-term facilities utilized" },
+      { item: "Net change in cash", value: -0.50, comment: "Liquidity buffer reduced", isSubtotal: true }
+    ],
+    keyDrivers: [
+      "Faster-than-expected inventory build-up in Retail & Consumer Goods",
+      "Service-level stabilization in Logistics increasing short-term costs",
+      "Front-loaded CAPEX in Energy & Infrastructure projects",
+      "Limited flexibility in lease-related cash outflows"
+    ],
+    implications: [
+      "Net debt / EBITDA temporarily increases above 3.6x",
+      "Internal liquidity buffer falls below comfort range",
+      "Increased sensitivity to interest rate movements",
+      "Rating agencies request additional transparency"
+    ]
+  },
+  analystReport: {
+    source: "Northbridge Capital Research",
+    title: "External Credit-Style Assessment",
+    observations: [
+      "Reported EBITDA stability masks a structurally weak cash conversion profile.",
+      "Over the past fiscal year, working capital absorption and front-loaded investment activity have materially constrained internally generated liquidity.",
+      "From an external perspective, the Group's portfolio composition remains challenging to assess. High-volume retail operations, capital-intensive infrastructure assets and a rapidly scaling digital unit coexist without clearly articulated capital allocation thresholds."
+    ],
+    financialIndicators: [
+      { label: "EBITDA", value: "€3.600 bn" },
+      { label: "Operating cash flow*", value: "€1.602 bn" },
+      { label: "Cash conversion (OCF / EBITDA)", value: "45.5%" },
+      { label: "Net CAPEX incl. leases", value: "-€2.328 bn" },
+      { label: "Free cash flow", value: "-€0.73 bn" },
+      { label: "Net debt / EBITDA", value: "3.3x" }
+    ],
+    conclusion: "Northbridge Capital Research views the Group as strategically well positioned but financially constrained. Without clearer prioritization, the current trajectory is unsustainable."
+  },
+  pulseSurvey: {
+    title: "Leadership & Ownership Pulse Survey 2025",
+    participants: 320,
+    responseRate: 68,
+    scale: "1 = strongly disagree | 5 = strongly agree",
+    note: "Results reflect perceptions, not intentions",
+    sections: [
+      {
+        name: "Role Clarity & Ownership",
+        items: [
+          { statement: "I have sufficient decision authority to fulfil my responsibilities.", score: 2.4 },
+          { statement: "Accountability and decision rights are aligned in my role.", score: 2.1 },
+          { statement: "When priorities conflict, it is clear who decides.", score: 2.3 }
+        ]
+      },
+      {
+        name: "Targets & Incentives",
+        items: [
+          { statement: "My targets encourage collaboration across functions.", score: 2.0 },
+          { statement: "I am rewarded for end-to-end outcomes, not just local optimization.", score: 1.9 },
+          { statement: "I sometimes act against my own targets to do what I believe is right.", score: 3.2 }
+        ]
+      },
+      {
+        name: "Pressure & Sustainability",
+        items: [
+          { statement: "My workload is sustainable over the next 12 months.", score: 2.2 },
+          { statement: "I have enough capacity to focus on improvement, not just firefighting.", score: 1.8 },
+          { statement: "I feel comfortable raising concerns early.", score: 2.5 }
+        ]
+      },
+      {
+        name: "Trust & Leadership",
+        items: [
+          { statement: "I trust senior management to consider local realities.", score: 2.6 },
+          { statement: "Central decisions are explained in a way I can relate to.", score: 2.3 },
+          { statement: "I see a clear and consistent direction for the organization.", score: 2.7 }
+        ]
+      }
+    ],
+    comments: [
+      "I am accountable for results, but I don't feel empowered to influence the outcome.",
+      "We solve problems with personal commitment and overtime - not with structures.",
+      "The organization talks about ownership but avoids making ownership explicit."
+    ],
+    hrComment: "The data indicates a structural tension between responsibility, authority and incentives. This is not a motivation issue. It is a leadership system issue."
+  },
+  ratingAgencyNotes: {
+    title: "Meeting Notes: Exchange with Rating Agency",
+    date: "January 26, 2026",
+    participants: [
+      "Michael Turner (CFO) Varexia Group",
+      "Senior Director European Corporates, Rating agency (non-public)"
+    ],
+    format: "Phone call (informal, approx. 30 minutes)",
+    classification: [
+      "No formal rating review",
+      "No short-term rating action planned",
+      "Nevertheless: increased internal attention on Varexia",
+      "Increasingly classified in peer comparison (retail/infrastructure/diversified groups)"
+    ],
+    operativePerformance: [
+      "Operating business continues to be assessed as stable",
+      "Revenue and EBITDA development generally positive",
+      "Portfolio diversification recognized"
+    ],
+    cashFlowProfile: [
+      "Cash conversion (OCF/EBITDA) significantly below historical levels",
+      "Deviation from peers increasingly noticeable",
+      "Main drivers: Front-loaded CAPEX, Working capital tied up, Scope and inflexibility of the leasing footprint",
+      "Individual effects explainable – cumulative effect relevant"
+    ],
+    capitalAllocation: [
+      "Strategic rationale behind individual investments comprehensible",
+      "Uncertainty regarding priorities in the event of conflicting objectives",
+      "Uncertainty regarding explicit thresholds (e.g., net debt/EBITDA)",
+      "Uncertainty regarding conditions for price adjustments"
+    ],
+    quote: "Not the question of what you do – but under which conditions you would change course.",
+    expectations: [
+      "No measures in the short term",
+      "With cash flow pressure persisting, increasing focus on Net debt/EBITDA development (12–18 months)",
+      "Visibility of prioritization",
+      "Consistency of internal and external communication",
+      "Governance and management quality are becoming increasingly important"
+    ],
+    internalEvaluation: "No acute escalation. Perception: probationary phase, not crisis. External stakeholders expect clearer trade-offs."
+  },
+  workshopProtocol: {
+    title: "Workshop Protocol – Commercial & Market Alignment",
+    date: "January 27, 2026",
+    location: "Regional Sales Hub, Cologne",
+    context: "Extraordinary workshop following increased customer escalations and recent market signals",
+    sections: [
+      {
+        title: "1. Opening & Shared Understanding",
+        content: "The workshop was opened by the Head of Commercial Excellence, who framed the session as a deliberate pause to reflect on growing tensions between market expectations and internal steering mechanisms. Participants were explicitly encouraged to speak openly and without immediate solution pressure.\n\nSeveral participants noted that recent customer escalations should not be seen as isolated incidents, but as signals of a broader shift in market behavior."
+      },
+      {
+        title: "2. Market Observations from the Sales Organisation",
+        content: "Sales representatives reported a noticeable change in the tone of customer discussions. Price comparisons with competitors are now raised much earlier in negotiations, often supported by concrete alternative offers.\n\nIn parallel, customers increasingly question delivery reliability and operational flexibility. What had previously been accepted as occasional deviations is now perceived as structural rigidity.\n\n\"We are no longer negotiating from a position of trust. Customers assume alternatives exist and expect us to justify why we are still the right partner.\""
+      },
+      {
+        title: "3. Internal Constraints and Perceived Misalignment",
+        content: "A recurring theme was the perceived gap between centrally defined pricing corridors and the realities of customer-facing negotiations. While participants acknowledged the financial rationale behind tighter controls, many expressed concern about their cumulative impact on relationship management.\n\nOperational representatives added that capacity allocation and delivery windows are increasingly optimised for efficiency, leaving limited room for ad-hoc adjustments requested by key accounts.\n\n\"Finance optimises margins quarter by quarter. We manage relationships that span decades.\""
+      },
+      {
+        title: "4. Emerging Tensions and Unresolved Questions",
+        content: "The discussion converged on a shared understanding that the organisation is currently operating close to the limits of what customers perceive as acceptable flexibility. Participants disagreed, however, on whether this should be addressed through selective exceptions, a broader adjustment of commercial principles or clearer prioritisation of key accounts.\n\nNo final decisions were taken during the workshop."
+      }
+    ]
+  },
+  lessonsLearnedSpeech: {
+    title: "Internal Lessons Learned – DRAFT",
+    subtitle: "Submitted proposal by Key Account Management Austria",
+    sections: [
+      {
+        heading: "A Short Story to Start",
+        content: "Last Tuesday evening, I walked into a store on my way home. Front aisle. Promotion display. The price label was there. The shelf was empty.\n\nA store manager stood next to me, on the phone, explaining to a customer why an advertised product was not available on day two of a national promotion. I did not introduce myself. I just listened.\n\nThat moment was uncomfortable. Not because someone had made a mistake. But because it was painfully obvious that the system had worked exactly as we had designed it to work."
+      },
+      {
+        heading: "What Actually Went Wrong",
+        content: "Retail pushed for availability. Logistics pushed for efficiency. IT pushed for stability. Each of us did what our targets told us to do. And each of us was locally right."
+      },
+      {
+        heading: "Why That Was Not Enough",
+        content: "Together, we optimized ourselves out of a good overall result. We had no clear end-to-end owner, no shared definition of success, and no early escalation when priorities collided."
+      },
+      {
+        heading: "The Uncomfortable Truth",
+        content: "We compensated with overtime, manual fixes and goodwill. That saved the week. It did not fix the system. And it made the next failure more likely, not less."
+      },
+      {
+        heading: "What Must Change",
+        content: "If we want different outcomes, we need different ownership, different KPIs and explicit trade-offs. Otherwise, we will repeat this story – with different products, but the same ending."
+      }
+    ],
+    footer: "Internal use / Learning oriented reflection – not a blame statement."
+  },
+  digitalSteeringCommittee: {
+    title: "Digital Steering Committee – Formal Minutes",
+    date: "January 25, 2026",
+    duration: "90 minutes",
+    participants: "Alexandra Rossi (CEO), Michael Turner (CFO), Isabelle Fournier (CIO), Heads of Retail, Logistics, HR",
+    agendaItem: "Agenda Item 3 – Integrated Planning & Promotion Platform",
+    status: "Amber",
+    timeline: "+6 months",
+    budgetUtilization: "72%",
+    businessCase: "to be refined",
+    discussion: "Retail reiterates urgency following recent promotion issues. Logistics emphasizes need for planning stability. IT highlights scope creep and limited development capacity. Finance requests updated ROI and short-term impact. Operations notes general alignment but asks for clearer next steps.",
+    decisions: "Agreement to refine scope. Agreement to update business case. Agreement to revisit governance model. (No formal decision taken.)",
+    actionItems: "IT to prepare revised roadmap (4 weeks). Business to clarify prioritization criteria (open). Finance to reassess ROI assumptions (open)."
+  },
+  leadershipWorkshop: {
+    title: "Internal Leadership Workshop – Executive One-Page Summary",
+    subtitle: "When performance remains strong, but the system shows structural strain",
+    date: "January 7, 2026",
+    location: "Cologne | On-site",
+    format: "Half-day leadership workshop",
+    participants: "Executive Board, Business Unit Heads, Regional CEOs",
+    objective: "Establish a shared fact base and leadership alignment",
+    situationAssessment: [
+      "Operating performance remains robust across business units",
+      "Cash flow and efficiency targets are increasingly binding",
+      "Steering mechanisms show growing internal contradictions",
+      "Target conflicts are managed implicitly rather than resolved explicitly"
+    ],
+    structuralTensions: [
+      "Market responsiveness vs. efficiency and cost discipline",
+      "Flexibility at the front line vs. system stability and standardization",
+      "Accountability for results vs. limited decision authority",
+      "Short-term cash discipline vs. service levels and growth ambitions"
+    ],
+    organizationalResponse: [
+      "Increased reliance on managerial discretion and informal decisions",
+      "Sustained overtime and personal commitment in critical roles",
+      "Selective rule-bending to protect customer and revenue outcomes",
+      "Escalations avoided to preserve short-term stability"
+    ],
+    emergingRisks: [
+      "Gradual erosion of leadership clarity and credibility",
+      "Rising frustration and cynicism in experienced management layers",
+      "Increased vulnerability to external recruitment pressure",
+      "Growing dependence on informal workarounds"
+    ],
+    coreInsight: [
+      "The challenge is neither operational nor purely financial",
+      "It is a leadership and steering issue at enterprise level",
+      "Non-decision has become an implicit decision with material risk",
+      "Explicit prioritization is required to restore system coherence"
+    ],
+    implication: "Without explicit prioritization and clear decision ownership, organizational strain will continue to increase despite strong reported performance."
+  },
+  leadershipConference: {
+    title: "Leadership Conference 2025 – Navigating a More Fragmented World",
+    subtitle: "Excerpt from the internal leadership newsletter – December 2025",
+    content: `As part of this year's Global Leadership Conference in November, senior leaders from across the Varexia Group came together to reflect on the company's strategic priorities and the broader environment in which we operate.
+
+One of the external highlights of the conference was a keynote delivered by Peter Neumann, senior partner from McKinsey & Company, who provided a concise but thought-provoking perspective on recent shifts in the global economic and political landscape.
+
+In his talk, Peter described how the world is moving away from a broadly rules-based, predictable order towards a more fragmented and multipolar reality. Trade flows, energy markets, technology ecosystems and regulatory regimes, he argued, are increasingly shaped by geopolitical considerations rather than purely economic logic. As a result, volatility and uncertainty are becoming structural features rather than temporary disruptions.
+
+A central message of the keynote was that in a multipolar environment, contradictions cannot simply be optimized away. Efficiency, resilience, flexibility and financial discipline often pull in different directions. Where such tensions used to be manageable through implicit compromises and informal coordination, they now tend to surface more sharply and more frequently.
+
+Several leaders noted in subsequent discussions that this perspective helped them reframe current challenges within the organization. Issues around prioritization, decision authority and the balance between global standards and local responsiveness were no longer seen as isolated internal questions, but as reflections of a more complex external context.
+
+Rather than offering ready-made answers, the keynote served as an invitation to reflect more deeply on how leadership assumptions may need to evolve. In particular, it highlighted the growing importance of making trade-offs explicit and of clearly owning decisions in situations where not all objectives can be achieved simultaneously.
+
+The session was widely appreciated for providing a shared language and reference point that continued to shape conversations throughout the conference – and beyond.`
+  },
+  boardMeetingImpressions: [
+    {
+      title: "Discussion regarding Share Price Development (1/3)",
+      content: `Varexia's trading division faces a delicate balancing act – cash flow becomes the focus.
+
+Solid operational performance masks growing tensions between investment ambitions and financial discipline.
+
+The trading and infrastructure group Varexia is facing a delicate phase in its strategic cycle. Although its operating business is stable, even relatively minor deviations from the plan are having an increasingly noticeable effect on free cash flow – and are bringing capital allocation more sharply into focus for the Management Board, Supervisory Board, and external observers.
+
+According to information from the company's environment, the timing and scope of investments and changes in working capital have become particularly important in recent months. While sales and margin figures continue to appear robust, liquidity developments are becoming the focus of internal discussions. Rating agencies are not alarmed so far, but are monitoring developments more closely – an indication of increased sensitivity to debt and financing flexibility.
+
+Varexia, whose business areas range from food retail to logistics and energy infrastructure to digital services, generated revenues of around €42 billion in the past fiscal year with stable operating margins. Nevertheless, free cash flow is said to have come under pressure earlier than originally expected. The main drivers are considered to be front-loaded investments, particularly in logistics and energy projects, as well as inventory build-ups in individual business areas.`
+    },
+    {
+      title: "Discussion regarding Strategic Options (2/3)",
+      content: `Management points to the resilience of the core business and the Group's broad earnings base. Internally, however, this development has triggered an intense debate about priorities. The central question is how ambitious growth programs can be reconciled with the need for balance sheet discipline and control.
+
+The tension is particularly evident in the classic conflicts of interest faced by large retail groups: Varexia wants to invest in price attractiveness, supply chain stability, and the energy transition at the same time – without letting debt get out of hand. Net debt is still considered high, which is due to the capital-intensive structure of the business model and long-term rental and leasing obligations.
+
+The supervisory board agrees on the problem description, but not on the right course of action. Some members advocate a more defensive approach and clearer prioritization in order to secure financial leeway. Others warn against curbing investment while competitive pressure in key markets is increasing. Too sharp a braking maneuver could weaken the strategic position in the long term.
+
+External observers are also becoming more attentive. Analysts point out that Varexia remains well positioned operationally, but that cash flow transparency is becoming increasingly important. The decisive factor will be whether management succeeds in telling a convincing story—one that combines short-term financial discipline with a credible path to sustainable growth.`
+    },
+    {
+      title: "Discussion regarding Asset Allocation and Governance (3/3)",
+      content: `Competition in the European trade and logistics market is intensifying noticeably. According to market observers, major competitors are increasingly resorting to price promotions while simultaneously reviewing their investment programs.
+
+In particular, the balance between growth, service quality, and financial stability is becoming more important. Several industry experts point out that delivery reliability and operational resilience are increasingly proving to be differentiating factors, especially in large-scale retail formats. At the same time, a comparison with competitors shows that the debt levels of some market participants are already at the upper end of the industry spectrum. Although overall profitability remains solid, the ability to finance investments from current cash flow is being questioned more critically.
+
+Other retail groups are already responding by temporarily curbing their investments in order to secure financial leeway. This restraint could increase competitive pressure for those who continue to expand aggressively. Industry experts therefore expect strategic priorities to shift in the coming quarters. The question is less whether to invest, but at what pace – and with what risk.`
+    }
   ]
 };
 
