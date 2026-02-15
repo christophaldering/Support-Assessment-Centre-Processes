@@ -6,6 +6,10 @@ import {
   accessCodes,
   assessmentSessions,
   uploadedExercises,
+  observerRatings,
+  selfAssessments,
+  timedReleases,
+  observerSessions,
   type User,
   type InsertUser,
   type AssessmentResponse,
@@ -16,6 +20,14 @@ import {
   type InsertAssessmentSession,
   type UploadedExercise,
   type InsertUploadedExercise,
+  type ObserverRating,
+  type InsertObserverRating,
+  type SelfAssessment,
+  type InsertSelfAssessment,
+  type TimedRelease,
+  type InsertTimedRelease,
+  type ObserverSession,
+  type InsertObserverSession,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -42,6 +54,24 @@ export interface IStorage {
   getAllUploadedExercises(): Promise<UploadedExercise[]>;
   createUploadedExercise(exercise: InsertUploadedExercise): Promise<UploadedExercise>;
   deleteUploadedExercise(id: string): Promise<void>;
+
+  getObserverRatings(sessionId: string, caseId: string): Promise<ObserverRating[]>;
+  getAllObserverRatings(): Promise<ObserverRating[]>;
+  upsertObserverRating(rating: InsertObserverRating): Promise<ObserverRating>;
+  getObserverRatingsByCase(caseId: string): Promise<ObserverRating[]>;
+
+  getSelfAssessments(sessionId: string, caseId: string): Promise<SelfAssessment[]>;
+  upsertSelfAssessment(sa: InsertSelfAssessment): Promise<SelfAssessment>;
+  getAllSelfAssessments(): Promise<SelfAssessment[]>;
+
+  getTimedReleases(caseId: string): Promise<TimedRelease[]>;
+  createTimedRelease(tr: InsertTimedRelease): Promise<TimedRelease>;
+  updateTimedRelease(id: string, data: Partial<TimedRelease>): Promise<TimedRelease>;
+  deleteTimedRelease(id: string): Promise<void>;
+
+  getObserverSession(observerName: string, targetSessionId: string, caseId: string): Promise<ObserverSession | undefined>;
+  createObserverSession(os: InsertObserverSession): Promise<ObserverSession>;
+  getAllObserverSessions(): Promise<ObserverSession[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -195,6 +225,151 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUploadedExercise(id: string): Promise<void> {
     await db.delete(uploadedExercises).where(eq(uploadedExercises.id, id));
+  }
+
+  async getObserverRatings(sessionId: string, caseId: string): Promise<ObserverRating[]> {
+    return db
+      .select()
+      .from(observerRatings)
+      .where(
+        and(
+          eq(observerRatings.sessionId, sessionId),
+          eq(observerRatings.caseId, caseId)
+        )
+      );
+  }
+
+  async getAllObserverRatings(): Promise<ObserverRating[]> {
+    return db.select().from(observerRatings).orderBy(desc(observerRatings.updatedAt));
+  }
+
+  async upsertObserverRating(rating: InsertObserverRating): Promise<ObserverRating> {
+    const existing = await db
+      .select()
+      .from(observerRatings)
+      .where(
+        and(
+          eq(observerRatings.sessionId, rating.sessionId),
+          eq(observerRatings.caseId, rating.caseId),
+          eq(observerRatings.observerName, rating.observerName),
+          eq(observerRatings.competencyKey, rating.competencyKey)
+        )
+      );
+
+    if (existing.length > 0) {
+      const [updated] = await db
+        .update(observerRatings)
+        .set({ rating: rating.rating, notes: rating.notes, updatedAt: new Date() })
+        .where(eq(observerRatings.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db
+      .insert(observerRatings)
+      .values(rating)
+      .returning();
+    return created;
+  }
+
+  async getObserverRatingsByCase(caseId: string): Promise<ObserverRating[]> {
+    return db
+      .select()
+      .from(observerRatings)
+      .where(eq(observerRatings.caseId, caseId))
+      .orderBy(desc(observerRatings.updatedAt));
+  }
+
+  async getSelfAssessments(sessionId: string, caseId: string): Promise<SelfAssessment[]> {
+    return db
+      .select()
+      .from(selfAssessments)
+      .where(
+        and(
+          eq(selfAssessments.sessionId, sessionId),
+          eq(selfAssessments.caseId, caseId)
+        )
+      );
+  }
+
+  async upsertSelfAssessment(sa: InsertSelfAssessment): Promise<SelfAssessment> {
+    const existing = await db
+      .select()
+      .from(selfAssessments)
+      .where(
+        and(
+          eq(selfAssessments.sessionId, sa.sessionId),
+          eq(selfAssessments.caseId, sa.caseId),
+          eq(selfAssessments.competencyKey, sa.competencyKey)
+        )
+      );
+
+    if (existing.length > 0) {
+      const [updated] = await db
+        .update(selfAssessments)
+        .set({ rating: sa.rating, reflection: sa.reflection, updatedAt: new Date() })
+        .where(eq(selfAssessments.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db
+      .insert(selfAssessments)
+      .values(sa)
+      .returning();
+    return created;
+  }
+
+  async getAllSelfAssessments(): Promise<SelfAssessment[]> {
+    return db.select().from(selfAssessments).orderBy(desc(selfAssessments.updatedAt));
+  }
+
+  async getTimedReleases(caseId: string): Promise<TimedRelease[]> {
+    return db
+      .select()
+      .from(timedReleases)
+      .where(eq(timedReleases.caseId, caseId));
+  }
+
+  async createTimedRelease(tr: InsertTimedRelease): Promise<TimedRelease> {
+    const [created] = await db.insert(timedReleases).values(tr).returning();
+    return created;
+  }
+
+  async updateTimedRelease(id: string, data: Partial<TimedRelease>): Promise<TimedRelease> {
+    const [updated] = await db
+      .update(timedReleases)
+      .set(data)
+      .where(eq(timedReleases.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteTimedRelease(id: string): Promise<void> {
+    await db.delete(timedReleases).where(eq(timedReleases.id, id));
+  }
+
+  async getObserverSession(observerName: string, targetSessionId: string, caseId: string): Promise<ObserverSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(observerSessions)
+      .where(
+        and(
+          eq(observerSessions.observerName, observerName),
+          eq(observerSessions.targetSessionId, targetSessionId),
+          eq(observerSessions.caseId, caseId)
+        )
+      );
+    return session;
+  }
+
+  async createObserverSession(os: InsertObserverSession): Promise<ObserverSession> {
+    const [created] = await db.insert(observerSessions).values(os).returning();
+    return created;
+  }
+
+  async getAllObserverSessions(): Promise<ObserverSession[]> {
+    return db.select().from(observerSessions).orderBy(desc(observerSessions.createdAt));
   }
 }
 

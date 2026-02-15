@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { assessmentQuestions } from "@/lib/data";
+import { assessmentQuestions, competencyFramework } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useRoute, useLocation } from "wouter";
 import { useLang } from "@/lib/i18n";
-import type { AssessmentResponse } from "@shared/schema";
+import type { AssessmentResponse, SelfAssessment } from "@shared/schema";
 
 const CASE_ID = "varexia";
 
@@ -27,7 +27,7 @@ function getSessionId(): string {
 export default function Assessment() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [, params] = useRoute("/case/:id/assessment");
   const [, setLocation] = useLocation();
   const caseId = params?.id || CASE_ID;
@@ -35,8 +35,11 @@ export default function Assessment() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState("analysis");
   const [hasUnsaved, setHasUnsaved] = useState(false);
+  const [selfRatings, setSelfRatings] = useState<Record<string, number>>({});
+  const [selfReflections, setSelfReflections] = useState<Record<string, string>>({});
   const sessionId = useRef(getSessionId()).current;
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selfDebounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const briefingConfirmed = sessionStorage.getItem(`aestimamus_briefing_${caseId}`) === "true";
 
@@ -44,6 +47,61 @@ export default function Assessment() {
     queryKey: [`/api/assessments/${caseId}/${sessionId}`],
     enabled: briefingConfirmed,
   });
+
+  const { data: savedSelfAssessments } = useQuery<SelfAssessment[]>({
+    queryKey: [`/api/self-assessment/${sessionId}/${caseId}`],
+    enabled: briefingConfirmed,
+  });
+
+  useEffect(() => {
+    if (savedSelfAssessments && savedSelfAssessments.length > 0) {
+      const ratings: Record<string, number> = {};
+      const reflections: Record<string, string> = {};
+      savedSelfAssessments.forEach((sa) => {
+        ratings[sa.competencyKey] = sa.rating;
+        reflections[sa.competencyKey] = sa.reflection || "";
+      });
+      setSelfRatings(ratings);
+      setSelfReflections(reflections);
+    }
+  }, [savedSelfAssessments]);
+
+  const selfAssessmentMutation = useMutation({
+    mutationFn: async (payload: { sessionId: string; caseId: string; competencyKey: string; rating: number; reflection: string }) => {
+      const res = await apiRequest("POST", "/api/self-assessment", payload);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/self-assessment/${sessionId}/${caseId}`] });
+    },
+  });
+
+  const handleSelfRating = (competencyKey: string, rating: number) => {
+    setSelfRatings(prev => ({ ...prev, [competencyKey]: rating }));
+    selfAssessmentMutation.mutate({
+      sessionId,
+      caseId,
+      competencyKey,
+      rating,
+      reflection: selfReflections[competencyKey] || "",
+    });
+  };
+
+  const handleSelfReflection = (competencyKey: string, value: string) => {
+    setSelfReflections(prev => ({ ...prev, [competencyKey]: value }));
+    if (selfDebounceTimers.current[competencyKey]) clearTimeout(selfDebounceTimers.current[competencyKey]);
+    selfDebounceTimers.current[competencyKey] = setTimeout(() => {
+      if (selfRatings[competencyKey]) {
+        selfAssessmentMutation.mutate({
+          sessionId,
+          caseId,
+          competencyKey,
+          rating: selfRatings[competencyKey],
+          reflection: value,
+        });
+      }
+    }, 1500);
+  };
 
   useEffect(() => {
     if (savedResponses && savedResponses.length > 0) {
@@ -200,6 +258,13 @@ export default function Assessment() {
           >
             {t("assessment.conclusions")}
           </TabsTrigger>
+          <TabsTrigger
+            value="self-assessment"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6 py-3 font-serif text-lg text-muted-foreground data-[state=active]:text-foreground"
+            data-testid="tab-self-assessment"
+          >
+            {t("assessment.self_assessment")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analysis" className="space-y-6">
@@ -271,6 +336,62 @@ export default function Assessment() {
               </Card>
             </motion.div>
           ))}
+        </TabsContent>
+
+        <TabsContent value="self-assessment" className="space-y-6">
+          <p className="text-muted-foreground text-sm mb-4" data-testid="text-self-assessment-intro">
+            {t("assessment.self_assessment_intro")}
+          </p>
+          {competencyFramework.dimensions.map((dim, i) => {
+            const scaleLabels = lang === "de" ? competencyFramework.ratingScaleDe.labels : competencyFramework.ratingScale.labels;
+            return (
+              <motion.div
+                key={dim.key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Card className="border border-border shadow-sm" data-testid={`card-self-assessment-${dim.key}`}>
+                  <CardHeader className="bg-muted/50 border-b border-border pb-4">
+                    <CardTitle className="text-base font-medium text-foreground font-sans leading-relaxed">
+                      {lang === "de" ? dim.labelDe : dim.label}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">{dim.description}</p>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-4">
+                    <div className="flex flex-wrap gap-2" data-testid={`rating-scale-${dim.key}`}>
+                      {[1, 2, 3, 4, 5].map((level) => (
+                        <button
+                          key={level}
+                          onClick={() => handleSelfRating(dim.key, level)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
+                            selfRatings[dim.key] === level
+                              ? "bg-copper text-white border-copper shadow-sm"
+                              : "bg-background text-muted-foreground border-border hover:border-copper/50 hover:text-foreground"
+                          }`}
+                          data-testid={`rating-button-${dim.key}-${level}`}
+                        >
+                          {level} – {scaleLabels[level - 1]}
+                        </button>
+                      ))}
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground/80 mb-1 block">
+                        {t("assessment.reflection")}
+                      </label>
+                      <Textarea
+                        placeholder={t("assessment.reflection")}
+                        className="min-h-[80px] resize-none text-sm border-border"
+                        value={selfReflections[dim.key] || ""}
+                        onChange={(e) => handleSelfReflection(dim.key, e.target.value)}
+                        data-testid={`input-reflection-${dim.key}`}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
         </TabsContent>
       </Tabs>
     </div>

@@ -17,6 +17,7 @@ import Emails from "@/pages/emails";
 import News from "@/pages/news";
 import NotFound from "@/pages/not-found";
 import Admin from "@/pages/admin";
+import Observer from "@/pages/observer";
 
 function Router() {
   return (
@@ -49,6 +50,7 @@ function Router() {
 
       <Route path="/overview"><Redirect to="/case/varexia" /></Route>
       <Route path="/admin" component={Admin} />
+      <Route path="/observer" component={Observer} />
 
       <Route component={NotFound} />
     </Switch>

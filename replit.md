@@ -17,15 +17,22 @@ Default passwords: "Christoph" for all access (global + all customers), admin: "
 
 ## Recent Changes
 
+- Added Applysia-inspired features: competency-based scoring, observer view, self-assessment, timed releases, radar charts, PDF reports
+- Added competency framework with 6 dimensions (strategic thinking, financial acumen, stakeholder management, decision quality, communication, leadership impact) with behavioral anchors and 1-5 Likert scale
+- Added observer live view at `/observer` with real-time candidate progress polling and competency rating controls
+- Added candidate self-assessment tab in assessment page (3rd tab after analysis and conclusions)
+- Added timed document release management in admin dashboard
+- Added candidate comparison radar/spider charts (Recharts) in admin dashboard
+- Added automated PDF report generation via window.print() in admin dashboard
+- Added observer_ratings, self_assessments, timed_releases, observer_sessions DB tables
 - Added EN/DE language toggle (dictionary-based i18n in `client/src/lib/i18n.ts`)
 - Added exercise countdown timer (90 min) and session elapsed timer in case study header
 - Added progress indicator tracking visited sections with percentage
 - Added briefing confirmation gate before assessment access
 - Added mobile-responsive sidebar (collapsible drawer for small screens)
-- Added admin dashboard at `/admin` with responses viewer, session tracker, access code management, exercise upload, CSV export
+- Added admin dashboard at `/admin` with 7 tabs (responses, sessions, access codes, exercises, competency comparison, timed releases, reports)
 - Added per-participant access codes with name/email tracking
 - Added uploaded exercises support (admin creates, shown in customer portal)
-- Added assessment_sessions and uploaded_exercises DB tables
 - Added print stylesheet for PDF export
 - Added loading animations between case study sections (Framer Motion)
 
@@ -36,7 +43,8 @@ Default passwords: "Christoph" for all access (global + all customers), admin: "
 2. **Customer portal** (`/portal`) — Customer selection (REWE, R&V, Materna) after global auth
 3. **Customer exercises** (`/portal/:customerId`) — Per-customer password gate, then exercise listing
 4. **Case study** (`/case/:id/*`) — Full assessment environment with sidebar navigation
-5. **Admin dashboard** (`/admin`) — Admin login (separate password), manage responses/codes/exercises
+5. **Admin dashboard** (`/admin`) — Admin login (separate password), manage responses/codes/exercises/competencies/releases/reports
+6. **Observer view** (`/observer`) — Observer login, live candidate monitoring, competency rating
 
 Auth state stored in `sessionStorage` (global_auth + per-customer flags + admin_auth). Passwords verified server-side via bcrypt-hashed codes in `access_codes` table.
 
@@ -47,6 +55,12 @@ Default access codes (seeded on first run):
 - Materna: `Christoph`
 - Admin: `aestimamus-admin-2026`
 
+### Competency Framework
+Defined in `client/src/lib/data.ts` as `competencyFramework` with 6 dimensions:
+- Strategic Thinking, Financial Acumen, Stakeholder Management, Decision Quality, Communication & Presence, Leadership Impact
+- Each dimension has 5 behavioral anchors (one per level)
+- Used by: observer rating controls, self-assessment tab, radar charts, PDF reports
+
 ### Frontend
 - **Framework**: React 18 with TypeScript, bundled by Vite
 - **Routing**: Wouter (lightweight client-side router)
@@ -54,10 +68,11 @@ Default access codes (seeded on first run):
   - `/portal` — Customer selection
   - `/portal/:customerId` — Customer-specific exercises page
   - `/case/:id/*` — Case study pages with sidebar layout
-  - `/admin` — Admin dashboard
+  - `/admin` — Admin dashboard (7 tabs)
+  - `/observer` — Observer live view with competency ratings
 - **State/Data fetching**: TanStack React Query for server state management
 - **UI Components**: shadcn/ui (new-york style) built on Radix UI primitives with Tailwind CSS v4
-- **Charts**: Recharts for financial data visualization
+- **Charts**: Recharts for financial data visualization and radar/spider competency charts
 - **Animations**: Framer Motion for page transitions and element animations
 - **i18n**: Simple dictionary-based system in `client/src/lib/i18n.ts`, persisted to localStorage
 - **Fonts**: Playfair Display (serif headers) + Inter (body/data text) loaded from Google Fonts
@@ -77,6 +92,16 @@ Default access codes (seeded on first run):
   - `GET /api/sessions/:sessionId/:caseId` — fetch session
   - `PATCH /api/sessions/:id` — update session
   - `GET /api/exercises/:customerId` — fetch uploaded exercises for customer
+  - `POST /api/observer/ratings` — upsert observer rating
+  - `GET /api/observer/ratings/:sessionId/:caseId` — get observer ratings
+  - `GET /api/observer/session/:sessionId/:caseId` — observer view (session + responses)
+  - `POST /api/observer/sessions` — create observer session
+  - `POST /api/self-assessment` — upsert self-assessment
+  - `GET /api/self-assessment/:sessionId/:caseId` — get self-assessments
+  - `GET /api/timed-releases/:caseId` — get released materials (candidate view)
+  - `GET/POST/PATCH/DELETE /api/admin/timed-releases` — manage timed releases
+  - `GET /api/admin/observer-ratings/:caseId` — all observer ratings for a case
+  - `GET /api/admin/self-assessments` — all self-assessments
   - `GET /api/admin/responses` — all responses (admin)
   - `GET /api/admin/sessions` — all sessions (admin)
   - `GET/POST/DELETE /api/admin/access-codes` — manage access codes (admin)
@@ -96,11 +121,16 @@ Default access codes (seeded on first run):
   - `access_codes` — id (UUID), scope (global/customer), customerId, codeHash, label, participantName, participantEmail
   - `assessment_sessions` — id (UUID), sessionId, customerId, caseId, participantName, startedAt, completedAt, briefingConfirmed, status
   - `uploaded_exercises` — id (UUID), customerId, title, description, type, fileName, fileData, status, createdAt
+  - `observer_ratings` — id (UUID), sessionId, caseId, observerName, competencyKey, rating (1-5), notes, updatedAt
+  - `self_assessments` — id (UUID), sessionId, caseId, competencyKey, rating (1-5), reflection, updatedAt
+  - `timed_releases` — id (UUID), caseId, materialKey, title, releaseAtMinutes, manualRelease, released, createdAt
+  - `observer_sessions` — id (UUID), observerName, targetSessionId, caseId, status, createdAt
 - **Migrations**: Drizzle Kit configured in `drizzle.config.ts`, output to `./migrations/`. Use `npm run db:push` to push schema changes directly.
 
 ### Data Model
 - Case study data (Varexia SE business units, financials, emails, assessment questions) is currently hardcoded in `client/src/lib/data.ts` — not stored in the database
-- Only assessment responses (user answers), access codes, sessions, and uploaded exercises are persisted to PostgreSQL
+- Competency framework (6 dimensions with behavioral anchors) is defined in `client/src/lib/data.ts`
+- Assessment responses, access codes, sessions, uploaded exercises, observer ratings, self-assessments, timed releases, and observer sessions are persisted to PostgreSQL
 - Session identification uses `localStorage` with a UUID (`aestimamus_session_id`)
 - Auth state uses `sessionStorage` (resets on browser close)
 - Timer state uses `sessionStorage` (exercise start time, visited sections)
@@ -123,7 +153,7 @@ Default access codes (seeded on first run):
 - **express**: HTTP server framework (v5)
 - **bcryptjs**: Password hashing for access codes
 - **@tanstack/react-query**: Server state management on the frontend
-- **recharts**: Charting library for financial visualizations
+- **recharts**: Charting library for financial visualizations and radar charts
 - **framer-motion**: Animation library
 - **wouter**: Lightweight React router
 - **zod**: Runtime schema validation

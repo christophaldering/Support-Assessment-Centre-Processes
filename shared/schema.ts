@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -92,3 +92,76 @@ export const insertUploadedExerciseSchema = createInsertSchema(uploadedExercises
 
 export type InsertUploadedExercise = z.infer<typeof insertUploadedExerciseSchema>;
 export type UploadedExercise = typeof uploadedExercises.$inferSelect;
+
+export const observerRatings = pgTable("observer_ratings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: text("session_id").notNull(),
+  caseId: text("case_id").notNull(),
+  observerName: text("observer_name").notNull(),
+  competencyKey: text("competency_key").notNull(),
+  rating: integer("rating").notNull(),
+  notes: text("notes").default(""),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertObserverRatingSchema = createInsertSchema(observerRatings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type InsertObserverRating = z.infer<typeof insertObserverRatingSchema>;
+export type ObserverRating = typeof observerRatings.$inferSelect;
+
+export const selfAssessments = pgTable("self_assessments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: text("session_id").notNull(),
+  caseId: text("case_id").notNull(),
+  competencyKey: text("competency_key").notNull(),
+  rating: integer("rating").notNull(),
+  reflection: text("reflection").default(""),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSelfAssessmentSchema = createInsertSchema(selfAssessments).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type InsertSelfAssessment = z.infer<typeof insertSelfAssessmentSchema>;
+export type SelfAssessment = typeof selfAssessments.$inferSelect;
+
+export const timedReleases = pgTable("timed_releases", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  caseId: text("case_id").notNull(),
+  materialKey: text("material_key").notNull(),
+  title: text("title").notNull(),
+  releaseAt: integer("release_at_minutes"),
+  manualRelease: boolean("manual_release").default(false),
+  released: boolean("released").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTimedReleaseSchema = createInsertSchema(timedReleases).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertTimedRelease = z.infer<typeof insertTimedReleaseSchema>;
+export type TimedRelease = typeof timedReleases.$inferSelect;
+
+export const observerSessions = pgTable("observer_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  observerName: text("observer_name").notNull(),
+  targetSessionId: text("target_session_id").notNull(),
+  caseId: text("case_id").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertObserverSessionSchema = createInsertSchema(observerSessions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertObserverSession = z.infer<typeof insertObserverSessionSchema>;
+export type ObserverSession = typeof observerSessions.$inferSelect;

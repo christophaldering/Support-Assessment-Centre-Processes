@@ -942,6 +942,91 @@ export const cases = [
   }
 ];
 
+export const competencyFramework = {
+  dimensions: [
+    {
+      key: "strategic_thinking",
+      label: "Strategic Thinking",
+      labelDe: "Strategisches Denken",
+      description: "Ability to analyze complex situations, identify patterns, and develop coherent strategic perspectives",
+      anchors: [
+        { level: 1, text: "Focuses on isolated facts without connecting them to broader patterns" },
+        { level: 2, text: "Identifies some connections but lacks a coherent overall perspective" },
+        { level: 3, text: "Develops a structured view with clear priorities and logical reasoning" },
+        { level: 4, text: "Integrates multiple perspectives into a nuanced, evidence-based strategic assessment" },
+        { level: 5, text: "Exceptional ability to navigate ambiguity and synthesize complex, conflicting information into actionable insight" },
+      ],
+    },
+    {
+      key: "financial_acumen",
+      label: "Financial Acumen",
+      labelDe: "Finanzielle Kompetenz",
+      description: "Understanding of financial data, cash flow dynamics, and capital allocation trade-offs",
+      anchors: [
+        { level: 1, text: "Limited understanding of financial indicators and their implications" },
+        { level: 2, text: "Reads financial data but struggles with implications and trade-offs" },
+        { level: 3, text: "Solid grasp of financial dynamics and their strategic implications" },
+        { level: 4, text: "Deep understanding of financial interdependencies and capital allocation" },
+        { level: 5, text: "Expert-level financial reasoning with sophisticated scenario thinking" },
+      ],
+    },
+    {
+      key: "stakeholder_management",
+      label: "Stakeholder Management",
+      labelDe: "Stakeholder-Management",
+      description: "Ability to navigate diverse stakeholder interests and manage competing expectations",
+      anchors: [
+        { level: 1, text: "Ignores or oversimplifies stakeholder dynamics" },
+        { level: 2, text: "Acknowledges stakeholders but does not address competing interests" },
+        { level: 3, text: "Balances key stakeholder perspectives with clear reasoning" },
+        { level: 4, text: "Proactively addresses stakeholder tensions and proposes realistic alignment strategies" },
+        { level: 5, text: "Masterfully navigates complex stakeholder landscapes with political sensitivity and strategic empathy" },
+      ],
+    },
+    {
+      key: "decision_quality",
+      label: "Decision Quality",
+      labelDe: "Entscheidungsqualität",
+      description: "Quality of judgment under uncertainty, willingness to make explicit trade-offs",
+      anchors: [
+        { level: 1, text: "Avoids decisions or makes choices without clear rationale" },
+        { level: 2, text: "Makes decisions but does not address trade-offs explicitly" },
+        { level: 3, text: "Makes well-reasoned decisions with explicit trade-off acknowledgment" },
+        { level: 4, text: "Demonstrates strong judgment under uncertainty with clear prioritization logic" },
+        { level: 5, text: "Exceptional decision-making that embraces complexity and makes courageous, well-substantiated choices" },
+      ],
+    },
+    {
+      key: "communication",
+      label: "Communication & Presence",
+      labelDe: "Kommunikation & Auftreten",
+      description: "Clarity, structure, and persuasiveness of communication",
+      anchors: [
+        { level: 1, text: "Unclear or disorganized communication" },
+        { level: 2, text: "Communicates key points but lacks structure or persuasiveness" },
+        { level: 3, text: "Clear, structured communication with appropriate executive-level tone" },
+        { level: 4, text: "Highly compelling and well-structured argumentation that engages the audience" },
+        { level: 5, text: "Outstanding executive presence with masterful ability to frame complex issues accessibly" },
+      ],
+    },
+    {
+      key: "leadership_impact",
+      label: "Leadership Impact",
+      labelDe: "Führungswirkung",
+      description: "Ability to inspire confidence, take ownership, and drive organizational clarity",
+      anchors: [
+        { level: 1, text: "Passive or hesitant in taking ownership of the situation" },
+        { level: 2, text: "Shows some initiative but lacks conviction or follow-through" },
+        { level: 3, text: "Takes clear ownership and demonstrates credible leadership stance" },
+        { level: 4, text: "Inspires confidence through decisive action and thoughtful organizational perspective" },
+        { level: 5, text: "Demonstrates transformational leadership potential with vision, courage, and authentic impact" },
+      ],
+    },
+  ],
+  ratingScale: { min: 1, max: 5, labels: ["Insufficient", "Basic", "Competent", "Strong", "Exceptional"] },
+  ratingScaleDe: { min: 1, max: 5, labels: ["Unzureichend", "Grundlegend", "Kompetent", "Stark", "Herausragend"] },
+};
+
 export const assessmentQuestions = {
   analysis: [
     "How do you assess the current situation of the Varexia Group based on the available information?",

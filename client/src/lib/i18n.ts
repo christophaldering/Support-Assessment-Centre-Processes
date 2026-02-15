@@ -45,6 +45,9 @@ const translations: Record<string, Record<Lang, string>> = {
   "assessment.chars": { de: "Zeichen", en: "characters" },
   "assessment.locked": { de: "Bitte bestätigen Sie zuerst das Briefing, bevor Sie auf die Bewertung zugreifen.", en: "Please confirm the briefing first before accessing the assessment." },
   "assessment.go_briefing": { de: "Zum Briefing", en: "Go to Briefing" },
+  "assessment.self_assessment": { de: "3. Selbsteinschätzung", en: "3. Self-Assessment" },
+  "assessment.self_assessment_intro": { de: "Bewerten Sie Ihre eigenen Kompetenzen auf einer Skala von 1-5.", en: "Rate your own competencies on a scale of 1-5." },
+  "assessment.reflection": { de: "Reflexion (optional)", en: "Reflection (optional)" },
 
   "landing.title": { de: "Executive Diagnostics Suite", en: "Executive Diagnostics Suite" },
   "landing.subtitle": { de: "Willkommen in der digitalen Assessment-Umgebung von aestimamus. Dieser geschützte Bereich bietet Ihnen Zugang zu den Materialien und Übungen Ihres Executive Assessment Centers.", en: "Welcome to the digital assessment environment of aestimamus. This protected area provides access to the materials and exercises of your Executive Assessment Center." },

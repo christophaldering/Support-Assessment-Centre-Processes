@@ -1,7 +1,13 @@
 import type { Express } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
-import { insertAssessmentResponseSchema } from "@shared/schema";
+import {
+  insertAssessmentResponseSchema,
+  insertObserverRatingSchema,
+  insertSelfAssessmentSchema,
+  insertTimedReleaseSchema,
+  insertObserverSessionSchema,
+} from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 
@@ -271,6 +277,164 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting exercise:", error);
       res.status(500).json({ message: "Failed to delete exercise" });
+    }
+  });
+
+  // Observer Ratings
+  app.post("/api/observer/ratings", async (req, res) => {
+    try {
+      const parsed = insertObserverRatingSchema.parse(req.body);
+      const result = await storage.upsertObserverRating(parsed);
+      res.json(result);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request body", errors: error.errors });
+      }
+      console.error("Error upserting observer rating:", error);
+      res.status(500).json({ message: "Failed to save observer rating" });
+    }
+  });
+
+  app.get("/api/observer/ratings/:sessionId/:caseId", async (req, res) => {
+    try {
+      const ratings = await storage.getObserverRatings(req.params.sessionId, req.params.caseId);
+      res.json(ratings);
+    } catch (error) {
+      console.error("Error fetching observer ratings:", error);
+      res.status(500).json({ message: "Failed to fetch observer ratings" });
+    }
+  });
+
+  app.get("/api/observer/session/:sessionId/:caseId", async (req, res) => {
+    try {
+      const { sessionId, caseId } = req.params;
+      const session = await storage.getSession(sessionId, caseId);
+      const responses = await storage.getAssessmentResponses(caseId, sessionId);
+      res.json({ session: session || null, responses });
+    } catch (error) {
+      console.error("Error fetching observer session data:", error);
+      res.status(500).json({ message: "Failed to fetch observer session data" });
+    }
+  });
+
+  app.post("/api/observer/sessions", async (req, res) => {
+    try {
+      const parsed = insertObserverSessionSchema.parse(req.body);
+      const existing = await storage.getObserverSession(parsed.observerName, parsed.targetSessionId, parsed.caseId);
+      if (existing) {
+        return res.json(existing);
+      }
+      const created = await storage.createObserverSession(parsed);
+      res.json(created);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request body", errors: error.errors });
+      }
+      console.error("Error creating observer session:", error);
+      res.status(500).json({ message: "Failed to create observer session" });
+    }
+  });
+
+  // Self Assessments
+  app.post("/api/self-assessment", async (req, res) => {
+    try {
+      const parsed = insertSelfAssessmentSchema.parse(req.body);
+      const result = await storage.upsertSelfAssessment(parsed);
+      res.json(result);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request body", errors: error.errors });
+      }
+      console.error("Error upserting self assessment:", error);
+      res.status(500).json({ message: "Failed to save self assessment" });
+    }
+  });
+
+  app.get("/api/self-assessment/:sessionId/:caseId", async (req, res) => {
+    try {
+      const assessments = await storage.getSelfAssessments(req.params.sessionId, req.params.caseId);
+      res.json(assessments);
+    } catch (error) {
+      console.error("Error fetching self assessments:", error);
+      res.status(500).json({ message: "Failed to fetch self assessments" });
+    }
+  });
+
+  // Timed Releases (admin)
+  app.get("/api/admin/timed-releases/:caseId", async (req, res) => {
+    try {
+      const releases = await storage.getTimedReleases(req.params.caseId);
+      res.json(releases);
+    } catch (error) {
+      console.error("Error fetching timed releases:", error);
+      res.status(500).json({ message: "Failed to fetch timed releases" });
+    }
+  });
+
+  app.post("/api/admin/timed-releases", async (req, res) => {
+    try {
+      const parsed = insertTimedReleaseSchema.parse(req.body);
+      const created = await storage.createTimedRelease(parsed);
+      res.json(created);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request body", errors: error.errors });
+      }
+      console.error("Error creating timed release:", error);
+      res.status(500).json({ message: "Failed to create timed release" });
+    }
+  });
+
+  app.patch("/api/admin/timed-releases/:id", async (req, res) => {
+    try {
+      const updated = await storage.updateTimedRelease(req.params.id, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating timed release:", error);
+      res.status(500).json({ message: "Failed to update timed release" });
+    }
+  });
+
+  app.delete("/api/admin/timed-releases/:id", async (req, res) => {
+    try {
+      await storage.deleteTimedRelease(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting timed release:", error);
+      res.status(500).json({ message: "Failed to delete timed release" });
+    }
+  });
+
+  // Candidate timed release check (only released=true)
+  app.get("/api/timed-releases/:caseId", async (req, res) => {
+    try {
+      const allReleases = await storage.getTimedReleases(req.params.caseId);
+      const released = allReleases.filter(r => r.released === true);
+      res.json(released);
+    } catch (error) {
+      console.error("Error fetching released timed releases:", error);
+      res.status(500).json({ message: "Failed to fetch timed releases" });
+    }
+  });
+
+  // Admin comparison data
+  app.get("/api/admin/observer-ratings/:caseId", async (req, res) => {
+    try {
+      const ratings = await storage.getObserverRatingsByCase(req.params.caseId);
+      res.json(ratings);
+    } catch (error) {
+      console.error("Error fetching observer ratings by case:", error);
+      res.status(500).json({ message: "Failed to fetch observer ratings" });
+    }
+  });
+
+  app.get("/api/admin/self-assessments", async (_req, res) => {
+    try {
+      const assessments = await storage.getAllSelfAssessments();
+      res.json(assessments);
+    } catch (error) {
+      console.error("Error fetching all self assessments:", error);
+      res.status(500).json({ message: "Failed to fetch self assessments" });
     }
   });
 
