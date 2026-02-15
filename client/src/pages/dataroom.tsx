@@ -49,7 +49,6 @@ export default function DataRoom() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="financials" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="grid grid-cols-1 gap-6">
             <Card>
               <CardHeader className="bg-slate-50 border-b border-slate-100">
@@ -95,119 +94,120 @@ export default function DataRoom() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
-              <CardHeader className="bg-slate-50 border-b border-slate-100">
-                <CardTitle className="font-serif">Assets</CardTitle>
-                <CardDescription>Consolidated Balance Sheet FY 2025 (€ Millions)</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Line Item</TableHead>
-                      <TableHead className="text-right">Value (€ mn)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow className="bg-slate-50/50">
-                      <TableCell className="font-bold text-slate-700" colSpan={2}>Non-Current Assets</TableCell>
-                    </TableRow>
-                    {data.detailedBalanceSheet.assets.nonCurrent.map((item) => (
-                      <TableRow key={item.item}>
-                        <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
-                        <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
+                <CardHeader className="bg-slate-50 border-b border-slate-100">
+                  <CardTitle className="font-serif">Assets</CardTitle>
+                  <CardDescription>Consolidated Balance Sheet FY 2025 (€ Millions)</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Line Item</TableHead>
+                        <TableHead className="text-right">Value (€ mn)</TableHead>
                       </TableRow>
-                    ))}
-                    <TableRow className="bg-slate-100 border-t-2 border-slate-200">
-                      <TableCell className="font-bold text-slate-900">Total Non-Current Assets</TableCell>
-                      <TableCell className="text-right font-bold font-mono text-slate-900">€61,747.00</TableCell>
-                    </TableRow>
-
-                    <TableRow className="bg-slate-50/50">
-                      <TableCell className="font-bold text-slate-700" colSpan={2}>Current Assets</TableCell>
-                    </TableRow>
-                    {data.detailedBalanceSheet.assets.current.map((item) => (
-                      <TableRow key={item.item}>
-                        <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
-                        <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow className="bg-slate-50/50">
+                        <TableCell className="font-bold text-slate-700" colSpan={2}>Non-Current Assets</TableCell>
                       </TableRow>
-                    ))}
-                    <TableRow className="bg-slate-100 border-t-2 border-slate-200">
-                      <TableCell className="font-bold text-slate-900">Total Current Assets</TableCell>
-                      <TableCell className="text-right font-bold font-mono text-slate-900">€17,993.00</TableCell>
-                    </TableRow>
-                     <TableRow className="bg-slate-800 text-white hover:bg-slate-800">
-                      <TableCell className="font-bold">TOTAL ASSETS</TableCell>
-                      <TableCell className="text-right font-bold font-mono">€79,740.00</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="bg-slate-50 border-b border-slate-100">
-                <CardTitle className="font-serif">Equity & Liabilities</CardTitle>
-                <CardDescription>Consolidated Balance Sheet FY 2025 (€ Millions)</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Line Item</TableHead>
-                      <TableHead className="text-right">Value (€ mn)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow className="bg-slate-50/50">
-                      <TableCell className="font-bold text-slate-700" colSpan={2}>Equity</TableCell>
-                    </TableRow>
-                    {data.detailedBalanceSheet.equityLiabilities.equity.map((item) => (
-                      <TableRow key={item.item}>
-                        <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
-                        <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
+                      {data.detailedBalanceSheet.assets.nonCurrent.map((item) => (
+                        <TableRow key={item.item}>
+                          <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
+                          <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-slate-100 border-t-2 border-slate-200">
+                        <TableCell className="font-bold text-slate-900">Total Non-Current Assets</TableCell>
+                        <TableCell className="text-right font-bold font-mono text-slate-900">€61,747.00</TableCell>
                       </TableRow>
-                    ))}
-                    <TableRow className="bg-slate-100 border-t-2 border-slate-200">
-                      <TableCell className="font-bold text-slate-900">Total Equity</TableCell>
-                      <TableCell className="text-right font-bold font-mono text-slate-900">€21,904.00</TableCell>
-                    </TableRow>
 
-                    <TableRow className="bg-slate-50/50">
-                      <TableCell className="font-bold text-slate-700" colSpan={2}>Non-Current Liabilities</TableCell>
-                    </TableRow>
-                    {data.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities.map((item) => (
-                      <TableRow key={item.item}>
-                        <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
-                        <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
+                      <TableRow className="bg-slate-50/50">
+                        <TableCell className="font-bold text-slate-700" colSpan={2}>Current Assets</TableCell>
                       </TableRow>
-                    ))}
-                    <TableRow className="bg-slate-100 border-t-2 border-slate-200">
-                      <TableCell className="font-bold text-slate-900">Total Non-Current Liab.</TableCell>
-                      <TableCell className="text-right font-bold font-mono text-slate-900">€43,853.00</TableCell>
-                    </TableRow>
-
-                    <TableRow className="bg-slate-50/50">
-                      <TableCell className="font-bold text-slate-700" colSpan={2}>Current Liabilities</TableCell>
-                    </TableRow>
-                    {data.detailedBalanceSheet.equityLiabilities.currentLiabilities.map((item) => (
-                      <TableRow key={item.item}>
-                        <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
-                        <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
+                      {data.detailedBalanceSheet.assets.current.map((item) => (
+                        <TableRow key={item.item}>
+                          <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
+                          <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-slate-100 border-t-2 border-slate-200">
+                        <TableCell className="font-bold text-slate-900">Total Current Assets</TableCell>
+                        <TableCell className="text-right font-bold font-mono text-slate-900">€17,993.00</TableCell>
                       </TableRow>
-                    ))}
-                    <TableRow className="bg-slate-100 border-t-2 border-slate-200">
-                      <TableCell className="font-bold text-slate-900">Total Current Liab.</TableCell>
-                      <TableCell className="text-right font-bold font-mono text-slate-900">€13,983.00</TableCell>
-                    </TableRow>
+                      <TableRow className="bg-slate-800 text-white hover:bg-slate-800">
+                        <TableCell className="font-bold">TOTAL ASSETS</TableCell>
+                        <TableCell className="text-right font-bold font-mono">€79,740.00</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
 
-                     <TableRow className="bg-slate-800 text-white hover:bg-slate-800">
-                      <TableCell className="font-bold">TOTAL EQUITY & LIAB.</TableCell>
-                      <TableCell className="text-right font-bold font-mono">€79,740.00</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="bg-slate-50 border-b border-slate-100">
+                  <CardTitle className="font-serif">Equity & Liabilities</CardTitle>
+                  <CardDescription>Consolidated Balance Sheet FY 2025 (€ Millions)</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Line Item</TableHead>
+                        <TableHead className="text-right">Value (€ mn)</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow className="bg-slate-50/50">
+                        <TableCell className="font-bold text-slate-700" colSpan={2}>Equity</TableCell>
+                      </TableRow>
+                      {data.detailedBalanceSheet.equityLiabilities.equity.map((item) => (
+                        <TableRow key={item.item}>
+                          <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
+                          <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-slate-100 border-t-2 border-slate-200">
+                        <TableCell className="font-bold text-slate-900">Total Equity</TableCell>
+                        <TableCell className="text-right font-bold font-mono text-slate-900">€21,904.00</TableCell>
+                      </TableRow>
+
+                      <TableRow className="bg-slate-50/50">
+                        <TableCell className="font-bold text-slate-700" colSpan={2}>Non-Current Liabilities</TableCell>
+                      </TableRow>
+                      {data.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities.map((item) => (
+                        <TableRow key={item.item}>
+                          <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
+                          <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-slate-100 border-t-2 border-slate-200">
+                        <TableCell className="font-bold text-slate-900">Total Non-Current Liab.</TableCell>
+                        <TableCell className="text-right font-bold font-mono text-slate-900">€43,853.00</TableCell>
+                      </TableRow>
+
+                      <TableRow className="bg-slate-50/50">
+                        <TableCell className="font-bold text-slate-700" colSpan={2}>Current Liabilities</TableCell>
+                      </TableRow>
+                      {data.detailedBalanceSheet.equityLiabilities.currentLiabilities.map((item) => (
+                        <TableRow key={item.item}>
+                          <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
+                          <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-slate-100 border-t-2 border-slate-200">
+                        <TableCell className="font-bold text-slate-900">Total Current Liab.</TableCell>
+                        <TableCell className="text-right font-bold font-mono text-slate-900">€13,983.00</TableCell>
+                      </TableRow>
+
+                      <TableRow className="bg-slate-800 text-white hover:bg-slate-800">
+                        <TableCell className="font-bold">TOTAL EQUITY & LIAB.</TableCell>
+                        <TableCell className="text-right font-bold font-mono">€79,740.00</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </TabsContent>
 
