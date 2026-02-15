@@ -67,6 +67,11 @@ const translations: Record<string, Record<Lang, string>> = {
   "landing.pillar2_text": { de: "Wir arbeiten nach dem Prinzip One Face to the Customer. Unsere Kunden profitieren von persönlicher Kontinuität in der Betreuung, hoher Servicequalität und maximaler Flexibilität.", en: "We work on the One Face to the Customer principle. Our clients benefit from personal continuity in support, high service quality and maximum flexibility." },
   "landing.pillar3_title": { de: "Verantwortung mit nachhaltiger Wirkung", en: "Responsibility with Lasting Impact" },
   "landing.pillar3_text": { de: "Wir verbinden kurzfristige Lieferfähigkeit mit innovativen Ansätzen und einem expliziten Fokus auf langfristige Wertschöpfung für unsere Kunden.", en: "We combine short-term delivery capability with innovative approaches and an explicit focus on long-term value creation for our clients." },
+  "landing.quicklinks_title": { de: "Direktzugang", en: "Quick Access" },
+  "landing.link_observer": { de: "Observer-Ansicht", en: "Observer View" },
+  "landing.link_observer_desc": { de: "Live-Beobachtung und Kompetenzbewertung von Kandidaten", en: "Live observation and competency rating of candidates" },
+  "landing.link_admin": { de: "Administration", en: "Administration" },
+  "landing.link_admin_desc": { de: "Dashboard für Ergebnisse, Berichte und Verwaltung", en: "Dashboard for results, reports and management" },
 
   "portal.title": { de: "Kundenbereich", en: "Client Area" },
   "portal.subtitle": { de: "Wählen Sie den Kundenbereich, für den Sie freigeschaltet wurden. Für den Zugang zu den einzelnen Bereichen ist ein separater Zugangscode erforderlich.", en: "Select the client area you have been authorized for. A separate access code is required for each area." },

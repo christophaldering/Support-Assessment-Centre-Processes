@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
-import { ArrowRight, AlertCircle, Globe } from "lucide-react";
+import { ArrowRight, AlertCircle, Globe, Eye, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import aestimamusLogo from "@assets/Bildschirmfoto_2026-02-15_um_02.45.11_1771120072465.png";
@@ -119,6 +119,42 @@ export default function Landing() {
               <p className="text-xs text-[#999] mt-6 leading-relaxed">
                 {t("landing.help")}
               </p>
+
+              <div className="mt-10 pt-8 border-t border-gray-200">
+                <h3 className="text-xs font-medium uppercase tracking-wider text-[#999] mb-4" data-testid="text-quicklinks-title">
+                  {t("landing.quicklinks_title")}
+                </h3>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setLocation("/observer")}
+                    className="w-full flex items-center gap-3 text-left p-3 rounded border border-gray-200 hover:border-copper/50 hover:bg-copper/5 transition-all group"
+                    data-testid="link-observer"
+                  >
+                    <div className="shrink-0 w-9 h-9 rounded-full bg-copper/10 flex items-center justify-center group-hover:bg-copper/20 transition-colors">
+                      <Eye className="h-4 w-4 text-copper" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-[#1a1a1a]">{t("landing.link_observer")}</div>
+                      <div className="text-xs text-[#999]">{t("landing.link_observer_desc")}</div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-[#ccc] group-hover:text-copper ml-auto shrink-0 transition-colors" />
+                  </button>
+                  <button
+                    onClick={() => setLocation("/admin")}
+                    className="w-full flex items-center gap-3 text-left p-3 rounded border border-gray-200 hover:border-copper/50 hover:bg-copper/5 transition-all group"
+                    data-testid="link-admin"
+                  >
+                    <div className="shrink-0 w-9 h-9 rounded-full bg-copper/10 flex items-center justify-center group-hover:bg-copper/20 transition-colors">
+                      <Settings className="h-4 w-4 text-copper" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-[#1a1a1a]">{t("landing.link_admin")}</div>
+                      <div className="text-xs text-[#999]">{t("landing.link_admin_desc")}</div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-[#ccc] group-hover:text-copper ml-auto shrink-0 transition-colors" />
+                  </button>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
