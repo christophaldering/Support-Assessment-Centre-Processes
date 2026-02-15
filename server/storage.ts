@@ -1,15 +1,21 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { db } from "./db";
 import {
   users,
   assessmentResponses,
   accessCodes,
+  assessmentSessions,
+  uploadedExercises,
   type User,
   type InsertUser,
   type AssessmentResponse,
   type InsertAssessmentResponse,
   type AccessCode,
   type InsertAccessCode,
+  type AssessmentSession,
+  type InsertAssessmentSession,
+  type UploadedExercise,
+  type InsertUploadedExercise,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -18,11 +24,24 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
 
   getAssessmentResponses(caseId: string, sessionId: string): Promise<AssessmentResponse[]>;
+  getAllAssessmentResponses(): Promise<AssessmentResponse[]>;
   upsertAssessmentResponse(response: InsertAssessmentResponse): Promise<AssessmentResponse>;
   bulkUpsertAssessmentResponses(responses: InsertAssessmentResponse[]): Promise<AssessmentResponse[]>;
 
   getAccessCodesByScope(scope: string, customerId?: string): Promise<AccessCode[]>;
+  getAllAccessCodes(): Promise<AccessCode[]>;
   createAccessCode(code: InsertAccessCode): Promise<AccessCode>;
+  deleteAccessCode(id: string): Promise<void>;
+
+  getSession(sessionId: string, caseId: string): Promise<AssessmentSession | undefined>;
+  getAllSessions(): Promise<AssessmentSession[]>;
+  createSession(session: InsertAssessmentSession): Promise<AssessmentSession>;
+  updateSession(id: string, data: Partial<AssessmentSession>): Promise<AssessmentSession>;
+
+  getUploadedExercises(customerId: string): Promise<UploadedExercise[]>;
+  getAllUploadedExercises(): Promise<UploadedExercise[]>;
+  createUploadedExercise(exercise: InsertUploadedExercise): Promise<UploadedExercise>;
+  deleteUploadedExercise(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -51,6 +70,10 @@ export class DatabaseStorage implements IStorage {
           eq(assessmentResponses.sessionId, sessionId)
         )
       );
+  }
+
+  async getAllAssessmentResponses(): Promise<AssessmentResponse[]> {
+    return db.select().from(assessmentResponses).orderBy(desc(assessmentResponses.updatedAt));
   }
 
   async upsertAssessmentResponse(response: InsertAssessmentResponse): Promise<AssessmentResponse> {
@@ -109,9 +132,69 @@ export class DatabaseStorage implements IStorage {
       .where(eq(accessCodes.scope, scope));
   }
 
+  async getAllAccessCodes(): Promise<AccessCode[]> {
+    return db.select().from(accessCodes);
+  }
+
   async createAccessCode(code: InsertAccessCode): Promise<AccessCode> {
     const [created] = await db.insert(accessCodes).values(code).returning();
     return created;
+  }
+
+  async deleteAccessCode(id: string): Promise<void> {
+    await db.delete(accessCodes).where(eq(accessCodes.id, id));
+  }
+
+  async getSession(sessionId: string, caseId: string): Promise<AssessmentSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(assessmentSessions)
+      .where(
+        and(
+          eq(assessmentSessions.sessionId, sessionId),
+          eq(assessmentSessions.caseId, caseId)
+        )
+      );
+    return session;
+  }
+
+  async getAllSessions(): Promise<AssessmentSession[]> {
+    return db.select().from(assessmentSessions).orderBy(desc(assessmentSessions.startedAt));
+  }
+
+  async createSession(session: InsertAssessmentSession): Promise<AssessmentSession> {
+    const [created] = await db.insert(assessmentSessions).values(session).returning();
+    return created;
+  }
+
+  async updateSession(id: string, data: Partial<AssessmentSession>): Promise<AssessmentSession> {
+    const [updated] = await db
+      .update(assessmentSessions)
+      .set(data)
+      .where(eq(assessmentSessions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getUploadedExercises(customerId: string): Promise<UploadedExercise[]> {
+    return db
+      .select()
+      .from(uploadedExercises)
+      .where(eq(uploadedExercises.customerId, customerId))
+      .orderBy(desc(uploadedExercises.createdAt));
+  }
+
+  async getAllUploadedExercises(): Promise<UploadedExercise[]> {
+    return db.select().from(uploadedExercises).orderBy(desc(uploadedExercises.createdAt));
+  }
+
+  async createUploadedExercise(exercise: InsertUploadedExercise): Promise<UploadedExercise> {
+    const [created] = await db.insert(uploadedExercises).values(exercise).returning();
+    return created;
+  }
+
+  async deleteUploadedExercise(id: string): Promise<void> {
+    await db.delete(uploadedExercises).where(eq(uploadedExercises.id, id));
   }
 }
 

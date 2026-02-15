@@ -135,3 +135,24 @@
     @apply font-serif;
   }
 }
+
+@media print {
+  aside, header, nav, footer, button, .no-print {
+    display: none !important;
+  }
+  main {
+    overflow: visible !important;
+    width: 100% !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+  }
+  .print-break {
+    page-break-before: always;
+  }
+  * {
+    box-shadow: none !important;
+  }
+}

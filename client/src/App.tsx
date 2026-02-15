@@ -16,6 +16,7 @@ import DataRoom from "@/pages/dataroom";
 import Emails from "@/pages/emails";
 import News from "@/pages/news";
 import NotFound from "@/pages/not-found";
+import Admin from "@/pages/admin";
 
 function Router() {
   return (
@@ -47,6 +48,7 @@ function Router() {
       </Route>
 
       <Route path="/overview"><Redirect to="/case/varexia" /></Route>
+      <Route path="/admin" component={Admin} />
 
       <Route component={NotFound} />
     </Switch>
