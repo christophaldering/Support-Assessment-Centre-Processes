@@ -49,6 +49,7 @@ export default function DataRoom() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="financials" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="grid grid-cols-1 gap-6">
             <Card>
               <CardHeader className="bg-slate-50 border-b border-slate-100">
