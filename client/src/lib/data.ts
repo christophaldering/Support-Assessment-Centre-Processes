@@ -62,93 +62,340 @@ export const varexiaData = {
   emails: [
     {
       id: "e1",
-      from: "Dr. Thomas Berner, Chairman of the Supervisory Board",
-      subject: "URGENT: Strategic Review Mandate - Varexia SE",
-      date: "Feb 14, 2026, 08:30 AM",
+      from: "Michael Turner, CFO",
+      subject: "Briefing: Cash Flow Situation & Financial Framing",
+      date: "Feb 10, 2026, 07:45 AM",
       read: false,
       important: true,
-      content: `Dear Colleague,
+      content: `Dear Candidate,
 
-Welcome to the executive assessment for the Chief Strategy Officer position at Varexia SE.
+As part of your preparation, I want to provide a brief framing of the financial situation as we see it from the CFO perspective.
 
-As you are aware, Varexia is currently facing one of the most challenging periods in its history. Despite our strong market position in Retail and Logistics, our overall market capitalization has declined significantly over the last 12 months. Shareholder pressure is mounting, and there are growing concerns about our conglomerate structure.
+The Group's overall revenue and EBITDA development remains broadly in line with expectations. However, internally generated liquidity has come under noticeable pressure in recent months. The primary drivers are front-loaded investment activity – particularly in our logistics and infrastructure segments – as well as working capital dynamics related to seasonal effects and supply chain timing.
 
-Your mandate today is to conduct a comprehensive strategic review of the group. We need you to analyze the current situation, identify the key tensions across our business units, and propose a clear path forward.
+The resulting cash flow profile is still within manageable boundaries, but the buffer has narrowed. We are closely monitoring the development of our net debt/EBITDA ratio, which rating agencies and lenders are paying increasing attention to.
 
-Specifically, I need you to address:
-1. The profitability issues in our Retail division.
-2. The strategic viability of our Digital Services unit.
-3. The capital allocation conflicts between our mature and growth businesses.
+I want to be very transparent: this is not a crisis, but it is a phase that requires clear prioritization. The Board has different perspectives on how to navigate this – and that is part of the challenge you will be expected to reflect on.
 
-I expect a clear, unvarnished assessment. We do not need more "business as usual" - we need a turnaround strategy.
+I have made the relevant financial documents available in the Data Room.
 
 Best regards,
-
-Dr. Thomas Berner
-Chairman of the Supervisory Board
-Varexia SE`
+Michael Turner
+Chief Financial Officer, Varexia SE`
     },
     {
       id: "e2",
-      from: "Marcus Weber, CFO",
-      subject: "CONFIDENTIAL: Financial Situation & Covenant Breach Risk",
-      date: "Feb 14, 2026, 09:15 AM",
+      from: "Michael Turner, CFO",
+      subject: "FYI: Stress Scenario & Sensitivity Analysis",
+      date: "Feb 10, 2026, 08:02 AM",
       read: false,
       important: true,
-      content: `Privileged & Confidential
+      content: `Dear Candidate,
 
-Following up on Dr. Berner's note, I must draw your attention to our immediate financial constraints.
+As a follow-up to my earlier note, I also want to draw your attention to the stress scenario we have prepared internally.
 
-While our top-line revenue remains stable at €42.0bn, our profitability is eroding faster than expected. Group EBIT has fallen to €1.4bn, and our free cash flow is barely covering our dividend commitments and necessary CAPEX.
+This is not a forecast – it reflects a set of plausible downside assumptions under which our cash flow position deteriorates more quickly than currently anticipated. The key drivers are an accelerated inventory build-up in Retail, front-loaded CAPEX in infrastructure, and limited flexibility in lease-related outflows.
 
-Most critically, please look closely at the "Energy & Infrastructure" CAPEX requirements vs. the "Retail" cash generation. We are dangerously close to breaching our debt covenants if EBITDA drops any further.
+Under this scenario, operating free cash flow turns negative and the internal liquidity buffer falls below our comfort range. Net debt/EBITDA temporarily rises above 3.6x.
 
-I have uploaded the FY2025 financial statements to the Data Room. Please review the "Non-Current Liabilities" section carefully - our debt pile of €11.4bn in bonds and €9.6bn in bank loans is becoming a heavy burden in this high-interest environment.
+I share this not to alarm, but to provide the full picture. This is the kind of information that shapes internal debates around prioritization and trade-offs.
 
-We need a strategy that releases cash, not just consumes it.
+The document is available in the Data Room.
 
-Regards,
-
-Marcus Weber
-Chief Financial Officer`
+Best regards,
+Michael Turner
+CFO`
     },
     {
       id: "e3",
-      from: "Sarah Jenkins, Head of HR",
-      subject: "Talent Drain in Digital Unit",
-      date: "Feb 14, 2026, 10:45 AM",
-      read: true,
-      important: false,
-      content: `Hi there,
+      from: "Julia Hartmann, Head of Investor Relations",
+      subject: "IR Update: Market Perception & Analyst Sentiment",
+      date: "Feb 9, 2026, 04:30 PM",
+      read: false,
+      important: true,
+      content: `Dear Candidate,
 
-Just wanted to flag a critical issue coming from the "Digital Services & Consulting" unit. 
+As part of the briefing materials, I wanted to provide a brief update on external market perception and investor sentiment toward Varexia SE.
 
-We are seeing an annualized attrition rate of 28% in key technical roles. The exit interviews are consistent: top talent is leaving because they feel Varexia is too bureaucratic and they lack "true" equity upside compared to startups.
+Over the past 6–12 months, the tone in analyst calls and investor meetings has shifted noticeably. While operational performance continues to be acknowledged as solid, there is growing scrutiny around cash flow transparency, capital allocation and portfolio coherence.
 
-The "Strategic Tension" noted in the business unit profile ("Scalability vs. people dependency") is very real. We are currently paying premium salaries to retain consultants, which is destroying the unit's margin (currently 16.7%, but trending down).
+Key themes raised by analysts and institutional investors include:
+• The widening gap between reported EBITDA and free cash flow generation
+• Questions around the strategic rationale for maintaining the current portfolio structure
+• Increasing references to a "conglomerate discount" estimated at 25–30%
+• Requests for more granular segment-level cash flow reporting
 
-If we don't fix the governance or incentive structure for Digital, we might as well shut it down.
+The share price has declined approximately 18% over the past 12 months, underperforming the Euro Stoxx 50 by a significant margin. Bond spreads have also widened, reflecting growing credit market concern.
 
-Best,
-Sarah`
+I should also note that activist fund Corvus Capital has built a stake of approximately 4.8% and is increasingly vocal about portfolio restructuring. We expect them to seek board representation at the next AGM if progress is not forthcoming.
+
+This is context you should factor into your assessment.
+
+Best regards,
+Julia Hartmann
+Head of Investor Relations, Varexia SE`
     },
     {
       id: "e4",
-      from: "Lars Nielsen, CEO Logistics Division",
-      subject: "Supply Chain Disruptions & Investment Request",
-      date: "Feb 14, 2026, 11:20 AM",
+      from: "Dr. Thomas Berner, Chairman of the Supervisory Board",
+      subject: "Personal Note: Context for Your Assessment",
+      date: "Feb 11, 2026, 09:00 AM",
+      read: false,
+      important: true,
+      content: `Dear Candidate,
+
+I want to take a moment to share some personal observations that may help frame the task ahead of you.
+
+Varexia is not in acute crisis. Our operating businesses are performing within acceptable ranges, and our market positions remain strong. However, I have become increasingly concerned about the trajectory we are on – not operationally, but structurally.
+
+The Board is aligned on the problem description: we face growing tensions between investment ambitions, financial discipline and stakeholder expectations. Where we differ is on the right course of action.
+
+Some Board members advocate a more defensive posture – tighter prioritization, balance sheet discipline, and selective divestments. Others warn that pulling back now could weaken our competitive position in markets where momentum matters.
+
+What I expect from you today is not a solution – it is a clear-eyed, differentiated assessment. I want to understand how you read the situation, where you see the critical fault lines, and how you would approach the trade-offs that the organization currently avoids making explicitly.
+
+The status quo is not an option. But neither is action without clarity.
+
+I look forward to your perspective.
+
+Best regards,
+Dr. Thomas Berner
+Chairman of the Supervisory Board, Varexia SE`
+    },
+    {
+      id: "e5",
+      from: "Northbridge Capital Research",
+      subject: "External View: Credit-Style Assessment Note",
+      date: "Feb 7, 2026, 11:15 AM",
+      read: true,
+      important: true,
+      content: `To the attention of the Executive Board,
+
+Please find attached our latest credit-style assessment of Varexia SE. Key observations:
+
+1. Reported EBITDA stability masks a structurally weak cash conversion profile.
+2. Working capital absorption and front-loaded investment activity have materially constrained internally generated liquidity.
+3. The Group's portfolio composition remains challenging to assess from an external perspective.
+
+Selected financial indicators:
+• EBITDA: €3.600 bn
+• Operating cash flow: €1.602 bn
+• Cash conversion (OCF/EBITDA): 45.5%
+• Net CAPEX incl. leases: -€2.328 bn
+• Free cash flow: -€0.73 bn
+• Net debt / EBITDA: 3.3x
+
+Conclusion: Northbridge Capital Research views the Group as strategically well positioned but financially constrained. Without clearer prioritization, the current trajectory is unsustainable.
+
+Full report available in the Data Room.
+
+Northbridge Capital Research
+European Corporates`
+    },
+    {
+      id: "e6",
+      from: "Isabelle Fournier, CIO",
+      subject: "Note on Digital Steering Committee & Platform Decision",
+      date: "Feb 8, 2026, 02:20 PM",
       read: true,
       important: false,
-      content: `Good morning,
+      content: `Dear Candidate,
 
-I'm hearing rumors of a CAPEX freeze across the group. I must warn you: if we cut investment in the Logistics automation project, our "Cost per case" will rise by at least 15% next year due to labor inflation.
+I wanted to provide brief context on a topic that may come up during your assessment: the Integrated Planning & Promotion Platform.
 
-Our competitors are fully automating their warehouses. We are still running semi-manual operations in 40% of our sites. The "Speed vs. Cost" tension is breaking us. We cannot be both the fastest AND the cheapest without significant technology investment.
+This project sits at the intersection of several organizational tensions. Retail sees it as urgently needed following recent promotion execution failures. Logistics views it as a potential threat to planning stability. Finance is requesting a clearer business case. And my team is dealing with scope creep and limited development capacity.
 
-I need your support to protect the Logistics budget in the upcoming board meeting.
+The Digital Steering Committee discussed this on January 25. The status is amber, the timeline has slipped by 6 months, and budget utilization stands at 72%. We agreed to refine the scope and revisit the governance model – but no formal decision was taken.
 
-Regards,
-Lars`
+I mention this because it illustrates a broader pattern: cross-functional initiatives that are strategically important but organizationally difficult to land. The challenge is not technical – it is about priorities, ownership and the willingness to make binding decisions.
+
+Best regards,
+Isabelle Fournier
+Chief Information Officer, Varexia SE`
+    },
+    {
+      id: "e7",
+      from: "Stefan Krause, Regional CEO Central Europe",
+      subject: "Perspective from the Region: Market Pressure & Internal Constraints",
+      date: "Feb 9, 2026, 10:05 AM",
+      read: true,
+      important: false,
+      content: `Dear Candidate,
+
+I lead the Central European region – our largest market by revenue. I wanted to share a few observations from the front line.
+
+The competitive environment has intensified noticeably over the past 12 months. Customers are better informed, more price-sensitive, and less forgiving of service failures. What used to be accepted as occasional operational hiccups is now perceived as structural rigidity.
+
+Internally, we are experiencing a growing disconnect between centrally defined policies and the realities of customer-facing operations. Pricing corridors are tighter, delivery windows are optimized for efficiency rather than flexibility, and our ability to respond to key account requests on short notice has diminished.
+
+I am not arguing against discipline – we need it. But I want to flag that the cumulative effect of multiple efficiency measures is starting to erode customer relationships that have been built over decades.
+
+"Finance optimizes margins quarter by quarter. We manage relationships that span decades." – This was a comment from one of our regional sales managers at a recent workshop. It stayed with me.
+
+Best regards,
+Stefan Krause
+Regional CEO, Central Europe`
+    },
+    {
+      id: "e8",
+      from: "Dr. Claudia Vogt, CHRO",
+      subject: "Observations on Leadership Climate & Organizational Strain",
+      date: "Feb 10, 2026, 11:30 AM",
+      read: true,
+      important: false,
+      content: `Dear Candidate,
+
+As CHRO, I want to share some observations on the human side of the challenges you will be assessing.
+
+We recently conducted a Leadership & Ownership Pulse Survey across 320 senior managers. The response rate was 68%, which is high for this type of instrument. The results are sobering:
+
+• Decision authority: 2.4 out of 5
+• Alignment of accountability and decision rights: 2.1
+• Sustainability of workload: 2.2
+• Capacity for improvement vs. firefighting: 1.8
+
+The qualitative comments are even more telling. Leaders describe a system where they are accountable for results but lack the authority to influence outcomes. Overtime and personal commitment are used to compensate for structural misalignment. Several leaders expressed frustration that the organization "talks about ownership but avoids making ownership explicit."
+
+In the Digital Services unit specifically, we are seeing annualized attrition of 28% in key technical roles. Exit interviews consistently cite bureaucratic processes, lack of equity participation, and a perception of being a "second-class citizen" within the Group.
+
+This is not a motivation issue. It is a leadership system issue.
+
+The full survey results and HR commentary are available in the Data Room.
+
+Best regards,
+Dr. Claudia Vogt
+Chief Human Resources Officer, Varexia SE`
+    },
+    {
+      id: "e9",
+      from: "Key Account Management Austria",
+      subject: "Internal Lessons Learned – Promotion Execution Failure",
+      date: "Feb 5, 2026, 03:45 PM",
+      read: true,
+      important: false,
+      content: `To the Executive Board,
+
+We would like to share a brief lessons-learned reflection following the recent promotion execution failure in our Austrian market.
+
+The short version: Retail pushed for availability. Logistics pushed for efficiency. IT pushed for stability. Each function did what their targets told them to do. And each was locally right.
+
+Together, we optimized ourselves out of a good overall result.
+
+We had no clear end-to-end owner, no shared definition of success, and no early escalation when priorities collided. We compensated with overtime, manual fixes and goodwill. That saved the week – but it did not fix the system. And it made the next failure more likely, not less.
+
+If we want different outcomes, we need different ownership, different KPIs and explicit trade-offs. Otherwise, we will repeat this story – with different products, but the same ending.
+
+This is submitted as a learning-oriented reflection, not a blame statement.
+
+Key Account Management Austria`
+    },
+    {
+      id: "e10",
+      from: "Alexandra Rossi, CEO",
+      subject: "Framing for Today's Assessment",
+      date: "Feb 11, 2026, 08:15 AM",
+      read: false,
+      important: true,
+      content: `Dear Candidate,
+
+Welcome. I want to briefly frame what we are looking for today.
+
+Varexia is a company with strong market positions, dedicated people, and a solid operational foundation. At the same time, we are experiencing growing structural strain – not because the business is failing, but because the system we have built is reaching its limits under current conditions.
+
+The tensions you will encounter in the materials are real. They are not theoretical. They affect capital allocation, leadership dynamics, customer relationships and talent retention every day. And they are interconnected in ways that make simple solutions inadequate.
+
+What we need from you is not a consulting deck or a turnaround plan. We need a thoughtful, evidence-based assessment of where the organization stands, what the critical fault lines are, and how you would approach the decisions that currently remain unresolved.
+
+I should be honest: there is no consensus on the Board about the right path forward. That is part of the challenge – and part of why your independent perspective matters.
+
+I wish you a productive session.
+
+Best regards,
+Alexandra Rossi
+Chief Executive Officer, Varexia SE`
+    },
+    {
+      id: "e11",
+      from: "Dr. Markus Engel, Handelsblatt",
+      subject: "Press Inquiry: Covenant Situation & Rating Outlook",
+      date: "Feb 12, 2026, 09:30 AM",
+      read: true,
+      important: false,
+      content: `Dear Investor Relations Team,
+
+Handelsblatt is preparing an article on Varexia SE's financial situation, with particular focus on debt covenant compliance and the current rating outlook.
+
+We have received information suggesting that S&P Global Ratings is reviewing a potential outlook change from "stable" to "negative" for the company's current BBB rating. We would also like to understand the current status of discussions with relationship banks regarding covenant terms.
+
+Could you provide a comment on the following:
+1. The current Net Debt/EBITDA ratio and proximity to covenant thresholds
+2. Any ongoing discussions with lenders regarding covenant amendments
+3. The status of the €2.1bn commercial paper programme
+4. Management's view on the pension obligations (€5.1bn) and their impact on adjusted leverage
+
+We intend to publish on February 12. A response by end of business today would be appreciated.
+
+Best regards,
+Dr. Markus Engel
+Financial Editor, Handelsblatt`
+    },
+    {
+      id: "e12",
+      from: "Customer Escalation Desk",
+      subject: "Summary: Recent Customer Complaints & Service Failures",
+      date: "Feb 6, 2026, 05:15 PM",
+      read: true,
+      important: false,
+      content: `Executive Summary – Customer Escalation Report
+
+Period: January 15 – February 5, 2026
+
+This report summarizes recent customer escalations that have been flagged for executive attention.
+
+Key patterns observed:
+• Delivery reliability complaints have increased 23% compared to the same period last year
+• Promotion availability issues: Multiple cases where advertised products were unavailable within 48 hours of promotion launch
+• Key account representatives report that price negotiations are becoming more adversarial, with customers presenting concrete competitor alternatives earlier in discussions
+• Several long-standing accounts have formally requested service-level reviews
+
+Root cause analysis points to systemic rather than isolated issues:
+1. Centrally defined pricing corridors leave insufficient room for relationship-based adjustments
+2. Capacity allocation optimized for efficiency limits ad-hoc flexibility for key accounts
+3. Cross-functional coordination gaps between Retail planning, Logistics execution and IT systems
+
+A detailed workshop protocol from the Commercial & Market Alignment session (January 27, Cologne) is available in the Data Room for further context.
+
+Customer Escalation Desk
+Varexia SE`
+    },
+    {
+      id: "e13",
+      from: "Rating Agency Exchange (Internal Summary)",
+      subject: "Meeting Notes: Informal Exchange with Rating Agency",
+      date: "Jan 28, 2026, 10:00 AM",
+      read: true,
+      important: false,
+      content: `INTERNAL – CONFIDENTIAL
+
+Summary of informal telephone exchange with Senior Director, European Corporates at a major rating agency. Approximately 30 minutes. No formal rating review.
+
+Key takeaways:
+
+1. Classification: No short-term rating action planned. However, increased internal attention on Varexia. Increasingly classified in peer comparison across retail/infrastructure/diversified groups.
+
+2. Operative Performance: Assessed as stable. Revenue and EBITDA development generally positive. Portfolio diversification recognized.
+
+3. Cash Flow Profile: Cash conversion (OCF/EBITDA) significantly below historical levels. Deviation from peers increasingly noticeable. Main drivers: front-loaded CAPEX, working capital absorption, inflexibility of leasing footprint. Individual effects explainable – cumulative effect relevant.
+
+4. Capital Allocation: Strategic rationale behind individual investments comprehensible. However: uncertainty regarding priorities in conflicting objectives, explicit thresholds (e.g. net debt/EBITDA), and conditions for course corrections.
+
+5. Key Quote: "Not the question of what you do – but under which conditions you would change course."
+
+6. Outlook: No measures in short term. If cash flow pressure persists, increasing focus on net debt/EBITDA development over 12–18 months. Visibility of prioritization, consistency of communication, and governance quality becoming increasingly important.
+
+Internal evaluation: No acute escalation. Perception: probationary phase, not crisis. External stakeholders expect clearer trade-offs.
+
+Prepared by: Office of the CFO`
     }
   ],
   news: [

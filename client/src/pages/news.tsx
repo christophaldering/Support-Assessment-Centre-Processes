@@ -20,17 +20,17 @@ export default function News() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-slate-900 mb-2" data-testid="text-news-title">Press & Media Coverage</h1>
-        <p className="text-slate-500">External reporting and analyst commentary on Varexia SE</p>
+        <h1 className="text-3xl font-serif font-bold text-foreground mb-2" data-testid="text-news-title">Press & Media Coverage</h1>
+        <p className="text-muted-foreground">External reporting and analyst commentary on Varexia SE</p>
       </div>
 
       <div className="flex h-[calc(100vh-14rem)] gap-4">
         {/* Article List */}
-        <Card className="w-[380px] shrink-0 flex flex-col overflow-hidden border-slate-200">
-          <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
-            <Newspaper className="h-5 w-5 text-slate-500" />
-            <h2 className="font-semibold text-slate-900">News Feed</h2>
-            <Badge variant="secondary" className="ml-auto bg-slate-200 text-slate-600">{articles.length} articles</Badge>
+        <Card className="w-[380px] shrink-0 flex flex-col overflow-hidden border-border">
+          <div className="p-4 bg-muted/50 border-b border-border flex items-center gap-2">
+            <Newspaper className="h-5 w-5 text-muted-foreground" />
+            <h2 className="font-semibold text-foreground">News Feed</h2>
+            <Badge variant="secondary" className="ml-auto bg-muted text-muted-foreground">{articles.length} articles</Badge>
           </div>
           <ScrollArea className="flex-1">
             <div className="flex flex-col">
@@ -41,30 +41,30 @@ export default function News() {
                     key={article.id}
                     onClick={() => setSelectedArticleId(article.id)}
                     data-testid={`button-article-${article.id}`}
-                    className={`flex flex-col items-start gap-2 p-4 text-left border-b border-slate-100 transition-colors hover:bg-slate-50/80 ${
-                      selectedArticleId === article.id ? "bg-slate-100 border-l-4 border-l-primary" : "border-l-4 border-l-transparent"
+                    className={`flex flex-col items-start gap-2 p-4 text-left border-b border-border transition-colors hover:bg-muted/50/80 ${
+                      selectedArticleId === article.id ? "bg-muted border-l-4 border-l-primary" : "border-l-4 border-l-transparent"
                     }`}
                   >
                     <div className="flex w-full items-center justify-between gap-2">
                       <Badge variant="outline" className={`text-[10px] h-5 px-1.5 font-bold ${style.bg} ${style.text} ${style.border}`}>
                         {article.source}
                       </Badge>
-                      <div className="flex items-center gap-1 text-xs text-slate-400">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground/60">
                         <Clock className="h-3 w-3" />
                         <span>{article.date.replace("February ", "Feb ").replace(", 2026", "")}</span>
                       </div>
                     </div>
                     <div className="w-full">
-                      <div className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2 mb-1">
+                      <div className="text-sm font-semibold text-foreground leading-snug line-clamp-2 mb-1">
                         {article.headline}
                       </div>
                       {article.subheadline && (
-                        <div className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                        <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                           {article.subheadline}
                         </div>
                       )}
                     </div>
-                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 border-slate-200 text-slate-500">
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 border-border text-muted-foreground">
                       {article.category}
                     </Badge>
                   </button>
@@ -75,7 +75,7 @@ export default function News() {
         </Card>
 
         {/* Article Content */}
-        <Card className="flex-1 flex flex-col overflow-hidden border-slate-200 bg-white shadow-sm">
+        <Card className="flex-1 flex flex-col overflow-hidden border-border bg-card shadow-sm">
           {selectedArticle ? (() => {
             const style = sourceStyles[selectedArticle.sourceTag] || sourceStyles.R;
             return (
@@ -85,27 +85,27 @@ export default function News() {
                     <Badge className={`${style.bg} ${style.text} border ${style.border} text-xs font-bold`}>
                       {selectedArticle.source}
                     </Badge>
-                    <Badge variant="outline" className="text-xs border-slate-300 text-slate-500">
+                    <Badge variant="outline" className="text-xs border-border text-muted-foreground">
                       {selectedArticle.category}
                     </Badge>
-                    <span className="text-xs text-slate-400 ml-auto">{selectedArticle.date}</span>
+                    <span className="text-xs text-muted-foreground/60 ml-auto">{selectedArticle.date}</span>
                   </div>
-                  <h1 className="text-2xl font-serif font-bold text-slate-900 leading-tight mb-2" data-testid="text-article-headline">
+                  <h1 className="text-2xl font-serif font-bold text-foreground leading-tight mb-2" data-testid="text-article-headline">
                     {selectedArticle.headline}
                   </h1>
                   {selectedArticle.subheadline && (
-                    <p className="text-sm text-slate-600 leading-relaxed italic">
+                    <p className="text-sm text-muted-foreground leading-relaxed italic">
                       {selectedArticle.subheadline}
                     </p>
                   )}
-                  <div className="mt-3 text-xs text-slate-500">
-                    By <span className="font-medium text-slate-700">{selectedArticle.author}</span>
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    By <span className="font-medium text-foreground/80">{selectedArticle.author}</span>
                   </div>
                 </div>
 
-                <ScrollArea className="flex-1 bg-white">
+                <ScrollArea className="flex-1 bg-card">
                   <article className="p-8 max-w-3xl">
-                    <div className="text-slate-800 text-[15px] leading-[1.8] whitespace-pre-wrap font-serif">
+                    <div className="text-foreground text-[15px] leading-[1.8] whitespace-pre-wrap font-serif">
                       {selectedArticle.content}
                     </div>
 
@@ -122,7 +122,7 @@ export default function News() {
               </>
             );
           })() : (
-            <div className="flex flex-col items-center justify-center h-full text-slate-400">
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/60">
               <Newspaper className="h-12 w-12 mb-4 opacity-20" />
               <p>Select an article to read</p>
             </div>

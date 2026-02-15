@@ -78,17 +78,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-slate-50 relative">
+      <main className="flex-1 overflow-y-auto bg-background relative">
         {/* Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm/50 backdrop-blur-sm bg-white/90">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
+        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm/50 backdrop-blur-sm bg-card/90">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
              <span className="font-medium text-primary">Aestimamus Suite</span>
-             <span className="text-slate-300">/</span>
-             <span className="text-slate-900 font-medium">{activeCase.name}</span>
+             <span className="text-border">/</span>
+             <span className="text-foreground font-medium">{activeCase.name}</span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-xs font-mono text-slate-400">CASE_ID: {caseId.toUpperCase()}</span>
-            <div className="h-8 w-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-serif text-xs">
+            <span className="text-xs font-mono text-muted-foreground">CASE_ID: {caseId.toUpperCase()}</span>
+            <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-serif text-xs">
               AV
             </div>
           </div>

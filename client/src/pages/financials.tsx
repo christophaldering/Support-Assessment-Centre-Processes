@@ -22,8 +22,8 @@ export default function Financials() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-slate-900 mb-2">Financial Analysis</h1>
-        <p className="text-slate-500">Consolidated Financial Statements & KPI Overview FY 2025</p>
+        <h1 className="text-3xl font-serif font-bold text-foreground mb-2">Financial Analysis</h1>
+        <p className="text-muted-foreground">Consolidated Financial Statements & KPI Overview FY 2025</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -91,17 +91,17 @@ export default function Financials() {
             <CardContent>
               <div className="grid md:grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider border-b pb-2">Assets Total: €79.74 bn</h4>
+                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider border-b pb-2">Assets Total: €79.74 bn</h4>
                   {assets.map((item) => (
                     <div key={item.name} className="flex justify-between items-center group">
                       <div className="flex items-center gap-2">
-                         <div className={`w-2 h-2 rounded-full ${item.name.includes('Non-current') ? 'bg-slate-800' : 'bg-slate-400'}`} />
-                         <span className="text-slate-700">{item.name}</span>
+                         <div className={`w-2 h-2 rounded-full ${item.name.includes('Non-current') ? 'bg-primary' : 'bg-muted-foreground'}`} />
+                         <span className="text-foreground/80">{item.name}</span>
                       </div>
-                      <span className="font-mono font-medium text-slate-900">€{item.value.toFixed(2)}</span>
-                      <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden ml-4">
+                      <span className="font-mono font-medium text-foreground">€{item.value.toFixed(2)}</span>
+                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden ml-4">
                         <div 
-                          className={`h-full ${item.name.includes('Non-current') ? 'bg-slate-800' : 'bg-slate-400'}`} 
+                          className={`h-full ${item.name.includes('Non-current') ? 'bg-primary' : 'bg-muted-foreground'}`} 
                           style={{ width: `${(item.value / 79.74) * 100}%` }} 
                         />
                       </div>
@@ -110,17 +110,17 @@ export default function Financials() {
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider border-b pb-2">Equity & Liabilities Total: €79.74 bn</h4>
+                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider border-b pb-2">Equity & Liabilities Total: €79.74 bn</h4>
                   {liabilities.map((item) => (
                     <div key={item.name} className="flex justify-between items-center group">
                       <div className="flex items-center gap-2">
-                         <div className={`w-2 h-2 rounded-full ${item.name === 'Equity' ? 'bg-yellow-500' : 'bg-slate-600'}`} />
-                         <span className="text-slate-700">{item.name}</span>
+                         <div className={`w-2 h-2 rounded-full ${item.name === 'Equity' ? 'bg-yellow-500' : 'bg-foreground/60'}`} />
+                         <span className="text-foreground/80">{item.name}</span>
                       </div>
-                      <span className="font-mono font-medium text-slate-900">€{item.value.toFixed(2)}</span>
-                      <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden ml-4">
+                      <span className="font-mono font-medium text-foreground">€{item.value.toFixed(2)}</span>
+                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden ml-4">
                         <div 
-                          className={`h-full ${item.name === 'Equity' ? 'bg-yellow-500' : 'bg-slate-600'}`} 
+                          className={`h-full ${item.name === 'Equity' ? 'bg-yellow-500' : 'bg-foreground/60'}`} 
                           style={{ width: `${(item.value / 79.74) * 100}%` }} 
                         />
                       </div>

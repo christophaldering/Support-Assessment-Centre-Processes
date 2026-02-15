@@ -114,8 +114,8 @@ export default function Assessment() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-        <span className="ml-3 text-slate-500">Loading your assessment...</span>
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/60" />
+        <span className="ml-3 text-muted-foreground">Loading your assessment...</span>
       </div>
     );
   }
@@ -124,8 +124,8 @@ export default function Assessment() {
     <div className="max-w-5xl mx-auto space-y-8 pb-20">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900 mb-2" data-testid="text-assessment-title">Executive Assessment</h1>
-          <p className="text-slate-500">Formulate your judgment on the Group's situation</p>
+          <h1 className="text-3xl font-serif font-bold text-foreground mb-2" data-testid="text-assessment-title">Executive Assessment</h1>
+          <p className="text-muted-foreground">Formulate your judgment on the Group's situation</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-xs mr-2" data-testid="status-save-indicator">
@@ -137,10 +137,10 @@ export default function Assessment() {
               <><Cloud className="h-3 w-3 text-green-500" /><span className="text-green-500">All saved</span></>
             )}
           </div>
-          <Button variant="outline" onClick={handleSave} className="gap-2 border-slate-300" data-testid="button-save-draft" disabled={saveMutation.isPending}>
+          <Button variant="outline" onClick={handleSave} className="gap-2 border-border" data-testid="button-save-draft" disabled={saveMutation.isPending}>
             <Save className="h-4 w-4" /> Save Draft
           </Button>
-          <Button onClick={handleSubmit} className="gap-2 bg-slate-900 hover:bg-slate-800 text-white" data-testid="button-finalize">
+          <Button onClick={handleSubmit} className="gap-2 bg-primary hover:bg-primary text-primary-foreground" data-testid="button-finalize">
             <CheckCircle className="h-4 w-4" /> Finalize Report
           </Button>
         </div>
@@ -154,17 +154,17 @@ export default function Assessment() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full justify-start border-b border-slate-200 rounded-none bg-transparent h-auto p-0 mb-6">
+        <TabsList className="w-full justify-start border-b border-border rounded-none bg-transparent h-auto p-0 mb-6">
           <TabsTrigger 
             value="analysis" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6 py-3 font-serif text-lg text-slate-500 data-[state=active]:text-slate-900"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6 py-3 font-serif text-lg text-muted-foreground data-[state=active]:text-foreground"
             data-testid="tab-analysis"
           >
             1. Analysis Phase
           </TabsTrigger>
           <TabsTrigger 
             value="conclusions" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6 py-3 font-serif text-lg text-slate-500 data-[state=active]:text-slate-900"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6 py-3 font-serif text-lg text-muted-foreground data-[state=active]:text-foreground"
             data-testid="tab-conclusions"
           >
             2. Strategic Conclusions
@@ -179,23 +179,23 @@ export default function Assessment() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <Card className="border border-slate-200 shadow-sm">
-                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-                  <CardTitle className="text-base font-medium text-slate-800 font-sans leading-relaxed">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="bg-muted/50 border-b border-border pb-4">
+                  <CardTitle className="text-base font-medium text-foreground font-sans leading-relaxed">
                     {q}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
                   <Textarea 
                     placeholder="Enter your assessment here..." 
-                    className="min-h-[150px] resize-none border-0 focus-visible:ring-0 px-0 text-slate-700 text-lg leading-relaxed font-serif bg-transparent placeholder:text-slate-300"
+                    className="min-h-[150px] resize-none border-0 focus-visible:ring-0 px-0 text-foreground/80 text-lg leading-relaxed font-serif bg-transparent placeholder:text-muted-foreground/40"
                     value={answers[q] || ""}
                     onChange={(e) => handleInputChange(q, e.target.value)}
                     data-testid={`input-analysis-${i}`}
                   />
                 </CardContent>
-                <CardFooter className="border-t border-slate-50 py-2 bg-slate-50/30 flex justify-end">
-                  <span className="text-xs text-slate-400" data-testid={`text-charcount-analysis-${i}`}>
+                <CardFooter className="border-t border-border py-2 bg-muted/30 flex justify-end">
+                  <span className="text-xs text-muted-foreground/60" data-testid={`text-charcount-analysis-${i}`}>
                     {answers[q]?.length || 0} characters
                   </span>
                 </CardFooter>
@@ -217,23 +217,23 @@ export default function Assessment() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <Card className="border-l-4 border-l-yellow-500 border-y border-r border-slate-200 shadow-sm">
-                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-                  <CardTitle className="text-base font-medium text-slate-800 font-sans leading-relaxed">
+              <Card className="border-l-4 border-l-yellow-500 border-y border-r border-border shadow-sm">
+                <CardHeader className="bg-muted/50 border-b border-border pb-4">
+                  <CardTitle className="text-base font-medium text-foreground font-sans leading-relaxed">
                     {q}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
                   <Textarea 
                     placeholder="Enter your conclusion here..." 
-                    className="min-h-[150px] resize-none border-0 focus-visible:ring-0 px-0 text-slate-700 text-lg leading-relaxed font-serif bg-transparent placeholder:text-slate-300"
+                    className="min-h-[150px] resize-none border-0 focus-visible:ring-0 px-0 text-foreground/80 text-lg leading-relaxed font-serif bg-transparent placeholder:text-muted-foreground/40"
                     value={answers[q] || ""}
                     onChange={(e) => handleInputChange(q, e.target.value)}
                     data-testid={`input-conclusions-${i}`}
                   />
                 </CardContent>
-                <CardFooter className="border-t border-slate-50 py-2 bg-slate-50/30 flex justify-end">
-                  <span className="text-xs text-slate-400" data-testid={`text-charcount-conclusions-${i}`}>
+                <CardFooter className="border-t border-border py-2 bg-muted/30 flex justify-end">
+                  <span className="text-xs text-muted-foreground/60" data-testid={`text-charcount-conclusions-${i}`}>
                     {answers[q]?.length || 0} characters
                   </span>
                 </CardFooter>
