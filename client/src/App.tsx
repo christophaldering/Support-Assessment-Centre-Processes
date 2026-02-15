@@ -10,6 +10,7 @@ import Overview from "@/pages/overview";
 import Briefing from "@/pages/briefing";
 import Financials from "@/pages/financials";
 import Assessment from "@/pages/assessment";
+import DataRoom from "@/pages/dataroom";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
         <Route path="/" component={Overview} />
         <Route path="/briefing" component={Briefing} />
         <Route path="/financials" component={Financials} />
+        <Route path="/dataroom" component={DataRoom} />
         <Route path="/assessment" component={Assessment} />
         <Route component={NotFound} />
       </Switch>

@@ -8,7 +8,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/", label: "Overview", icon: LayoutDashboard },
     { href: "/briefing", label: "Strategic Briefing", icon: FileText },
-    { href: "/financials", label: "Financial Data", icon: BarChart3 },
+    { href: "/dataroom", label: "Data Room", icon: Database },
+    { href: "/financials", label: "Financial Visualization", icon: BarChart3 },
     { href: "/assessment", label: "Assessment Workspace", icon: ClipboardList },
   ];
 

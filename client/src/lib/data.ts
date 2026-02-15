@@ -41,6 +41,91 @@ export const companyData = {
       tension: "Scalability vs. people dependency"
     }
   ],
+  detailedBalanceSheet: {
+    assets: {
+      nonCurrent: [
+        { item: "Goodwill", value: 12384.00 },
+        { item: "Other intangible assets", value: 6358.00 },
+        { item: "Land & buildings", value: 10972.00 },
+        { item: "Plant & equipment", value: 7614.00 },
+        { item: "Construction in progress", value: 2800.00 },
+        { item: "Right-of-use assets - stores & sites", value: 10745.00 },
+        { item: "Right-of-use assets – logistics network", value: 2411.00 },
+        { item: "Right-of-use assets - vehicles & other", value: 762.00 },
+        { item: "Equity investments", value: 3214.00 },
+        { item: "Joint ventures & associates", value: 2001.00 },
+        { item: "Other financial investments", value: 999.00 },
+        { item: "Deferred tax assets", value: 1487.00 }
+      ],
+      current: [
+        { item: "Inventories – merchandise", value: 6102.00 },
+        { item: "Inventories - packaging & consumables", value: 641.00 },
+        { item: "Inventories - energy commodities", value: 520.00 },
+        { item: "Trade receivables", value: 3781.00 },
+        { item: "Other receivables", value: 1137.00 },
+        { item: "Cash on hand & bank balances", value: 4322.00 },
+        { item: "Short-term deposits", value: 1490.00 }
+      ]
+    },
+    equityLiabilities: {
+      equity: [
+        { item: "Share capital", value: 3116.00 },
+        { item: "Capital reserves", value: 6482.00 },
+        { item: "Retained earnings", value: 12996.00 },
+        { item: "Other comprehensive income (OCI)", value: -690.00 }
+      ],
+      nonCurrentLiabilities: [
+        { item: "Pension provisions - defined benefit", value: 5102.00 },
+        { item: "Other long-term employee benefits", value: 582.00 },
+        { item: "Bonds", value: 11400.00 },
+        { item: "Bank loans (long-term)", value: 9650.00 },
+        { item: "Other financial liabilities (long-term)", value: 2561.00 },
+        { item: "Lease liabilities - stores & sites (LT)", value: 9880.00 },
+        { item: "Lease liabilities - logistics (LT)", value: 1360.00 },
+        { item: "Lease liabilities - other (LT)", value: 502.00 },
+        { item: "Deferred tax liabilities", value: 2816.00 }
+      ],
+      currentLiabilities: [
+        { item: "Commercial paper / short-term notes", value: 2100.00 },
+        { item: "Bank overdrafts & credit lines", value: 1436.00 },
+        { item: "Current portion of long-term debt", value: 1200.00 },
+        { item: "Lease liabilities - current portion", value: 1610.00 },
+        { item: "Lease liabilities - other current", value: 353.00 },
+        { item: "Trade payables", value: 5912.00 },
+        { item: "Accrued expenses & other current liabilities", value: 1372.00 }
+      ]
+    }
+  },
+  buDetails: [
+    {
+      id: "retail",
+      name: "Retail & Consumer Goods",
+      kpis: ["Like-for-like sales", "Gross margin", "Working capital"],
+      tension: "Price leadership vs. profitability",
+      financials: { revenue: 24.5, ebitda: 1.8, margin: 7.3, employees: 190000 }
+    },
+    {
+      id: "logistics",
+      name: "Logistics & Supply Chain",
+      kpis: ["Service level (OTIF)", "Cost per case/delivery", "Warehouse utilization"],
+      tension: "Speed & reliability vs. cost efficiency",
+      financials: { revenue: 8.0, ebitda: 0.55, margin: 6.9, employees: 55000 }
+    },
+    {
+      id: "energy",
+      name: "Energy & Infrastructure",
+      kpis: ["CAPEX intensity", "ROI/IRR (portfolio)", "Regulatory compliance risk"],
+      tension: "Long-term assets vs. short-term returns",
+      financials: { revenue: 6.5, ebitda: 0.75, margin: 11.5, employees: 25000 }
+    },
+    {
+      id: "digital",
+      name: "Digital Services & Consulting",
+      kpis: ["Utilization rate", "Project margin", "Talent retention (key roles)"],
+      tension: "Scalability vs. people dependency",
+      financials: { revenue: 3.0, ebitda: 0.5, margin: 16.7, employees: 15000 }
+    }
+  ],
   balanceSheet: [
     { name: "Non-current Assets", value: 61.75, type: "asset" },
     { name: "Current Assets", value: 17.99, type: "asset" },
