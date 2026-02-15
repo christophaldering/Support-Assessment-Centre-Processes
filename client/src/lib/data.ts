@@ -59,6 +59,98 @@ export const varexiaData = {
       yoy: { revenue: 2.7, ebitda: 0.43, deltaRevenue: 0.3, deltaEbitda: 0.07 }
     }
   ],
+  emails: [
+    {
+      id: "e1",
+      from: "Dr. Thomas Berner, Chairman of the Supervisory Board",
+      subject: "URGENT: Strategic Review Mandate - Varexia SE",
+      date: "Feb 14, 2026, 08:30 AM",
+      read: false,
+      important: true,
+      content: `Dear Colleague,
+
+Welcome to the executive assessment for the Chief Strategy Officer position at Varexia SE.
+
+As you are aware, Varexia is currently facing one of the most challenging periods in its history. Despite our strong market position in Retail and Logistics, our overall market capitalization has declined significantly over the last 12 months. Shareholder pressure is mounting, and there are growing concerns about our conglomerate structure.
+
+Your mandate today is to conduct a comprehensive strategic review of the group. We need you to analyze the current situation, identify the key tensions across our business units, and propose a clear path forward.
+
+Specifically, I need you to address:
+1. The profitability issues in our Retail division.
+2. The strategic viability of our Digital Services unit.
+3. The capital allocation conflicts between our mature and growth businesses.
+
+I expect a clear, unvarnished assessment. We do not need more "business as usual" - we need a turnaround strategy.
+
+Best regards,
+
+Dr. Thomas Berner
+Chairman of the Supervisory Board
+Varexia SE`
+    },
+    {
+      id: "e2",
+      from: "Marcus Weber, CFO",
+      subject: "CONFIDENTIAL: Financial Situation & Covenant Breach Risk",
+      date: "Feb 14, 2026, 09:15 AM",
+      read: false,
+      important: true,
+      content: `Privileged & Confidential
+
+Following up on Dr. Berner's note, I must draw your attention to our immediate financial constraints.
+
+While our top-line revenue remains stable at €42.0bn, our profitability is eroding faster than expected. Group EBIT has fallen to €1.4bn, and our free cash flow is barely covering our dividend commitments and necessary CAPEX.
+
+Most critically, please look closely at the "Energy & Infrastructure" CAPEX requirements vs. the "Retail" cash generation. We are dangerously close to breaching our debt covenants if EBITDA drops any further.
+
+I have uploaded the FY2025 financial statements to the Data Room. Please review the "Non-Current Liabilities" section carefully - our debt pile of €11.4bn in bonds and €9.6bn in bank loans is becoming a heavy burden in this high-interest environment.
+
+We need a strategy that releases cash, not just consumes it.
+
+Regards,
+
+Marcus Weber
+Chief Financial Officer`
+    },
+    {
+      id: "e3",
+      from: "Sarah Jenkins, Head of HR",
+      subject: "Talent Drain in Digital Unit",
+      date: "Feb 14, 2026, 10:45 AM",
+      read: true,
+      important: false,
+      content: `Hi there,
+
+Just wanted to flag a critical issue coming from the "Digital Services & Consulting" unit. 
+
+We are seeing an annualized attrition rate of 28% in key technical roles. The exit interviews are consistent: top talent is leaving because they feel Varexia is too bureaucratic and they lack "true" equity upside compared to startups.
+
+The "Strategic Tension" noted in the business unit profile ("Scalability vs. people dependency") is very real. We are currently paying premium salaries to retain consultants, which is destroying the unit's margin (currently 16.7%, but trending down).
+
+If we don't fix the governance or incentive structure for Digital, we might as well shut it down.
+
+Best,
+Sarah`
+    },
+    {
+      id: "e4",
+      from: "Lars Nielsen, CEO Logistics Division",
+      subject: "Supply Chain Disruptions & Investment Request",
+      date: "Feb 14, 2026, 11:20 AM",
+      read: true,
+      important: false,
+      content: `Good morning,
+
+I'm hearing rumors of a CAPEX freeze across the group. I must warn you: if we cut investment in the Logistics automation project, our "Cost per case" will rise by at least 15% next year due to labor inflation.
+
+Our competitors are fully automating their warehouses. We are still running semi-manual operations in 40% of our sites. The "Speed vs. Cost" tension is breaking us. We cannot be both the fastest AND the cheapest without significant technology investment.
+
+I need your support to protect the Logistics budget in the upcoming board meeting.
+
+Regards,
+Lars`
+    }
+  ],
   detailedBalanceSheet: {
     assets: {
       nonCurrent: [
