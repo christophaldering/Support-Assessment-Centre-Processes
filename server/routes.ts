@@ -11,7 +11,7 @@ import {
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 
-const ADMIN_PASSWORD = "aestimamus-admin-2026";
+const ADMIN_PASSWORD = "Christoph";
 
 async function seedAccessCodes() {
   const globalCodes = await storage.getAccessCodesByScope("global");

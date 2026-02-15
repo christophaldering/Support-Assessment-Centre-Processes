@@ -13,7 +13,7 @@ The app is a full-stack TypeScript project with a React frontend and Express bac
 Preferred communication style: Simple, everyday language.
 Design language: German (all user-facing portal/landing pages in German, with EN/DE toggle)
 Brand alignment: aestimamus.com aesthetic — pure white backgrounds, near-black text (#1a1a1a), copper/terracotta accent (hsl(14, 48%, 44%)), Playfair Display + Inter fonts
-Default passwords: "Christoph" for all access (global + all customers), admin: "aestimamus-admin-2026"
+Default passwords: "Christoph" for all access (global, all customers, admin, observer)
 
 ## Recent Changes
 
@@ -53,7 +53,7 @@ Default access codes (seeded on first run):
 - REWE: `Christoph`
 - R+V: `Christoph`
 - Materna: `Christoph`
-- Admin: `aestimamus-admin-2026`
+- Admin: `Christoph`
 
 ### Competency Framework
 Defined in `client/src/lib/data.ts` as `competencyFramework` with 6 dimensions:
