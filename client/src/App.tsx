@@ -13,6 +13,7 @@ import Financials from "@/pages/financials";
 import Assessment from "@/pages/assessment";
 import DataRoom from "@/pages/dataroom";
 import Emails from "@/pages/emails";
+import News from "@/pages/news";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +29,7 @@ function Router() {
           <Overview />
         </Route>
         <Route path="/case/:id/briefing" component={Briefing} />
+        <Route path="/case/:id/news" component={News} />
         <Route path="/case/:id/emails" component={Emails} />
         <Route path="/case/:id/financials" component={Financials} />
         <Route path="/case/:id/dataroom" component={DataRoom} />

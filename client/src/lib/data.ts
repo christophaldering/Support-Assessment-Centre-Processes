@@ -151,6 +151,148 @@ Regards,
 Lars`
     }
   ],
+  news: [
+    {
+      id: "n1",
+      source: "Financial Times",
+      sourceTag: "FT",
+      category: "Companies",
+      date: "February 13, 2026",
+      headline: "Varexia faces investor revolt over conglomerate discount",
+      subheadline: "Activist fund Corvus Capital builds 4.8% stake and demands break-up of European industrial group",
+      author: "James Whitfield, European Industry Correspondent",
+      content: `Varexia SE, the Frankfurt-listed conglomerate, is facing mounting pressure from activist investors demanding a radical restructuring of the group, according to people familiar with the matter.
+
+Corvus Capital, a London-based activist hedge fund, has quietly amassed a 4.8 per cent stake in the company over the past six months and is now pushing for a break-up of the sprawling industrial group, which spans retail, logistics, energy infrastructure and digital consulting.
+
+The fund argues that Varexia's current market capitalisation of €28.7bn significantly undervalues the sum of its parts, with the conglomerate discount estimated at 25-30 per cent. "The board has failed to articulate a coherent portfolio strategy," said a person close to Corvus. "There is no strategic rationale for housing a supermarket chain and an energy infrastructure business under the same roof."
+
+Varexia's shares have declined 18 per cent over the past 12 months, lagging the Euro Stoxx 50 by a wide margin. The group's EBIT margin has compressed to just 3.3 per cent on revenues of €42bn, well below peers in each of its operating segments.
+
+Dr Thomas Berner, chairman of the supervisory board, declined to comment on specific investor demands but acknowledged in a recent speech that "the status quo is not an option" and that the board was "conducting a thorough strategic review."
+
+Industry analysts have long questioned the logic of Varexia's diversified structure. "The retail business generates cash but needs investment. Energy eats capital. Digital lacks scale. And logistics is caught between automation costs and margin pressure," said Katharina Schulz, an analyst at Berenberg. "Something has to give."
+
+The supervisory board is expected to announce the appointment of a new chief strategy officer within weeks, a move seen as a precursor to major portfolio changes. Corvus has indicated it will seek board representation at the next annual general meeting if progress is not forthcoming.`
+    },
+    {
+      id: "n2",
+      source: "Handelsblatt",
+      sourceTag: "HB",
+      category: "Unternehmen",
+      date: "February 12, 2026",
+      headline: "Varexia SE: Kreditklauseln unter Druck - Analysten warnen vor Herabstufung",
+      subheadline: "Die Verschuldung des Mischkonzerns nähert sich kritischen Schwellenwerten. S&P erwägt Ausblickänderung.",
+      author: "Dr. Markus Engel, Finanzredaktion",
+      content: `Frankfurt — Die finanzielle Lage des Mischkonzerns Varexia SE gibt Analysten und Ratingagenturen zunehmend Anlass zur Sorge. Nach Informationen des Handelsblatts prüft S&P Global Ratings eine Änderung des Ausblicks von "stabil" auf "negativ" für das aktuelle BBB-Rating des Unternehmens.
+
+[Translation for case context: The financial situation of conglomerate Varexia SE is increasingly worrying analysts and rating agencies. According to Handelsblatt sources, S&P Global Ratings is reviewing a potential outlook change from "stable" to "negative" for the company's current BBB rating.]
+
+The group's total financial debt stands at approximately €21bn when including bonds (€11.4bn), bank loans (€9.6bn), and other financial liabilities. With lease obligations adding a further €13.9bn to the balance sheet, the enterprise value leverage is approaching levels that could trigger covenant breaches on the syndicated credit facility.
+
+"The key metric to watch is Net Debt/EBITDA," wrote Christina Hartmann of Deutsche Bank in a recent note. "At current EBITDA levels of approximately €3.8bn, the ratio is already at 5.5x. Their covenant ceiling is 6.0x. One bad quarter in Retail and they breach."
+
+CFO Marcus Weber has reportedly been in discussions with the group's relationship banks to negotiate a temporary relaxation of covenant terms, though no agreement has been reached. The €2.1bn commercial paper programme, which requires constant rollover, adds further refinancing risk in the current interest rate environment.
+
+The company's pension obligations of €5.1bn represent an additional burden that is often overlooked in headline leverage calculations. "When you add pensions to the adjusted leverage, you get a very different — and much more alarming — picture," noted a fixed-income analyst at a major European bank.
+
+Varexia's bonds maturing in 2027 are currently trading at spreads of 185 basis points over Bunds, up from 120bps six months ago, reflecting growing credit market concern.`
+    },
+    {
+      id: "n3",
+      source: "Financial Times",
+      sourceTag: "FT",
+      category: "Lex Column",
+      date: "February 11, 2026",
+      headline: "Lex: Varexia — the conglomerate that time forgot",
+      subheadline: "",
+      author: "Lex Column",
+      content: `Some conglomerates justify their existence through superior capital allocation. Others through operational synergies. Varexia SE appears to justify its existence through inertia alone.
+
+The numbers tell a damning story. Group EBIT margins of 3.3 per cent compare unfavourably with pure-play competitors in every single segment. The retail operation, which accounts for 58 per cent of revenues, runs on a wafer-thin 7.3 per cent EBITDA margin — roughly 300 basis points below leading European food retailers. The logistics arm, while showing growth, faces a binary choice between massive capital expenditure and competitive irrelevance.
+
+Then there is "Digital Services & Consulting" (€3bn revenues, 15,000 employees), a unit that exists in an uncomfortable no-man's land: too small to compete with Accenture, too corporate to attract top tech talent, and too unprofitable to justify further investment. Annualised attrition of 28 per cent in key roles tells you everything you need to know.
+
+The energy and infrastructure division, meanwhile, is consuming capital at a rate that would make sense only if Varexia were a dedicated energy transition vehicle — which it emphatically is not.
+
+Market capitalisation: €28.7bn. Conservative sum-of-the-parts valuation: €37-40bn. That gap represents approximately €10bn of value destruction attributable to the conglomerate structure itself.
+
+The prescription is clear, even if politically unpalatable: sell Digital, IPO Logistics, ring-fence Energy's capital needs, and let Retail generate the cash flow it is capable of producing without subsidising three other businesses.
+
+The question is whether the supervisory board has the courage to act before Corvus Capital forces its hand.`
+    },
+    {
+      id: "n4",
+      source: "Reuters",
+      sourceTag: "R",
+      category: "Business News",
+      date: "February 10, 2026",
+      headline: "Varexia logistics unit eyes €800m automation investment amid group-wide CAPEX freeze",
+      subheadline: "Internal tensions rise as divisions compete for shrinking capital budget",
+      author: "Anna Kowalski, Reuters Frankfurt",
+      content: `FRANKFURT (Reuters) — Varexia SE's logistics division is pushing for an €800 million automation investment programme over the next three years, even as the parent company considers a group-wide capital expenditure freeze, three people with knowledge of the matter told Reuters.
+
+The investment, which would cover warehouse robotics, automated sorting systems, and last-mile delivery technology across 40 per cent of the division's sites that still run semi-manual operations, is seen as critical to maintaining competitiveness in the rapidly consolidating European logistics sector.
+
+"Without this investment, our cost per case will increase by at least 15 per cent next year due to labour inflation alone," said one person close to the logistics division's management. "Our competitors are fully automated. We are falling behind."
+
+However, the investment request comes at a difficult time. Varexia's group-level free cash flow is barely sufficient to cover its €1.2bn annual dividend commitment and essential maintenance capital expenditure. The Energy & Infrastructure division is simultaneously requesting significant CAPEX for grid modernisation projects.
+
+"There is a fundamental capital allocation conflict at the heart of this group," said a senior banker advising the company. "You cannot simultaneously fund a logistics automation programme, an energy transition, and maintain a progressive dividend policy on €42bn of revenues generating only €1.4bn of EBIT."
+
+Shares in Varexia fell 2.3 per cent on the Frankfurt exchange on Monday to €47.82, bringing the year-to-date decline to 14 per cent. The stock has underperformed the DAX by approximately 22 percentage points over the past 12 months.
+
+A Varexia spokesperson said the company "continuously evaluates investment priorities across all divisions" and that "all capital allocation decisions are made in the context of our overall group strategy."`
+    },
+    {
+      id: "n5",
+      source: "Handelsblatt",
+      sourceTag: "HB",
+      category: "Technologie",
+      date: "February 8, 2026",
+      headline: "Talentflucht bei Varexia Digital: 'Wir verlieren den Krieg um die besten Köpfe'",
+      subheadline: "Die Digitalsparte des Konzerns kämpft mit einer Fluktuation von 28 Prozent. Interne Dokumente zeigen das Ausmaß der Krise.",
+      author: "Lena Berger, Technologie-Redaktion",
+      content: `Düsseldorf — Interne Dokumente, die dem Handelsblatt vorliegen, zeichnen ein düsteres Bild der Personalentwicklung in Varexias Digitalsparte "Digital Services & Consulting."
+
+[Translation for case context: Internal documents obtained by Handelsblatt paint a grim picture of workforce development in Varexia's digital division "Digital Services & Consulting."]
+
+The unit, which employs approximately 15,000 people and generates €3bn in annual revenue, is experiencing an annualised attrition rate of 28 per cent in key technical and consulting roles — nearly double the industry average of 15 per cent.
+
+Exit interview data compiled by Varexia's central HR function reveals three consistent themes: bureaucratic decision-making processes that frustrate entrepreneurial talent, lack of meaningful equity participation compared to startup and scale-up competitors, and a perception that the division is a "second-class citizen" within the wider group.
+
+"The best people leave within 18 months," said a former Varexia Digital senior manager who departed last year for a Berlin-based AI startup. "They join expecting to build innovative solutions. Instead, they spend 60 per cent of their time navigating internal approval processes and justifying their existence to a supervisory board that doesn't understand technology."
+
+The talent drain is already impacting financial performance. The division's EBITDA margin has declined from 19.2 per cent in FY2023 to 16.7 per cent in FY2025, largely driven by rising recruitment and retention costs. Premium salaries required to attract replacements are estimated to cost €40-50m annually above market rates.
+
+Industry observers suggest the division faces a structural governance problem. "You cannot run a consulting and digital services business inside a traditional German conglomerate structure," said Prof. Dr. Stefan Richter of WHU Otto Beisheim School of Management. "The incentive systems, the decision-making speed, the culture — everything is misaligned."
+
+Some analysts have suggested that a spin-off or partial IPO of the digital unit could simultaneously solve the talent retention problem — by creating a standalone equity story — and unlock value for Varexia shareholders.`
+    },
+    {
+      id: "n6",
+      source: "Financial Times",
+      sourceTag: "FT",
+      category: "Energy",
+      date: "February 7, 2026",
+      headline: "European grid operators face €200bn investment gap as energy transition accelerates",
+      subheadline: "Varexia's infrastructure arm among groups struggling to balance transition spending with shareholder returns",
+      author: "Sophie Müller, Energy Correspondent",
+      content: `Europe's energy infrastructure companies face a collective investment gap of approximately €200bn over the next decade as the continent races to modernise its electricity grids for the energy transition, according to a new report by McKinsey & Company.
+
+The analysis highlights the acute tension between the massive capital requirements of grid modernisation and the financial constraints facing diversified groups that house infrastructure assets alongside other businesses.
+
+Varexia SE's Energy & Infrastructure division, which generates €6bn in revenue and employs 29,000 people, is cited as a case study in the report. The division requires sustained capital expenditure of €1.5-2bn annually to meet its grid modernisation commitments, yet operates within a group whose total free cash flow barely covers existing obligations.
+
+"Infrastructure assets need patient, dedicated capital," said the report's lead author. "Housing them inside a diversified conglomerate that also needs to fund retail operations, logistics automation, and digital transformation creates an impossible capital allocation puzzle."
+
+The division's EBITDA margin of 15 per cent is broadly in line with regulated European peers, but the capital intensity of its operations means that free cash flow conversion remains low. The "Transition ambition vs. cash generation" tension identified in Varexia's own strategic documents reflects a wider industry challenge.
+
+Market analysts have noted that standalone European grid operators such as Elia Group and TenneT command significantly higher valuation multiples than Varexia's infrastructure division receives as part of the conglomerate. A separation could potentially unlock €8-10bn of incremental value, though execution risks remain significant.
+
+Varexia declined to comment on the McKinsey report but pointed to its published sustainability targets, which include a commitment to carbon neutrality across its infrastructure operations by 2040.`
+    }
+  ],
   detailedBalanceSheet: {
     assets: {
       nonCurrent: [

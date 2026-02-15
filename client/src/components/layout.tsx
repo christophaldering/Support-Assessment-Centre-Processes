@@ -1,5 +1,5 @@
 import { Link, useLocation, useRoute } from "wouter";
-import { LayoutDashboard, FileText, BarChart3, ClipboardList, Database, ArrowLeft, Briefcase, Mail } from "lucide-react";
+import { LayoutDashboard, FileText, BarChart3, ClipboardList, Database, ArrowLeft, Briefcase, Mail, Newspaper } from "lucide-react";
 import aestimamusLogo from "@assets/Bildschirmfoto_2026-02-15_um_02.45.11_1771120072465.png";
 import { varexiaData } from "@/lib/data";
 
@@ -19,6 +19,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: `/case/${caseId}`, label: "Overview", icon: LayoutDashboard },
+    { href: `/case/${caseId}/news`, label: "Press & Media", icon: Newspaper },
     { href: `/case/${caseId}/emails`, label: "Communications", icon: Mail },
     { href: `/case/${caseId}/briefing`, label: "Strategic Briefing", icon: FileText },
     { href: `/case/${caseId}/dataroom`, label: "Data Room", icon: Database },
