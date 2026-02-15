@@ -35,3 +35,18 @@ export const insertAssessmentResponseSchema = createInsertSchema(assessmentRespo
 
 export type InsertAssessmentResponse = z.infer<typeof insertAssessmentResponseSchema>;
 export type AssessmentResponse = typeof assessmentResponses.$inferSelect;
+
+export const accessCodes = pgTable("access_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  scope: text("scope").notNull(),
+  customerId: text("customer_id"),
+  codeHash: text("code_hash").notNull(),
+  label: text("label"),
+});
+
+export const insertAccessCodeSchema = createInsertSchema(accessCodes).omit({
+  id: true,
+});
+
+export type InsertAccessCode = z.infer<typeof insertAccessCodeSchema>;
+export type AccessCode = typeof accessCodes.$inferSelect;

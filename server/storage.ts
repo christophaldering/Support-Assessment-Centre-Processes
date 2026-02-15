@@ -3,10 +3,13 @@ import { db } from "./db";
 import {
   users,
   assessmentResponses,
+  accessCodes,
   type User,
   type InsertUser,
   type AssessmentResponse,
   type InsertAssessmentResponse,
+  type AccessCode,
+  type InsertAccessCode,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -17,6 +20,9 @@ export interface IStorage {
   getAssessmentResponses(caseId: string, sessionId: string): Promise<AssessmentResponse[]>;
   upsertAssessmentResponse(response: InsertAssessmentResponse): Promise<AssessmentResponse>;
   bulkUpsertAssessmentResponses(responses: InsertAssessmentResponse[]): Promise<AssessmentResponse[]>;
+
+  getAccessCodesByScope(scope: string, customerId?: string): Promise<AccessCode[]>;
+  createAccessCode(code: InsertAccessCode): Promise<AccessCode>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -83,6 +89,29 @@ export class DatabaseStorage implements IStorage {
       results.push(result);
     }
     return results;
+  }
+
+  async getAccessCodesByScope(scope: string, customerId?: string): Promise<AccessCode[]> {
+    if (customerId) {
+      return db
+        .select()
+        .from(accessCodes)
+        .where(
+          and(
+            eq(accessCodes.scope, scope),
+            eq(accessCodes.customerId, customerId)
+          )
+        );
+    }
+    return db
+      .select()
+      .from(accessCodes)
+      .where(eq(accessCodes.scope, scope));
+  }
+
+  async createAccessCode(code: InsertAccessCode): Promise<AccessCode> {
+    const [created] = await db.insert(accessCodes).values(code).returning();
+    return created;
   }
 }
 
