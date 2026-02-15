@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { companyData } from "@/lib/data";
+import { varexiaData } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,6 +8,7 @@ import { FileText, Database, Layers, ArrowUpRight, FolderOpen } from "lucide-rea
 
 export default function DataRoom() {
   const [activeTab, setActiveTab] = useState("financials");
+  const data = varexiaData;
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-EU', { style: 'currency', currency: 'EUR' }).format(val);
@@ -67,7 +68,7 @@ export default function DataRoom() {
                     <TableRow className="bg-slate-50/50">
                       <TableCell className="font-bold text-slate-700" colSpan={2}>Non-Current Assets</TableCell>
                     </TableRow>
-                    {companyData.detailedBalanceSheet.assets.nonCurrent.map((item) => (
+                    {data.detailedBalanceSheet.assets.nonCurrent.map((item) => (
                       <TableRow key={item.item}>
                         <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
                         <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
@@ -81,7 +82,7 @@ export default function DataRoom() {
                     <TableRow className="bg-slate-50/50">
                       <TableCell className="font-bold text-slate-700" colSpan={2}>Current Assets</TableCell>
                     </TableRow>
-                    {companyData.detailedBalanceSheet.assets.current.map((item) => (
+                    {data.detailedBalanceSheet.assets.current.map((item) => (
                       <TableRow key={item.item}>
                         <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
                         <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
@@ -117,7 +118,7 @@ export default function DataRoom() {
                     <TableRow className="bg-slate-50/50">
                       <TableCell className="font-bold text-slate-700" colSpan={2}>Equity</TableCell>
                     </TableRow>
-                    {companyData.detailedBalanceSheet.equityLiabilities.equity.map((item) => (
+                    {data.detailedBalanceSheet.equityLiabilities.equity.map((item) => (
                       <TableRow key={item.item}>
                         <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
                         <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
@@ -131,7 +132,7 @@ export default function DataRoom() {
                     <TableRow className="bg-slate-50/50">
                       <TableCell className="font-bold text-slate-700" colSpan={2}>Non-Current Liabilities</TableCell>
                     </TableRow>
-                    {companyData.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities.map((item) => (
+                    {data.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities.map((item) => (
                       <TableRow key={item.item}>
                         <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
                         <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
@@ -145,7 +146,7 @@ export default function DataRoom() {
                     <TableRow className="bg-slate-50/50">
                       <TableCell className="font-bold text-slate-700" colSpan={2}>Current Liabilities</TableCell>
                     </TableRow>
-                    {companyData.detailedBalanceSheet.equityLiabilities.currentLiabilities.map((item) => (
+                    {data.detailedBalanceSheet.equityLiabilities.currentLiabilities.map((item) => (
                       <TableRow key={item.item}>
                         <TableCell className="text-slate-600 pl-8">{item.item}</TableCell>
                         <TableCell className="text-right font-mono text-slate-900">{formatCurrency(item.value)}</TableCell>
@@ -169,7 +170,7 @@ export default function DataRoom() {
 
         <TabsContent value="business-units" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {companyData.buDetails.map((bu) => (
+            {data.businessUnits.map((bu) => (
               <Card key={bu.id} className="hover:border-slate-400 transition-colors">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-3">
                   <div className="flex justify-between items-start">

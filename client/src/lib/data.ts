@@ -1,6 +1,8 @@
-
-export const companyData = {
+// Varexia Data (Module 1)
+export const varexiaData = {
+  id: "varexia",
   name: "Varexia SE",
+  description: "Publicly listed European stock corporation (SE) with a dual management structure.",
   metrics: [
     { label: "Revenue", value: "€42.0 bn", trend: "stable" },
     { label: "EBIT", value: "€1.4 bn", trend: "down" },
@@ -9,36 +11,48 @@ export const companyData = {
   ],
   businessUnits: [
     {
+      id: "retail",
       name: "Retail & Consumer Goods",
       revenue: 24.5,
       ebitda: 1.8,
       margin: 7.3,
       employees: 190000,
-      tension: "Price leadership vs. profitability"
+      tension: "Price leadership vs. profitability",
+      kpis: ["Like-for-like sales", "Gross margin", "Working capital"],
+      financials: { revenue: 24.5, ebitda: 1.8, margin: 7.3, employees: 190000 }
     },
     {
+      id: "logistics",
       name: "Logistics & Supply Chain",
       revenue: 8.0,
       ebitda: 0.55,
       margin: 6.9,
       employees: 55000,
-      tension: "Speed & reliability vs. cost efficiency"
+      tension: "Speed & reliability vs. cost efficiency",
+      kpis: ["Service level (OTIF)", "Cost per case/delivery", "Warehouse utilization"],
+      financials: { revenue: 8.0, ebitda: 0.55, margin: 6.9, employees: 55000 }
     },
     {
+      id: "energy",
       name: "Energy & Infrastructure",
       revenue: 6.5,
       ebitda: 0.75,
       margin: 11.5,
       employees: 25000,
-      tension: "Long-term assets vs. short-term returns"
+      tension: "Long-term assets vs. short-term returns",
+      kpis: ["CAPEX intensity", "ROI/IRR (portfolio)", "Regulatory compliance risk"],
+      financials: { revenue: 6.5, ebitda: 0.75, margin: 11.5, employees: 25000 }
     },
     {
+      id: "digital",
       name: "Digital Services & Consulting",
       revenue: 3.0,
       ebitda: 0.5,
       margin: 16.7,
       employees: 15000,
-      tension: "Scalability vs. people dependency"
+      tension: "Scalability vs. people dependency",
+      kpis: ["Utilization rate", "Project margin", "Talent retention (key roles)"],
+      financials: { revenue: 3.0, ebitda: 0.5, margin: 16.7, employees: 15000 }
     }
   ],
   detailedBalanceSheet: {
@@ -96,36 +110,6 @@ export const companyData = {
       ]
     }
   },
-  buDetails: [
-    {
-      id: "retail",
-      name: "Retail & Consumer Goods",
-      kpis: ["Like-for-like sales", "Gross margin", "Working capital"],
-      tension: "Price leadership vs. profitability",
-      financials: { revenue: 24.5, ebitda: 1.8, margin: 7.3, employees: 190000 }
-    },
-    {
-      id: "logistics",
-      name: "Logistics & Supply Chain",
-      kpis: ["Service level (OTIF)", "Cost per case/delivery", "Warehouse utilization"],
-      tension: "Speed & reliability vs. cost efficiency",
-      financials: { revenue: 8.0, ebitda: 0.55, margin: 6.9, employees: 55000 }
-    },
-    {
-      id: "energy",
-      name: "Energy & Infrastructure",
-      kpis: ["CAPEX intensity", "ROI/IRR (portfolio)", "Regulatory compliance risk"],
-      tension: "Long-term assets vs. short-term returns",
-      financials: { revenue: 6.5, ebitda: 0.75, margin: 11.5, employees: 25000 }
-    },
-    {
-      id: "digital",
-      name: "Digital Services & Consulting",
-      kpis: ["Utilization rate", "Project margin", "Talent retention (key roles)"],
-      tension: "Scalability vs. people dependency",
-      financials: { revenue: 3.0, ebitda: 0.5, margin: 16.7, employees: 15000 }
-    }
-  ],
   balanceSheet: [
     { name: "Non-current Assets", value: 61.75, type: "asset" },
     { name: "Current Assets", value: 17.99, type: "asset" },
@@ -134,6 +118,30 @@ export const companyData = {
     { name: "Current Liabilities", value: 13.98, type: "liability" }
   ]
 };
+
+// Case Registry
+export const cases = [
+  {
+    id: "varexia",
+    title: "Varexia SE",
+    subtitle: "Strategic Review FY 2026",
+    status: "active",
+    type: "Turnaround Strategy",
+    difficulty: "High",
+    description: "Multi-divisional European conglomerate facing shareholder pressure and structural inefficiencies.",
+    data: varexiaData
+  },
+  {
+    id: "coming-soon",
+    title: "Project Helios",
+    subtitle: "M&A Due Diligence",
+    status: "locked",
+    type: "Mergers & Acquisitions",
+    difficulty: "Medium",
+    description: "Automotive supplier evaluating a cross-border acquisition target.",
+    data: null
+  }
+];
 
 export const assessmentQuestions = {
   analysis: [

@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout";
 
 // Pages
+import SuiteDashboard from "@/pages/suite-dashboard";
 import Overview from "@/pages/overview";
 import Briefing from "@/pages/briefing";
 import Financials from "@/pages/financials";
@@ -17,11 +18,22 @@ function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Overview} />
-        <Route path="/briefing" component={Briefing} />
-        <Route path="/financials" component={Financials} />
-        <Route path="/dataroom" component={DataRoom} />
-        <Route path="/assessment" component={Assessment} />
+        {/* New Suite Home */}
+        <Route path="/" component={SuiteDashboard} />
+        
+        {/* Case Routes - parameterized by ID */}
+        <Route path="/case/:id">
+          {/* Default to overview if just ID provided */}
+          <Overview />
+        </Route>
+        <Route path="/case/:id/briefing" component={Briefing} />
+        <Route path="/case/:id/financials" component={Financials} />
+        <Route path="/case/:id/dataroom" component={DataRoom} />
+        <Route path="/case/:id/assessment" component={Assessment} />
+
+        {/* Legacy redirect for old links if any */}
+        <Route path="/overview"><Redirect to="/case/varexia" /></Route>
+
         <Route component={NotFound} />
       </Switch>
     </Layout>

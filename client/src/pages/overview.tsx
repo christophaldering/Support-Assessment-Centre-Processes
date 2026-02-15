@@ -1,10 +1,13 @@
 import { motion } from "framer-motion";
-import { companyData } from "@/lib/data";
+import { varexiaData } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowDownRight, ArrowRight, TrendingDown, Users, Building2, Wallet, AlertCircle } from "lucide-react";
 import corporateBg from "@/assets/corporate-bg.png";
 
 export default function Overview() {
+  // Default to Varexia data
+  const data = varexiaData;
+
   return (
     <div className="space-y-8">
       {/* Hero Section */}
@@ -28,9 +31,9 @@ export default function Overview() {
               <AlertCircle className="h-3 w-3" />
               Strategic Review Required
             </div>
-            <h1 className="text-4xl font-serif font-bold mb-2">Varexia Group</h1>
+            <h1 className="text-4xl font-serif font-bold mb-2">{data.name}</h1>
             <p className="text-slate-300 max-w-xl text-lg leading-relaxed">
-              Independent senior-level assessment of the Group’s current situation, financial profile, and governance structure.
+              {data.description}
             </p>
           </motion.div>
         </div>
@@ -38,7 +41,7 @@ export default function Overview() {
 
       {/* KPI Grid */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {companyData.metrics.map((metric, i) => (
+        {data.metrics.map((metric, i) => (
           <motion.div
             key={metric.label}
             initial={{ opacity: 0, y: 20 }}
@@ -71,7 +74,7 @@ export default function Overview() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {companyData.businessUnits.map((bu, i) => (
+          {data.businessUnits.map((bu, i) => (
             <motion.div
               key={bu.name}
               initial={{ opacity: 0, scale: 0.95 }}

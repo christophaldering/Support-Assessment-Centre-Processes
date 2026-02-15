@@ -1,10 +1,13 @@
 import { motion } from "framer-motion";
-import { companyData } from "@/lib/data";
+import { varexiaData } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 
 export default function Financials() {
-  const revenueData = companyData.businessUnits.map(bu => ({
+  // Use Varexia data by default for now (in full multi-tenant, we'd use params.id)
+  const data = varexiaData;
+
+  const revenueData = data.businessUnits.map(bu => ({
     name: bu.name.split(' ')[0], // Short name for axis
     fullName: bu.name,
     revenue: bu.revenue,
@@ -12,7 +15,7 @@ export default function Financials() {
     margin: bu.margin
   }));
 
-  const balanceSheetData = companyData.balanceSheet;
+  const balanceSheetData = data.balanceSheet;
   const assets = balanceSheetData.filter(i => i.type === 'asset');
   const liabilities = balanceSheetData.filter(i => i.type === 'liability');
 
