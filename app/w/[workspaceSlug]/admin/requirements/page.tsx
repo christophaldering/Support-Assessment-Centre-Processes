@@ -128,6 +128,11 @@ export default function RequirementsAnalysisPage() {
   const [aiEnhance, setAiEnhance] = useState(false);
   const [generatingVariantId, setGeneratingVariantId] = useState<string | null>(null);
   const [variantSuccessId, setVariantSuccessId] = useState<string | null>(null);
+  const [generatingExerciseIdx, setGeneratingExerciseIdx] = useState<number | null>(null);
+  const [generatedExercises, setGeneratedExercises] = useState<Set<number>>(new Set());
+  const [generatingAll, setGeneratingAll] = useState(false);
+  const [matchingTemplatePackUrl, setMatchingTemplatePackUrl] = useState<string | null>(null);
+  const [matchingPackGenerating, setMatchingPackGenerating] = useState(false);
 
   const fetchAnalyses = useCallback(async () => {
     try {
@@ -414,6 +419,61 @@ export default function RequirementsAnalysisPage() {
     }
   };
 
+  const handleCreateExercise = async (spec: any, idx: number) => {
+    setGeneratingExerciseIdx(idx);
+    try {
+      const res = await fetch(`/api/w/${slug}/automation/generate-exercise`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: spec.name || "Neue Übung",
+          type: spec.type || "other",
+          duration: spec.duration || 30,
+          targetLevel: spec.targetLevel || spec.difficultyLevel || "Senior Manager",
+          competencies: spec.competencyMappings || [],
+          description: spec.description || spec.instructions || "",
+          context: spec.context || undefined,
+        }),
+      });
+      if (res.ok) {
+        setGeneratedExercises(prev => new Set(prev).add(idx));
+      }
+    } catch {}
+    finally { setGeneratingExerciseIdx(null); }
+  };
+
+  const handleCreateAllExercises = async () => {
+    if (!matchingResult?.recommendationsJson?.create_new) return;
+    setGeneratingAll(true);
+    for (let i = 0; i < matchingResult.recommendationsJson.create_new.length; i++) {
+      if (generatedExercises.has(i)) continue;
+      const r = matchingResult.recommendationsJson.create_new[i];
+      const spec = r.proposedExerciseSpec || r.aiSpec || {};
+      await handleCreateExercise(spec, i);
+    }
+    setGeneratingAll(false);
+  };
+
+  const handleMatchingTemplatePack = async () => {
+    setMatchingPackGenerating(true);
+    setMatchingTemplatePackUrl(null);
+    try {
+      const ids: string[] = [];
+      matchingResult?.recommendationsJson?.use_as_is?.forEach((r: any) => { if (r.libraryItemId) ids.push(r.libraryItemId); });
+      matchingResult?.recommendationsJson?.adapt?.forEach((r: any) => { if (r.libraryItemId) ids.push(r.libraryItemId); });
+      const res = await fetch(`/api/w/${slug}/automation/template-pack`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemIds: ids }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMatchingTemplatePackUrl(data.downloadUrl || data.url || null);
+      }
+    } catch {}
+    finally { setMatchingPackGenerating(false); }
+  };
+
   const openProposal = (analysis: RequirementsAnalysis) => {
     setActiveAnalysis(analysis);
     setEditedProposal(analysis.proposal);
@@ -612,14 +672,34 @@ export default function RequirementsAnalysisPage() {
                       </span>
                     )}
                   </div>
-                  <button
-                    onClick={() => { setMatchingResult(null); setMatchingAnalysisId(null); }}
-                    className="text-sm text-gray-500 hover:text-gray-700"
-                    data-testid="button-close-matching"
-                  >
-                    Schließen
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleMatchingTemplatePack}
+                      disabled={matchingPackGenerating}
+                      data-testid="button-matching-template-pack"
+                      className="px-3 py-1 text-xs font-medium text-white rounded-full hover:opacity-90 transition disabled:opacity-50 flex items-center gap-1.5"
+                      style={{ backgroundColor: accentColor }}
+                    >
+                      {matchingPackGenerating && <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                      Template Pack
+                    </button>
+                    <button
+                      onClick={() => { setMatchingResult(null); setMatchingAnalysisId(null); setMatchingTemplatePackUrl(null); setGeneratedExercises(new Set()); }}
+                      className="text-sm text-gray-500 hover:text-gray-700"
+                      data-testid="button-close-matching"
+                    >
+                      Schließen
+                    </button>
+                  </div>
                 </div>
+
+                {matchingTemplatePackUrl && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm" data-testid="matching-template-pack-result">
+                    <p className="font-medium text-emerald-800">Template Pack erstellt</p>
+                    <a href={matchingTemplatePackUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-600 underline text-xs mt-1 inline-block">Download Template Pack</a>
+                    <button onClick={() => setMatchingTemplatePackUrl(null)} className="text-xs text-emerald-500 underline ml-3">Schließen</button>
+                  </div>
+                )}
 
                 {matchingResult.recommendationsJson?.use_as_is?.length > 0 && (
                   <div>
@@ -723,15 +803,50 @@ export default function RequirementsAnalysisPage() {
 
                 {matchingResult.recommendationsJson?.create_new?.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-blue-500 rounded-full" />
-                      Neu erstellen ({matchingResult.recommendationsJson.create_new.length})
+                    <h4 className="text-sm font-semibold text-blue-700 mb-2 flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full" />
+                        Neu erstellen ({matchingResult.recommendationsJson.create_new.length})
+                      </span>
+                      <button
+                        onClick={handleCreateAllExercises}
+                        disabled={generatingAll}
+                        data-testid="button-create-all-exercises"
+                        className="px-3 py-1 text-xs font-medium text-white rounded-full hover:opacity-90 transition disabled:opacity-50 flex items-center gap-1.5"
+                        style={{ backgroundColor: "#7c3aed" }}
+                      >
+                        {generatingAll && <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                        Alle Übungen generieren
+                      </button>
                     </h4>
                     <div className="space-y-2">
                       {matchingResult.recommendationsJson.create_new.map((r: any, i: number) => (
                         <div key={i} className="p-3 bg-blue-50 border border-blue-200 rounded-lg" data-testid={`match-new-${i}`}>
-                          <p className="font-medium text-sm text-gray-900">{r.proposedExerciseSpec?.name || "Neue Übung"}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">{r.rationale}</p>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium text-sm text-gray-900">{r.proposedExerciseSpec?.name || "Neue Übung"}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{r.rationale}</p>
+                            </div>
+                            <div className="shrink-0 ml-3">
+                              {generatedExercises.has(i) ? (
+                                <span className="flex items-center gap-1.5">
+                                  <span className="text-xs font-medium text-emerald-700">Erstellt!</span>
+                                  <Link href={`/w/${slug}/admin/exercise-library`} className="text-xs text-emerald-600 underline">Zur Bibliothek</Link>
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleCreateExercise(r.proposedExerciseSpec || r.aiSpec || {}, i)}
+                                  disabled={generatingExerciseIdx === i || generatingAll}
+                                  data-testid={`button-create-exercise-${i}`}
+                                  className="px-2.5 py-1 text-xs font-medium text-white rounded-full hover:opacity-90 transition disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap"
+                                  style={{ backgroundColor: "#7c3aed" }}
+                                >
+                                  {generatingExerciseIdx === i && <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                                  Übung erstellen
+                                </button>
+                              )}
+                            </div>
+                          </div>
                           {r.proposedExerciseSpec?.type && (
                             <span className="inline-block mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                               {r.proposedExerciseSpec.type}

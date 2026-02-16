@@ -95,6 +95,15 @@ export default function ExerciseLibraryPage() {
   const [editStatus, setEditStatus] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [batchProcessing, setBatchProcessing] = useState(false);
+  const [batchResult, setBatchResult] = useState<any>(null);
+  const [showGenerateForm, setShowGenerateForm] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generateSpec, setGenerateSpec] = useState({ name: "", type: "case_study", duration: 30, targetLevel: "Senior Manager", competencies: "", description: "", context: "" });
+  const [templatePackUrl, setTemplatePackUrl] = useState<string | null>(null);
+  const [packGenerating, setPackGenerating] = useState(false);
+
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchItems = useCallback(async (searchVal?: string) => {
@@ -241,6 +250,81 @@ export default function ExerciseLibraryPage() {
     }
   };
 
+  const handleSelectItem = (id: string) => {
+    setSelectedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.size === items.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(items.map(i => i.id)));
+    }
+  };
+
+  const handleBatchAdapt = async () => {
+    setBatchProcessing(true);
+    setBatchResult(null);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/automation/adapt-batch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemIds: Array.from(selectedItems) }),
+      });
+      const data = await res.json();
+      setBatchResult(data);
+      if (res.ok) { setSelectedItems(new Set()); fetchItems(); }
+    } catch { setBatchResult({ error: "Fehler bei der Batch-Anpassung" }); }
+    finally { setBatchProcessing(false); }
+  };
+
+  const handleGenerateExercise = async () => {
+    setGenerating(true);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/automation/generate-exercise`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: generateSpec.name,
+          type: generateSpec.type,
+          duration: generateSpec.duration,
+          targetLevel: generateSpec.targetLevel,
+          competencies: generateSpec.competencies.split(",").map(c => c.trim()).filter(Boolean),
+          description: generateSpec.description,
+          context: generateSpec.context || undefined,
+        }),
+      });
+      if (res.ok) {
+        setShowGenerateForm(false);
+        setGenerateSpec({ name: "", type: "case_study", duration: 30, targetLevel: "Senior Manager", competencies: "", description: "", context: "" });
+        fetchItems();
+      }
+    } catch {}
+    finally { setGenerating(false); }
+  };
+
+  const handleGenerateTemplatePack = async () => {
+    setPackGenerating(true);
+    setTemplatePackUrl(null);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/automation/template-pack`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemIds: Array.from(selectedItems) }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTemplatePackUrl(data.downloadUrl || data.url || null);
+        setSelectedItems(new Set());
+      }
+    } catch {}
+    finally { setPackGenerating(false); }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <header className="bg-brand-navy text-white">
@@ -319,14 +403,29 @@ export default function ExerciseLibraryPage() {
             {Object.entries(QUALITY_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
           <button
+            onClick={() => setShowGenerateForm(true)}
+            data-testid="button-open-generate"
+            className="rounded-lg text-white text-sm font-medium px-4 py-2 transition-colors ml-auto"
+            style={{ backgroundColor: "#7c3aed" }}
+          >
+            Neue Übung generieren
+          </button>
+          <button
             onClick={() => setShowCreate(!showCreate)}
             data-testid="button-create-exercise"
-            className="rounded-lg text-white text-sm font-medium px-4 py-2 transition-colors ml-auto"
+            className="rounded-lg text-white text-sm font-medium px-4 py-2 transition-colors"
             style={{ backgroundColor: ACCENT }}
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
             {showCreate ? "Abbrechen" : "+ Neue Übung"}
+          </button>
+          <button
+            onClick={handleSelectAll}
+            data-testid="button-select-all"
+            className="rounded-lg border border-slate-300 text-slate-600 text-sm font-medium px-3 py-2 hover:bg-slate-100 transition-colors"
+          >
+            {selectedItems.size === items.length && items.length > 0 ? "Alle abwählen" : "Alle auswählen"}
           </button>
         </div>
 
@@ -428,6 +527,79 @@ export default function ExerciseLibraryPage() {
                 {creating ? "Wird erstellt…" : "Übung erstellen"}
               </button>
             </form>
+          </div>
+        )}
+
+        {showGenerateForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
+              <h2 className="text-lg font-semibold font-serif mb-4" style={{ color: "#7c3aed" }}>Neue Übung generieren</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+                  <input type="text" value={generateSpec.name} onChange={e => setGenerateSpec({ ...generateSpec, name: e.target.value })} data-testid="input-gen-name" className={inputClass} placeholder="Übungsname" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Typ</label>
+                    <select value={generateSpec.type} onChange={e => setGenerateSpec({ ...generateSpec, type: e.target.value })} data-testid="select-gen-type" className={inputClass}>
+                      {EXERCISE_TYPES.map(t => <option key={t} value={t}>{EXERCISE_TYPE_LABELS[t]}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Dauer in Minuten</label>
+                    <input type="number" value={generateSpec.duration} onChange={e => setGenerateSpec({ ...generateSpec, duration: parseInt(e.target.value) || 0 })} data-testid="input-gen-duration" className={inputClass} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Ziel-Ebene</label>
+                  <select value={generateSpec.targetLevel} onChange={e => setGenerateSpec({ ...generateSpec, targetLevel: e.target.value })} data-testid="select-gen-level" className={inputClass}>
+                    {TARGET_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Kompetenzen (kommagetrennt)</label>
+                  <input type="text" value={generateSpec.competencies} onChange={e => setGenerateSpec({ ...generateSpec, competencies: e.target.value })} data-testid="input-gen-competencies" className={inputClass} placeholder="z.B. Führung, Strategie" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
+                  <textarea value={generateSpec.description} onChange={e => setGenerateSpec({ ...generateSpec, description: e.target.value })} data-testid="textarea-gen-description" className={inputClass} rows={3} placeholder="Beschreiben Sie die Übung…" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Kontext (optional)</label>
+                  <textarea value={generateSpec.context} onChange={e => setGenerateSpec({ ...generateSpec, context: e.target.value })} className={inputClass} rows={2} placeholder="Zusätzlicher Kontext…" />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-5">
+                <button onClick={handleGenerateExercise} disabled={generating || !generateSpec.name.trim()} data-testid="button-submit-generate" className="rounded-lg text-white text-sm font-medium px-5 py-2 disabled:opacity-50 flex items-center gap-2" style={{ backgroundColor: "#7c3aed" }}>
+                  {generating && <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                  {generating ? "Generiert…" : "Übung generieren"}
+                </button>
+                <button onClick={() => setShowGenerateForm(false)} className="text-sm text-slate-500 hover:text-slate-700 px-3 py-2">Abbrechen</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {batchResult && (
+          <div className="mb-4 p-4 bg-violet-50 border border-violet-200 rounded-lg text-sm" data-testid="batch-result">
+            {batchResult.error ? (
+              <p className="text-red-600">{batchResult.error}</p>
+            ) : (
+              <div>
+                <p className="font-medium text-violet-800">Batch-Anpassung abgeschlossen</p>
+                {batchResult.results && <p className="text-violet-600 mt-1">{batchResult.results.length} Übungen verarbeitet</p>}
+              </div>
+            )}
+            <button onClick={() => setBatchResult(null)} className="text-xs text-violet-500 underline mt-2">Schließen</button>
+          </div>
+        )}
+
+        {templatePackUrl && (
+          <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-sm" data-testid="template-pack-result">
+            <p className="font-medium text-emerald-800">Template Pack erstellt</p>
+            <a href={templatePackUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-600 underline text-xs mt-1 inline-block">Download Template Pack</a>
+            <button onClick={() => setTemplatePackUrl(null)} className="text-xs text-emerald-500 underline mt-2 ml-3">Schließen</button>
           </div>
         )}
 
@@ -546,8 +718,16 @@ export default function ExerciseLibraryPage() {
                       className="p-5 cursor-pointer"
                       onClick={() => handleExpand(item.id)}
                     >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-semibold text-brand-navy font-serif text-sm leading-tight">{item.title}</h3>
+                      <div className="flex items-start gap-2 mb-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.has(item.id)}
+                          onChange={(e) => { e.stopPropagation(); handleSelectItem(item.id); }}
+                          onClick={(e) => e.stopPropagation()}
+                          data-testid={`checkbox-select-${item.id}`}
+                          className="mt-1 rounded border-slate-300 shrink-0"
+                        />
+                        <h3 className="font-semibold text-brand-navy font-serif text-sm leading-tight flex-1">{item.title}</h3>
                         <span
                           className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full shrink-0"
                           style={{ backgroundColor: ACCENT }}
@@ -682,6 +862,37 @@ export default function ExerciseLibraryPage() {
           </div>
         )}
       </main>
+
+      {selectedItems.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-lg px-6 py-3">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-700">{selectedItems.size} ausgewählt</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleBatchAdapt}
+                disabled={batchProcessing}
+                data-testid="button-batch-adapt"
+                className="rounded-lg text-white text-sm font-medium px-4 py-2 disabled:opacity-50 flex items-center gap-2"
+                style={{ backgroundColor: "#7c3aed" }}
+              >
+                {batchProcessing && <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                Alle CD-anpassen
+              </button>
+              <button
+                onClick={handleGenerateTemplatePack}
+                disabled={packGenerating}
+                data-testid="button-generate-pack"
+                className="rounded-lg text-white text-sm font-medium px-4 py-2 disabled:opacity-50 flex items-center gap-2"
+                style={{ backgroundColor: ACCENT }}
+              >
+                {packGenerating && <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                Template Pack erstellen
+              </button>
+              <button onClick={() => setSelectedItems(new Set())} className="text-sm text-slate-500 hover:text-slate-700 px-2">✕</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="border-t py-6 border-slate-200">
         <p className="text-center text-xs text-slate-400">

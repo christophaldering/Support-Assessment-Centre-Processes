@@ -200,6 +200,21 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       }
     }
 
+    const activeBrandRuleSet = await prisma.brandRuleSet.findFirst({
+      where: { workspaceId: workspace.id, status: "active" },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    const brandRules = activeBrandRuleSet
+      ? (activeBrandRuleSet.rulesJson as {
+          colors?: { primary?: string; secondary?: string; accent?: string; background?: string };
+          typography?: { headingFont?: string; bodyFont?: string; headingSize?: string; bodySize?: string };
+          documentRules?: { coverPage?: boolean; headerFooter?: string; confidentialityNote?: string; pageNumbers?: boolean; watermark?: string };
+          slideRules?: { titleSlide?: boolean; sectionDividers?: boolean; footer?: string; legalLine?: string };
+          logoPlacement?: { position?: string; maxHeight?: string };
+        })
+      : undefined;
+
     const reportData: ReportData = {
       assessmentName: assessment.name,
       assessmentDescription: assessment.description || undefined,
@@ -235,6 +250,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
             bg: workspace.theme.backgroundColor,
           }
         : undefined,
+      brandRules,
     };
 
     let fileBuffer: Buffer;

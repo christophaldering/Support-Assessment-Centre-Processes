@@ -10,6 +10,10 @@ import {
   WidthType,
   AlignmentType,
   BorderStyle,
+  Header,
+  Footer,
+  PageBreak,
+  SectionType,
 } from "docx";
 // @ts-ignore
 import PDFDocument from "pdfkit";
@@ -41,6 +45,13 @@ export interface ReportData {
   aiRecommendations?: string;
   aiSections: string[];
   themeColors?: { primary: string; accent: string; text: string; bg: string };
+  brandRules?: {
+    colors?: { primary?: string; secondary?: string; accent?: string; background?: string };
+    typography?: { headingFont?: string; bodyFont?: string; headingSize?: string; bodySize?: string };
+    documentRules?: { coverPage?: boolean; headerFooter?: string; confidentialityNote?: string; pageNumbers?: boolean; watermark?: string };
+    slideRules?: { titleSlide?: boolean; sectionDividers?: boolean; footer?: string; legalLine?: string };
+    logoPlacement?: { position?: string; maxHeight?: string };
+  };
 }
 
 function getStrengthsAndDevAreas(data: ReportData) {
@@ -75,10 +86,13 @@ function aiLabel(sectionName: string, aiSections: string[]): string {
 export async function generateDocx(data: ReportData): Promise<Buffer> {
   const { strengths, devAreas } = getStrengthsAndDevAreas(data);
 
+  const brandColors = data.brandRules?.colors;
+  const brandBorderColor = brandColors?.accent?.replace("#", "") || "999999";
+
   const borderStyle = {
     style: BorderStyle.SINGLE,
     size: 1,
-    color: "999999",
+    color: brandBorderColor,
   };
   const cellBorders = {
     top: borderStyle,
@@ -87,9 +101,11 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
     right: borderStyle,
   };
 
+  const headingColor = brandColors?.primary?.replace("#", "") || undefined;
+
   const headerCell = (text: string) =>
     new TableCell({
-      children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: 20 })] })],
+      children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: 20, color: headingColor })] })],
       borders: cellBorders,
       width: { size: 20, type: WidthType.PERCENTAGE },
     });
@@ -267,12 +283,81 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
   sections.push(new Paragraph({ text: `Beobachter: ${observers.join(", ") || "Keine"}` }));
   sections.push(new Paragraph({ text: `Workspace: ${data.workspaceName}` }));
 
-  const doc = new Document({
-    sections: [
-      {
-        children: [...sections.slice(0, 8), scoresTable, ...sections.slice(8)],
+  const docSectionHeaders: Record<string, unknown> = {};
+  const docSectionFooters: Record<string, unknown> = {};
+
+  if (data.brandRules?.documentRules?.headerFooter) {
+    docSectionHeaders["default"] = new Header({
+      children: [
+        new Paragraph({
+          children: [new TextRun({ text: data.brandRules.documentRules.headerFooter, size: 16, italics: true, color: headingColor || "666666" })],
+          alignment: AlignmentType.RIGHT,
+        }),
+      ],
+    });
+  }
+
+  if (data.brandRules?.documentRules?.confidentialityNote) {
+    docSectionFooters["default"] = new Footer({
+      children: [
+        new Paragraph({
+          children: [new TextRun({ text: data.brandRules.documentRules.confidentialityNote, size: 14, italics: true, color: "999999" })],
+          alignment: AlignmentType.CENTER,
+        }),
+      ],
+    });
+  }
+
+  const docSections: Array<Record<string, unknown>> = [];
+
+  if (data.brandRules?.documentRules?.coverPage) {
+    docSections.push({
+      properties: {
+        type: SectionType.NEXT_PAGE,
       },
-    ],
+      headers: docSectionHeaders,
+      footers: docSectionFooters,
+      children: [
+        new Paragraph({ text: "" }),
+        new Paragraph({ text: "" }),
+        new Paragraph({ text: "" }),
+        new Paragraph({
+          children: [new TextRun({ text: data.assessmentName, bold: true, size: 52, color: headingColor })],
+          alignment: AlignmentType.CENTER,
+        }),
+        new Paragraph({ text: "" }),
+        new Paragraph({
+          children: [new TextRun({ text: `Diagnostik-Bericht`, size: 36, color: brandColors?.secondary?.replace("#", "") || headingColor })],
+          alignment: AlignmentType.CENTER,
+        }),
+        new Paragraph({ text: "" }),
+        new Paragraph({ text: "" }),
+        new Paragraph({
+          children: [new TextRun({ text: data.workspaceName, size: 24 })],
+          alignment: AlignmentType.CENTER,
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: formatDate(data.generatedAt), size: 24 })],
+          alignment: AlignmentType.CENTER,
+        }),
+        new Paragraph({ text: "" }),
+        new Paragraph({
+          children: [new TextRun({ text: data.brandRules?.typography?.headingFont ? `Schriftart: ${data.brandRules.typography.headingFont}` : "", size: 16, italics: true, color: "AAAAAA" })],
+          alignment: AlignmentType.CENTER,
+        }),
+      ],
+    });
+  }
+
+  docSections.push({
+    ...(docSections.length > 0 ? { properties: { type: SectionType.NEXT_PAGE } } : {}),
+    headers: docSectionHeaders,
+    footers: docSectionFooters,
+    children: [...sections.slice(0, 8), scoresTable, ...sections.slice(8)],
+  });
+
+  const doc = new Document({
+    sections: docSections as any,
   });
 
   const buffer = await Packer.toBuffer(doc);
@@ -288,11 +373,41 @@ export async function generatePdf(data: ReportData): Promise<Buffer> {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    const primary = data.themeColors?.primary || "#1a365d";
+    const brandColors = data.brandRules?.colors;
+    const primary = brandColors?.primary || data.themeColors?.primary || "#1a365d";
+    const secondary = brandColors?.secondary || primary;
+    const accentColor = brandColors?.accent || data.themeColors?.accent || "#3182ce";
     const textColor = data.themeColors?.text || "#1a1a1a";
+    const confidentialityNote = data.brandRules?.documentRules?.confidentialityNote;
+    const watermark = data.brandRules?.documentRules?.watermark;
+
+    const addPageDecorations = () => {
+      if (watermark) {
+        doc.save();
+        doc.fontSize(48).fillColor("#EEEEEE").opacity(0.15);
+        doc.text(watermark, 100, 350, { align: "center" });
+        doc.opacity(1).restore();
+      }
+      if (confidentialityNote) {
+        const savedY = doc.y;
+        doc.fontSize(7).fillColor("#AAAAAA").text(confidentialityNote, 50, 810, { align: "center", width: 495 });
+        doc.y = savedY;
+      }
+    };
+
+    if (data.brandRules?.typography) {
+      const typo = data.brandRules.typography;
+      doc.fontSize(8).fillColor("#CCCCCC").text(
+        `[Typography: Heading=${typo.headingFont || "default"}, Body=${typo.bodyFont || "default"}]`,
+        { align: "right" }
+      );
+    }
+
+    doc.on("pageAdded", () => addPageDecorations());
+    addPageDecorations();
 
     doc.fontSize(22).fillColor(primary).text(`Diagnostik-Bericht`, { align: "center" });
-    doc.fontSize(16).fillColor(primary).text(data.assessmentName, { align: "center" });
+    doc.fontSize(16).fillColor(secondary).text(data.assessmentName, { align: "center" });
     doc
       .fontSize(11)
       .fillColor(textColor)
@@ -419,15 +534,38 @@ export async function generatePdf(data: ReportData): Promise<Buffer> {
 export async function generatePptx(data: ReportData): Promise<Buffer> {
   const pptx = new PptxGenJS();
 
-  const primary = data.themeColors?.primary || "#1a365d";
-  const accent = data.themeColors?.accent || "#3182ce";
+  const brandColors = data.brandRules?.colors;
+  const primary = brandColors?.primary || data.themeColors?.primary || "#1a365d";
+  const accent = brandColors?.accent || data.themeColors?.accent || "#3182ce";
   const textCol = data.themeColors?.text || "#1a1a1a";
-  const bgCol = data.themeColors?.bg || "#ffffff";
+  const bgCol = brandColors?.background || data.themeColors?.bg || "#ffffff";
+  const slideFooter = data.brandRules?.slideRules?.footer;
 
   pptx.defineLayout({ name: "A4", width: 10, height: 7.5 });
   pptx.layout = "A4";
 
   const slideOpts = { fill: { color: bgCol.replace("#", "") } };
+
+  const addSlideFooter = (slide: PptxGenJS.Slide) => {
+    if (slideFooter) {
+      slide.addText(slideFooter, {
+        x: 0.5, y: 7.0, w: 9, h: 0.3,
+        fontSize: 8, color: "999999", align: "center", italic: true,
+      });
+    }
+  };
+
+  const addDividerSlide = (title: string) => {
+    if (data.brandRules?.slideRules?.sectionDividers) {
+      const divider = pptx.addSlide();
+      Object.assign(divider, { background: slideOpts });
+      divider.addText(title, {
+        x: 0.5, y: 2.5, w: 9, h: 2,
+        fontSize: 28, bold: true, color: primary.replace("#", ""), align: "center", valign: "middle",
+      });
+      addSlideFooter(divider);
+    }
+  };
 
   const titleSlide = pptx.addSlide();
   Object.assign(titleSlide, { background: slideOpts });
@@ -462,7 +600,9 @@ export async function generatePptx(data: ReportData): Promise<Buffer> {
       align: "center",
     }
   );
+  addSlideFooter(titleSlide);
 
+  addDividerSlide("Executive Summary");
   const summarySlide = pptx.addSlide();
   Object.assign(summarySlide, { background: slideOpts });
   const summaryLabel = `Executive Summary${aiLabel("executive_summary", data.aiSections)}`;
@@ -488,7 +628,9 @@ export async function generatePptx(data: ReportData): Promise<Buffer> {
       valign: "top",
     }
   );
+  addSlideFooter(summarySlide);
 
+  addDividerSlide("Kompetenzprofil");
   const scoresSlide = pptx.addSlide();
   Object.assign(scoresSlide, { background: slideOpts });
   scoresSlide.addText("Kompetenzprofil", {
@@ -534,8 +676,10 @@ export async function generatePptx(data: ReportData): Promise<Buffer> {
     fontSize: 9,
     color: textCol.replace("#", ""),
   });
+  addSlideFooter(scoresSlide);
 
   const { strengths, devAreas } = getStrengthsAndDevAreas(data);
+  addDividerSlide("Stärken & Entwicklungsfelder");
   const sdSlide = pptx.addSlide();
   Object.assign(sdSlide, { background: slideOpts });
   sdSlide.addText(`Stärken & Entwicklungsfelder${aiLabel("strengths", data.aiSections)}`, {
@@ -583,7 +727,9 @@ export async function generatePptx(data: ReportData): Promise<Buffer> {
     color: textCol.replace("#", ""),
     valign: "top",
   });
+  addSlideFooter(sdSlide);
 
+  addDividerSlide("Evidenz-Zusammenfassung");
   const evidenceSlide = pptx.addSlide();
   Object.assign(evidenceSlide, { background: slideOpts });
   evidenceSlide.addText("Evidenz-Zusammenfassung", {
@@ -622,8 +768,10 @@ export async function generatePptx(data: ReportData): Promise<Buffer> {
     color: textCol.replace("#", ""),
     valign: "top",
   });
+  addSlideFooter(evidenceSlide);
 
   if (data.aiRecommendations) {
+    addDividerSlide("Empfehlungen");
     const recSlide = pptx.addSlide();
     Object.assign(recSlide, { background: slideOpts });
     recSlide.addText(`Empfehlungen${aiLabel("recommendations", data.aiSections)}`, {
@@ -644,6 +792,17 @@ export async function generatePptx(data: ReportData): Promise<Buffer> {
       color: textCol.replace("#", ""),
       valign: "top",
     });
+    addSlideFooter(recSlide);
+  }
+
+  if (data.brandRules?.slideRules?.legalLine) {
+    const legalSlide = pptx.addSlide();
+    Object.assign(legalSlide, { background: slideOpts });
+    legalSlide.addText(data.brandRules.slideRules.legalLine, {
+      x: 0.5, y: 3.0, w: 9, h: 1.5,
+      fontSize: 10, color: "999999", align: "center", valign: "middle", italic: true,
+    });
+    addSlideFooter(legalSlide);
   }
 
   const arrayBuffer = await pptx.write({ outputType: "arraybuffer" }) as ArrayBuffer;
