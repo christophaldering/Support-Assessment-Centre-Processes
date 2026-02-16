@@ -19,6 +19,8 @@ Footer credit: "© Christoph Aldering · Private initiative / concept"
 The platform is built on a modern full-stack architecture utilizing Next.js 14 (App Router) with TypeScript for the frontend and API routes. Data persistence is managed with Prisma ORM and PostgreSQL. Styling is handled by Tailwind CSS, allowing for a consistent and customizable design system.
 
 **Key Architectural Decisions:**
+- **Navigation Flow:** Enterprise Cockpit (global KPIs + project list) → Project Detail (5-step process within a specific assessment) → Individual process sections (requirements, competencies, assessments, etc.). This ensures all work is scoped to a specific project/assessment.
+- **Tools & Modules:** A reusable assessment instrument container available per workspace. Includes case studies (e.g., Varexia SE with 6 tabs), exercises, and assessment instruments. Data stored in TypeScript files under `lib/case-studies/`.
 - **UI/UX:** A dual-branding approach supports both a neutral platform theme (dark navy, blue accent) and a customizable workspace theme (e.g., aestimamus workspace with copper/terracotta). The platform supports per-workspace theming with live preview capabilities for colors, fonts, and logos.
 - **Authentication & Authorization:** Employs HTTP-only cookies for session management (master admin, workspace admin, and user sessions). Password hashing uses bcryptjs. A granular Role-Based Access Control (RBAC) system with six distinct roles (ADMIN, MODERATOR, OBSERVER, PROJECT_ASSISTANT, HR_CLIENT, CANDIDATE) ensures secure access to resources and features based on a role-to-permissions map.
 - **Data Processing Pipelines:**
