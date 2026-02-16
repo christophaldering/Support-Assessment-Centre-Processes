@@ -27,6 +27,8 @@ model Workspace {
   theme              Theme?
   users              User[]
   assessments        Assessment[]
+  competencyModels   CompetencyModel[]
+  scaleDefinitions   ScaleDefinition[]
 
   @@map("workspaces")
 }
@@ -102,8 +104,9 @@ model Exercise {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  documents      Document[]
+  assessment           Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  documents            Document[]
+  competencyMappings   ExerciseCompetencyMapping[]
 
   @@map("exercises")
 }
@@ -128,6 +131,89 @@ model Document {
   uploadedBy     User       @relation(fields: [uploadedById], references: [id])
 
   @@map("documents")
+}
+
+model CompetencyModel {
+  id           String   @id @default(uuid())
+  workspaceId  String   @map("workspace_id")
+  name         String
+  description  String?
+  version      Int      @default(1)
+  status       String   @default("draft")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+  nodes        CompetencyNode[]
+  weightingProfiles WeightingProfile[]
+
+  @@map("competency_models")
+}
+
+model CompetencyNode {
+  id                String   @id @default(uuid())
+  competencyModelId String   @map("competency_model_id")
+  parentId          String?  @map("parent_id")
+  name              String
+  nodeType          String   @default("competency") @map("node_type")
+  description       String?
+  sortOrder         Int      @default(0) @map("sort_order")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  competencyModel   CompetencyModel @relation(fields: [competencyModelId], references: [id], onDelete: Cascade)
+  parent            CompetencyNode? @relation("NodeHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children          CompetencyNode[] @relation("NodeHierarchy")
+  exerciseMappings  ExerciseCompetencyMapping[]
+
+  @@map("competency_nodes")
+}
+
+model ScaleDefinition {
+  id           String   @id @default(uuid())
+  workspaceId  String   @map("workspace_id")
+  name         String
+  type         String   @default("likert")
+  minValue     Int?     @map("min_value")
+  maxValue     Int?     @map("max_value")
+  points       Json     @default("[]")
+  status       String   @default("active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@map("scale_definitions")
+}
+
+model WeightingProfile {
+  id                String   @id @default(uuid())
+  competencyModelId String   @map("competency_model_id")
+  name              String
+  targetRole        String?  @map("target_role")
+  version           Int      @default(1)
+  weights           Json     @default("[]")
+  status            String   @default("active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  competencyModel   CompetencyModel @relation(fields: [competencyModelId], references: [id], onDelete: Cascade)
+
+  @@map("weighting_profiles")
+}
+
+model ExerciseCompetencyMapping {
+  id               String   @id @default(uuid())
+  exerciseId       String   @map("exercise_id")
+  competencyNodeId String   @map("competency_node_id")
+  weight           Float    @default(1.0)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  exercise         Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  competencyNode   CompetencyNode @relation(fields: [competencyNodeId], references: [id], onDelete: Cascade)
+
+  @@unique([exerciseId, competencyNodeId])
+  @@map("exercise_competency_mappings")
 }
 
 model PasswordResetToken {
