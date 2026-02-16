@@ -1,0 +1,60 @@
+Replit Prompt (Phase 5):
+Implement the operational diagnostic engine:
+A) Observer Rating UI:
+exercise × competency matrix
+rating input using selected scale
+evidence notes (structured + free)
+offline-first:
+local encrypted cache
+sync when online
+conflict resolution with version timestamps
+B) Consolidation:
+configurable per assessment (method, outlier flags, consensus requirement, moderator override)
+store consolidated scores with algorithm metadata
+display variance flags
+C) Consent Management:
+consent templates versioned per workspace (DE/EN)
+consent capture for candidate + internal users if required
+feature gating for audio recording, transcription, AI, HR sharing, exports
+audit everything
+D) Audio → Transcript → Structured Summary:
+support upload + live capture (live can be “beta”)
+store transcript + AI summary (tagged)
+retention policies applied
+E) AI Layer:
+implement /api/ai with policy checks (RBAC + consent + workspace config)
+log AI requests + outputs
+AI Transparency tags on generated content
+“Autonomous Diagnostic Mode” as a beta feature:
+admin toggle per workspace
+explicit risk warning modal
+only internal use, never exposed to HR/Client
+full logging
+F) Reporting:
+generate DOCX + PDF + PPT outputs
+include: executive summary, competency profile, strengths/dev areas, evidence, recommendation
+clearly label AI-generated sections
+version reports + snapshots (time travel)
+G) Analytics & Normalization:
+compute normalized scores (0–100) from raw scale values
+support optional z-score/percentile once enough data exists
+enable benchmark dashboards:
+per workspace
+cross-workspace only if explicitly enabled and anonymized
+handle heterogeneous models/scales via normalized layer
+H) Theme Editor:
+full theme editor per workspace
+preview
+apply to portals + exports
+I) Pricing/Telemetry events:
+log usage events for future billing (workspace/user/assessment/AI credits)
+Definition of Done:
+Observer can rate offline and sync
+Consolidation works and is configurable
+Consents gate features
+Audio upload → transcript → summary works (at least upload path)
+AI requests logged + transparency tagging
+DOCX/PDF/PPT exports generated + versioned
+Normalized analytics dashboards work
+Theme editor works and affects UI
+Usage events are recorded
