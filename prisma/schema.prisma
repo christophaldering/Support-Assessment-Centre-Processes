@@ -64,22 +64,70 @@ model User {
   workspace           Workspace @relation(fields: [workspaceId], references: [id])
   assessment          Assessment? @relation(fields: [assessmentId], references: [id])
   passwordResetTokens PasswordResetToken[]
+  uploadedDocuments   Document[]
 
   @@unique([email, workspaceId])
   @@map("users")
 }
 
 model Assessment {
-  id          String   @id @default(uuid())
-  name        String
-  workspaceId String   @map("workspace_id")
-  status      String   @default("draft")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  name         String
+  workspaceId  String   @map("workspace_id")
+  status       String   @default("draft")
+  description  String?
+  location     String?
+  startDate    DateTime? @map("start_date")
+  endDate      DateTime? @map("end_date")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  candidates  User[]
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+  candidates   User[]
+  exercises    Exercise[]
+  documents    Document[]
 
   @@map("assessments")
+}
+
+model Exercise {
+  id             String   @id @default(uuid())
+  assessmentId   String   @map("assessment_id")
+  name           String
+  type           String
+  instructions   String?
+  duration       Int?
+  sortOrder      Int      @default(0) @map("sort_order")
+  status         String   @default("active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  documents      Document[]
+
+  @@map("exercises")
+}
+
+model Document {
+  id             String   @id @default(uuid())
+  assessmentId   String   @map("assessment_id")
+  exerciseId     String?  @map("exercise_id")
+  name           String
+  fileName       String   @map("file_name")
+  fileSize       Int      @map("file_size")
+  mimeType       String   @map("mime_type")
+  objectPath     String   @map("object_path")
+  version        Int      @default(1)
+  visibleTo      String[] @map("visible_to")
+  watermark      Boolean  @default(false)
+  uploadedById   String   @map("uploaded_by_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  exercise       Exercise?  @relation(fields: [exerciseId], references: [id], onDelete: SetNull)
+  uploadedBy     User       @relation(fields: [uploadedById], references: [id])
+
+  @@map("documents")
 }
 
 model PasswordResetToken {
