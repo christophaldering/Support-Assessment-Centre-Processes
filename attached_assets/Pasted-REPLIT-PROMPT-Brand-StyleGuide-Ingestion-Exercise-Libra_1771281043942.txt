@@ -1,0 +1,368 @@
+REPLIT PROMPT — Brand/StyleGuide Ingestion + Exercise Library Ingestion + Requirements→Exercise Matching & Adaptation
+
+Objective
+Extend the Executive Diagnostics Platform with an enterprise-grade “Brand & Exercise Adaptation Engine” per Workspace, enabling:
+1) Upload and analyze company-specific Style Guides (brand manuals, CD guidelines) and apply them to:
+   - Workspace UI theme (web portals)
+   - All generated or adapted documents/exports (PDF, DOCX, PPTX)
+   - Exercise templates and materials
+2) Upload existing exercises (PDF/DOCX/PPTX) into a workspace “Exercise Toolbox/Library” and optionally:
+   - Auto-adapt formatting/layout/visual language to the workspace CD
+   - Keep original version + create CD-adapted version (versioning)
+3) After Requirements Analysis, automatically:
+   - Search and propose matching exercises from the Library
+   - Recommend which exercises: “use as is”, “adapt”, “create new”
+   - Provide an AI-supported interactive selection and refinement workflow
+4) After explicit user approval (“commission”), execute:
+   - Adaptation tasks (apply CD, tailor content, adjust difficulty)
+   - New exercise generation when needed
+All outputs must be fully traceable (AI transparency, audit log, versioning) and consent-gated where relevant.
+
+Tech/Stack
+- Next.js + TypeScript + Prisma + PostgreSQL
+- Existing modules: Workspaces, Theme Editor, Consent Management, AI layer, Reporting Engine, Requirements Analysis → Auto Builder
+- Add new modules: Style Guide Ingestion, Brand Rules, Exercise Toolbox, Adaptation Pipeline, Matching Engine
+
+===========================================================
+A) NEW DATA MODEL (Prisma) — add these tables/entities
+===========================================================
+
+1) WorkspaceStyleGuide
+- id (uuid)
+- workspaceId
+- title
+- sourceType: "PDF" | "DOCX" | "PPTX" | "URL" | "TEXT"
+- fileAssetId (nullable) (points to Document/File storage)
+- rawTextExtract (long text) // extracted text for analysis (no OCR loops; best-effort)
+- analysisJson (JSON) // AI/heuristic structured results
+- status: "uploaded" | "parsed" | "analyzed" | "failed"
+- version (string)
+- createdAt, updatedAt
+
+2) BrandRuleSet
+- id (uuid)
+- workspaceId
+- name
+- derivedFromStyleGuideIds (string[] or relation table)
+- rulesJson (JSON) containing:
+  - colors: primary/secondary/accent/background palettes
+  - typography: headings/body fonts, sizes
+  - spacing/grid guidelines
+  - logo placement rules
+  - iconography style guidelines
+  - tone of voice rules for text (formal/informal, etc.)
+  - document templates rules: cover page, header/footer, page numbers, confidentiality note, watermark
+  - slide templates rules: title slide, section dividers, footer, legal lines
+  - tables/charts rules (fonts, spacing, if any)
+- appliesTo:
+  - "workspace_ui" boolean
+  - "documents" boolean
+  - "ppt_exports" boolean
+  - "exercise_materials" boolean
+- status: "draft" | "active" | "archived"
+- createdAt, updatedAt
+
+3) ExerciseLibraryItem
+- id (uuid)
+- workspaceId
+- title
+- tags (string[])
+- exerciseType: same enum as Exercise module (INTERVIEW, CASE_STUDY, ROLEPLAY, etc.)
+- targetLevels (string[] e.g. ["C-Level","Director"])
+- languagesAvailable (string[] e.g. ["DE","EN"])
+- sourceFiles (relation to Document/File assets) // original uploaded files
+- derivedVariants (relation to ExerciseLibraryVariant)
+- metadataJson (JSON): author, year, client restrictions, usage notes
+- qualityStatus: "draft" | "validated" | "deprecated"
+- createdAt, updatedAt
+
+4) ExerciseLibraryVariant
+- id (uuid)
+- libraryItemId
+- variantType:
+  - "original"
+  - "cd_adapted"
+  - "assessment_tailored"
+  - "ai_generated_new"
+- brandRuleSetId (nullable)
+- language ("DE"|"EN")
+- fileAssetId (nullable) // adapted DOCX/PPTX/PDF stored here
+- contentJson (JSON) // structured representation when possible (sections, prompts, tables)
+- analysisJson (JSON) // extracted structure/metadata
+- version (string)
+- createdAt, updatedAt
+
+5) RequirementsAnalysisArtifact (extend your existing module)
+Add fields:
+- workspaceId
+- assessmentId (nullable until applied)
+- sourceType: "audio" | "transcript" | "notes"
+- fileAssetId (nullable)
+- transcriptText (nullable)
+- extractedProfileJson (JSON):
+  - target role context
+  - success criteria
+  - challenge map
+  - inferred competencies
+  - risk/red flags
+  - recommended exercise profile
+- createdAt, updatedAt
+
+6) ExerciseRecommendation
+- id (uuid)
+- requirementsAnalysisId
+- workspaceId
+- assessmentId (nullable)
+- recommendationsJson (JSON):
+  - use_as_is: [ { libraryItemId, variantId, rationale, fitScore } ]
+  - adapt: [ { libraryItemId, variantId, suggestedChanges, rationale, fitScore } ]
+  - create_new: [ { proposedExerciseSpec, rationale, fitScore } ]
+- status: "draft" | "approved" | "executing" | "completed" | "rejected"
+- approvedByUserId (nullable)
+- createdAt, updatedAt
+
+7) AdaptationJob
+- id (uuid)
+- workspaceId
+- assessmentId (nullable)
+- jobType:
+  - "apply_brand_to_workspace_theme"
+  - "apply_brand_to_document"
+  - "apply_brand_to_exercise_variant"
+  - "tailor_exercise_to_assessment"
+  - "generate_new_exercise"
+  - "generate_print_export"
+- inputRefsJson (JSON): which files, which library items, which brand rules
+- outputRefsJson (JSON): produced assets/variants
+- aiUsed (boolean)
+- aiTraceId (nullable -> AIRequest/AIOutput)
+- status: "queued" | "running" | "completed" | "failed"
+- createdAt, updatedAt
+
+8) DocumentTemplatePack (optional but recommended)
+- id (uuid)
+- workspaceId
+- brandRuleSetId
+- docxTemplateAssetId (nullable)
+- pptxTemplateAssetId (nullable)
+- pdfTemplateSpecJson (JSON)
+- createdAt, updatedAt
+
+===========================================================
+B) NEW PERMISSIONS
+===========================================================
+
+Add permissions:
+- styleguides.upload
+- styleguides.analyze
+- brandrules.manage
+- exerciselibrary.upload
+- exerciselibrary.manage
+- exerciselibrary.adapt_cd
+- requirements.match_exercises
+- adaptationjobs.run
+
+Map defaults:
+- ADMIN: all enabled
+- MODERATOR: exerciselibrary.manage + requirements.match_exercises + adaptationjobs.run + exerciselibrary.adapt_cd
+- PROJECT_ASSISTANT: exerciselibrary.upload + exerciselibrary.manage (no AI auto-run unless enabled)
+- OBSERVER/CANDIDATE/HR_CLIENT: none
+
+===========================================================
+C) UI/UX REQUIREMENTS
+===========================================================
+
+1) Workspace Admin → “Brand & Style” section
+Tabs:
+- Style Guides (upload PDF/DOCX/PPTX/URL/TEXT)
+- Brand Rule Sets (view/edit/activate)
+- Templates (DOCX/PPTX template packs)
+- Preview & Apply:
+  - “Apply to Workspace UI Theme”
+  - “Apply to Report Exports”
+  - “Apply to Exercise Materials (default)”
+Include an “AI Assist” button:
+- “Extract brand rules from style guide”
+- “Propose a complete brand ruleset”
+- “Generate DOCX/PPTX template packs” (as feasible)
+
+2) Workspace Admin → “Exercise Toolbox / Library”
+Features:
+- Upload existing exercises as PDF/DOCX/PPTX
+- Auto-detect exercise type + language + structure (best-effort)
+- Tagging + search + filters (type, level, language, status)
+For each Library Item:
+- Show Original variant
+- “Create CD-adapted variant” button
+- “Tailor to Assessment” button (select assessment)
+- Version history (time travel)
+
+3) Requirements Analysis → “Exercise Matching & Builder”
+After uploading/creating requirements analysis:
+- Button: “Find matching exercises”
+System returns a recommendation dashboard:
+- “Use as is” list (with fit score + rationale)
+- “Adapt” list (suggested changes)
+- “Create new” list (proposed exercise specs)
+User can:
+- select exercises to include
+- choose variant (original vs CD-adapted)
+- request adaptation (CD + content tailoring)
+- request new exercise generation
+Important: nothing executes until user clicks:
+- “Approve & Commission”
+Then AdaptationJobs run and results are attached to the Assessment.
+
+4) Transparency & Safety UI
+For any AI-generated or AI-adapted content:
+- Display “AI-generated” label
+- Provide “Why this recommendation?” explanation
+- Provide references to inputs used (requirements analysis sections, selected competencies, etc.)
+- Provide an audit trail link
+
+===========================================================
+D) FUNCTIONAL LOGIC — MUST IMPLEMENT
+===========================================================
+
+1) Style Guide Parsing & Analysis
+- When a file is uploaded:
+  - Extract text best-effort:
+    - PDF: use a robust text extraction library (no repeated OCR calls)
+    - DOCX: parse document text
+    - PPTX: parse slide notes and text boxes
+  - Store rawTextExtract
+- Run analysis step (AI + heuristics):
+  - Identify colors (hex codes), fonts, logo usage rules, spacing/layout guidance
+  - Identify tone-of-voice guidelines (formal, concise, etc.)
+  - Identify document template rules (header/footer, confidentiality, page numbering)
+- Produce analysisJson
+- Convert analysisJson → a BrandRuleSet draft
+- Allow manual edits in UI
+- “Activate” sets BrandRuleSet as active for workspace
+
+2) Apply BrandRuleSet to Workspace UI Theme
+- Map brand colors/typography to Theme model fields
+- Create or update workspace theme
+- Keep previous theme versioned (time travel)
+
+3) Exercise Ingestion
+- Upload exercise files into ExerciseLibraryItem:
+  - Create variantType="original"
+  - Parse structure best-effort (headings, sections, tables)
+  - Store analysisJson (type detection, language detection, length, complexity)
+- Allow manual metadata editing:
+  - exerciseType, tags, levels, language
+
+4) CD Adaptation of Exercises (Files)
+- For DOCX/PPTX:
+  - Generate a CD-adapted variant by:
+    - applying brand fonts/colors
+    - applying header/footer/confidentiality lines
+    - cover slide/page rules
+    - consistent spacing/layout
+  - Output: new asset file + variantType="cd_adapted"
+- For PDF:
+  - Prefer re-rendering from a structured source if available.
+  - If only PDF exists: create a “CD cover page + watermark + header/footer overlay” variant as feasible, and store limitations in analysisJson.
+- Always keep original intact.
+- Version everything.
+- Log AdaptationJob.
+
+5) Requirements → Exercise Matching (Core requirement)
+- After requirements analysis extraction:
+  - Build a “requirements signature”:
+    - target role level
+    - key competency clusters
+    - must-test topics (e.g., strategy, crisis, labor relations, M&A)
+    - constraints (time, language)
+  - Search ExerciseLibraryItems by:
+    - tags, type, language, level
+    - semantic similarity via embeddings (if available) OR AI-assisted ranking using extracted summaries
+  - Produce recommendationsJson with fitScore (0–100) and rationale.
+- Classify into:
+  - use_as_is: high fit, minimal changes needed
+  - adapt: good fit but needs tailoring (content, difficulty, context, CD)
+  - create_new: gaps requiring new exercise
+- Provide UI to accept/adjust.
+- Only execute after explicit approval.
+
+6) “Tailor Exercise to Assessment” (AI co-creation + Auto mode)
+- When tailoring is requested:
+  - Input:
+    - requirements profile
+    - selected competency model
+    - target audience (candidate level)
+    - brand rules
+    - existing exercise variant (optional)
+  - Output:
+    - adapted exercise text (DE/EN)
+    - updated scoring guidance for observers
+    - difficulty metadata (if adaptive)
+    - explicit notes: what changed and why
+- Ensure if exercise is adaptive (difficulty shifts), observers are informed:
+  - Store “difficulty events” or “difficulty level chosen”
+  - Show in observer UI and report so ratings can be interpreted accordingly.
+
+7) New Exercise Generation
+- Generate a new exercise spec and assets when “create_new” approved:
+  - Provide structured format:
+    - purpose, competencies targeted, scenario, tasks, timebox
+    - materials, exhibits, data tables
+    - observer rating guidance + anchors
+  - Produce DOCX/PPTX templates aligned with brand rules when possible
+  - Store as ExerciseLibraryItem with variantType="ai_generated_new" and qualityStatus="draft"
+  - Allow moderator to “validate” and set to “validated”
+
+===========================================================
+E) CONSENT + POLICY GATING (MANDATORY)
+===========================================================
+
+- Style guide upload: internal only; no candidate consent required
+- Requirements analysis recordings: require consent modules if audio/transcription/AI used
+- Any AI call must check:
+  - RBAC permission
+  - workspace consent config
+  - relevant consent record for the subject (candidate) if candidate data is involved
+- HR/Client access to adapted materials must follow sharing consents
+
+===========================================================
+F) AUDIT + VERSIONING (MANDATORY)
+===========================================================
+
+- Every:
+  - style guide upload, analysis, activation
+  - exercise upload, adaptation, tailoring
+  - requirements matching
+  - AI recommendation and generation
+must create:
+- AuditLog entries
+- Version records for affected items
+- Snapshot when applying to an assessment
+
+===========================================================
+G) IMPLEMENTATION STEPS
+===========================================================
+
+1) Implement Prisma migrations and update schema.
+2) Build “Brand & Style” admin section + upload endpoints.
+3) Build style guide parsing utilities + AI analysis endpoint integration.
+4) Build BrandRuleSet editor UI + activation.
+5) Build Exercise Toolbox:
+   - upload, parse, tag, search, variants, versioning
+6) Build CD adaptation pipeline for DOCX/PPTX first; implement best-effort PDF overlay as fallback.
+7) Build Requirements matching UI + recommendations engine.
+8) Build commissioning workflow:
+   - approve → create AdaptationJobs → run → attach results to assessment exercises/materials.
+9) Ensure tests for:
+   - permission gating
+   - consent gating
+   - idempotent job execution
+   - version history correctness
+
+Definition of Done
+- Workspace can upload a style guide and generate a BrandRuleSet draft (AI-assisted) and activate it.
+- Activated BrandRuleSet can update workspace theme and export templates (at least placeholders).
+- Workspace can upload exercises (PDF/DOCX/PPTX) into Exercise Toolbox and produce a CD-adapted variant (DOCX/PPTX first).
+- Requirements analysis can recommend: use/adapt/create, with rationales and fit scores.
+- After approval, system runs adaptation/generation jobs and attaches results to the assessment.
+- All AI outputs are labeled and fully auditable; all content is versioned and time-travelable.
