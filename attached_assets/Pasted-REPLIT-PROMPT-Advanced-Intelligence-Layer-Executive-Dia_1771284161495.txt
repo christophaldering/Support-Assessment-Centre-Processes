@@ -1,0 +1,346 @@
+REPLIT PROMPT — Advanced Intelligence Layer (Executive Diagnostics 3.0)
+
+Objective
+Add a high-level “Advanced Intelligence Layer” on top of the existing Executive Diagnostics Platform.
+
+This layer must provide:
+
+1) Predictive Success Intelligence
+2) Leadership Pattern Recognition
+3) Dynamic Stress & Adaptivity Engine
+4) Team-Level Diagnostics
+5) Development Path Generator
+6) Bias & Fairness Monitor
+7) Longitudinal Intelligence
+8) Explainable Diagnostic Hypothesis Engine
+
+All outputs must:
+- Be auditable
+- Be explainable
+- Be confidence-scored
+- Be clearly marked as AI-assisted
+- Respect consent and RBAC gating
+
+This layer is NOT replacing human judgment.
+It is an analytical augmentation layer.
+
+------------------------------------------------------------
+A) PREDICTIVE SUCCESS INTELLIGENCE
+------------------------------------------------------------
+
+Goal:
+Move from static scoring to scenario-based predictive diagnostics.
+
+1. Create entity: PredictiveProfile
+- id
+- assessmentId
+- taxonomyTagAggregates (JSON)
+- normalizedScoreVector (JSON)
+- riskIndicatorsJson (JSON)
+- successScenarioClusters (JSON)
+- confidenceScore (0–1)
+- createdAt
+
+2. Build Risk Indicator Engine
+Inputs:
+- normalized competency scores
+- variance patterns
+- evidence density
+- stress difficulty metadata
+
+Outputs:
+- execution_risk
+- stakeholder_risk
+- resilience_risk
+- governance_risk
+- transformation_risk
+
+Each risk indicator:
+- score 0–100
+- explanation text
+- contributing factors list
+
+3. Scenario Simulation Engine
+For target role (e.g. CFO DAX, CEO turnaround, etc.)
+Simulate:
+
+- crisis scenario
+- growth scenario
+- stakeholder conflict scenario
+- transformation scenario
+
+Output:
+- predicted behavior pattern
+- risk flags
+- required compensating strengths
+
+Store as structured JSON.
+
+------------------------------------------------------------
+B) LEADERSHIP PATTERN RECOGNITION
+------------------------------------------------------------
+
+Goal:
+Detect behavioral archetypes beyond competency scores.
+
+Create entity: LeadershipPatternProfile
+- id
+- assessmentId
+- patternScoresJson
+- archetypeLabel
+- explanation
+- stabilityIndex
+- createdAt
+
+Patterns to detect:
+- decision_style (consensus / directive / data-driven / intuitive)
+- risk_orientation (risk-seeking / balanced / risk-averse)
+- stress_response (controlled / reactive / avoidant)
+- power_orientation (ego-driven / mission-driven / collective)
+- narrative_mode (story-driven / logic-driven / authority-driven)
+
+Method:
+Use:
+- transcript analysis (if available)
+- scoring distributions
+- variance across exercises
+- AI classification with evidence citations
+
+Output:
+- Archetype Map visualization data
+- Pattern Confidence score
+
+------------------------------------------------------------
+C) DYNAMIC STRESS & ADAPTIVITY ENGINE
+------------------------------------------------------------
+
+Goal:
+Allow controlled real-time escalation and log difficulty.
+
+Create entity: DifficultyEvent
+- id
+- exerciseId
+- assessmentId
+- triggerType (manual/ai)
+- difficultyLevelBefore
+- difficultyLevelAfter
+- rationale
+- timestamp
+
+1. Stress Escalation Suggestions (AI assist)
+During live session:
+- analyze transcript sentiment
+- detect hesitation/overconfidence/evasion
+- suggest:
+  - increase ambiguity
+  - introduce stakeholder conflict
+  - tighten time constraint
+  - add data contradiction
+
+2. Difficulty Adjustment Metadata
+Store difficulty coefficient.
+Ensure rating normalization can factor this in.
+
+------------------------------------------------------------
+D) TEAM-LEVEL DIAGNOSTICS
+------------------------------------------------------------
+
+Goal:
+Generate collective leadership analysis.
+
+Create entity: TeamDiagnosticProfile
+- id
+- workspaceId
+- assessmentIds[]
+- heterogeneityIndex
+- blindSpotClusters
+- redundancyMap
+- collectiveRiskIndicators
+- explanation
+- createdAt
+
+Compute:
+- score dispersion across canonical taxonomy
+- overlapping weaknesses
+- missing competencies in collective map
+- overconcentration patterns
+
+Output:
+- collective leadership heatmap
+- systemic risk notes
+
+------------------------------------------------------------
+E) DEVELOPMENT PATH GENERATOR
+------------------------------------------------------------
+
+Goal:
+Turn diagnostics into actionable development architecture.
+
+Create entity: DevelopmentBlueprint
+- id
+- assessmentId
+- 90_day_focus_areas
+- 6_month_growth_targets
+- 12_month_positioning_goals
+- coaching_questions
+- suggested_interventions
+- risk_mitigation_steps
+- confidenceScore
+- createdAt
+
+Generate:
+- prioritized focus areas
+- “if left unaddressed” risks
+- coaching anchor questions
+- measurable behavior shifts
+
+Allow:
+- export to HR-view
+- export to coaching-view
+
+------------------------------------------------------------
+F) BIAS & FAIRNESS MONITOR
+------------------------------------------------------------
+
+Goal:
+Detect structural bias patterns.
+
+Create entity: FairnessAnalysis
+- id
+- workspaceId
+- scope ("assessment"|"observer"|"exercise"|"cohort")
+- metricsJson
+- alertLevel
+- explanation
+- createdAt
+
+Implement:
+
+1. Observer Drift
+Compare observer mean vs cohort mean (normalized).
+
+2. Exercise Bias Pattern
+Analyze score distributions across demographic categories (if consented).
+
+3. Extremity Pattern
+Detect extreme scoring bias.
+
+Flag:
+- potential bias risk
+- low reliability risk
+
+------------------------------------------------------------
+G) LONGITUDINAL INTELLIGENCE
+------------------------------------------------------------
+
+Goal:
+Track development over time.
+
+Create entity: LongitudinalProfile
+- id
+- candidateProfileId
+- assessmentHistory[]
+- growthVectorsJson
+- regressionFlags
+- stabilityIndex
+- createdAt
+
+Compute:
+- score delta across taxonomy
+- growth consistency
+- volatility index
+- sustained vs situational strengths
+
+Visual output:
+- trajectory chart
+- momentum classification
+
+------------------------------------------------------------
+H) EXPLAINABLE DIAGNOSTIC HYPOTHESIS ENGINE
+------------------------------------------------------------
+
+Goal:
+Structured, transparent hypothesis generation.
+
+Create entity: DiagnosticHypothesis
+- id
+- assessmentId
+- hypothesisText
+- supportingEvidenceRefs[]
+- counterEvidenceRefs[]
+- confidenceScore
+- aiGenerated (boolean)
+- createdAt
+
+For each major finding:
+- generate:
+  - primary hypothesis
+  - alternative interpretation
+  - required further validation
+  - evidence coverage score
+
+Must:
+- link back to ratings, transcripts, difficulty events
+- never fabricate external data
+
+------------------------------------------------------------
+I) AI SAFETY & GUARDRAILS
+------------------------------------------------------------
+
+All AI outputs must:
+- reference internal artifacts only
+- include confidenceScore
+- include evidence coverage metric
+- be logged in AIRequest / AIOutput tables
+- be reviewable before report export (unless autonomous mode explicitly enabled)
+
+------------------------------------------------------------
+J) UI INTEGRATION
+------------------------------------------------------------
+
+Add new section in Moderator/Admin dashboard:
+“Advanced Intelligence”
+
+Tabs:
+- Predictive
+- Patterns
+- Stress Dynamics
+- Team View
+- Development
+- Fairness
+- Longitudinal
+- Hypotheses
+
+Each section:
+- toggleable per workspace
+- labeled “AI-Assisted Analysis”
+- exportable as appendix
+
+------------------------------------------------------------
+K) PERMISSIONS
+------------------------------------------------------------
+
+Add permissions:
+- advanced_intelligence.view
+- advanced_intelligence.generate
+- advanced_intelligence.export
+
+Default:
+- ADMIN: full
+- MODERATOR: generate + view
+- HR_CLIENT: view only if explicitly enabled
+- OBSERVER: none
+
+------------------------------------------------------------
+Definition of Done
+------------------------------------------------------------
+
+- Predictive profile generates structured risk indicators.
+- Leadership archetype map is computed.
+- Difficulty events recorded and influence metadata.
+- Team-level diagnostics available when multiple assessments exist.
+- Development blueprint auto-generated.
+- Fairness analysis detects variance anomalies.
+- Longitudinal trajectory computed.
+- Hypotheses include evidence + counter-evidence.
+- All AI outputs are transparent, confidence-scored, and auditable.
