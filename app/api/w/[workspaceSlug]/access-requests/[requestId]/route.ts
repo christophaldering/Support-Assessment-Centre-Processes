@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth, getWorkspaceAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
 import bcrypt from "bcryptjs";
+import { sendAccessApprovedEmail, sendAccessRejectedEmail } from "@/lib/email";
 
 interface RouteContext {
   params: { workspaceSlug: string; requestId: string };
@@ -41,6 +42,8 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   }
 
   const { action, roles } = await req.json();
+
+  const baseUrl = req.nextUrl.origin;
 
   if (action === "approve") {
     const assignedRoles = roles && roles.length > 0 ? roles : ["OBSERVER"];
@@ -90,6 +93,18 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       }),
     ]);
 
+    try {
+      await sendAccessApprovedEmail(
+        accessRequest.email,
+        accessRequest.name,
+        workspace.name,
+        workspace.slug,
+        baseUrl
+      );
+    } catch (emailErr) {
+      console.error("Failed to send approval email:", emailErr);
+    }
+
     return NextResponse.json({ success: true, userCreated: true });
   }
 
@@ -102,6 +117,16 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
         reviewedBy: userSession?.userId || "master",
       },
     });
+
+    try {
+      await sendAccessRejectedEmail(
+        accessRequest.email,
+        accessRequest.name,
+        workspace.name
+      );
+    } catch (emailErr) {
+      console.error("Failed to send rejection email:", emailErr);
+    }
 
     return NextResponse.json({ success: true });
   }
