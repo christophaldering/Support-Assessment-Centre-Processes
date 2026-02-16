@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout";
 
 import Landing from "@/pages/landing";
+import PlatformLanding from "@/pages/platform-landing";
 import Portal from "@/pages/portal";
 import CustomerPortal from "@/pages/customer-portal";
 import Overview from "@/pages/overview";
@@ -18,11 +19,15 @@ import News from "@/pages/news";
 import NotFound from "@/pages/not-found";
 import Admin from "@/pages/admin";
 import Observer from "@/pages/observer";
+import WorkspaceSelector from "@/pages/workspace-selector";
+import PlatformLogin from "@/pages/platform-login";
+import CandidatePortal from "@/pages/candidate-portal";
+import WorkspaceDashboard from "@/pages/workspace-dashboard";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Landing} />
+      <Route path="/" component={PlatformLanding} />
       <Route path="/portal" component={Portal} />
       <Route path="/portal/:customerId" component={CustomerPortal} />
 
@@ -51,6 +56,10 @@ function Router() {
       <Route path="/overview"><Redirect to="/case/varexia" /></Route>
       <Route path="/admin" component={Admin} />
       <Route path="/observer" component={Observer} />
+      <Route path="/workspaces" component={WorkspaceSelector} />
+      <Route path="/login" component={PlatformLogin} />
+      <Route path="/candidate" component={CandidatePortal} />
+      <Route path="/workspace/:slug" component={WorkspaceDashboard} />
 
       <Route component={NotFound} />
     </Switch>

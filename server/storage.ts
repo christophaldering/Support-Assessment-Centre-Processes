@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, arrayContains } from "drizzle-orm";
 import { db } from "./db";
 import {
   users,
@@ -10,6 +10,20 @@ import {
   selfAssessments,
   timedReleases,
   observerSessions,
+  workspaces,
+  platformUsers,
+  competencyModels,
+  competencyNodes,
+  scaleDefinitions,
+  assessments,
+  exercises,
+  candidateProfiles,
+  observerAssignments,
+  exerciseCompetencyMappings,
+  ratings,
+  auditLogs,
+  consentTemplates,
+  consentRecords,
   type User,
   type InsertUser,
   type AssessmentResponse,
@@ -28,6 +42,34 @@ import {
   type InsertTimedRelease,
   type ObserverSession,
   type InsertObserverSession,
+  type Workspace,
+  type InsertWorkspace,
+  type PlatformUser,
+  type InsertPlatformUser,
+  type CompetencyModel,
+  type InsertCompetencyModel,
+  type CompetencyNode,
+  type InsertCompetencyNode,
+  type ScaleDefinition,
+  type InsertScaleDefinition,
+  type Assessment,
+  type InsertAssessment,
+  type Exercise,
+  type InsertExercise,
+  type CandidateProfile,
+  type InsertCandidateProfile,
+  type ObserverAssignment,
+  type InsertObserverAssignment,
+  type ExerciseCompetencyMapping,
+  type InsertExerciseCompetencyMapping,
+  type Rating,
+  type InsertRating,
+  type AuditLog,
+  type InsertAuditLog,
+  type ConsentTemplate,
+  type InsertConsentTemplate,
+  type ConsentRecord,
+  type InsertConsentRecord,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -72,6 +114,64 @@ export interface IStorage {
   getObserverSession(observerName: string, targetSessionId: string, caseId: string): Promise<ObserverSession | undefined>;
   createObserverSession(os: InsertObserverSession): Promise<ObserverSession>;
   getAllObserverSessions(): Promise<ObserverSession[]>;
+
+  getWorkspaces(): Promise<Workspace[]>;
+  getWorkspaceBySlug(slug: string): Promise<Workspace | undefined>;
+  getWorkspace(id: string): Promise<Workspace | undefined>;
+  createWorkspace(ws: InsertWorkspace): Promise<Workspace>;
+  updateWorkspace(id: string, data: Partial<Workspace>): Promise<Workspace>;
+
+  getPlatformUser(id: string): Promise<PlatformUser | undefined>;
+  getPlatformUserByEmail(email: string): Promise<PlatformUser | undefined>;
+  getPlatformUsersByWorkspace(workspaceId: string): Promise<PlatformUser[]>;
+  getPlatformUsersByRole(workspaceId: string, role: string): Promise<PlatformUser[]>;
+  createPlatformUser(user: InsertPlatformUser): Promise<PlatformUser>;
+  updatePlatformUser(id: string, data: Partial<PlatformUser>): Promise<PlatformUser>;
+
+  getCompetencyModels(workspaceId: string): Promise<CompetencyModel[]>;
+  getCompetencyModel(id: string): Promise<CompetencyModel | undefined>;
+  createCompetencyModel(model: InsertCompetencyModel): Promise<CompetencyModel>;
+
+  getCompetencyNodes(modelId: string): Promise<CompetencyNode[]>;
+  createCompetencyNode(node: InsertCompetencyNode): Promise<CompetencyNode>;
+
+  getScaleDefinitions(workspaceId: string): Promise<ScaleDefinition[]>;
+  createScaleDefinition(scale: InsertScaleDefinition): Promise<ScaleDefinition>;
+
+  getAssessmentsByWorkspace(workspaceId: string): Promise<Assessment[]>;
+  getAssessmentById(id: string): Promise<Assessment | undefined>;
+  createAssessmentRecord(assessment: InsertAssessment): Promise<Assessment>;
+  updateAssessmentRecord(id: string, data: Partial<Assessment>): Promise<Assessment>;
+
+  getExercisesByAssessment(assessmentId: string): Promise<Exercise[]>;
+  getExerciseById(id: string): Promise<Exercise | undefined>;
+  createExerciseRecord(exercise: InsertExercise): Promise<Exercise>;
+
+  getCandidateProfiles(assessmentId: string): Promise<CandidateProfile[]>;
+  getCandidateProfileByUser(assessmentId: string, userId: string): Promise<CandidateProfile | undefined>;
+  getCandidateProfilesByUserId(userId: string): Promise<CandidateProfile[]>;
+  createCandidateProfile(profile: InsertCandidateProfile): Promise<CandidateProfile>;
+  updateCandidateProfile(id: string, data: Partial<CandidateProfile>): Promise<CandidateProfile>;
+
+  getObserverAssignments(assessmentId: string): Promise<ObserverAssignment[]>;
+  createObserverAssignment(assignment: InsertObserverAssignment): Promise<ObserverAssignment>;
+
+  getRatingsByAssessment(assessmentId: string): Promise<Rating[]>;
+  getRatingsByObserver(assessmentId: string, observerUserId: string): Promise<Rating[]>;
+  getRatingsByCandidate(assessmentId: string, candidateUserId: string): Promise<Rating[]>;
+  createRatingRecord(rating: InsertRating): Promise<Rating>;
+  upsertRatingRecord(rating: InsertRating): Promise<Rating>;
+
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+  getAuditLogs(workspaceId: string, limit?: number): Promise<AuditLog[]>;
+
+  getConsentTemplates(workspaceId: string): Promise<ConsentTemplate[]>;
+  createConsentTemplate(template: InsertConsentTemplate): Promise<ConsentTemplate>;
+  getConsentRecords(userId: string): Promise<ConsentRecord[]>;
+  createConsentRecord(record: InsertConsentRecord): Promise<ConsentRecord>;
+
+  getExerciseCompetencyMappings(exerciseId: string): Promise<ExerciseCompetencyMapping[]>;
+  createExerciseCompetencyMapping(mapping: InsertExerciseCompetencyMapping): Promise<ExerciseCompetencyMapping>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -370,6 +470,295 @@ export class DatabaseStorage implements IStorage {
 
   async getAllObserverSessions(): Promise<ObserverSession[]> {
     return db.select().from(observerSessions).orderBy(desc(observerSessions.createdAt));
+  }
+
+  async getWorkspaces(): Promise<Workspace[]> {
+    return db.select().from(workspaces);
+  }
+
+  async getWorkspaceBySlug(slug: string): Promise<Workspace | undefined> {
+    const [ws] = await db.select().from(workspaces).where(eq(workspaces.slug, slug));
+    return ws;
+  }
+
+  async getWorkspace(id: string): Promise<Workspace | undefined> {
+    const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, id));
+    return ws;
+  }
+
+  async createWorkspace(ws: InsertWorkspace): Promise<Workspace> {
+    const [created] = await db.insert(workspaces).values(ws).returning();
+    return created;
+  }
+
+  async updateWorkspace(id: string, data: Partial<Workspace>): Promise<Workspace> {
+    const [updated] = await db.update(workspaces).set(data).where(eq(workspaces.id, id)).returning();
+    return updated;
+  }
+
+  async getPlatformUser(id: string): Promise<PlatformUser | undefined> {
+    const [user] = await db.select().from(platformUsers).where(eq(platformUsers.id, id));
+    return user;
+  }
+
+  async getPlatformUserByEmail(email: string): Promise<PlatformUser | undefined> {
+    const [user] = await db.select().from(platformUsers).where(eq(platformUsers.email, email));
+    return user;
+  }
+
+  async getPlatformUsersByWorkspace(workspaceId: string): Promise<PlatformUser[]> {
+    return db.select().from(platformUsers).where(eq(platformUsers.workspaceId, workspaceId));
+  }
+
+  async getPlatformUsersByRole(workspaceId: string, role: string): Promise<PlatformUser[]> {
+    return db
+      .select()
+      .from(platformUsers)
+      .where(
+        and(
+          eq(platformUsers.workspaceId, workspaceId),
+          arrayContains(platformUsers.roles, [role])
+        )
+      );
+  }
+
+  async createPlatformUser(user: InsertPlatformUser): Promise<PlatformUser> {
+    const [created] = await db.insert(platformUsers).values(user).returning();
+    return created;
+  }
+
+  async updatePlatformUser(id: string, data: Partial<PlatformUser>): Promise<PlatformUser> {
+    const [updated] = await db.update(platformUsers).set(data).where(eq(platformUsers.id, id)).returning();
+    return updated;
+  }
+
+  async getCompetencyModels(workspaceId: string): Promise<CompetencyModel[]> {
+    return db.select().from(competencyModels).where(eq(competencyModels.workspaceId, workspaceId));
+  }
+
+  async getCompetencyModel(id: string): Promise<CompetencyModel | undefined> {
+    const [model] = await db.select().from(competencyModels).where(eq(competencyModels.id, id));
+    return model;
+  }
+
+  async createCompetencyModel(model: InsertCompetencyModel): Promise<CompetencyModel> {
+    const [created] = await db.insert(competencyModels).values(model).returning();
+    return created;
+  }
+
+  async getCompetencyNodes(modelId: string): Promise<CompetencyNode[]> {
+    return db
+      .select()
+      .from(competencyNodes)
+      .where(eq(competencyNodes.competencyModelId, modelId))
+      .orderBy(competencyNodes.ordering);
+  }
+
+  async createCompetencyNode(node: InsertCompetencyNode): Promise<CompetencyNode> {
+    const [created] = await db.insert(competencyNodes).values(node).returning();
+    return created;
+  }
+
+  async getScaleDefinitions(workspaceId: string): Promise<ScaleDefinition[]> {
+    return db.select().from(scaleDefinitions).where(eq(scaleDefinitions.workspaceId, workspaceId));
+  }
+
+  async createScaleDefinition(scale: InsertScaleDefinition): Promise<ScaleDefinition> {
+    const [created] = await db.insert(scaleDefinitions).values(scale).returning();
+    return created;
+  }
+
+  async getAssessmentsByWorkspace(workspaceId: string): Promise<Assessment[]> {
+    return db
+      .select()
+      .from(assessments)
+      .where(eq(assessments.workspaceId, workspaceId))
+      .orderBy(desc(assessments.createdAt));
+  }
+
+  async getAssessmentById(id: string): Promise<Assessment | undefined> {
+    const [assessment] = await db.select().from(assessments).where(eq(assessments.id, id));
+    return assessment;
+  }
+
+  async createAssessmentRecord(assessment: InsertAssessment): Promise<Assessment> {
+    const [created] = await db.insert(assessments).values(assessment).returning();
+    return created;
+  }
+
+  async updateAssessmentRecord(id: string, data: Partial<Assessment>): Promise<Assessment> {
+    const [updated] = await db.update(assessments).set(data).where(eq(assessments.id, id)).returning();
+    return updated;
+  }
+
+  async getExercisesByAssessment(assessmentId: string): Promise<Exercise[]> {
+    return db
+      .select()
+      .from(exercises)
+      .where(eq(exercises.assessmentId, assessmentId))
+      .orderBy(exercises.ordering);
+  }
+
+  async getExerciseById(id: string): Promise<Exercise | undefined> {
+    const [exercise] = await db.select().from(exercises).where(eq(exercises.id, id));
+    return exercise;
+  }
+
+  async createExerciseRecord(exercise: InsertExercise): Promise<Exercise> {
+    const [created] = await db.insert(exercises).values(exercise).returning();
+    return created;
+  }
+
+  async getCandidateProfiles(assessmentId: string): Promise<CandidateProfile[]> {
+    return db.select().from(candidateProfiles).where(eq(candidateProfiles.assessmentId, assessmentId));
+  }
+
+  async getCandidateProfileByUser(assessmentId: string, userId: string): Promise<CandidateProfile | undefined> {
+    const [profile] = await db
+      .select()
+      .from(candidateProfiles)
+      .where(
+        and(
+          eq(candidateProfiles.assessmentId, assessmentId),
+          eq(candidateProfiles.userId, userId)
+        )
+      );
+    return profile;
+  }
+
+  async getCandidateProfilesByUserId(userId: string): Promise<CandidateProfile[]> {
+    return db.select().from(candidateProfiles).where(eq(candidateProfiles.userId, userId));
+  }
+
+  async createCandidateProfile(profile: InsertCandidateProfile): Promise<CandidateProfile> {
+    const [created] = await db.insert(candidateProfiles).values(profile).returning();
+    return created;
+  }
+
+  async updateCandidateProfile(id: string, data: Partial<CandidateProfile>): Promise<CandidateProfile> {
+    const [updated] = await db.update(candidateProfiles).set(data).where(eq(candidateProfiles.id, id)).returning();
+    return updated;
+  }
+
+  async getObserverAssignments(assessmentId: string): Promise<ObserverAssignment[]> {
+    return db.select().from(observerAssignments).where(eq(observerAssignments.assessmentId, assessmentId));
+  }
+
+  async createObserverAssignment(assignment: InsertObserverAssignment): Promise<ObserverAssignment> {
+    const [created] = await db.insert(observerAssignments).values(assignment).returning();
+    return created;
+  }
+
+  async getRatingsByAssessment(assessmentId: string): Promise<Rating[]> {
+    return db.select().from(ratings).where(eq(ratings.assessmentId, assessmentId));
+  }
+
+  async getRatingsByObserver(assessmentId: string, observerUserId: string): Promise<Rating[]> {
+    return db
+      .select()
+      .from(ratings)
+      .where(
+        and(
+          eq(ratings.assessmentId, assessmentId),
+          eq(ratings.observerUserId, observerUserId)
+        )
+      );
+  }
+
+  async getRatingsByCandidate(assessmentId: string, candidateUserId: string): Promise<Rating[]> {
+    return db
+      .select()
+      .from(ratings)
+      .where(
+        and(
+          eq(ratings.assessmentId, assessmentId),
+          eq(ratings.candidateUserId, candidateUserId)
+        )
+      );
+  }
+
+  async createRatingRecord(rating: InsertRating): Promise<Rating> {
+    const [created] = await db.insert(ratings).values(rating).returning();
+    return created;
+  }
+
+  async upsertRatingRecord(rating: InsertRating): Promise<Rating> {
+    const existing = await db
+      .select()
+      .from(ratings)
+      .where(
+        and(
+          eq(ratings.assessmentId, rating.assessmentId),
+          eq(ratings.exerciseId, rating.exerciseId),
+          eq(ratings.competencyNodeId, rating.competencyNodeId),
+          eq(ratings.observerUserId, rating.observerUserId),
+          eq(ratings.candidateUserId, rating.candidateUserId)
+        )
+      );
+
+    if (existing.length > 0) {
+      const [updated] = await db
+        .update(ratings)
+        .set({
+          rawScore: rating.rawScore,
+          scaleId: rating.scaleId,
+          notes: rating.notes,
+          evidenceSituation: rating.evidenceSituation,
+          evidenceTask: rating.evidenceTask,
+          evidenceAction: rating.evidenceAction,
+          evidenceResult: rating.evidenceResult,
+          normalizedScore: rating.normalizedScore,
+          version: (existing[0].version ?? 1) + 1,
+          previousVersionId: existing[0].id,
+        })
+        .where(eq(ratings.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db.insert(ratings).values(rating).returning();
+    return created;
+  }
+
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const [created] = await db.insert(auditLogs).values(log).returning();
+    return created;
+  }
+
+  async getAuditLogs(workspaceId: string, limit: number = 100): Promise<AuditLog[]> {
+    return db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.workspaceId, workspaceId))
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(limit);
+  }
+
+  async getConsentTemplates(workspaceId: string): Promise<ConsentTemplate[]> {
+    return db.select().from(consentTemplates).where(eq(consentTemplates.workspaceId, workspaceId));
+  }
+
+  async createConsentTemplate(template: InsertConsentTemplate): Promise<ConsentTemplate> {
+    const [created] = await db.insert(consentTemplates).values(template).returning();
+    return created;
+  }
+
+  async getConsentRecords(userId: string): Promise<ConsentRecord[]> {
+    return db.select().from(consentRecords).where(eq(consentRecords.userId, userId));
+  }
+
+  async createConsentRecord(record: InsertConsentRecord): Promise<ConsentRecord> {
+    const [created] = await db.insert(consentRecords).values(record).returning();
+    return created;
+  }
+
+  async getExerciseCompetencyMappings(exerciseId: string): Promise<ExerciseCompetencyMapping[]> {
+    return db.select().from(exerciseCompetencyMappings).where(eq(exerciseCompetencyMappings.exerciseId, exerciseId));
+  }
+
+  async createExerciseCompetencyMapping(mapping: InsertExerciseCompetencyMapping): Promise<ExerciseCompetencyMapping> {
+    const [created] = await db.insert(exerciseCompetencyMappings).values(mapping).returning();
+    return created;
   }
 }
 
