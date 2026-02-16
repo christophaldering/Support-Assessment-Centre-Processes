@@ -2,9 +2,7 @@
 
 ## Overview
 
-Enterprise-grade, multi-tenant SaaS platform for hosting executive assessment centers. Currently in **Phase 4 — Competency Models, Scales, Weighting Profiles & Exercise Mapping**.
-
-Tech stack: Next.js 14 (App Router) + TypeScript (strict) + Prisma + PostgreSQL + Tailwind CSS.
+The Executive Diagnostics Platform is an enterprise-grade, multi-tenant SaaS solution designed to host executive assessment centers. Its primary purpose is to streamline and enhance the process of executive evaluation through advanced diagnostics. Key capabilities include observer ratings, data consolidation, comprehensive consent management, audio processing (transcription and AI-driven summarization), AI-powered insights and recommendations, robust reporting, and detailed analytics. The platform aims to provide a sophisticated, efficient, and compliant environment for executive assessment, supporting organizational development and talent management.
 
 ## User Preferences
 
@@ -16,173 +14,28 @@ Dual branding:
 Default passwords: "Christoph" for all access
 Footer credit: "© Christoph Aldering · Private initiative / concept"
 
-## Project Structure
-
-```
-/app                          → Next.js App Router
-  page.tsx                    → Neutral landing page with feature overview
-  layout.tsx                  → Root layout with metadata
-  globals.css                 → Tailwind + design baseline + Google Fonts
-  /admin/login/page.tsx       → Master admin password gate
-  /admin/workspaces/page.tsx  → Workspace selector (loads from DB)
-  /admin/workspaces/layout.tsx → Server-side master auth guard
-  /w/[workspaceSlug]/
-    admin/page.tsx            → Workspace admin dashboard (themed)
-    admin/users/page.tsx      → User management (create, roles, CSV placeholder)
-    admin/users/layout.tsx    → Server-side RBAC guard (users.read)
-    admin/assessments/page.tsx → Assessment list & CRUD management
-    admin/assessments/[assessmentId]/page.tsx → Assessment detail with exercises & documents
-    admin/competencies/page.tsx → Competency models, scales, weighting profiles & exercise mapping
-    login/page.tsx            → User login (email + password)
-    change-password/page.tsx  → Forced password change (candidates)
-    assessment/page.tsx       → Candidate assessment portal (exercises + documents)
-    observer/page.tsx         → Observer/HR portal (read-only assessments view)
-    reset-password/page.tsx   → Password reset request form
-  /api/health/route.ts        → Health check endpoint
-  /api/auth/master/route.ts   → Master admin password verification
-  /api/auth/workspace/route.ts → Workspace admin password verification
-  /api/auth/login/route.ts    → User login (email + password + workspace)
-  /api/auth/logout/route.ts   → Logout (clears all session cookies)
-  /api/auth/me/route.ts       → Current user info
-  /api/auth/change-password/route.ts → Change password (supports forced change)
-  /api/auth/reset-request/route.ts   → Password reset token creation
-  /api/auth/reset-confirm/route.ts   → Password reset confirmation
-  /api/workspaces/route.ts    → List workspaces (master-auth protected)
-  /api/w/[workspaceSlug]/
-    users/route.ts            → List + create users (RBAC protected)
-    users/[userId]/route.ts   → Update + deactivate users (RBAC protected)
-    assessments/route.ts      → List + create assessments (RBAC protected)
-    assessments/[assessmentId]/route.ts → Get/update/delete assessment
-    assessments/[assessmentId]/exercises/route.ts → List + create exercises
-    assessments/[assessmentId]/exercises/[exerciseId]/route.ts → Get/update/delete exercise
-    assessments/[assessmentId]/documents/route.ts → List + upload documents
-    assessments/[assessmentId]/documents/[documentId]/route.ts → Get (with download URL) + delete document
-    my-assessment/route.ts    → Candidate's own assessment with exercises & filtered documents
-    my-assessment/documents/[documentId]/route.ts → Candidate document download (role + workspace verified)
-    competency-models/route.ts → List + create competency models
-    competency-models/[modelId]/route.ts → Get/update/delete competency model
-    competency-models/[modelId]/nodes/route.ts → List + create competency nodes
-    competency-models/[modelId]/nodes/[nodeId]/route.ts → Get/update/delete node
-    competency-models/[modelId]/nodes/reorder/route.ts → Batch reorder nodes
-    competency-models/[modelId]/weighting-profiles/route.ts → List + create weighting profiles
-    competency-models/[modelId]/weighting-profiles/[profileId]/route.ts → Get/update/delete profile
-    scales/route.ts           → List + create scale definitions
-    scales/[scaleId]/route.ts → Get/update/delete scale
-    assessments/[assessmentId]/exercise-competency-mappings/route.ts → Exercise↔competency matrix
-  /api/ai/route.ts            → AI assist stub (generate_model, write_anchors, suggest_weights)
-/lib                          → Shared utilities & modules
-  db.ts                       → Prisma client singleton
-  session.ts                  → Cookie-based auth helpers (master + workspace + user)
-  rbac.ts                     → Role-based access control (6 roles, permissions map)
-  object-storage.ts           → Replit object storage helpers (presigned upload/download URLs)
-  auth.ts                     → Authentication (stub)
-  consent.ts                  → GDPR consent management (stub)
-  audit.ts                    → Audit logging (stub)
-  ai.ts                       → AI integration helpers (stub)
-/prisma
-  schema.prisma               → Prisma schema (+ CompetencyModel, CompetencyNode, ScaleDefinition, WeightingProfile, ExerciseCompetencyMapping)
-  seed.ts                     → Seeds workspace + admin + assessment + competency model + scale
-```
-
-## Roles & Permissions
-
-| Role               | Key Permissions                                           |
-| ------------------- | --------------------------------------------------------- |
-| ADMIN              | Full access: workspace, users, assessments, reports, theme |
-| MODERATOR          | Assessments CRUD, candidates, reports, read users          |
-| OBSERVER           | Read assessments, candidates, reports                      |
-| PROJECT_ASSISTANT  | Assessments read/update, candidates CRUD, read users       |
-| HR_CLIENT          | Read assessments, candidates, reports                      |
-| CANDIDATE          | Own assessment only                                        |
-
-## Access Control Flow
-
-1. **Landing page** (`/`) — Neutral platform landing, "Administrator Access" button
-2. **Master admin gate** (`/admin/login`) — Single password (env var `MASTER_ADMIN_PASSWORD_HASH`, bcrypt)
-3. **Workspace selector** (`/admin/workspaces`) — Lists workspaces from DB, protected by master auth cookie
-4. **Workspace admin password** — Per-workspace password (bcrypt hash stored on Workspace model)
-5. **Workspace dashboard** (`/w/{slug}/admin`) — Themed admin dashboard (master auth OR workspace auth OR user session with internal role)
-6. **User login** (`/w/{slug}/login`) — Email + password, workspace-scoped. Routes: CANDIDATE→assessment, OBSERVER/HR_CLIENT→observer, others→admin
-7. **Candidate flow** — Login → forced password change → assessment portal (exercises + documents)
-8. **Observer flow** — Login → observer portal (read-only assessments and exercises)
-9. **Assessment management** (`/w/{slug}/admin/assessments`) — RBAC protected (assessments.read/create/update/delete)
-10. **User management** (`/w/{slug}/admin/users`) — RBAC protected (requires `users.read` permission)
-
-All default passwords: "Christoph"
-Seeded admin user: admin@aestimamus.de
-
 ## System Architecture
 
-- **Framework**: Next.js 14 App Router + TypeScript (strict mode)
-- **ORM**: Prisma with PostgreSQL
-- **Styling**: Tailwind CSS v3 with custom design tokens
-- **Auth**: HTTP-only cookies with 4-hour expiry
-  - `edp_master_auth` — master admin session
-  - `edp_workspace_auth` — workspace admin session
-  - `edp_user_session` — user session (JSON: userId, workspaceSlug, roles)
-- **Password hashing**: bcryptjs
-- **RBAC**: Role-to-permissions map, union of permissions across roles
-- **Object Storage**: Replit built-in (GCS-backed), presigned URLs for upload/download
-- **Linting**: ESLint (next/core-web-vitals) + Prettier
-- **Port**: 5000 (bound to 0.0.0.0)
+The platform is built on a modern full-stack architecture utilizing Next.js 14 (App Router) with TypeScript for the frontend and API routes. Data persistence is managed with Prisma ORM and PostgreSQL. Styling is handled by Tailwind CSS, allowing for a consistent and customizable design system.
 
-## Database
-
-- **Provider**: PostgreSQL (via DATABASE_URL env var)
-- **Tables**: `health_check`, `workspaces`, `themes`, `users`, `assessments`, `exercises`, `documents`, `password_reset_tokens`
-- **Seeded data**: aestimamus workspace with copper theme, admin user, sample assessment with 4 exercises
-- **Schema management**: `npx prisma db push` for development
-
-## Document Upload Flow
-
-1. Client sends JSON metadata (name, fileName, fileSize, mimeType) to POST /api/w/{slug}/assessments/{id}/documents
-2. Server creates Document record in DB and returns presigned upload URL
-3. Client uploads file directly to presigned URL (Google Cloud Storage)
-4. For download: GET /api/.../documents/{docId} returns signed download URL (1hr TTL)
-5. Documents have role-based visibility (visibleTo array) and watermark flag
-
-## Environment Variables
-
-| Variable                      | Description                              |
-| ----------------------------- | ---------------------------------------- |
-| `DATABASE_URL`                | PostgreSQL connection string (required)  |
-| `MASTER_ADMIN_PASSWORD_HASH`  | bcrypt hash of master admin password     |
-| `PRIVATE_OBJECT_DIR`          | Object storage private directory path    |
-| `PUBLIC_OBJECT_SEARCH_PATHS`  | Object storage public search paths       |
-
-## Build & Development
-
-- `npm run dev` — Start dev server on port 5000
-- `npm run build` — Production build
-- `npm run start` — Start production server
-- `npm run lint` — ESLint check
-- `npm run format` — Prettier format
-- `npm run db:push` — Push schema to database
-- `npm run db:generate` — Regenerate Prisma client
-- `npm run db:seed` — Run seed script
-
-## Design System Baseline
-
-- **Primary**: Dark navy `#0f172a`
-- **Accent**: Blue `#3b82f6`
-- **Fonts**: Inter (body, sans-serif) + Playfair Display (headings, serif)
-- **Backgrounds**: White with subtle slate borders
-- **Workspace theming**: Per-workspace colors applied via inline styles on `/w/{slug}/admin`
-
-## Exercise Types
-
-| Key              | German Label       |
-| ---------------- | ------------------ |
-| presentation     | Präsentation       |
-| interview        | Interview          |
-| group_discussion | Gruppendiskussion  |
-| case_study       | Fallstudie         |
-| role_play        | Rollenspiel        |
-| in_tray          | Postkorb           |
-| psychometric     | Psychometrisch     |
-| other            | Sonstiges          |
+**Key Architectural Decisions:**
+- **UI/UX:** A dual-branding approach supports both a neutral platform theme (dark navy, blue accent) and a customizable workspace theme (e.g., aestimamus workspace with copper/terracotta). The platform supports per-workspace theming with live preview capabilities for colors, fonts, and logos.
+- **Authentication & Authorization:** Employs HTTP-only cookies for session management (master admin, workspace admin, and user sessions). Password hashing uses bcryptjs. A granular Role-Based Access Control (RBAC) system with six distinct roles (ADMIN, MODERATOR, OBSERVER, PROJECT_ASSISTANT, HR_CLIENT, CANDIDATE) ensures secure access to resources and features based on a role-to-permissions map.
+- **Data Processing Pipelines:**
+    - **Observer Rating System:** Features an offline-first UI for exercise x competency matrix ratings, with localStorage caching, auto-sync, and conflict resolution.
+    - **Consolidation Engine:** Configurable methods (mean, median, trimmed_mean) for score consolidation, including variance calculation and moderator override.
+    - **Consent Management:** GDPR-compliant system with versioned templates, granular consent records, and API-level feature gating (`checkConsent()`).
+    - **Audio Processing:** A pipeline for uploading audio to object storage, transcribing via OpenAI, and generating structured AI summaries, with configurable retention policies.
+- **AI Integration:** An enhanced AI layer integrates OpenAI services (via Replit AI Integrations) for tasks like competency model generation, behavioral anchor creation, recommendations, and autonomous diagnostics. All AI actions are protected by RBAC, consent verification, and full audit logging. Transparency tags are added to all AI-generated responses.
+- **Reporting:** Generates comprehensive reports in DOCX, PDF, and PPTX formats, including executive summaries, competency profiles, and AI-generated recommendations. Reports are versioned and stored in object storage.
+- **Analytics:** Provides a dashboard with normalized scores, benchmark views, and visual representations of competency averages, with outlier highlighting.
+- **Telemetry:** A usage event logging system tracks platform activities, supporting audit trails and platform insights.
 
 ## External Dependencies
 
-- **PostgreSQL**: Required. Connection via `DATABASE_URL` environment variable.
-- **Replit Object Storage**: For document uploads. Auto-configured via integration.
+- **PostgreSQL**: The primary database for all persistent data.
+- **Replit Object Storage**: Used for storing uploaded documents, audio recordings, and generated reports. It leverages Google Cloud Storage internally.
+- **OpenAI**: Integrated via Replit AI Integrations for advanced AI functionalities such as transcription, summarization, competency model generation, behavioral anchors, recommendations, and autonomous diagnostics.
+- **`docx`**: A JavaScript library for generating DOCX format reports.
+- **`pdfkit`**: A JavaScript library for generating PDF format reports.
+- **`pptxgenjs`**: A JavaScript library for generating PowerPoint (PPTX) format reports.
