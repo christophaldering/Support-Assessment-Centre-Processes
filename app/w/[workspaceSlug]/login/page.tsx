@@ -13,6 +13,7 @@ export default function WorkspaceUserLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [statusInfo, setStatusInfo] = useState<"pending" | "rejected" | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -59,6 +60,7 @@ export default function WorkspaceUserLoginPage() {
   const handleActivate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setStatusInfo(null);
     setLoading(true);
 
     try {
@@ -71,6 +73,9 @@ export default function WorkspaceUserLoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.status === "pending" || data.status === "rejected") {
+          setStatusInfo(data.status);
+        }
         setError(data.error || "Aktivierung fehlgeschlagen.");
         return;
       }
@@ -199,7 +204,23 @@ export default function WorkspaceUserLoginPage() {
                 />
               </div>
 
-              {error && <p className="text-sm text-red-500" data-testid="text-activate-error">{error}</p>}
+              {error && (
+                <div
+                  className={`text-sm p-3 rounded-lg ${
+                    statusInfo === "pending"
+                      ? "bg-amber-50 border border-amber-200 text-amber-800"
+                      : statusInfo === "rejected"
+                      ? "bg-red-50 border border-red-200 text-red-700"
+                      : "text-red-500"
+                  }`}
+                  data-testid="text-activate-error"
+                >
+                  <p>{error}</p>
+                  {statusInfo === "pending" && (
+                    <p className="mt-1 text-xs text-amber-600">Ihr Workspace-Administrator wird Sie informieren, sobald Ihr Zugang freigeschaltet ist.</p>
+                  )}
+                </div>
+              )}
 
               <button
                 type="submit"

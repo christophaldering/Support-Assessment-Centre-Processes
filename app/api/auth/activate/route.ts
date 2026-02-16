@@ -18,13 +18,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Workspace nicht gefunden." }, { status: 404 });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     const user = await prisma.user.findUnique({
-      where: { email_workspaceId: { email: email.toLowerCase().trim(), workspaceId: workspace.id } },
+      where: { email_workspaceId: { email: normalizedEmail, workspaceId: workspace.id } },
     });
 
     if (!user || user.status !== "active") {
+      const accessRequest = await prisma.accessRequest.findUnique({
+        where: { email_workspaceId: { email: normalizedEmail, workspaceId: workspace.id } },
+      });
+
+      if (accessRequest) {
+        if (accessRequest.status === "pending") {
+          return NextResponse.json(
+            { error: "Ihre Zugangsanfrage wird noch geprüft. Bitte warten Sie auf die Genehmigung durch den Workspace-Administrator.", status: "pending" },
+            { status: 403 }
+          );
+        }
+        if (accessRequest.status === "rejected") {
+          return NextResponse.json(
+            { error: "Ihre Zugangsanfrage wurde leider abgelehnt. Bitte wenden Sie sich an den Workspace-Administrator.", status: "rejected" },
+            { status: 403 }
+          );
+        }
+      }
+
       return NextResponse.json(
-        { error: "Kein Konto mit dieser E-Mail-Adresse gefunden." },
+        { error: "Kein Konto mit dieser E-Mail-Adresse gefunden. Bitte fordern Sie zunächst einen Zugang an.", status: "not_found" },
         { status: 404 }
       );
     }

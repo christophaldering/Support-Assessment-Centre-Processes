@@ -30,6 +30,7 @@ export default function AccessRequestsPage() {
   const [requests, setRequests] = useState<AccessRequestRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [roleSelections, setRoleSelections] = useState<Record<string, string[]>>({});
@@ -68,6 +69,8 @@ export default function AccessRequestsPage() {
 
   const handleAction = async (requestId: string, action: "approve" | "reject") => {
     setProcessingId(requestId);
+    setSuccessMessage("");
+    const request = requests.find((r) => r.id === requestId);
     try {
       const roles = roleSelections[requestId] || ["OBSERVER"];
       const res = await fetch(`/api/w/${workspaceSlug}/access-requests/${requestId}`, {
@@ -80,6 +83,13 @@ export default function AccessRequestsPage() {
         const data = await res.json();
         setError(data.error || "Aktion fehlgeschlagen.");
         return;
+      }
+
+      const personName = request?.name || request?.email || "Person";
+      if (action === "approve") {
+        setSuccessMessage(`${personName} wurde genehmigt. Bitte informieren Sie die Person, dass sie sich jetzt über "Erstanmeldung" auf der Login-Seite registrieren kann.`);
+      } else {
+        setSuccessMessage(`Anfrage von ${personName} wurde abgelehnt.`);
       }
 
       fetchRequests();
@@ -151,6 +161,12 @@ export default function AccessRequestsPage() {
             ))}
           </div>
         </div>
+
+        {successMessage && (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg" data-testid="text-success">
+            <p className="text-sm text-green-800 font-medium">{successMessage}</p>
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-500 mb-4" data-testid="text-error">{error}</p>}
 
