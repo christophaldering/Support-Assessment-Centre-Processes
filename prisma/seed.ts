@@ -49,6 +49,7 @@ async function main() {
         passwordHash: adminHash,
         roles: ["ADMIN"],
         workspaceId,
+        forcePasswordChange: true,
         status: "active",
       },
     });
