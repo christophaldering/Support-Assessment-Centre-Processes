@@ -128,6 +128,23 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       ],
     },
     {
+      title: "Tools & Modules",
+      titleDe: "Tools & Module",
+      subtitle: "Reusable diagnostic instruments and case studies.",
+      subtitleDe: "Wiederverwendbare Diagnostik-Instrumente und Fallstudien.",
+      priority: "primary" as const,
+      cards: [
+        {
+          title: "Tools & Module",
+          titleEn: "Tools & Modules",
+          desc: "Fallstudien, Übungen und Assessment-Instrumente verwalten und einsetzen.",
+          href: `${base}/modules`,
+          primary: true,
+          badge: "1 aktiv",
+        },
+      ],
+    },
+    {
       title: "Analysis & Judgment",
       titleDe: "Analyse & Urteilsbildung",
       subtitle: "From structured data to defensible insight.",
