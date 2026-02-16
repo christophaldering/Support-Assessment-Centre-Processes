@@ -45,8 +45,11 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
     { title: "Anforderungsanalyse", desc: "Anforderungen analysieren und Assessment-Entwürfe per KI erstellen.", href: `/w/${params.workspaceSlug}/admin/requirements` },
     { title: "Benutzer", desc: "Workspace-Benutzer, Rollen und Berechtigungen verwalten.", href: canManageUsers ? `/w/${params.workspaceSlug}/admin/users` : null },
     { title: "Kompetenzmodelle", desc: "Kompetenzrahmen, Dimensionen und Skalen konfigurieren.", href: `/w/${params.workspaceSlug}/admin/competencies` },
-    { title: "Berichte", desc: "Assessment-Berichte erstellen und prüfen.", href: null },
-    { title: "Theme Editor", desc: "Workspace-Branding und visuelle Identität anpassen.", href: null },
+    { title: "Analysen", desc: "Assessment-Analysen, Kompetenzwerte und Statistiken einsehen.", href: `/w/${params.workspaceSlug}/admin/analytics` },
+    { title: "Einwilligungen", desc: "Einwilligungsvorlagen und -aufzeichnungen verwalten.", href: `/w/${params.workspaceSlug}/admin/consents` },
+    { title: "Theme Editor", desc: "Workspace-Branding und visuelle Identität anpassen.", href: `/w/${params.workspaceSlug}/admin/theme` },
+    { title: "Berichte", desc: "Assessment-Berichte erstellen und prüfen.", href: `/w/${params.workspaceSlug}/admin/reports` },
+    { title: "Audioaufnahmen", desc: "Audioaufnahmen hochladen, transkribieren und zusammenfassen.", href: `/w/${params.workspaceSlug}/admin/audio` },
     { title: "Audit-Protokoll", desc: "Systemaktivitäten und Compliance-Aufzeichnungen prüfen.", href: null },
   ];
 

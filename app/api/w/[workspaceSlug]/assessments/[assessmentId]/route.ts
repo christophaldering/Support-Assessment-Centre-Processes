@@ -33,6 +33,10 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
       include: {
         exercises: { orderBy: { sortOrder: "asc" } },
         documents: true,
+        candidates: {
+          where: { roles: { has: "CANDIDATE" } },
+          select: { id: true, name: true, email: true },
+        },
         _count: { select: { candidates: true } },
       },
     });

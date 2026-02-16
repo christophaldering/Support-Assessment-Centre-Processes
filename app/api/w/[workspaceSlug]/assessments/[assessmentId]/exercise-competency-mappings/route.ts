@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session && !master && !hasPermission(session.roles, "assessments.update")) {
+  if (session && !master && !hasPermission(session.roles, "assessments.read")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -47,7 +47,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
       where: { exerciseId: { in: exerciseIds } },
       include: {
         exercise: { select: { id: true, name: true } },
-        competencyNode: { select: { id: true, name: true } },
+        competencyNode: { select: { id: true, name: true, description: true, sortOrder: true } },
       },
       orderBy: { createdAt: "asc" },
     });

@@ -22,6 +22,10 @@ model Workspace {
   status             String   @default("active")
   adminPasswordHash  String   @map("admin_password_hash")
   dataResidency      String   @default("EU") @map("data_residency")
+  consolidationConfig Json?   @map("consolidation_config")
+  aiEnabled          Boolean  @default(false) @map("ai_enabled")
+  autonomousDiagMode Boolean  @default(false) @map("autonomous_diag_mode")
+  featureFlags       Json?    @map("feature_flags")
   createdAt          DateTime @default(now()) @map("created_at")
 
   theme              Theme?
@@ -31,6 +35,11 @@ model Workspace {
   scaleDefinitions   ScaleDefinition[]
   requirementsAnalyses RequirementsAnalysis[]
   auditLogs          AuditLog[]
+  consentTemplates   ConsentTemplate[]
+  consentRecords     ConsentRecord[]
+  audioRecordings    AudioRecording[]
+  reports            Report[]
+  usageEvents        UsageEvent[]
 
   @@map("workspaces")
 }
@@ -88,10 +97,13 @@ model Assessment {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
-  workspace    Workspace @relation(fields: [workspaceId], references: [id])
-  candidates   User[]
-  exercises    Exercise[]
-  documents    Document[]
+  workspace          Workspace @relation(fields: [workspaceId], references: [id])
+  candidates         User[]
+  exercises          Exercise[]
+  documents          Document[]
+  observerRatings    ObserverRating[]
+  consolidatedScores ConsolidatedScore[]
+  reports            Report[]
 
   @@map("assessments")
 }
@@ -114,6 +126,7 @@ model Exercise {
   assessment           Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   documents            Document[]
   competencyMappings   ExerciseCompetencyMapping[]
+  observerRatings      ObserverRating[]
 
   @@map("exercises")
 }
@@ -276,4 +289,162 @@ model PasswordResetToken {
   user      User @relation(fields: [userId], references: [id])
 
   @@map("password_reset_tokens")
+}
+
+model ObserverRating {
+  id               String   @id @default(uuid())
+  assessmentId     String   @map("assessment_id")
+  exerciseId       String   @map("exercise_id")
+  competencyNodeId String   @map("competency_node_id")
+  candidateId      String   @map("candidate_id")
+  observerId       String   @map("observer_id")
+  rating           Float?
+  evidenceNotes    String?  @map("evidence_notes")
+  evidenceStructured Json?  @map("evidence_structured")
+  scaleId          String?  @map("scale_id")
+  version          Int      @default(1)
+  syncedAt         DateTime? @map("synced_at")
+  clientTimestamp   DateTime? @map("client_timestamp")
+  status           String   @default("draft")
+  aiGenerated      Boolean  @default(false) @map("ai_generated")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  assessment       Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  exercise         Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, exerciseId, competencyNodeId, candidateId, observerId])
+  @@index([assessmentId, candidateId])
+  @@index([observerId])
+  @@map("observer_ratings")
+}
+
+model ConsolidatedScore {
+  id               String   @id @default(uuid())
+  assessmentId     String   @map("assessment_id")
+  candidateId      String   @map("candidate_id")
+  competencyNodeId String   @map("competency_node_id")
+  exerciseId       String?  @map("exercise_id")
+  consolidatedValue Float   @map("consolidated_value")
+  normalizedValue  Float?   @map("normalized_value")
+  method           String   @default("mean")
+  raterCount       Int      @default(0) @map("rater_count")
+  variance         Float?
+  outlierFlag      Boolean  @default(false) @map("outlier_flag")
+  moderatorOverride Float?  @map("moderator_override")
+  overrideReason   String?  @map("override_reason")
+  algorithmMeta    Json?    @map("algorithm_meta")
+  version          Int      @default(1)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  assessment       Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, candidateId, competencyNodeId, exerciseId])
+  @@index([assessmentId, candidateId])
+  @@map("consolidated_scores")
+}
+
+model ConsentTemplate {
+  id           String   @id @default(uuid())
+  workspaceId  String   @map("workspace_id")
+  name         String
+  language     String   @default("de")
+  category     String   @default("general")
+  content      String
+  version      Int      @default(1)
+  status       String   @default("active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+  records      ConsentRecord[]
+
+  @@index([workspaceId, category])
+  @@map("consent_templates")
+}
+
+model ConsentRecord {
+  id             String   @id @default(uuid())
+  workspaceId    String   @map("workspace_id")
+  templateId     String   @map("template_id")
+  userId         String   @map("user_id")
+  feature        String
+  granted        Boolean  @default(false)
+  grantedAt      DateTime? @map("granted_at")
+  revokedAt      DateTime? @map("revoked_at")
+  ipAddress      String?  @map("ip_address")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  workspace      Workspace @relation(fields: [workspaceId], references: [id])
+  template       ConsentTemplate @relation(fields: [templateId], references: [id])
+
+  @@index([workspaceId, userId, feature])
+  @@map("consent_records")
+}
+
+model AudioRecording {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  assessmentId    String?  @map("assessment_id")
+  exerciseId      String?  @map("exercise_id")
+  candidateId     String?  @map("candidate_id")
+  objectPath      String   @map("object_path")
+  originalFileName String? @map("original_file_name")
+  duration        Int?
+  transcript      String?
+  aiSummary       String?  @map("ai_summary")
+  aiSummaryMeta   Json?    @map("ai_summary_meta")
+  retentionDays   Int      @default(90) @map("retention_days")
+  expiresAt       DateTime? @map("expires_at")
+  status          String   @default("uploaded")
+  createdById     String   @map("created_by_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  workspace       Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId, assessmentId])
+  @@map("audio_recordings")
+}
+
+model Report {
+  id             String   @id @default(uuid())
+  workspaceId    String   @map("workspace_id")
+  assessmentId   String   @map("assessment_id")
+  candidateId    String?  @map("candidate_id")
+  title          String
+  format         String   @default("pdf")
+  objectPath     String?  @map("object_path")
+  snapshotData   Json?    @map("snapshot_data")
+  aiSections     String[] @map("ai_sections")
+  version        Int      @default(1)
+  status         String   @default("generating")
+  generatedAt    DateTime? @map("generated_at")
+  createdById    String   @map("created_by_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  workspace      Workspace @relation(fields: [workspaceId], references: [id])
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId, candidateId])
+  @@map("reports")
+}
+
+model UsageEvent {
+  id           String   @id @default(uuid())
+  workspaceId  String   @map("workspace_id")
+  userId       String?  @map("user_id")
+  eventType    String   @map("event_type")
+  entityType   String?  @map("entity_type")
+  entityId     String?  @map("entity_id")
+  metadata     Json?
+  credits      Float    @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId, eventType])
+  @@index([workspaceId, createdAt])
+  @@map("usage_events")
 }
