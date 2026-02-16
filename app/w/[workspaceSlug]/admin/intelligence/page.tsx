@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 const ACCENT = "hsl(14, 48%, 44%)";
@@ -164,12 +164,14 @@ const INTERVENTION_ICONS: Record<string, string> = {
 
 export default function AdvancedIntelligencePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const workspaceSlug = params.workspaceSlug as string;
+  const lockedAssessmentId = searchParams.get("assessmentId") || "";
 
   const [tab, setTab] = useState<TabKey>("predictive");
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [selectedAssessment, setSelectedAssessment] = useState("");
+  const [selectedAssessment, setSelectedAssessment] = useState(lockedAssessmentId);
   const [selectedCandidate, setSelectedCandidate] = useState("");
   const [targetRole, setTargetRole] = useState("");
   const [loading, setLoading] = useState(false);
@@ -288,54 +290,98 @@ export default function AdvancedIntelligencePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Assessment</label>
-            <select
-              data-testid="select-assessment"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              value={selectedAssessment}
-              onChange={e => { setSelectedAssessment(e.target.value); setSelectedCandidate(""); }}
-            >
-              <option value="">Auswählen...</option>
-              {assessments.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-            </select>
+        {lockedAssessmentId ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Assessment</label>
+              <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 font-medium" data-testid="text-locked-assessment">
+                {assessments.find(a => a.id === lockedAssessmentId)?.name || "Wird geladen..."}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Kandidat</label>
+              <select
+                data-testid="select-candidate"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={selectedCandidate}
+                onChange={e => setSelectedCandidate(e.target.value)}
+              >
+                <option value="">Auswählen...</option>
+                {candidates.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-slate-500 mb-1">Zielrolle (optional)</label>
+                <input
+                  data-testid="input-target-role"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  placeholder="z.B. CFO DAX, CEO Turnaround"
+                  value={targetRole}
+                  onChange={e => setTargetRole(e.target.value)}
+                />
+              </div>
+              <button
+                data-testid="button-generate"
+                className="rounded-lg text-white text-sm font-medium px-4 py-2 transition-colors disabled:opacity-50"
+                style={{ backgroundColor: ACCENT }}
+                disabled={loading || !selectedCandidate}
+                onClick={() => generate(tab)}
+              >
+                {loading ? "Generiere..." : "Analyse generieren"}
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Kandidat</label>
-            <select
-              data-testid="select-candidate"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              value={selectedCandidate}
-              onChange={e => setSelectedCandidate(e.target.value)}
-              disabled={!selectedAssessment}
-            >
-              <option value="">Auswählen...</option>
-              {candidates.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Assessment</label>
+              <select
+                data-testid="select-assessment"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={selectedAssessment}
+                onChange={e => { setSelectedAssessment(e.target.value); setSelectedCandidate(""); }}
+              >
+                <option value="">Auswählen...</option>
+                {assessments.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Kandidat</label>
+              <select
+                data-testid="select-candidate"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={selectedCandidate}
+                onChange={e => setSelectedCandidate(e.target.value)}
+                disabled={!selectedAssessment}
+              >
+                <option value="">Auswählen...</option>
+                {candidates.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Zielrolle (optional)</label>
+              <input
+                data-testid="input-target-role"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                placeholder="z.B. CFO DAX, CEO Turnaround"
+                value={targetRole}
+                onChange={e => setTargetRole(e.target.value)}
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                data-testid="button-generate"
+                className="w-full rounded-lg text-white text-sm font-medium px-4 py-2 transition-colors disabled:opacity-50"
+                style={{ backgroundColor: ACCENT }}
+                disabled={loading || !selectedAssessment || !selectedCandidate}
+                onClick={() => generate(tab)}
+              >
+                {loading ? "Generiere..." : "Analyse generieren"}
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Zielrolle (optional)</label>
-            <input
-              data-testid="input-target-role"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder="z.B. CFO DAX, CEO Turnaround"
-              value={targetRole}
-              onChange={e => setTargetRole(e.target.value)}
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              data-testid="button-generate"
-              className="w-full rounded-lg text-white text-sm font-medium px-4 py-2 transition-colors disabled:opacity-50"
-              style={{ backgroundColor: ACCENT }}
-              disabled={loading || !selectedAssessment || !selectedCandidate}
-              onClick={() => generate(tab)}
-            >
-              {loading ? "Generiere..." : "Analyse generieren"}
-            </button>
-          </div>
-        </div>
+        )}
 
         <div className="flex gap-1 mb-6 border-b border-slate-200">
           {tabs.map(t => (

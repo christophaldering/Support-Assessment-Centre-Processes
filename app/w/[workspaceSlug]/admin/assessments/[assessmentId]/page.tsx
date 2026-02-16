@@ -477,6 +477,13 @@ export default function AssessmentDetailPage() {
                 {saving ? "Wird gespeichert…" : "Speichern"}
               </button>
               {saveMsg && <span className="text-sm text-slate-500" data-testid="text-save-msg">{saveMsg}</span>}
+              <Link
+                href={`/w/${workspaceSlug}/admin/intelligence?assessmentId=${assessmentId}`}
+                className="ml-auto rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
+                data-testid="link-intelligence"
+              >
+                Advanced Intelligence
+              </Link>
             </div>
           </div>
         </div>
