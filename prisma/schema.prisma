@@ -41,7 +41,26 @@ model Workspace {
   reports            Report[]
   usageEvents        UsageEvent[]
 
+  accessRequests     AccessRequest[]
+
   @@map("workspaces")
+}
+
+model AccessRequest {
+  id          String   @id @default(uuid())
+  email       String
+  name        String
+  message     String?
+  workspaceId String   @map("workspace_id")
+  status      String   @default("pending")
+  reviewedAt  DateTime? @map("reviewed_at")
+  reviewedBy  String?  @map("reviewed_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([email, workspaceId])
+  @@map("access_requests")
 }
 
 model Theme {
