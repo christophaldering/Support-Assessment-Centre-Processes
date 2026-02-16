@@ -11,6 +11,7 @@ import {
   AlignmentType,
   BorderStyle,
 } from "docx";
+// @ts-ignore
 import PDFDocument from "pdfkit";
 import PptxGenJS from "pptxgenjs";
 
@@ -50,7 +51,7 @@ function getStrengthsAndDevAreas(data: ReportData) {
       uniqueScores.set(s.competencyName, s.normalizedValue);
     }
   }
-  const sorted = [...uniqueScores.entries()].sort((a, b) => b[1] - a[1]);
+  const sorted = Array.from(uniqueScores.entries()).sort((a, b) => b[1] - a[1]);
   const strengths = sorted.slice(0, 3).map(([name, val]) => `${name} (${val.toFixed(2)})`);
   const devAreas = sorted
     .slice(-3)
@@ -216,7 +217,7 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
     group.push(en);
     exerciseGroups.set(en.exerciseName, group);
   }
-  for (const [exercise, notes] of exerciseGroups) {
+  Array.from(exerciseGroups.entries()).forEach(([exercise, notes]) => {
     sections.push(
       new Paragraph({
         text: exercise,
@@ -236,7 +237,7 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
         })
       );
     }
-  }
+  });
   sections.push(new Paragraph({ text: "" }));
 
   if (data.aiRecommendations) {
@@ -250,7 +251,7 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
     sections.push(new Paragraph({ text: "" }));
   }
 
-  const observers = [...new Set(data.evidenceNotes.map((e) => e.observerName))];
+  const observers = Array.from(new Set(data.evidenceNotes.map((e) => e.observerName)));
   sections.push(
     new Paragraph({
       text: "6. Assessment-Metadaten",
@@ -324,13 +325,10 @@ export async function generatePdf(data: ReportData): Promise<Buffer> {
     let xPos = tableLeft;
     doc.fontSize(8).fillColor("#ffffff");
     for (let i = 0; i < headers.length; i++) {
-      doc
-        .rect(xPos, tableTop, colWidths[i], 18)
-        .fill(primary);
-      doc
-        .fillColor("#ffffff")
-        .text(headers[i], xPos + 3, tableTop + 4, { width: colWidths[i] - 6 });
-      xPos += colWidths[i];
+      const w = colWidths[i]!;
+      doc.rect(xPos, tableTop, w, 18).fill(primary);
+      doc.fillColor("#ffffff").text(headers[i]!, xPos + 3, tableTop + 4, { width: w - 6 });
+      xPos += w;
     }
 
     let rowY = tableTop + 18;
@@ -351,9 +349,10 @@ export async function generatePdf(data: ReportData): Promise<Buffer> {
         s.outlierFlag ? "Ja" : "Nein",
       ];
       for (let i = 0; i < rowData.length; i++) {
-        doc.rect(xPos, rowY, colWidths[i], 16).stroke("#cccccc");
-        doc.text(rowData[i], xPos + 3, rowY + 3, { width: colWidths[i] - 6 });
-        xPos += colWidths[i];
+        const w = colWidths[i]!;
+        doc.rect(xPos, rowY, w, 16).stroke("#cccccc");
+        doc.text(rowData[i]!, xPos + 3, rowY + 3, { width: w - 6 });
+        xPos += w;
       }
       rowY += 16;
     }
@@ -382,7 +381,7 @@ export async function generatePdf(data: ReportData): Promise<Buffer> {
       group.push(en);
       exerciseGroups.set(en.exerciseName, group);
     }
-    for (const [exercise, notes] of exerciseGroups) {
+    Array.from(exerciseGroups.entries()).forEach(([exercise, notes]) => {
       if (doc.y > 700) doc.addPage();
       doc.fontSize(11).fillColor(primary).text(exercise);
       doc.fillColor(textColor).fontSize(9);
@@ -393,7 +392,7 @@ export async function generatePdf(data: ReportData): Promise<Buffer> {
         );
       }
       doc.moveDown(0.5);
-    }
+    });
 
     if (data.aiRecommendations) {
       if (doc.y > 650) doc.addPage();
@@ -405,7 +404,7 @@ export async function generatePdf(data: ReportData): Promise<Buffer> {
     if (doc.y > 680) doc.addPage();
     const metaNum = data.aiRecommendations ? 6 : 5;
     sectionTitle(metaNum, "Assessment-Metadaten");
-    const observers = [...new Set(data.evidenceNotes.map((e) => e.observerName))];
+    const observers = Array.from(new Set(data.evidenceNotes.map((e) => e.observerName)));
     doc.text(`Assessment: ${data.assessmentName}`);
     doc.text(`Kandidat: ${data.candidateName}`);
     if (data.candidateEmail) doc.text(`E-Mail: ${data.candidateEmail}`);
@@ -603,7 +602,7 @@ export async function generatePptx(data: ReportData): Promise<Buffer> {
     group.push(en);
     exerciseGroups.set(en.exerciseName, group);
   }
-  for (const [exercise, notes] of exerciseGroups) {
+  Array.from(exerciseGroups.entries()).forEach(([exercise, notes]) => {
     evidenceLines.push(`\n${exercise}:`);
     for (const n of notes.slice(0, 3)) {
       evidenceLines.push(
@@ -613,7 +612,7 @@ export async function generatePptx(data: ReportData): Promise<Buffer> {
     if (notes.length > 3) {
       evidenceLines.push(`  ... und ${notes.length - 3} weitere Einträge`);
     }
-  }
+  });
   evidenceSlide.addText(evidenceLines.join("\n").substring(0, 2000), {
     x: 0.5,
     y: 1.1,
