@@ -67,11 +67,47 @@ async function main() {
         name: "Leadership Assessment Q1 2026",
         workspaceId,
         status: "draft",
+        description: "Umfassendes Leadership Assessment für Führungskräfte der oberen Ebene.",
+        location: "Frankfurt am Main",
+        startDate: new Date("2026-03-15"),
+        endDate: new Date("2026-03-16"),
+        exercises: {
+          create: [
+            { name: "Strategische Präsentation", type: "presentation", instructions: "Bereiten Sie eine 15-minütige Präsentation zur strategischen Ausrichtung vor.", duration: 15, sortOrder: 1 },
+            { name: "Strukturiertes Interview", type: "interview", instructions: "Kompetenzbasiertes Interview zu Führungserfahrungen.", duration: 45, sortOrder: 2 },
+            { name: "Gruppendiskussion Marktanalyse", type: "group_discussion", instructions: "Diskutieren Sie in der Gruppe über aktuelle Markttrends.", duration: 30, sortOrder: 3 },
+            { name: "Fallstudie Restrukturierung", type: "case_study", instructions: "Analysieren Sie den Fall und erarbeiten Sie einen Restrukturierungsplan.", duration: 60, sortOrder: 4 },
+          ],
+        },
       },
     });
-    console.log(`Seed: Created assessment "${assessment.name}" (${assessment.id})`);
+    console.log(`Seed: Created assessment "${assessment.name}" with 4 exercises (${assessment.id})`);
   } else {
-    console.log("Seed: Assessment already exists, skipping.");
+    const exerciseCount = await prisma.exercise.count({ where: { assessmentId: existingAssessment.id } });
+    if (exerciseCount === 0) {
+      await prisma.exercise.createMany({
+        data: [
+          { assessmentId: existingAssessment.id, name: "Strategische Präsentation", type: "presentation", instructions: "Bereiten Sie eine 15-minütige Präsentation zur strategischen Ausrichtung vor.", duration: 15, sortOrder: 1 },
+          { assessmentId: existingAssessment.id, name: "Strukturiertes Interview", type: "interview", instructions: "Kompetenzbasiertes Interview zu Führungserfahrungen.", duration: 45, sortOrder: 2 },
+          { assessmentId: existingAssessment.id, name: "Gruppendiskussion Marktanalyse", type: "group_discussion", instructions: "Diskutieren Sie in der Gruppe über aktuelle Markttrends.", duration: 30, sortOrder: 3 },
+          { assessmentId: existingAssessment.id, name: "Fallstudie Restrukturierung", type: "case_study", instructions: "Analysieren Sie den Fall und erarbeiten Sie einen Restrukturierungsplan.", duration: 60, sortOrder: 4 },
+        ],
+      });
+      console.log("Seed: Added 4 exercises to existing assessment.");
+    }
+    if (!existingAssessment.description) {
+      await prisma.assessment.update({
+        where: { id: existingAssessment.id },
+        data: {
+          description: "Umfassendes Leadership Assessment für Führungskräfte der oberen Ebene.",
+          location: "Frankfurt am Main",
+          startDate: new Date("2026-03-15"),
+          endDate: new Date("2026-03-16"),
+        },
+      });
+      console.log("Seed: Updated existing assessment with details.");
+    }
+    console.log("Seed: Assessment already exists, skipping creation.");
   }
 }
 

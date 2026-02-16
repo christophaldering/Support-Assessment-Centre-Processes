@@ -41,7 +41,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   const canManageUsers = masterAuth || hasPermission(userRoles, "users.read");
 
   const sections = [
-    { title: "Assessments", desc: "Assessment-Veranstaltungen, Übungen und Kandidatenzuweisungen verwalten.", href: null },
+    { title: "Assessments", desc: "Assessment-Veranstaltungen, Übungen und Kandidatenzuweisungen verwalten.", href: `/w/${params.workspaceSlug}/admin/assessments` },
     { title: "Benutzer", desc: "Workspace-Benutzer, Rollen und Berechtigungen verwalten.", href: canManageUsers ? `/w/${params.workspaceSlug}/admin/users` : null },
     { title: "Kompetenzmodelle", desc: "Kompetenzrahmen, Dimensionen und Skalen konfigurieren.", href: null },
     { title: "Berichte", desc: "Assessment-Berichte erstellen und prüfen.", href: null },

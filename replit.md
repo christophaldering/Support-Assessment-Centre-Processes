@@ -2,7 +2,7 @@
 
 ## Overview
 
-Enterprise-grade, multi-tenant SaaS platform for hosting executive assessment centers. Currently in **Phase 2 — RBAC, Users, Invitations, Candidate Accounts**.
+Enterprise-grade, multi-tenant SaaS platform for hosting executive assessment centers. Currently in **Phase 3 — Assessments, Exercises, Documents & Portals**.
 
 Tech stack: Next.js 14 (App Router) + TypeScript (strict) + Prisma + PostgreSQL + Tailwind CSS.
 
@@ -30,9 +30,12 @@ Footer credit: "© Christoph Aldering · Private initiative / concept"
     admin/page.tsx            → Workspace admin dashboard (themed)
     admin/users/page.tsx      → User management (create, roles, CSV placeholder)
     admin/users/layout.tsx    → Server-side RBAC guard (users.read)
+    admin/assessments/page.tsx → Assessment list & CRUD management
+    admin/assessments/[assessmentId]/page.tsx → Assessment detail with exercises & documents
     login/page.tsx            → User login (email + password)
     change-password/page.tsx  → Forced password change (candidates)
-    assessment/page.tsx       → Candidate assessment portal
+    assessment/page.tsx       → Candidate assessment portal (exercises + documents)
+    observer/page.tsx         → Observer/HR portal (read-only assessments view)
     reset-password/page.tsx   → Password reset request form
   /api/health/route.ts        → Health check endpoint
   /api/auth/master/route.ts   → Master admin password verification
@@ -47,19 +50,26 @@ Footer credit: "© Christoph Aldering · Private initiative / concept"
   /api/w/[workspaceSlug]/
     users/route.ts            → List + create users (RBAC protected)
     users/[userId]/route.ts   → Update + deactivate users (RBAC protected)
-    assessments/route.ts      → List assessments (RBAC protected)
-/components                   → Reusable React components (empty, ready)
+    assessments/route.ts      → List + create assessments (RBAC protected)
+    assessments/[assessmentId]/route.ts → Get/update/delete assessment
+    assessments/[assessmentId]/exercises/route.ts → List + create exercises
+    assessments/[assessmentId]/exercises/[exerciseId]/route.ts → Get/update/delete exercise
+    assessments/[assessmentId]/documents/route.ts → List + upload documents
+    assessments/[assessmentId]/documents/[documentId]/route.ts → Get (with download URL) + delete document
+    my-assessment/route.ts    → Candidate's own assessment with exercises & filtered documents
+    my-assessment/documents/[documentId]/route.ts → Candidate document download (role + workspace verified)
 /lib                          → Shared utilities & modules
   db.ts                       → Prisma client singleton
   session.ts                  → Cookie-based auth helpers (master + workspace + user)
   rbac.ts                     → Role-based access control (6 roles, permissions map)
+  object-storage.ts           → Replit object storage helpers (presigned upload/download URLs)
   auth.ts                     → Authentication (stub)
   consent.ts                  → GDPR consent management (stub)
   audit.ts                    → Audit logging (stub)
   ai.ts                       → AI integration helpers (stub)
 /prisma
-  schema.prisma               → Prisma schema (Workspace, Theme, User, Assessment, PasswordResetToken, HealthCheck)
-  seed.ts                     → Seeds aestimamus workspace + admin user + sample assessment
+  schema.prisma               → Prisma schema (Workspace, Theme, User, Assessment, Exercise, Document, PasswordResetToken, HealthCheck)
+  seed.ts                     → Seeds aestimamus workspace + admin user + assessment with 4 exercises
 ```
 
 ## Roles & Permissions
@@ -80,9 +90,11 @@ Footer credit: "© Christoph Aldering · Private initiative / concept"
 3. **Workspace selector** (`/admin/workspaces`) — Lists workspaces from DB, protected by master auth cookie
 4. **Workspace admin password** — Per-workspace password (bcrypt hash stored on Workspace model)
 5. **Workspace dashboard** (`/w/{slug}/admin`) — Themed admin dashboard (master auth OR workspace auth OR user session with internal role)
-6. **User login** (`/w/{slug}/login`) — Email + password, workspace-scoped
-7. **Candidate flow** — Login → forced password change → assessment portal
-8. **User management** (`/w/{slug}/admin/users`) — RBAC protected (requires `users.read` permission)
+6. **User login** (`/w/{slug}/login`) — Email + password, workspace-scoped. Routes: CANDIDATE→assessment, OBSERVER/HR_CLIENT→observer, others→admin
+7. **Candidate flow** — Login → forced password change → assessment portal (exercises + documents)
+8. **Observer flow** — Login → observer portal (read-only assessments and exercises)
+9. **Assessment management** (`/w/{slug}/admin/assessments`) — RBAC protected (assessments.read/create/update/delete)
+10. **User management** (`/w/{slug}/admin/users`) — RBAC protected (requires `users.read` permission)
 
 All default passwords: "Christoph"
 Seeded admin user: admin@aestimamus.de
@@ -98,15 +110,24 @@ Seeded admin user: admin@aestimamus.de
   - `edp_user_session` — user session (JSON: userId, workspaceSlug, roles)
 - **Password hashing**: bcryptjs
 - **RBAC**: Role-to-permissions map, union of permissions across roles
+- **Object Storage**: Replit built-in (GCS-backed), presigned URLs for upload/download
 - **Linting**: ESLint (next/core-web-vitals) + Prettier
 - **Port**: 5000 (bound to 0.0.0.0)
 
 ## Database
 
 - **Provider**: PostgreSQL (via DATABASE_URL env var)
-- **Tables**: `health_check`, `workspaces`, `themes`, `users`, `assessments`, `password_reset_tokens`
-- **Seeded data**: aestimamus workspace with copper theme, admin user, sample assessment
+- **Tables**: `health_check`, `workspaces`, `themes`, `users`, `assessments`, `exercises`, `documents`, `password_reset_tokens`
+- **Seeded data**: aestimamus workspace with copper theme, admin user, sample assessment with 4 exercises
 - **Schema management**: `npx prisma db push` for development
+
+## Document Upload Flow
+
+1. Client sends JSON metadata (name, fileName, fileSize, mimeType) to POST /api/w/{slug}/assessments/{id}/documents
+2. Server creates Document record in DB and returns presigned upload URL
+3. Client uploads file directly to presigned URL (Google Cloud Storage)
+4. For download: GET /api/.../documents/{docId} returns signed download URL (1hr TTL)
+5. Documents have role-based visibility (visibleTo array) and watermark flag
 
 ## Environment Variables
 
@@ -114,6 +135,8 @@ Seeded admin user: admin@aestimamus.de
 | ----------------------------- | ---------------------------------------- |
 | `DATABASE_URL`                | PostgreSQL connection string (required)  |
 | `MASTER_ADMIN_PASSWORD_HASH`  | bcrypt hash of master admin password     |
+| `PRIVATE_OBJECT_DIR`          | Object storage private directory path    |
+| `PUBLIC_OBJECT_SEARCH_PATHS`  | Object storage public search paths       |
 
 ## Build & Development
 
@@ -134,6 +157,20 @@ Seeded admin user: admin@aestimamus.de
 - **Backgrounds**: White with subtle slate borders
 - **Workspace theming**: Per-workspace colors applied via inline styles on `/w/{slug}/admin`
 
+## Exercise Types
+
+| Key              | German Label       |
+| ---------------- | ------------------ |
+| presentation     | Präsentation       |
+| interview        | Interview          |
+| group_discussion | Gruppendiskussion  |
+| case_study       | Fallstudie         |
+| role_play        | Rollenspiel        |
+| in_tray          | Postkorb           |
+| psychometric     | Psychometrisch     |
+| other            | Sonstiges          |
+
 ## External Dependencies
 
 - **PostgreSQL**: Required. Connection via `DATABASE_URL` environment variable.
+- **Replit Object Storage**: For document uploads. Auto-configured via integration.
