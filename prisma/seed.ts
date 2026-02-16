@@ -44,7 +44,7 @@ async function main() {
   if (!existingAdmin) {
     const user = await prisma.user.create({
       data: {
-        email: "admin@aestimamus.de",
+        email: "christoph.aldering@aestimamus.com",
         name: "Christoph Aldering",
         passwordHash: adminHash,
         roles: ["ADMIN"],
