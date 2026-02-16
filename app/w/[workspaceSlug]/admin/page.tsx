@@ -62,14 +62,6 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
     }),
   ]);
 
-  const kpis = [
-    { label: "Aktive Assessments", value: assessmentCount > 0 ? String(assessmentCount) : "—" },
-    { label: "Ausstehende Berichte", value: reportCount > 0 ? String(reportCount) : "—" },
-    { label: "Einwilligungen", value: consentCount > 0 ? String(consentCount) : "—" },
-    { label: "Benutzer", value: String(userCount) },
-    { label: "Offene Zugangsanfragen", value: String(pendingCount), highlight: pendingCount > 0 },
-  ];
-
   const base = `/w/${params.workspaceSlug}/admin`;
 
   const quickLinks = [
@@ -151,24 +143,6 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {kpis.map((kpi) => (
-              <div
-                key={kpi.label}
-                className="rounded-lg border px-4 py-3 text-center"
-                style={{
-                  borderColor: kpi.highlight ? primary : `${primary}15`,
-                  backgroundColor: kpi.highlight ? `${primary}08` : bgColor,
-                }}
-                data-testid={`kpi-${kpi.label.toLowerCase().replace(/\s+/g, "-")}`}
-              >
-                <p className="text-xl font-bold" style={{ color: kpi.highlight ? primary : textColor }}>
-                  {kpi.value}
-                </p>
-                <p className="text-[11px] leading-tight mt-1 opacity-50">{kpi.label}</p>
-              </div>
-            ))}
-          </div>
         </section>
 
         <DashboardClient
