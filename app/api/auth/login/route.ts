@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email_workspaceId: { email, workspaceId: workspace.id } },
+      where: { email_workspaceId: { email: email.toLowerCase().trim(), workspaceId: workspace.id } },
     });
 
     if (!user || user.status !== "active") {
