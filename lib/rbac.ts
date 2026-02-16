@@ -35,6 +35,9 @@ export const PERMISSIONS = [
   "exerciselibrary.manage",
   "brandrules.manage",
   "requirements.match_exercises",
+  "advanced_intelligence.view",
+  "advanced_intelligence.generate",
+  "advanced_intelligence.export",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -65,6 +68,9 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "exerciselibrary.manage",
     "brandrules.manage",
     "requirements.match_exercises",
+    "advanced_intelligence.view",
+    "advanced_intelligence.generate",
+    "advanced_intelligence.export",
   ],
   MODERATOR: [
     "assessments.create",
@@ -80,6 +86,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "users.read",
     "exerciselibrary.manage",
     "requirements.match_exercises",
+    "advanced_intelligence.view",
+    "advanced_intelligence.generate",
   ],
   OBSERVER: [
     "assessments.read",
@@ -100,6 +108,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "assessments.read",
     "candidates.read",
     "reports.read",
+    "advanced_intelligence.view",
   ],
   CANDIDATE: [
     "candidate.own_assessment",

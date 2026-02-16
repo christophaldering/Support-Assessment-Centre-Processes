@@ -38,6 +38,12 @@ The platform is built on a modern full-stack architecture utilizing Next.js 14 (
 - **Style Guide AI Parsing (Phase 2):** Upload PDF/DOCX style guides via `/api/w/{slug}/brand-rules/parse-styleguide`, AI extracts structured brand rules (colors, typography, tone, document/slide rules) into a new BrandRuleSet. UI: KI-Analyse tab on Brand & Style page with drag-and-drop upload and results preview.
 - **AI-Enhanced Exercise Matching (Phase 2):** `?enhance=true` query param on exercise matching API triggers OpenAI analysis for contextual fit rationale, specific adaptation suggestions, and detailed new exercise specs. UI: KI-Analyse toggle on requirements page.
 - **CD-Adapted Variant Generation (Phase 2):** `/api/w/{slug}/exercise-library/{id}/generate-variant` uses active brand rules + OpenAI to generate CD-adapted exercise variants (variantType: cd_adapted). UI: "CD-Variante erstellen" button on exercise cards and matching recommendations.
+- **Advanced Intelligence Layer (Priority 1):** Three AI-powered diagnostic modules under `/api/w/{slug}/intelligence/`:
+    - **Predictive Success Intelligence:** Risk indicators (execution, stakeholder, resilience, governance, transformation) + scenario simulations (crisis, growth, conflict, transformation). Entity: PredictiveProfile. RBAC: advanced_intelligence.generate.
+    - **Development Path Generator:** 90-day focus areas, 6-month growth targets, 12-month positioning goals, coaching questions, interventions, risk mitigation. Entity: DevelopmentBlueprint.
+    - **Diagnostic Hypothesis Engine:** Evidence-linked hypotheses with alternative interpretations, supporting/counter evidence, validation steps. Entity: DiagnosticHypothesis.
+    - All outputs are confidence-scored, evidence-coverage-tracked, AI-labeled, and audit-logged. UI: `/w/{slug}/admin/intelligence` with 3 tabs.
+    - Permissions: ADMIN (full), MODERATOR (view+generate), HR_CLIENT (view only), OBSERVER/CANDIDATE (none).
 
 ## External Dependencies
 

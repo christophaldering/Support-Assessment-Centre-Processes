@@ -46,6 +46,9 @@ model Workspace {
   brandRuleSets      BrandRuleSet[]
   exerciseLibraryItems ExerciseLibraryItem[]
   exerciseRecommendations ExerciseRecommendation[]
+  predictiveProfiles PredictiveProfile[]
+  developmentBlueprints DevelopmentBlueprint[]
+  diagnosticHypotheses DiagnosticHypothesis[]
 
   @@map("workspaces")
 }
@@ -572,4 +575,68 @@ model ExerciseRecommendation {
   @@index([workspaceId])
   @@index([requirementsAnalysisId])
   @@map("exercise_recommendations")
+}
+
+model PredictiveProfile {
+  id                      String   @id @default(uuid())
+  assessmentId            String   @map("assessment_id")
+  candidateId             String   @map("candidate_id")
+  workspaceId             String   @map("workspace_id")
+  normalizedScoreVector   Json     @map("normalized_score_vector")
+  riskIndicators          Json     @map("risk_indicators")
+  successScenarios        Json     @map("success_scenarios")
+  confidenceScore         Float    @default(0) @map("confidence_score")
+  evidenceCoverage        Float    @default(0) @map("evidence_coverage")
+  aiGenerated             Boolean  @default(true) @map("ai_generated")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  workspace               Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId, assessmentId])
+  @@index([assessmentId, candidateId])
+  @@map("predictive_profiles")
+}
+
+model DevelopmentBlueprint {
+  id                    String   @id @default(uuid())
+  assessmentId          String   @map("assessment_id")
+  candidateId           String   @map("candidate_id")
+  workspaceId           String   @map("workspace_id")
+  focusAreas90d         Json     @map("focus_areas_90d")
+  growthTargets6m       Json     @map("growth_targets_6m")
+  positioningGoals12m   Json     @map("positioning_goals_12m")
+  coachingQuestions      Json     @map("coaching_questions")
+  suggestedInterventions Json    @map("suggested_interventions")
+  riskMitigationSteps   Json     @map("risk_mitigation_steps")
+  confidenceScore       Float    @default(0) @map("confidence_score")
+  aiGenerated           Boolean  @default(true) @map("ai_generated")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  workspace             Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId, assessmentId])
+  @@index([assessmentId, candidateId])
+  @@map("development_blueprints")
+}
+
+model DiagnosticHypothesis {
+  id                    String   @id @default(uuid())
+  assessmentId          String   @map("assessment_id")
+  candidateId           String   @map("candidate_id")
+  workspaceId           String   @map("workspace_id")
+  hypothesisText        String   @map("hypothesis_text")
+  alternativeText       String?  @map("alternative_text")
+  supportingEvidence    Json     @map("supporting_evidence")
+  counterEvidence       Json     @map("counter_evidence")
+  requiredValidation    Json     @map("required_validation")
+  confidenceScore       Float    @default(0) @map("confidence_score")
+  evidenceCoverage      Float    @default(0) @map("evidence_coverage")
+  aiGenerated           Boolean  @default(true) @map("ai_generated")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  workspace             Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId, assessmentId])
+  @@index([assessmentId, candidateId])
+  @@map("diagnostic_hypotheses")
 }
