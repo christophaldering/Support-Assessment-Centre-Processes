@@ -14,3 +14,34 @@ model HealthCheck {
 
   @@map("health_check")
 }
+
+model Workspace {
+  id                 String   @id @default(uuid())
+  slug               String   @unique
+  name               String
+  status             String   @default("active")
+  adminPasswordHash  String   @map("admin_password_hash")
+  dataResidency      String   @default("EU") @map("data_residency")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  theme              Theme?
+
+  @@map("workspaces")
+}
+
+model Theme {
+  id                String @id @default(uuid())
+  workspaceId       String @unique @map("workspace_id")
+  primaryColor      String @map("primary_color")
+  secondaryColor    String @map("secondary_color")
+  accentColor       String @map("accent_color")
+  backgroundColor   String @default("#ffffff") @map("background_color")
+  textColor         String @default("#1a1a1a") @map("text_color")
+  fontFamily        String @default("Inter") @map("font_family")
+  fontFamilyHeading String @default("Playfair Display") @map("font_family_heading")
+  logoUrl           String? @map("logo_url")
+
+  workspace         Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@map("themes")
+}
