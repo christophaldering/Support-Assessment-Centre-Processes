@@ -46,7 +46,11 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   const baseUrl = req.nextUrl.origin;
 
   if (action === "approve") {
-    const assignedRoles = roles && roles.length > 0 ? roles : ["OBSERVER"];
+    const ALLOWED_ROLES = ["MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"];
+    const filteredRoles = roles && roles.length > 0
+      ? roles.filter((r: string) => ALLOWED_ROLES.includes(r))
+      : ["OBSERVER"];
+    const assignedRoles = filteredRoles.length > 0 ? filteredRoles : ["OBSERVER"];
     const defaultPassword = "Christoph";
     const passwordHash = await bcrypt.hash(defaultPassword, 10);
 

@@ -13,9 +13,8 @@ interface AccessRequestRecord {
   createdAt: string;
 }
 
-const ALL_ROLES = ["ADMIN", "MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"] as const;
+const ASSIGNABLE_ROLES = ["MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"] as const;
 const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Admin",
   MODERATOR: "Moderator",
   OBSERVER: "Beobachter",
   PROJECT_ASSISTANT: "Projektassistent",
@@ -192,9 +191,9 @@ export default function AccessRequestsPage() {
                 {r.status === "pending" && (
                   <div className="shrink-0 space-y-3">
                     <div>
-                      <p className="text-xs font-medium text-slate-500 mb-1.5">Rollen zuweisen:</p>
+                      <p className="text-xs font-medium text-slate-500 mb-1.5">Rolle zuweisen:</p>
                       <div className="flex flex-wrap gap-1">
-                        {ALL_ROLES.map((role) => {
+                        {ASSIGNABLE_ROLES.map((role) => {
                           const selected = (roleSelections[r.id] || ["OBSERVER"]).includes(role);
                           return (
                             <button
