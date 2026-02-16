@@ -2,28 +2,28 @@ import Link from "next/link";
 
 const features = [
   {
-    title: "Role-Based Portals",
-    desc: "Dedicated views for Admin, Moderator, Observer, Project Assistant, HR Client, and Candidate — each tailored to their workflow.",
+    title: "Competency-Based Evaluation",
+    desc: "Flexible competency hierarchies with configurable scales, behavioral anchors, weighted dimensions, and structured exercise mapping.",
   },
   {
-    title: "Competency Frameworks",
-    desc: "Flexible competency hierarchies with configurable scales, behavioral anchors, and weighted dimensions.",
+    title: "Structured Observation",
+    desc: "Offline-capable observer portal with exercise × competency rating matrix, evidence capture, and real-time sync.",
   },
   {
-    title: "Real-Time Observation",
-    desc: "Live observer view with competency rating controls, session tracking, and offline-capable data capture.",
+    title: "AI-Augmented Analysis",
+    desc: "Intelligent assistance for competency model generation, transcription, structured summaries, and data-driven recommendations.",
   },
   {
-    title: "AI-Powered Analysis",
-    desc: "Intelligent assistance for evaluation, transcription, and automated report generation.",
+    title: "Enterprise-Grade Reporting",
+    desc: "Automated PDF, DOCX & PPTX reports with competency profiles, cross-candidate benchmarking, and AI-labeled insights.",
   },
   {
     title: "Audit & Compliance",
-    desc: "Complete audit trails, versioned data, GDPR consent management, and EU data residency.",
+    desc: "Complete audit trails, versioned data, GDPR consent management, and full transparency on AI-generated content.",
   },
   {
-    title: "Advanced Reporting",
-    desc: "Automated PDF/DOCX reports with radar charts, cross-candidate benchmarking, and narrative summaries.",
+    title: "Role-Based Portals",
+    desc: "Dedicated views for Admin, Moderator, Observer, Project Assistant, HR Client, and Candidate — each tailored to their workflow.",
   },
 ];
 
@@ -33,7 +33,7 @@ export default function HomePage() {
       <header className="bg-brand-navy text-white sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="font-serif text-lg font-bold tracking-tight">
-            Executive Diagnostics Platform
+            Executive Diagnostics Suite
           </span>
           <Link
             href="/admin/login"
@@ -47,13 +47,16 @@ export default function HomePage() {
       <section className="bg-brand-navy text-white py-24">
         <div className="max-w-3xl mx-auto px-6 text-center space-y-6">
           <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-            Enterprise-Grade Executive Diagnostics
+            Executive Diagnostics Suite{" "}
+            <span className="text-blue-300">– Intelligent by Design</span>
           </h1>
-          <p className="text-slate-300 text-lg max-w-2xl mx-auto leading-relaxed">
-            The secure, multi-tenant platform for Executive Assessment Centers. Competency-based
-            evaluation, AI-powered analysis, and comprehensive reporting — all in one solution.
-          </p>
           <div className="h-1 w-16 bg-brand-blue mx-auto rounded-full" />
+          <p className="text-slate-300 text-lg max-w-2xl mx-auto leading-relaxed">
+            The secure, multi-tenant platform for Top-Executive Assessment Centers / an integrated platform for high-stakes executive assessment.
+          </p>
+          <p className="text-slate-400 text-base max-w-2xl mx-auto leading-relaxed">
+            Competency-based evaluation, structured observation, AI-augmented analysis, and enterprise-grade reporting — seamlessly connected in one secure ecosystem.
+          </p>
         </div>
       </section>
 
@@ -88,7 +91,7 @@ export default function HomePage() {
       <footer className="border-t border-slate-100 py-8 bg-white">
         <div className="max-w-5xl mx-auto px-6 text-center space-y-1">
           <p className="text-xs text-slate-400 font-medium">
-            Executive Diagnostics Platform
+            Executive Diagnostics Suite
           </p>
           <p className="text-xs text-slate-400">
             &copy; Christoph Aldering &middot; Private initiative / concept
