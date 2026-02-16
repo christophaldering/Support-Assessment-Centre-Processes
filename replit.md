@@ -35,6 +35,9 @@ The platform is built on a modern full-stack architecture utilizing Next.js 14 (
 - **Exercise Library (Phase 1):** Full CRUD for reusable assessment exercises with variant management (original/cd_adapted/assessment_tailored/ai_generated_new), search/filter by type/level/tags/language/status. API: `/api/w/{slug}/exercise-library/`. UI: `/w/{slug}/admin/exercise-library`.
 - **Brand Rule Sets (Phase 1):** Manual entry of corporate identity rules (colors, typography, tone, document/slide rules) with activate/archive lifecycle and apply-to-theme action. API: `/api/w/{slug}/brand-rules/`. UI: `/w/{slug}/admin/brand-rules`.
 - **Exercise Matching (Phase 1):** Scoring algorithm (type 40pts, level 20pts, tag overlap 30pts, language 10pts) classifying library exercises into use_as_is (>=70), adapt (40-69), create_new (gaps). Integrated into requirements analysis page with "Übungen finden" button. API: `/api/w/{slug}/exercise-matching/`.
+- **Style Guide AI Parsing (Phase 2):** Upload PDF/DOCX style guides via `/api/w/{slug}/brand-rules/parse-styleguide`, AI extracts structured brand rules (colors, typography, tone, document/slide rules) into a new BrandRuleSet. UI: KI-Analyse tab on Brand & Style page with drag-and-drop upload and results preview.
+- **AI-Enhanced Exercise Matching (Phase 2):** `?enhance=true` query param on exercise matching API triggers OpenAI analysis for contextual fit rationale, specific adaptation suggestions, and detailed new exercise specs. UI: KI-Analyse toggle on requirements page.
+- **CD-Adapted Variant Generation (Phase 2):** `/api/w/{slug}/exercise-library/{id}/generate-variant` uses active brand rules + OpenAI to generate CD-adapted exercise variants (variantType: cd_adapted). UI: "CD-Variante erstellen" button on exercise cards and matching recommendations.
 
 ## External Dependencies
 
