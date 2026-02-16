@@ -1,0 +1,184 @@
+You are updating the FIRST public landing page.
+
+Objective:
+Position the Executive Diagnostics Suite as a next-generation diagnostic architecture — not merely a software tool.
+
+Tone:
+Visionary but disciplined.
+Board-level.
+Methodologically serious.
+No startup hype.
+No exaggerated claims.
+
+Title must remain:
+
+Executive Diagnostics Suite – Intelligent by Design
+
+----------------------------------------------------
+HERO SECTION
+----------------------------------------------------
+
+Title:
+Executive Diagnostics Suite – Intelligent by Design
+
+Subheadline:
+Redefining how strategic leadership decisions are designed, evaluated, and governed.
+
+Add 3 short impact statements under hero:
+
+• From static assessments to adaptive diagnostic architectures  
+• From fragmented tools to an integrated intelligence system  
+• From documentation to defensible executive judgment  
+
+CTA 1:
+Request Workspace Access
+
+CTA 2:
+Security, Privacy & AI Governance Pack
+(Admin / NDA-gated)
+
+----------------------------------------------------
+VISION SECTION
+----------------------------------------------------
+
+Headline:
+A New Standard for Executive Diagnostics
+
+Text:
+
+Leadership decisions shape enterprise trajectory.  
+Yet the systems behind executive assessment have remained largely static.
+
+The Executive Diagnostics Suite introduces a dynamic diagnostic architecture —  
+where requirement analysis, competency modeling, assessment design, observation, and reporting are structurally interconnected.
+
+AI does not replace judgment.  
+It enhances clarity, structural coherence, and analytical depth.
+
+This is not digitization of existing practice.  
+It is architectural transformation.
+
+----------------------------------------------------
+INNOVATION SECTION
+----------------------------------------------------
+
+Headline:
+Innovation at the Core
+
+Feature Block 1:
+Dynamic Assessment Architecture
+
+Text:
+
+Requirement analysis is no longer a separate document.  
+Its results directly configure the assessment architecture.
+
+Validated modules are selected and assembled in alignment with DIN 33430 principles.  
+Competencies, weighting, scales, and behavioral anchors are systemically linked.
+
+Assessment design becomes adaptive — not static.
+
+Feature Block 2:
+Context-Aware Exercise Adaptation
+
+Text:
+
+Exercises adjust to industry context, strategic complexity, leadership level, and candidate experience.
+
+Scenario framing, challenge intensity, and evaluation criteria can be recalibrated —  
+while maintaining methodological integrity.
+
+This enables diagnostics that reflect real organizational reality.
+
+----------------------------------------------------
+AI SECTION
+----------------------------------------------------
+
+Headline:
+Intelligence Embedded — At Your Discretion
+
+Text:
+
+AI support spans the full diagnostic lifecycle:
+
+• Structuring requirement input  
+• Competency clustering  
+• Assessment configuration proposals  
+• Transcript structuring  
+• Pattern detection  
+• Narrative synthesis  
+
+AI remains configurable per project and fully reviewable.
+
+All outputs remain under expert supervision.
+
+Judgment is strengthened — not automated.
+
+----------------------------------------------------
+GOVERNANCE SECTION
+----------------------------------------------------
+
+Headline:
+Governance Built In — Not Added Later
+
+Text:
+
+Strategic innovation requires regulatory integrity.
+
+The Executive Diagnostics Suite is designed in alignment with:
+
+• GDPR  
+• European AI Act governance principles  
+• EU data residency standards  
+• Full auditability and traceability  
+
+Hosting (final production environment):
+
+Germany-based infrastructure:
+[PLACEHOLDER: Hosting Provider]
+Region: [PLACEHOLDER: German Region]
+Certification: [PLACEHOLDER: ISO 27001 / BSI C5]
+Environment: [PLACEHOLDER: Azure / AWS / Hybrid]
+
+----------------------------------------------------
+DOCUMENTATION SECTION
+----------------------------------------------------
+
+Headline:
+Security, Privacy & AI Governance Pack
+
+Text:
+
+A consolidated documentation set for IT, Security, and Data Protection Officers.
+
+Includes:
+• System architecture overview  
+• Data flow mapping  
+• Encryption standards  
+• Access governance model  
+• Audit logging logic  
+• Retention & deletion policies  
+• AI governance framework (incl. EU AI Act risk classification approach)
+
+Button:
+View Documentation
+
+Link:
+https://<PLACEHOLDER-DOMAIN>/security-governance-pack
+
+Note:
+Access may require workspace administrator approval or NDA confirmation.
+
+----------------------------------------------------
+CLOSING SECTION
+----------------------------------------------------
+
+Headline:
+Diagnostics Designed for Strategic Consequence
+
+Text:
+
+When executive decisions shape enterprise direction,  
+the underlying diagnostic architecture must be equally robust.
+
+The Executive Diagnostics Suite is built for that responsibility.
