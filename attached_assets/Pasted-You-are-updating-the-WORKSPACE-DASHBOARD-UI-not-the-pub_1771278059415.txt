@@ -1,0 +1,150 @@
+You are updating the WORKSPACE DASHBOARD UI (not the public landing page). The current dashboard is a flat grid of equally weighted tiles. Christoph dislikes it because it feels like a generic admin backend. 
+
+Goal:
+Implement Option A (process-driven “Diagnostic Architecture”) AND integrate an Enterprise-Cockpit header with key status numbers. The dashboard must be useful for ALL target groups (Admin, Project Assistant, Moderator, Observer, HR Client, Candidate where applicable), but this screen is primarily for Admin/Workspace owners and internal operators.
+
+Do NOT change backend logic. Only restructure the dashboard UI and labels. 
+If data for some KPIs is not available yet, show “—” and keep the layout stable.
+
+Tone & design:
+- Clean, executive, minimal.
+- Clear hierarchy, generous whitespace.
+- Avoid “too many” icons; use subtle icons only if already in the design system.
+- Sections must be visually separated (cards or panels), with short subheadlines.
+- Emphasize diagnostic excellence and process clarity.
+
+------------------------------------------------------------
+1) ENTERPRISE COCKPIT HEADER (TOP OF DASHBOARD)
+------------------------------------------------------------
+
+At the top, add a compact “Enterprise Cockpit” band with:
+A) Workspace context (left): Workspace name + short descriptor
+B) KPI tiles (center/right): 4–6 small KPI chips/cards.
+
+KPI set (use best available; if not available, show “—”):
+- Active Assessments
+- Pending Reports
+- Consent Coverage (%)
+- AI-Supported Projects (count)
+- Open Access Requests
+- Last Activity (relative time)
+
+Implementation notes:
+- If you have no data source: create placeholder selectors and show “—”.
+- If you have partial data: display counts you can compute from existing lists (assessments, reports, access requests, consents, audit events).
+- Keep KPI cards small, same height, aligned in one row (wrap on mobile).
+
+------------------------------------------------------------
+2) PROCESS BAR (OPTIONAL BUT RECOMMENDED)
+------------------------------------------------------------
+
+Directly below the cockpit, add a thin horizontal process bar with 5 steps:
+Requirement → Design → Execution → Analysis → Reporting
+
+This is for orientation only (no new routing required).
+If you can infer the “current phase” from where the user last clicked or from active items, highlight it; otherwise default to no active highlight.
+
+------------------------------------------------------------
+3) MAIN DASHBOARD STRUCTURE = OPTION A (PROCESS-DRIVEN)
+------------------------------------------------------------
+
+Replace the flat grid with 5 clearly separated sections (vertical stack). 
+Each section has:
+- Section title
+- 1 short subheadline (1 line)
+- A grid of cards inside the section (cards can vary in size/priority)
+- “Primary” cards are larger than “supporting” cards.
+
+SECTION 1: Mandate & Diagnostic Design
+Subheadline: “Where structure precedes judgment.”
+Cards (primary first):
+- Requirement Analysis
+  Description: “Analyze role demands and generate assessment blueprints (AI-supported).”
+- Competency Frameworks
+  Description: “Configure competencies, scales, anchors, and weighting logic.”
+- Assessment Architecture
+  (This is the existing “Assessments” design/config area; if there is already an Assessments entry, split label:
+   - “Assessment Architecture” (design/config)
+   - “Assessments” (execution) in Section 2)
+  Description: “Assemble validated modules aligned with DIN 33430 principles.”
+
+SECTION 2: Execution & Observation
+Subheadline: “Where evidence is generated.”
+Cards:
+- Assessments
+  Description: “Manage sessions, candidate assignments, and moderation.”
+- Observation & Ratings
+  (If there is no separate module, map to the closest existing observer/ratings page.)
+  Description: “Live rating, session tracking, offline-capable capture.”
+- Audio & Transcripts
+  Description: “Upload audio, transcribe, and summarize.”
+
+SECTION 3: Analysis & Judgment
+Subheadline: “From structured data to defensible insight.”
+Cards:
+- Analyses
+  Description: “Review competency results, patterns, and statistics.”
+- Reports
+  Description: “Create, review, and export board-ready reports (PDF/DOCX).”
+Optional (only if exists):
+- Benchmarking
+  Description: “Cross-candidate comparisons and reference groups.”
+
+SECTION 4: Governance & Compliance
+Subheadline: “Auditability and privacy built in.”
+Cards (smaller / less visually dominant):
+- Users & Roles (existing: Benutzer)
+- Consent Management (existing: Einwilligungen)
+- Audit Log (existing: Audit-Protokoll)
+
+SECTION 5: Workspace & System
+Subheadline: “Workspace appearance and configuration.”
+Cards (smallest, near page bottom):
+- Theme Editor
+- Workspace Settings (or “Workspace Configuration”)
+If no settings page exists, keep only Theme Editor.
+
+------------------------------------------------------------
+4) INFORMATION ARCHITECTURE & LABELS
+------------------------------------------------------------
+
+Current German labels to map (example):
+- Zugangsansfragen → Access Requests (place in Governance or top KPI + link in Governance)
+- Assessments → split into “Assessment Architecture” (Design) and “Assessments” (Execution) if possible.
+- Anforderungsanalyse → Requirement Analysis (Design)
+- Kompetenzmodelle → Competency Frameworks (Design)
+- Analysen → Analyses (Analysis)
+- Berichte → Reports (Reporting/Analysis)
+- Einwilligungen → Consent Management (Governance)
+- Audioaufnahmen → Audio & Transcripts (Execution)
+- Audit-Protokoll → Audit Log (Governance)
+- Theme Editor → Theme Editor (System)
+
+Keep bilingual support if the app has it:
+- Ensure all new titles/descriptions are in both DE and EN via existing i18n patterns.
+- Default language should follow existing locale switch (EU/DE).
+
+------------------------------------------------------------
+5) VISUAL PRIORITY RULES
+------------------------------------------------------------
+
+- Section 1–3 are primary: larger cards, stronger typography.
+- Section 4 is secondary: smaller cards, subtle style.
+- Section 5 is tertiary: smallest cards, minimal emphasis.
+- Use consistent spacing and alignment.
+- Ensure good mobile behavior: sections stack; cards become single-column; cockpit KPIs wrap cleanly.
+
+------------------------------------------------------------
+6) ACCEPTANCE CRITERIA
+------------------------------------------------------------
+
+- Dashboard is no longer a flat list of features; it reads as a diagnostic lifecycle.
+- Enterprise-cockpit KPIs are visible and helpful; placeholders are acceptable.
+- Users can still navigate to all existing modules (no broken links).
+- No backend changes required.
+- Clean, executive look with clear hierarchy.
+
+DELIVERABLES:
+- Update the Dashboard page/component implementing the above.
+- Provide updated i18n keys (EN + DE) for new titles/subheadlines/descriptions.
+- Keep footer/header (workspace switch) intact.

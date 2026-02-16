@@ -8,6 +8,14 @@ interface Props {
   params: { workspaceSlug: string };
 }
 
+const processSteps = [
+  { label: "Requirement", labelDe: "Anforderung" },
+  { label: "Design", labelDe: "Design" },
+  { label: "Execution", labelDe: "Durchführung" },
+  { label: "Analysis", labelDe: "Analyse" },
+  { label: "Reporting", labelDe: "Berichterstattung" },
+];
+
 export default async function WorkspaceAdminDashboard({ params }: Props) {
   const wsAuth = getWorkspaceAuth();
   const masterAuth = hasMasterAuth();
@@ -40,22 +48,162 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   const userRoles = userSession?.roles ?? [];
   const canManageUsers = masterAuth || hasPermission(userRoles, "users.read");
 
-  const pendingCount = await prisma.accessRequest.count({
-    where: { workspaceId: workspace.id, status: "pending" },
-  });
+  const [pendingCount, assessmentCount, reportCount, consentCount, userCount] = await Promise.all([
+    prisma.accessRequest.count({ where: { workspaceId: workspace.id, status: "pending" } }),
+    prisma.assessment.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
+    prisma.report.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
+    prisma.consentRecord.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
+    prisma.user.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
+  ]);
+
+  const kpis = [
+    { label: "Aktive Assessments", value: assessmentCount > 0 ? String(assessmentCount) : "—" },
+    { label: "Ausstehende Berichte", value: reportCount > 0 ? String(reportCount) : "—" },
+    { label: "Einwilligungen", value: consentCount > 0 ? String(consentCount) : "—" },
+    { label: "Benutzer", value: String(userCount) },
+    { label: "Offene Zugangsanfragen", value: String(pendingCount), highlight: pendingCount > 0 },
+  ];
+
+  const base = `/w/${params.workspaceSlug}/admin`;
 
   const sections = [
-    { title: pendingCount > 0 ? `Zugangsanfragen (${pendingCount})` : "Zugangsanfragen", desc: "Zugangsanfragen für diesen Workspace prüfen und genehmigen.", href: canManageUsers ? `/w/${params.workspaceSlug}/admin/access-requests` : null },
-    { title: "Assessments", desc: "Assessment-Veranstaltungen, Übungen und Kandidatenzuweisungen verwalten.", href: `/w/${params.workspaceSlug}/admin/assessments` },
-    { title: "Anforderungsanalyse", desc: "Anforderungen analysieren und Assessment-Entwürfe per KI erstellen.", href: `/w/${params.workspaceSlug}/admin/requirements` },
-    { title: "Benutzer", desc: "Workspace-Benutzer, Rollen und Berechtigungen verwalten.", href: canManageUsers ? `/w/${params.workspaceSlug}/admin/users` : null },
-    { title: "Kompetenzmodelle", desc: "Kompetenzrahmen, Dimensionen und Skalen konfigurieren.", href: `/w/${params.workspaceSlug}/admin/competencies` },
-    { title: "Analysen", desc: "Assessment-Analysen, Kompetenzwerte und Statistiken einsehen.", href: `/w/${params.workspaceSlug}/admin/analytics` },
-    { title: "Einwilligungen", desc: "Einwilligungsvorlagen und -aufzeichnungen verwalten.", href: `/w/${params.workspaceSlug}/admin/consents` },
-    { title: "Theme Editor", desc: "Workspace-Branding und visuelle Identität anpassen.", href: `/w/${params.workspaceSlug}/admin/theme` },
-    { title: "Berichte", desc: "Assessment-Berichte erstellen und prüfen.", href: `/w/${params.workspaceSlug}/admin/reports` },
-    { title: "Audioaufnahmen", desc: "Audioaufnahmen hochladen, transkribieren und zusammenfassen.", href: `/w/${params.workspaceSlug}/admin/audio` },
-    { title: "Audit-Protokoll", desc: "Systemaktivitäten und Compliance-Aufzeichnungen prüfen.", href: null },
+    {
+      title: "Mandate & Diagnostic Design",
+      titleDe: "Auftrag & Diagnostik-Design",
+      subtitle: "Where structure precedes judgment.",
+      subtitleDe: "Wo Struktur dem Urteil vorausgeht.",
+      priority: "primary" as const,
+      cards: [
+        {
+          title: "Anforderungsanalyse",
+          titleEn: "Requirement Analysis",
+          desc: "Rollenanforderungen analysieren und Assessment-Blaupausen erstellen (KI-gestützt).",
+          href: `${base}/requirements`,
+          primary: true,
+        },
+        {
+          title: "Kompetenzrahmen",
+          titleEn: "Competency Frameworks",
+          desc: "Kompetenzen, Skalen, Anker und Gewichtungslogik konfigurieren.",
+          href: `${base}/competencies`,
+          primary: true,
+        },
+        {
+          title: "Assessment-Architektur",
+          titleEn: "Assessment Architecture",
+          desc: "Validierte Module im Einklang mit DIN 33430 zusammenstellen.",
+          href: `${base}/assessments`,
+          primary: true,
+        },
+      ],
+    },
+    {
+      title: "Execution & Observation",
+      titleDe: "Durchführung & Beobachtung",
+      subtitle: "Where evidence is generated.",
+      subtitleDe: "Wo Evidenz entsteht.",
+      priority: "primary" as const,
+      cards: [
+        {
+          title: "Assessments",
+          titleEn: "Assessments",
+          desc: "Sitzungen verwalten, Kandidaten zuweisen und Moderation steuern.",
+          href: `${base}/assessments`,
+          primary: true,
+        },
+        {
+          title: "Beobachtung & Bewertung",
+          titleEn: "Observation & Ratings",
+          desc: "Live-Bewertung, Sitzungs-Tracking, offline-fähige Erfassung.",
+          href: `${base}/assessments`,
+          primary: false,
+        },
+        {
+          title: "Audio & Transkripte",
+          titleEn: "Audio & Transcripts",
+          desc: "Audio hochladen, transkribieren und zusammenfassen.",
+          href: `${base}/audio`,
+          primary: false,
+        },
+      ],
+    },
+    {
+      title: "Analysis & Judgment",
+      titleDe: "Analyse & Urteilsbildung",
+      subtitle: "From structured data to defensible insight.",
+      subtitleDe: "Von strukturierten Daten zu belastbaren Erkenntnissen.",
+      priority: "primary" as const,
+      cards: [
+        {
+          title: "Analysen",
+          titleEn: "Analyses",
+          desc: "Kompetenzergebnisse, Muster und Statistiken einsehen.",
+          href: `${base}/analytics`,
+          primary: true,
+        },
+        {
+          title: "Berichte",
+          titleEn: "Reports",
+          desc: "Vorstandstaugliche Berichte erstellen, prüfen und exportieren (PDF/DOCX).",
+          href: `${base}/reports`,
+          primary: true,
+        },
+      ],
+    },
+    {
+      title: "Governance & Compliance",
+      titleDe: "Governance & Compliance",
+      subtitle: "Auditability and privacy built in.",
+      subtitleDe: "Nachvollziehbarkeit und Datenschutz von Anfang an.",
+      priority: "secondary" as const,
+      cards: [
+        {
+          title: "Benutzer & Rollen",
+          titleEn: "Users & Roles",
+          desc: "Workspace-Benutzer, Rollen und Berechtigungen verwalten.",
+          href: canManageUsers ? `${base}/users` : null,
+          primary: false,
+        },
+        {
+          title: "Zugangsanfragen",
+          titleEn: "Access Requests",
+          desc: "Zugangsanfragen prüfen und genehmigen.",
+          href: canManageUsers ? `${base}/access-requests` : null,
+          badge: pendingCount > 0 ? String(pendingCount) : undefined,
+          primary: false,
+        },
+        {
+          title: "Einwilligungen",
+          titleEn: "Consent Management",
+          desc: "Einwilligungsvorlagen und -aufzeichnungen verwalten.",
+          href: `${base}/consents`,
+          primary: false,
+        },
+        {
+          title: "Audit-Protokoll",
+          titleEn: "Audit Log",
+          desc: "Systemaktivitäten und Compliance-Aufzeichnungen prüfen.",
+          href: null,
+          primary: false,
+        },
+      ],
+    },
+    {
+      title: "Workspace & System",
+      titleDe: "Workspace & System",
+      subtitle: "Workspace appearance and configuration.",
+      subtitleDe: "Erscheinungsbild und Konfiguration des Workspace.",
+      priority: "tertiary" as const,
+      cards: [
+        {
+          title: "Theme Editor",
+          titleEn: "Theme Editor",
+          desc: "Workspace-Branding und visuelle Identität anpassen.",
+          href: `${base}/theme`,
+          primary: false,
+        },
+      ],
+    },
   ];
 
   return (
@@ -64,7 +212,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
         className="text-white sticky top-0 z-50"
         style={{ backgroundColor: primary }}
       >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <span
             className="text-lg font-bold tracking-tight"
             style={{ fontFamily: `'${headingFont}', serif` }}
@@ -80,6 +228,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
               <Link
                 href="/admin/workspaces"
                 className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
+                data-testid="link-switch-workspace"
               >
                 Workspace wechseln
               </Link>
@@ -88,84 +237,174 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
-        <div className="mb-8">
-          <h1
-            className="text-3xl font-bold mb-1"
-            style={{ fontFamily: `'${headingFont}', serif` }}
-          >
-            Workspace Dashboard
-          </h1>
-          <p className="text-sm opacity-60">
-            Verwaltung für <strong>{workspace.name}</strong>
-          </p>
-        </div>
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sections.map((s) => {
-            const inner = (
-              <>
-                <h3
-                  className="font-semibold mb-2"
-                  style={{ color: primary, fontFamily: `'${headingFont}', serif` }}
-                >
-                  {s.title}
-                </h3>
-                <p className="text-sm opacity-60">{s.desc}</p>
-                {s.href && (
-                  <span className="text-xs mt-3 inline-block opacity-50">→ Öffnen</span>
-                )}
-              </>
-            );
-
-            if (s.href) {
-              return (
-                <Link
-                  key={s.title}
-                  href={s.href}
-                  className="rounded-xl p-6 border transition-all hover:shadow-md"
-                  style={{ borderColor: `${primary}20`, backgroundColor: bgColor }}
-                >
-                  {inner}
-                </Link>
-              );
-            }
-
-            return (
-              <div
-                key={s.title}
-                className="rounded-xl p-6 border transition-all hover:shadow-sm"
-                style={{ borderColor: `${primary}20`, backgroundColor: bgColor }}
+        {/* ENTERPRISE COCKPIT */}
+        <section className="mb-8" data-testid="section-cockpit">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+            <div>
+              <h1
+                className="text-2xl font-bold tracking-tight"
+                style={{ fontFamily: `'${headingFont}', serif` }}
+                data-testid="text-dashboard-title"
               >
-                {inner}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-12 border rounded-xl p-6" style={{ borderColor: `${primary}20` }}>
-          <h2
-            className="text-lg font-bold mb-4"
-            style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
-          >
-            Theme Editor
-          </h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            {t && (
-              <>
-                <ThemeField label="Primary Color" value={t.primaryColor} />
-                <ThemeField label="Secondary Color" value={t.secondaryColor} />
-                <ThemeField label="Accent Color" value={t.accentColor} />
-                <ThemeField label="Background Color" value={t.backgroundColor} />
-                <ThemeField label="Text Color" value={t.textColor} />
-                <ThemeField label="Body Font" value={t.fontFamily} />
-                <ThemeField label="Heading Font" value={t.fontFamilyHeading} />
-              </>
-            )}
-            {!t && <p className="text-sm opacity-50 col-span-2">Kein Theme konfiguriert.</p>}
+                Enterprise Cockpit
+              </h1>
+              <p className="text-sm mt-1 opacity-50">
+                {workspace.name} · Diagnostik-Plattform
+              </p>
+            </div>
           </div>
-          <p className="text-xs opacity-40 mt-4">Theme-Editor kommt in einer zukünftigen Phase.</p>
-        </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {kpis.map((kpi) => (
+              <div
+                key={kpi.label}
+                className="rounded-lg border px-4 py-3 text-center"
+                style={{
+                  borderColor: kpi.highlight ? primary : `${primary}15`,
+                  backgroundColor: kpi.highlight ? `${primary}08` : `${bgColor}`,
+                }}
+                data-testid={`kpi-${kpi.label.toLowerCase().replace(/\s+/g, "-")}`}
+              >
+                <p className="text-xl font-bold" style={{ color: kpi.highlight ? primary : textColor }}>
+                  {kpi.value}
+                </p>
+                <p className="text-[11px] leading-tight mt-1 opacity-50">{kpi.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* PROCESS BAR */}
+        <section className="mb-10" data-testid="section-process-bar">
+          <div className="flex items-center gap-0 overflow-x-auto">
+            {processSteps.map((step, i) => (
+              <div key={step.label} className="flex items-center">
+                <div
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-full whitespace-nowrap"
+                  style={{
+                    backgroundColor: `${primary}08`,
+                    color: `${primary}`,
+                    border: `1px solid ${primary}20`,
+                  }}
+                >
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: primary }}>
+                    {i + 1}
+                  </span>
+                  {step.labelDe}
+                </div>
+                {i < processSteps.length - 1 && (
+                  <div className="w-6 h-px mx-1" style={{ backgroundColor: `${primary}30` }} />
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* DASHBOARD SECTIONS */}
+        {sections.map((section) => {
+          const isPrimary = section.priority === "primary";
+          const isSecondary = section.priority === "secondary";
+          const isTertiary = section.priority === "tertiary";
+
+          return (
+            <section
+              key={section.title}
+              className={`mb-10 ${isTertiary ? "mb-6" : ""}`}
+              data-testid={`section-${section.title.toLowerCase().replace(/\s+/g, "-")}`}
+            >
+              <div className="mb-4">
+                <h2
+                  className={`font-bold tracking-tight ${isPrimary ? "text-xl" : isSecondary ? "text-lg" : "text-base"}`}
+                  style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
+                >
+                  {section.titleDe}
+                </h2>
+                <p className={`mt-0.5 italic opacity-40 ${isPrimary ? "text-sm" : "text-xs"}`}>
+                  {section.subtitleDe}
+                </p>
+              </div>
+
+              <div className={`grid gap-4 ${
+                isPrimary
+                  ? "md:grid-cols-2 lg:grid-cols-3"
+                  : isSecondary
+                  ? "md:grid-cols-2 lg:grid-cols-4"
+                  : "md:grid-cols-2 lg:grid-cols-3"
+              }`}>
+                {section.cards.map((card) => {
+                  const cardContent = (
+                    <div
+                      className={`rounded-xl border transition-all ${
+                        card.href ? "hover:shadow-md cursor-pointer" : "opacity-70"
+                      } ${
+                        isPrimary && card.primary
+                          ? "p-6"
+                          : isSecondary || isTertiary
+                          ? "p-4"
+                          : "p-5"
+                      }`}
+                      style={{
+                        borderColor: `${primary}15`,
+                        backgroundColor: bgColor,
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h3
+                          className={`font-semibold ${isPrimary && card.primary ? "text-base" : "text-sm"}`}
+                          style={{ color: primary, fontFamily: `'${headingFont}', serif` }}
+                        >
+                          {card.title}
+                        </h3>
+                        {card.badge && (
+                          <span
+                            className="text-[10px] font-bold text-white rounded-full px-2 py-0.5"
+                            style={{ backgroundColor: primary }}
+                            data-testid={`badge-${card.titleEn?.toLowerCase().replace(/\s+/g, "-")}`}
+                          >
+                            {card.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`mt-1.5 opacity-50 leading-relaxed ${isPrimary ? "text-sm" : "text-xs"}`}>
+                        {card.desc}
+                      </p>
+                      {card.titleEn && (
+                        <p className="text-[10px] mt-2 opacity-30 uppercase tracking-wider">
+                          {card.titleEn}
+                        </p>
+                      )}
+                      {card.href && (
+                        <span className="text-[11px] mt-3 inline-block opacity-40">→ Öffnen</span>
+                      )}
+                    </div>
+                  );
+
+                  const cardId = (card.titleEn || card.title).toLowerCase().replace(/\s+/g, "-");
+
+                  if (card.href) {
+                    return (
+                      <Link
+                        key={card.title}
+                        href={card.href}
+                        data-testid={`link-card-${cardId}`}
+                      >
+                        {cardContent}
+                      </Link>
+                    );
+                  }
+
+                  return (
+                    <div key={card.title} data-testid={`card-${cardId}`}>
+                      {cardContent}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
       </main>
 
       <footer className="border-t py-6" style={{ borderColor: `${primary}10` }}>
@@ -173,24 +412,6 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
           &copy; Christoph Aldering &middot; Private initiative / concept
         </p>
       </footer>
-    </div>
-  );
-}
-
-function ThemeField({ label, value }: { label: string; value: string }) {
-  const isColor = value.startsWith("#") || value.startsWith("hsl") || value.startsWith("rgb");
-  return (
-    <div className="flex items-center gap-3 py-2 px-3 rounded-lg bg-slate-50 border border-slate-100">
-      {isColor && (
-        <div
-          className="w-6 h-6 rounded-md border border-black/10 shrink-0"
-          style={{ backgroundColor: value }}
-        />
-      )}
-      <div>
-        <p className="text-xs text-slate-400">{label}</p>
-        <p className="text-sm font-mono text-slate-700">{value}</p>
-      </div>
     </div>
   );
 }
