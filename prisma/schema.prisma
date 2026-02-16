@@ -25,6 +25,8 @@ model Workspace {
   createdAt          DateTime @default(now()) @map("created_at")
 
   theme              Theme?
+  users              User[]
+  assessments        Assessment[]
 
   @@map("workspaces")
 }
@@ -44,4 +46,51 @@ model Theme {
   workspace         Workspace @relation(fields: [workspaceId], references: [id])
 
   @@map("themes")
+}
+
+model User {
+  id                  String   @id @default(uuid())
+  email               String
+  name                String
+  passwordHash        String   @map("password_hash")
+  roles               String[]
+  workspaceId         String   @map("workspace_id")
+  assessmentId        String?  @map("assessment_id")
+  forcePasswordChange Boolean  @default(false) @map("force_password_change")
+  status              String   @default("active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  workspace           Workspace @relation(fields: [workspaceId], references: [id])
+  assessment          Assessment? @relation(fields: [assessmentId], references: [id])
+  passwordResetTokens PasswordResetToken[]
+
+  @@unique([email, workspaceId])
+  @@map("users")
+}
+
+model Assessment {
+  id          String   @id @default(uuid())
+  name        String
+  workspaceId String   @map("workspace_id")
+  status      String   @default("draft")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  candidates  User[]
+
+  @@map("assessments")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User @relation(fields: [userId], references: [id])
+
+  @@map("password_reset_tokens")
 }

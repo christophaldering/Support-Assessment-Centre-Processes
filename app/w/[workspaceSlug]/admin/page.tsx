@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
-import { getWorkspaceAuth, hasMasterAuth } from "@/lib/session";
+import { getWorkspaceAuth, hasMasterAuth, getUserSession } from "@/lib/session";
+import { hasPermission } from "@/lib/rbac";
 import Link from "next/link";
 
 interface Props {
@@ -10,9 +11,15 @@ interface Props {
 export default async function WorkspaceAdminDashboard({ params }: Props) {
   const wsAuth = getWorkspaceAuth();
   const masterAuth = hasMasterAuth();
+  const userSession = getUserSession();
 
-  if (!masterAuth && wsAuth !== params.workspaceSlug) {
-    redirect("/admin/login");
+  const hasUserAccess =
+    userSession &&
+    userSession.workspaceSlug === params.workspaceSlug &&
+    !userSession.roles.includes("CANDIDATE");
+
+  if (!masterAuth && wsAuth !== params.workspaceSlug && !hasUserAccess) {
+    redirect(`/w/${params.workspaceSlug}/login`);
   }
 
   const workspace = await prisma.workspace.findUnique({
@@ -30,13 +37,16 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   const bgColor = t?.backgroundColor ?? "#ffffff";
   const headingFont = t?.fontFamilyHeading ?? "Playfair Display";
 
-  const placeholderSections = [
-    { title: "Assessments", desc: "Manage assessment events, exercises, and candidate assignments." },
-    { title: "Users", desc: "Manage workspace users, roles, and permissions." },
-    { title: "Competency Models", desc: "Configure competency frameworks, dimensions, and scales." },
-    { title: "Reports", desc: "Generate and review assessment reports." },
-    { title: "Theme Editor", desc: "Customize workspace branding and visual identity." },
-    { title: "Audit Log", desc: "Review system activity and compliance records." },
+  const userRoles = userSession?.roles ?? [];
+  const canManageUsers = masterAuth || hasPermission(userRoles, "users.read");
+
+  const sections = [
+    { title: "Assessments", desc: "Assessment-Veranstaltungen, Übungen und Kandidatenzuweisungen verwalten.", href: null },
+    { title: "Benutzer", desc: "Workspace-Benutzer, Rollen und Berechtigungen verwalten.", href: canManageUsers ? `/w/${params.workspaceSlug}/admin/users` : null },
+    { title: "Kompetenzmodelle", desc: "Kompetenzrahmen, Dimensionen und Skalen konfigurieren.", href: null },
+    { title: "Berichte", desc: "Assessment-Berichte erstellen und prüfen.", href: null },
+    { title: "Theme Editor", desc: "Workspace-Branding und visuelle Identität anpassen.", href: null },
+    { title: "Audit-Protokoll", desc: "Systemaktivitäten und Compliance-Aufzeichnungen prüfen.", href: null },
   ];
 
   return (
@@ -53,13 +63,18 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
             {workspace.name}
           </span>
           <div className="flex items-center gap-4">
+            {userSession && (
+              <span className="text-xs text-white/70">{userSession.roles.join(", ")}</span>
+            )}
             <span className="text-xs text-white/70">{workspace.dataResidency}</span>
-            <Link
-              href="/admin/workspaces"
-              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-            >
-              Switch workspace
-            </Link>
+            {masterAuth && (
+              <Link
+                href="/admin/workspaces"
+                className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
+              >
+                Workspace wechseln
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -73,26 +88,50 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
             Workspace Dashboard
           </h1>
           <p className="text-sm opacity-60">
-            Administration panel for <strong>{workspace.name}</strong>
+            Verwaltung für <strong>{workspace.name}</strong>
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {placeholderSections.map((s) => (
-            <div
-              key={s.title}
-              className="rounded-xl p-6 border transition-all hover:shadow-sm"
-              style={{ borderColor: `${primary}20`, backgroundColor: `${bgColor}` }}
-            >
-              <h3
-                className="font-semibold mb-2"
-                style={{ color: primary, fontFamily: `'${headingFont}', serif` }}
+          {sections.map((s) => {
+            const inner = (
+              <>
+                <h3
+                  className="font-semibold mb-2"
+                  style={{ color: primary, fontFamily: `'${headingFont}', serif` }}
+                >
+                  {s.title}
+                </h3>
+                <p className="text-sm opacity-60">{s.desc}</p>
+                {s.href && (
+                  <span className="text-xs mt-3 inline-block opacity-50">→ Öffnen</span>
+                )}
+              </>
+            );
+
+            if (s.href) {
+              return (
+                <Link
+                  key={s.title}
+                  href={s.href}
+                  className="rounded-xl p-6 border transition-all hover:shadow-md"
+                  style={{ borderColor: `${primary}20`, backgroundColor: bgColor }}
+                >
+                  {inner}
+                </Link>
+              );
+            }
+
+            return (
+              <div
+                key={s.title}
+                className="rounded-xl p-6 border transition-all hover:shadow-sm"
+                style={{ borderColor: `${primary}20`, backgroundColor: bgColor }}
               >
-                {s.title}
-              </h3>
-              <p className="text-sm opacity-60">{s.desc}</p>
-            </div>
-          ))}
+                {inner}
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-12 border rounded-xl p-6" style={{ borderColor: `${primary}20` }}>
@@ -114,9 +153,9 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
                 <ThemeField label="Heading Font" value={t.fontFamilyHeading} />
               </>
             )}
-            {!t && <p className="text-sm opacity-50 col-span-2">No theme configured.</p>}
+            {!t && <p className="text-sm opacity-50 col-span-2">Kein Theme konfiguriert.</p>}
           </div>
-          <p className="text-xs opacity-40 mt-4">Theme editor UI coming in a future phase.</p>
+          <p className="text-xs opacity-40 mt-4">Theme-Editor kommt in einer zukünftigen Phase.</p>
         </div>
       </main>
 

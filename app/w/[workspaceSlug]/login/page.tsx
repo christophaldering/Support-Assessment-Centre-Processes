@@ -1,0 +1,134 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
+
+export default function WorkspaceUserLoginPage() {
+  const router = useRouter();
+  const params = useParams();
+  const workspaceSlug = params.workspaceSlug as string;
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, workspaceSlug }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Login failed.");
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.user.forcePasswordChange) {
+        router.push(`/w/${workspaceSlug}/change-password`);
+        return;
+      }
+
+      if (data.user.roles.includes("CANDIDATE")) {
+        router.push(`/w/${workspaceSlug}/assessment`);
+      } else {
+        router.push(`/w/${workspaceSlug}/admin`);
+      }
+    } catch {
+      setError("Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="bg-brand-navy text-white">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
+          <Link href="/" className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity">
+            Executive Diagnostics Platform
+          </Link>
+        </div>
+      </header>
+
+      <main className="flex-1 flex items-center justify-center px-6">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-brand-navy mb-2">Anmeldung</h1>
+            <p className="text-sm text-slate-500">
+              Workspace: <strong>{workspaceSlug}</strong>
+            </p>
+            <div className="h-1 w-10 bg-brand-blue mx-auto rounded-full mt-4" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4" data-testid="form-login">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+                E-Mail
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="ihre@email.de"
+                required
+                data-testid="input-email"
+                className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue transition-colors"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+                Passwort
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Passwort eingeben"
+                required
+                data-testid="input-password"
+                className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue transition-colors"
+              />
+            </div>
+
+            {error && <p className="text-sm text-red-500" data-testid="text-error">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading || !email.trim() || !password.trim()}
+              data-testid="button-login"
+              className="w-full rounded-lg bg-brand-blue text-white font-medium py-2.5 text-sm hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
+            >
+              {loading ? "Anmelden…" : "Anmelden"}
+            </button>
+          </form>
+
+          <div className="text-center mt-6 space-y-2">
+            <Link
+              href={`/w/${workspaceSlug}/reset-password`}
+              className="block text-sm text-slate-400 hover:text-brand-blue transition-colors"
+            >
+              Passwort vergessen?
+            </Link>
+            <Link href="/" className="block text-sm text-slate-400 hover:text-brand-blue transition-colors">
+              Zurück zur Plattform
+            </Link>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
