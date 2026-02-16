@@ -7,11 +7,21 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const workspaces = await prisma.workspace.findMany({
-    include: { theme: true },
-    orderBy: { createdAt: "desc" },
-  });
+  try {
+    const workspaces = await prisma.workspace.findMany({
+      include: { theme: true },
+      orderBy: { createdAt: "desc" },
+    });
 
-  const safe = workspaces.map(({ adminPasswordHash: _hash, ...w }) => w);
-  return NextResponse.json(safe);
+    console.log(`[workspaces] Found ${workspaces.length} workspace(s)`);
+
+    const safe = workspaces.map(({ adminPasswordHash: _hash, ...w }) => w);
+    return NextResponse.json(safe);
+  } catch (err: any) {
+    console.error("[workspaces] Database error:", err?.message || err);
+    return NextResponse.json(
+      { error: "Failed to load workspaces", detail: err?.message },
+      { status: 500 }
+    );
+  }
 }

@@ -43,12 +43,13 @@ export default function WorkspaceSelectorPage() {
             router.push("/admin/login");
             return;
           }
-          throw new Error("Failed to load");
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.detail || body?.error || `HTTP ${res.status}`);
         }
         const data = await res.json();
         setWorkspaces(data);
       })
-      .catch(() => setError("Failed to load workspaces."))
+      .catch((err) => setError(`Failed to load workspaces: ${err.message}`))
       .finally(() => setLoading(false));
   }, [router]);
 
