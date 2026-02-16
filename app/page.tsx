@@ -11,10 +11,10 @@ export default function HomePage() {
           </span>
           <Link
             href="/admin/login"
-            className="text-xs font-medium text-slate-300 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-4 py-1.5 transition-colors"
+            className="text-[11px] font-medium text-slate-400 hover:text-slate-200 transition-colors"
             data-testid="link-admin-access"
           >
-            Administrator Access
+            Plattform-Administration
           </Link>
         </div>
       </header>
@@ -48,22 +48,9 @@ export default function HomePage() {
 
           <div className="pt-4 space-y-5">
             <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">
-              Access Your Workspace
+              Workspace-Zugang
             </p>
             <WorkspaceEntry />
-          </div>
-
-          <div className="pt-2">
-            <Link
-              href="#governance-pack"
-              className="inline-block rounded-lg border border-white/20 text-slate-300 hover:text-white hover:border-white/40 font-medium px-6 py-3 text-sm transition-colors"
-              data-testid="button-governance-pack"
-            >
-              Security, Privacy &amp; AI Governance Pack
-            </Link>
-            <p className="text-xs text-slate-500 italic mt-3">
-              Access may require administrator approval or NDA confirmation.
-            </p>
           </div>
         </div>
       </section>

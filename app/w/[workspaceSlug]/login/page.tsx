@@ -214,6 +214,13 @@ export default function WorkspaceUserLoginPage() {
 
           <div className="text-center mt-6 space-y-2">
             <Link
+              href={`/w/${workspaceSlug}/request-access`}
+              className="block text-sm text-brand-blue hover:text-brand-blue-dark font-medium transition-colors"
+              data-testid="link-request-access"
+            >
+              Zugang anfordern
+            </Link>
+            <Link
               href={`/w/${workspaceSlug}/reset-password`}
               className="block text-sm text-slate-400 hover:text-brand-blue transition-colors"
             >

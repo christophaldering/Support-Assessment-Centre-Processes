@@ -40,7 +40,12 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   const userRoles = userSession?.roles ?? [];
   const canManageUsers = masterAuth || hasPermission(userRoles, "users.read");
 
+  const pendingCount = await prisma.accessRequest.count({
+    where: { workspaceId: workspace.id, status: "pending" },
+  });
+
   const sections = [
+    { title: pendingCount > 0 ? `Zugangsanfragen (${pendingCount})` : "Zugangsanfragen", desc: "Zugangsanfragen für diesen Workspace prüfen und genehmigen.", href: canManageUsers ? `/w/${params.workspaceSlug}/admin/access-requests` : null },
     { title: "Assessments", desc: "Assessment-Veranstaltungen, Übungen und Kandidatenzuweisungen verwalten.", href: `/w/${params.workspaceSlug}/admin/assessments` },
     { title: "Anforderungsanalyse", desc: "Anforderungen analysieren und Assessment-Entwürfe per KI erstellen.", href: `/w/${params.workspaceSlug}/admin/requirements` },
     { title: "Benutzer", desc: "Workspace-Benutzer, Rollen und Berechtigungen verwalten.", href: canManageUsers ? `/w/${params.workspaceSlug}/admin/users` : null },

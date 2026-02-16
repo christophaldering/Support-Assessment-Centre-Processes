@@ -19,12 +19,12 @@ export default function WorkspaceEntry() {
     try {
       const res = await fetch(`/api/workspaces/${encodeURIComponent(trimmed)}/check`);
       if (res.ok) {
-        router.push(`/w/${encodeURIComponent(trimmed)}/login`);
+        router.push(`/w/${encodeURIComponent(trimmed)}/request-access`);
       } else {
-        setError("Workspace not found. Please check the name and try again.");
+        setError("Workspace nicht gefunden. Bitte prüfen Sie den Namen.");
       }
     } catch {
-      setError("Connection error. Please try again.");
+      setError("Verbindungsfehler. Bitte versuchen Sie es erneut.");
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ export default function WorkspaceEntry() {
             setSlug(e.target.value);
             if (error) setError("");
           }}
-          placeholder="Enter workspace name"
+          placeholder="Workspace-Name eingeben"
           className="flex-1 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-2.5 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/50 focus:border-brand-blue transition-colors"
           data-testid="input-workspace-slug"
         />
