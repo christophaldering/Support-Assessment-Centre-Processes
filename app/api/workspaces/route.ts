@@ -9,13 +9,19 @@ export async function GET() {
 
   try {
     const workspaces = await prisma.workspace.findMany({
-      include: { theme: true },
+      include: {
+        theme: true,
+        _count: { select: { accessRequests: { where: { status: "pending" } } } },
+      },
       orderBy: { createdAt: "desc" },
     });
 
     console.log(`[workspaces] Found ${workspaces.length} workspace(s)`);
 
-    const safe = workspaces.map(({ adminPasswordHash: _hash, ...w }) => w);
+    const safe = workspaces.map(({ adminPasswordHash: _hash, _count, ...w }) => ({
+      ...w,
+      pendingAccessRequests: _count?.accessRequests ?? 0,
+    }));
     return NextResponse.json(safe);
   } catch (err: any) {
     console.error("[workspaces] Database error:", err?.message || err);

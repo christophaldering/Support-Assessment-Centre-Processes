@@ -22,6 +22,7 @@ interface Workspace {
   dataResidency: string;
   createdAt: string;
   theme: Theme | null;
+  pendingAccessRequests: number;
 }
 
 export default function WorkspaceSelectorPage() {
@@ -124,15 +125,22 @@ export default function WorkspaceSelectorPage() {
                     <p className="text-xs text-slate-400">/{ws.slug} · {ws.dataResidency}</p>
                   </div>
                 </div>
-                <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    ws.status === "active"
-                      ? "bg-emerald-50 text-emerald-600"
-                      : "bg-slate-100 text-slate-500"
-                  }`}
-                >
-                  {ws.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  {ws.pendingAccessRequests > 0 && (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                      {ws.pendingAccessRequests} Anfrage{ws.pendingAccessRequests !== 1 ? "n" : ""}
+                    </span>
+                  )}
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      ws.status === "active"
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {ws.status}
+                  </span>
+                </div>
               </div>
 
               {selectedId === ws.id ? (
