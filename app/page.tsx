@@ -27,9 +27,6 @@ export default function HomePage() {
             <span className="text-blue-300">– Intelligent by Design</span>
           </h1>
           <div className="h-1 w-16 bg-brand-blue mx-auto rounded-full" />
-          <p className="text-slate-300 text-lg max-w-2xl mx-auto leading-relaxed" data-testid="text-hero-subheadline">
-            Redefining how strategic leadership decisions are designed, evaluated, and governed.
-          </p>
 
           <div className="max-w-xl mx-auto space-y-3 text-left">
             <p className="text-slate-400 text-sm flex items-start gap-3">
