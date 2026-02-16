@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  experimental: {
+    instrumentationHook: true,
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
