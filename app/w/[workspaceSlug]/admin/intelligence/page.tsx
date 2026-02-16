@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -163,6 +163,14 @@ const INTERVENTION_ICONS: Record<string, string> = {
 };
 
 export default function AdvancedIntelligencePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-400">Laden...</div>}>
+      <IntelligenceContent />
+    </Suspense>
+  );
+}
+
+function IntelligenceContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const workspaceSlug = params.workspaceSlug as string;
