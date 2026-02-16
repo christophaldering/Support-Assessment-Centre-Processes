@@ -1,4 +1,5 @@
 import Link from "next/link";
+import WorkspaceEntry from "./components/WorkspaceEntry";
 
 export default function HomePage() {
   return (
@@ -45,25 +46,25 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link
-              href="/admin/login"
-              className="rounded-lg bg-brand-blue text-white font-medium px-6 py-3 text-sm hover:bg-brand-blue-dark transition-colors"
-              data-testid="button-request-access"
-            >
-              Request Workspace Access
-            </Link>
+          <div className="pt-4 space-y-5">
+            <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">
+              Access Your Workspace
+            </p>
+            <WorkspaceEntry />
+          </div>
+
+          <div className="pt-2">
             <Link
               href="#governance-pack"
-              className="rounded-lg border border-white/20 text-slate-300 hover:text-white hover:border-white/40 font-medium px-6 py-3 text-sm transition-colors"
+              className="inline-block rounded-lg border border-white/20 text-slate-300 hover:text-white hover:border-white/40 font-medium px-6 py-3 text-sm transition-colors"
               data-testid="button-governance-pack"
             >
               Security, Privacy &amp; AI Governance Pack
             </Link>
+            <p className="text-xs text-slate-500 italic mt-3">
+              Access may require administrator approval or NDA confirmation.
+            </p>
           </div>
-          <p className="text-xs text-slate-500 italic">
-            Governance Pack access may require administrator approval or NDA confirmation.
-          </p>
         </div>
       </section>
 
