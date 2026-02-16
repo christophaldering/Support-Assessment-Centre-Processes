@@ -60,7 +60,7 @@ export default function WorkspaceUserLoginPage() {
       <header className="bg-brand-navy text-white">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
           <Link href="/" className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity">
-            Executive Diagnostics Platform
+            Executive Diagnostics Suite
           </Link>
         </div>
       </header>
