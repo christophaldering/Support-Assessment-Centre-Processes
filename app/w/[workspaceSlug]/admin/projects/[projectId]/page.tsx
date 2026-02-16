@@ -144,6 +144,18 @@ export default async function ProjectDetailPage({ params }: Props) {
           href: `${base}/modules`,
           badge: "1 aktiv",
         },
+        {
+          title: "Übungsbibliothek",
+          titleEn: "EXERCISE LIBRARY",
+          desc: "Übungen hochladen, taggen, durchsuchen und für Assessments bereitstellen.",
+          href: `/w/${params.workspaceSlug}/admin/exercise-library`,
+        },
+        {
+          title: "Brand & Style",
+          titleEn: "BRAND RULES",
+          desc: "Corporate-Identity-Regeln definieren, Farben und Typografie auf das Workspace-Theme anwenden.",
+          href: `/w/${params.workspaceSlug}/admin/brand-rules`,
+        },
       ],
     },
     {

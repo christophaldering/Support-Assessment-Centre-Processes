@@ -83,6 +83,8 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       : []),
     { title: "Einwilligungen", href: `${base}/consents`, desc: "Einwilligungsvorlagen verwalten" },
     { title: "Tools & Module", href: `${base}/modules`, desc: "Fallstudien & Instrumente" },
+    { title: "Übungsbibliothek", href: `${base}/exercise-library`, desc: "Übungen hochladen & verwalten" },
+    { title: "Brand & Style", href: `${base}/brand-rules`, desc: "Corporate-Identity-Regeln" },
     { title: "Theme Editor", href: `${base}/theme`, desc: "Branding anpassen" },
   ];
 

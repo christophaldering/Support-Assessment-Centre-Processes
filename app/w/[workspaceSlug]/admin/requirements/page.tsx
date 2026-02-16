@@ -121,6 +121,11 @@ export default function RequirementsAnalysisPage() {
   const [coCreationStep, setCoCreationStep] = useState("target_role");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const [matchingAnalysisId, setMatchingAnalysisId] = useState<string | null>(null);
+  const [matchingLoading, setMatchingLoading] = useState(false);
+  const [matchingResult, setMatchingResult] = useState<any>(null);
+  const [matchingError, setMatchingError] = useState<string | null>(null);
+
   const fetchAnalyses = useCallback(async () => {
     try {
       const res = await fetch(`/api/w/${slug}/requirements-analysis`);
@@ -360,6 +365,33 @@ export default function RequirementsAnalysisPage() {
     }
   };
 
+  const handleFindMatches = async (analysisId: string) => {
+    setMatchingAnalysisId(analysisId);
+    setMatchingLoading(true);
+    setMatchingResult(null);
+    setMatchingError(null);
+
+    try {
+      const res = await fetch(`/api/w/${slug}/exercise-matching`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requirementsAnalysisId: analysisId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Fehler beim Suchen");
+      }
+
+      const result = await res.json();
+      setMatchingResult(result);
+    } catch (err) {
+      setMatchingError(err instanceof Error ? err.message : "Fehler");
+    } finally {
+      setMatchingLoading(false);
+    }
+  };
+
   const openProposal = (analysis: RequirementsAnalysis) => {
     setActiveAnalysis(analysis);
     setEditedProposal(analysis.proposal);
@@ -499,6 +531,17 @@ export default function RequirementsAnalysisPage() {
                       >
                         {STATUS_LABELS[a.status] || a.status}
                       </span>
+                      {(a.status === "proposal_ready" || a.status === "applied") && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleFindMatches(a.id); }}
+                          disabled={matchingLoading && matchingAnalysisId === a.id}
+                          className="px-3 py-1 text-xs font-medium text-white rounded-full hover:opacity-90 transition disabled:opacity-50"
+                          style={{ backgroundColor: "#7c3aed" }}
+                          data-testid={`button-match-exercises-${a.id}`}
+                        >
+                          {matchingLoading && matchingAnalysisId === a.id ? "Suche…" : "Übungen finden"}
+                        </button>
+                      )}
                       {a.appliedAssessmentId && (
                         <Link
                           href={`/w/${slug}/admin/assessments/${a.appliedAssessmentId}`}
@@ -513,6 +556,97 @@ export default function RequirementsAnalysisPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {matchingError && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm" data-testid="text-matching-error">
+                {matchingError}
+                <button onClick={() => setMatchingError(null)} className="ml-3 underline">Schließen</button>
+              </div>
+            )}
+
+            {matchingResult && (
+              <div className="mt-6 space-y-6" data-testid="section-matching-results">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold" style={{ fontFamily: "Playfair Display, serif", color: "#7c3aed" }}>
+                    Übungs-Empfehlungen
+                  </h3>
+                  <button
+                    onClick={() => { setMatchingResult(null); setMatchingAnalysisId(null); }}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                    data-testid="button-close-matching"
+                  >
+                    Schließen
+                  </button>
+                </div>
+
+                {matchingResult.recommendationsJson?.use_as_is?.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-emerald-700 mb-2 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full" />
+                      Direkt einsetzbar ({matchingResult.recommendationsJson.use_as_is.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {matchingResult.recommendationsJson.use_as_is.map((r: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg" data-testid={`match-use-${i}`}>
+                          <div>
+                            <p className="font-medium text-sm text-gray-900">{r.title}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{r.rationale}</p>
+                          </div>
+                          <span className="text-sm font-bold text-emerald-700">{r.fitScore}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {matchingResult.recommendationsJson?.adapt?.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-amber-700 mb-2 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-amber-500 rounded-full" />
+                      Anpassung empfohlen ({matchingResult.recommendationsJson.adapt.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {matchingResult.recommendationsJson.adapt.map((r: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg" data-testid={`match-adapt-${i}`}>
+                          <div>
+                            <p className="font-medium text-sm text-gray-900">{r.title}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{r.rationale}</p>
+                            {r.suggestedChanges && <p className="text-xs text-amber-700 mt-0.5">{r.suggestedChanges}</p>}
+                          </div>
+                          <span className="text-sm font-bold text-amber-700">{r.fitScore}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {matchingResult.recommendationsJson?.create_new?.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full" />
+                      Neu erstellen ({matchingResult.recommendationsJson.create_new.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {matchingResult.recommendationsJson.create_new.map((r: any, i: number) => (
+                        <div key={i} className="p-3 bg-blue-50 border border-blue-200 rounded-lg" data-testid={`match-new-${i}`}>
+                          <p className="font-medium text-sm text-gray-900">{r.proposedExerciseSpec?.name || "Neue Übung"}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{r.rationale}</p>
+                          {r.proposedExerciseSpec?.type && (
+                            <span className="inline-block mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                              {r.proposedExerciseSpec.type}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(!matchingResult.recommendationsJson?.use_as_is?.length && !matchingResult.recommendationsJson?.adapt?.length && !matchingResult.recommendationsJson?.create_new?.length) && (
+                  <p className="text-sm text-gray-500 text-center py-8">Keine Empfehlungen verfügbar. Bitte fügen Sie zunächst Übungen zur Bibliothek hinzu.</p>
+                )}
               </div>
             )}
           </div>

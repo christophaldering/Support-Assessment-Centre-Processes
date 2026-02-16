@@ -42,6 +42,10 @@ model Workspace {
   usageEvents        UsageEvent[]
 
   accessRequests     AccessRequest[]
+  styleGuides        WorkspaceStyleGuide[]
+  brandRuleSets      BrandRuleSet[]
+  exerciseLibraryItems ExerciseLibraryItem[]
+  exerciseRecommendations ExerciseRecommendation[]
 
   @@map("workspaces")
 }
@@ -466,4 +470,106 @@ model UsageEvent {
   @@index([workspaceId, eventType])
   @@index([workspaceId, createdAt])
   @@map("usage_events")
+}
+
+model WorkspaceStyleGuide {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  title           String
+  sourceType      String   @map("source_type")
+  fileObjectPath  String?  @map("file_object_path")
+  rawTextExtract  String?  @map("raw_text_extract")
+  analysisJson    Json?    @map("analysis_json")
+  status          String   @default("uploaded")
+  version         String   @default("1.0")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  workspace       Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@map("workspace_style_guides")
+}
+
+model BrandRuleSet {
+  id                      String   @id @default(uuid())
+  workspaceId             String   @map("workspace_id")
+  name                    String
+  derivedFromStyleGuideIds String[] @map("derived_from_style_guide_ids")
+  rulesJson               Json     @map("rules_json")
+  appliesToWorkspaceUi    Boolean  @default(false) @map("applies_to_workspace_ui")
+  appliesToDocuments      Boolean  @default(false) @map("applies_to_documents")
+  appliesToPptExports     Boolean  @default(false) @map("applies_to_ppt_exports")
+  appliesToExerciseMaterials Boolean @default(false) @map("applies_to_exercise_materials")
+  status                  String   @default("draft")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  workspace               Workspace @relation(fields: [workspaceId], references: [id])
+  exerciseVariants        ExerciseLibraryVariant[]
+
+  @@index([workspaceId])
+  @@map("brand_rule_sets")
+}
+
+model ExerciseLibraryItem {
+  id                String   @id @default(uuid())
+  workspaceId       String   @map("workspace_id")
+  title             String
+  tags              String[]
+  exerciseType      String   @map("exercise_type")
+  targetLevels      String[] @map("target_levels")
+  languagesAvailable String[] @map("languages_available")
+  metadataJson      Json?    @map("metadata_json")
+  qualityStatus     String   @default("draft") @map("quality_status")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  workspace         Workspace @relation(fields: [workspaceId], references: [id])
+  variants          ExerciseLibraryVariant[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, exerciseType])
+  @@map("exercise_library_items")
+}
+
+model ExerciseLibraryVariant {
+  id              String   @id @default(uuid())
+  libraryItemId   String   @map("library_item_id")
+  variantType     String   @map("variant_type")
+  brandRuleSetId  String?  @map("brand_rule_set_id")
+  language        String   @default("DE")
+  fileObjectPath  String?  @map("file_object_path")
+  fileName        String?  @map("file_name")
+  fileSize        Int?     @map("file_size")
+  mimeType        String?  @map("mime_type")
+  contentJson     Json?    @map("content_json")
+  analysisJson    Json?    @map("analysis_json")
+  version         String   @default("1.0")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  libraryItem     ExerciseLibraryItem @relation(fields: [libraryItemId], references: [id], onDelete: Cascade)
+  brandRuleSet    BrandRuleSet? @relation(fields: [brandRuleSetId], references: [id], onDelete: SetNull)
+
+  @@index([libraryItemId])
+  @@map("exercise_library_variants")
+}
+
+model ExerciseRecommendation {
+  id                      String   @id @default(uuid())
+  requirementsAnalysisId  String   @map("requirements_analysis_id")
+  workspaceId             String   @map("workspace_id")
+  assessmentId            String?  @map("assessment_id")
+  recommendationsJson     Json     @map("recommendations_json")
+  status                  String   @default("draft")
+  approvedByUserId        String?  @map("approved_by_user_id")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  workspace               Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@index([requirementsAnalysisId])
+  @@map("exercise_recommendations")
 }

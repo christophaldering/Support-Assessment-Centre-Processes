@@ -31,6 +31,10 @@ export const PERMISSIONS = [
   "audit.read",
   "theme.manage",
   "candidate.own_assessment",
+  "exerciselibrary.upload",
+  "exerciselibrary.manage",
+  "brandrules.manage",
+  "requirements.match_exercises",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -57,6 +61,10 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "requirements.manage",
     "audit.read",
     "theme.manage",
+    "exerciselibrary.upload",
+    "exerciselibrary.manage",
+    "brandrules.manage",
+    "requirements.match_exercises",
   ],
   MODERATOR: [
     "assessments.create",
@@ -70,6 +78,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "reports.create",
     "requirements.manage",
     "users.read",
+    "exerciselibrary.manage",
+    "requirements.match_exercises",
   ],
   OBSERVER: [
     "assessments.read",
@@ -83,6 +93,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "candidates.read",
     "candidates.update",
     "users.read",
+    "exerciselibrary.upload",
+    "exerciselibrary.manage",
   ],
   HR_CLIENT: [
     "assessments.read",
