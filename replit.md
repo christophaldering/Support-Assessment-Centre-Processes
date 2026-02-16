@@ -2,7 +2,7 @@
 
 ## Overview
 
-Enterprise-grade, multi-tenant SaaS platform for hosting executive assessment centers. Currently in **Phase 3 — Assessments, Exercises, Documents & Portals**.
+Enterprise-grade, multi-tenant SaaS platform for hosting executive assessment centers. Currently in **Phase 4 — Competency Models, Scales, Weighting Profiles & Exercise Mapping**.
 
 Tech stack: Next.js 14 (App Router) + TypeScript (strict) + Prisma + PostgreSQL + Tailwind CSS.
 
@@ -32,6 +32,7 @@ Footer credit: "© Christoph Aldering · Private initiative / concept"
     admin/users/layout.tsx    → Server-side RBAC guard (users.read)
     admin/assessments/page.tsx → Assessment list & CRUD management
     admin/assessments/[assessmentId]/page.tsx → Assessment detail with exercises & documents
+    admin/competencies/page.tsx → Competency models, scales, weighting profiles & exercise mapping
     login/page.tsx            → User login (email + password)
     change-password/page.tsx  → Forced password change (candidates)
     assessment/page.tsx       → Candidate assessment portal (exercises + documents)
@@ -58,6 +59,17 @@ Footer credit: "© Christoph Aldering · Private initiative / concept"
     assessments/[assessmentId]/documents/[documentId]/route.ts → Get (with download URL) + delete document
     my-assessment/route.ts    → Candidate's own assessment with exercises & filtered documents
     my-assessment/documents/[documentId]/route.ts → Candidate document download (role + workspace verified)
+    competency-models/route.ts → List + create competency models
+    competency-models/[modelId]/route.ts → Get/update/delete competency model
+    competency-models/[modelId]/nodes/route.ts → List + create competency nodes
+    competency-models/[modelId]/nodes/[nodeId]/route.ts → Get/update/delete node
+    competency-models/[modelId]/nodes/reorder/route.ts → Batch reorder nodes
+    competency-models/[modelId]/weighting-profiles/route.ts → List + create weighting profiles
+    competency-models/[modelId]/weighting-profiles/[profileId]/route.ts → Get/update/delete profile
+    scales/route.ts           → List + create scale definitions
+    scales/[scaleId]/route.ts → Get/update/delete scale
+    assessments/[assessmentId]/exercise-competency-mappings/route.ts → Exercise↔competency matrix
+  /api/ai/route.ts            → AI assist stub (generate_model, write_anchors, suggest_weights)
 /lib                          → Shared utilities & modules
   db.ts                       → Prisma client singleton
   session.ts                  → Cookie-based auth helpers (master + workspace + user)
@@ -68,8 +80,8 @@ Footer credit: "© Christoph Aldering · Private initiative / concept"
   audit.ts                    → Audit logging (stub)
   ai.ts                       → AI integration helpers (stub)
 /prisma
-  schema.prisma               → Prisma schema (Workspace, Theme, User, Assessment, Exercise, Document, PasswordResetToken, HealthCheck)
-  seed.ts                     → Seeds aestimamus workspace + admin user + assessment with 4 exercises
+  schema.prisma               → Prisma schema (+ CompetencyModel, CompetencyNode, ScaleDefinition, WeightingProfile, ExerciseCompetencyMapping)
+  seed.ts                     → Seeds workspace + admin + assessment + competency model + scale
 ```
 
 ## Roles & Permissions
