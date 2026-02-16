@@ -125,6 +125,9 @@ export default function RequirementsAnalysisPage() {
   const [matchingLoading, setMatchingLoading] = useState(false);
   const [matchingResult, setMatchingResult] = useState<any>(null);
   const [matchingError, setMatchingError] = useState<string | null>(null);
+  const [aiEnhance, setAiEnhance] = useState(false);
+  const [generatingVariantId, setGeneratingVariantId] = useState<string | null>(null);
+  const [variantSuccessId, setVariantSuccessId] = useState<string | null>(null);
 
   const fetchAnalyses = useCallback(async () => {
     try {
@@ -365,6 +368,22 @@ export default function RequirementsAnalysisPage() {
     }
   };
 
+  const handleGenerateVariant = async (itemId: string) => {
+    setGeneratingVariantId(itemId);
+    setVariantSuccessId(null);
+    try {
+      const res = await fetch(`/api/w/${slug}/exercise-library/${itemId}/generate-variant`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: "DE" }),
+      });
+      if (res.ok) {
+        setVariantSuccessId(itemId);
+      }
+    } catch {}
+    finally { setGeneratingVariantId(null); }
+  };
+
   const handleFindMatches = async (analysisId: string) => {
     setMatchingAnalysisId(analysisId);
     setMatchingLoading(true);
@@ -372,7 +391,10 @@ export default function RequirementsAnalysisPage() {
     setMatchingError(null);
 
     try {
-      const res = await fetch(`/api/w/${slug}/exercise-matching`, {
+      const url = aiEnhance
+        ? `/api/w/${slug}/exercise-matching?enhance=true`
+        : `/api/w/${slug}/exercise-matching`;
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requirementsAnalysisId: analysisId }),
@@ -532,15 +554,26 @@ export default function RequirementsAnalysisPage() {
                         {STATUS_LABELS[a.status] || a.status}
                       </span>
                       {(a.status === "proposal_ready" || a.status === "applied") && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleFindMatches(a.id); }}
-                          disabled={matchingLoading && matchingAnalysisId === a.id}
-                          className="px-3 py-1 text-xs font-medium text-white rounded-full hover:opacity-90 transition disabled:opacity-50"
-                          style={{ backgroundColor: "#7c3aed" }}
-                          data-testid={`button-match-exercises-${a.id}`}
-                        >
-                          {matchingLoading && matchingAnalysisId === a.id ? "Suche…" : "Übungen finden"}
-                        </button>
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <label className="flex items-center gap-1.5 cursor-pointer" data-testid={`toggle-ai-enhance-${a.id}`}>
+                            <input
+                              type="checkbox"
+                              checked={aiEnhance}
+                              onChange={(e) => setAiEnhance(e.target.checked)}
+                              className="w-3.5 h-3.5 rounded"
+                            />
+                            <span className="text-xs text-gray-600 whitespace-nowrap">KI-Analyse</span>
+                          </label>
+                          <button
+                            onClick={() => handleFindMatches(a.id)}
+                            disabled={matchingLoading && matchingAnalysisId === a.id}
+                            className="px-3 py-1 text-xs font-medium text-white rounded-full hover:opacity-90 transition disabled:opacity-50"
+                            style={{ backgroundColor: "#7c3aed" }}
+                            data-testid={`button-match-exercises-${a.id}`}
+                          >
+                            {matchingLoading && matchingAnalysisId === a.id ? (aiEnhance ? "KI analysiert…" : "Suche…") : "Übungen finden"}
+                          </button>
+                        </div>
                       )}
                       {a.appliedAssessmentId && (
                         <Link
@@ -569,9 +602,16 @@ export default function RequirementsAnalysisPage() {
             {matchingResult && (
               <div className="mt-6 space-y-6" data-testid="section-matching-results">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold" style={{ fontFamily: "Playfair Display, serif", color: "#7c3aed" }}>
-                    Übungs-Empfehlungen
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold" style={{ fontFamily: "Playfair Display, serif", color: "#7c3aed" }}>
+                      Übungs-Empfehlungen
+                    </h3>
+                    {matchingResult.aiEnhanced && (
+                      <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full" data-testid="badge-ai-enhanced">
+                        KI-erweitert
+                      </span>
+                    )}
+                  </div>
                   <button
                     onClick={() => { setMatchingResult(null); setMatchingAnalysisId(null); }}
                     className="text-sm text-gray-500 hover:text-gray-700"
@@ -589,12 +629,38 @@ export default function RequirementsAnalysisPage() {
                     </h4>
                     <div className="space-y-2">
                       {matchingResult.recommendationsJson.use_as_is.map((r: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg" data-testid={`match-use-${i}`}>
-                          <div>
-                            <p className="font-medium text-sm text-gray-900">{r.title}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">{r.rationale}</p>
+                        <div key={i} className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg" data-testid={`match-use-${i}`}>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-sm text-gray-900">{r.title}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{r.rationale}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {r.libraryItemId && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleGenerateVariant(r.libraryItemId); }}
+                                  disabled={generatingVariantId === r.libraryItemId}
+                                  data-testid={`button-generate-variant-use-${i}`}
+                                  className="text-[10px] font-medium text-white px-2 py-0.5 rounded-full disabled:opacity-60 whitespace-nowrap"
+                                  style={{ backgroundColor: "#7c3aed" }}
+                                >
+                                  {generatingVariantId === r.libraryItemId ? "…" : variantSuccessId === r.libraryItemId ? "✓ CD" : "CD-Variante"}
+                                </button>
+                              )}
+                              <span className="text-sm font-bold text-emerald-700">{r.fitScore}%</span>
+                            </div>
                           </div>
-                          <span className="text-sm font-bold text-emerald-700">{r.fitScore}%</span>
+                          {matchingResult.aiEnhanced && r.aiRationale && (
+                            <div className="mt-2 pt-2 border-t border-emerald-200">
+                              <p className="text-xs text-emerald-800 flex items-start gap-1.5">
+                                <span className="inline-flex items-center px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded shrink-0" data-testid={`badge-ki-use-${i}`}>KI</span>
+                                <span>{r.aiRationale}</span>
+                              </p>
+                              {r.contextualFitNotes && (
+                                <p className="text-xs text-emerald-700 mt-1 ml-7 italic">{r.contextualFitNotes}</p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -609,13 +675,46 @@ export default function RequirementsAnalysisPage() {
                     </h4>
                     <div className="space-y-2">
                       {matchingResult.recommendationsJson.adapt.map((r: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg" data-testid={`match-adapt-${i}`}>
-                          <div>
-                            <p className="font-medium text-sm text-gray-900">{r.title}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">{r.rationale}</p>
-                            {r.suggestedChanges && <p className="text-xs text-amber-700 mt-0.5">{r.suggestedChanges}</p>}
+                        <div key={i} className="p-3 bg-amber-50 border border-amber-200 rounded-lg" data-testid={`match-adapt-${i}`}>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-sm text-gray-900">{r.title}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{r.rationale}</p>
+                              {r.suggestedChanges && <p className="text-xs text-amber-700 mt-0.5">{r.suggestedChanges}</p>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {r.libraryItemId && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleGenerateVariant(r.libraryItemId); }}
+                                  disabled={generatingVariantId === r.libraryItemId}
+                                  data-testid={`button-generate-variant-adapt-${i}`}
+                                  className="text-[10px] font-medium text-white px-2 py-0.5 rounded-full disabled:opacity-60 whitespace-nowrap"
+                                  style={{ backgroundColor: "#7c3aed" }}
+                                >
+                                  {generatingVariantId === r.libraryItemId ? "…" : variantSuccessId === r.libraryItemId ? "✓ CD" : "CD-Variante"}
+                                </button>
+                              )}
+                              <span className="text-sm font-bold text-amber-700">{r.fitScore}%</span>
+                            </div>
                           </div>
-                          <span className="text-sm font-bold text-amber-700">{r.fitScore}%</span>
+                          {matchingResult.aiEnhanced && (r.aiRationale || r.aiSuggestedChanges) && (
+                            <div className="mt-2 pt-2 border-t border-amber-200 space-y-1.5">
+                              {r.aiRationale && (
+                                <p className="text-xs text-amber-800 flex items-start gap-1.5">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded shrink-0" data-testid={`badge-ki-adapt-${i}`}>KI</span>
+                                  <span>{r.aiRationale}</span>
+                                </p>
+                              )}
+                              {r.aiSuggestedChanges && (
+                                <div className="ml-7 p-2 bg-amber-100 border border-amber-300 rounded text-xs text-amber-900" data-testid={`ai-suggestions-adapt-${i}`}>
+                                  <span className="font-semibold">Anpassungsvorschläge:</span> {r.aiSuggestedChanges}
+                                </div>
+                              )}
+                              {r.contextualFitNotes && (
+                                <p className="text-xs text-amber-700 mt-1 ml-7 italic">{r.contextualFitNotes}</p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -637,6 +736,33 @@ export default function RequirementsAnalysisPage() {
                             <span className="inline-block mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                               {r.proposedExerciseSpec.type}
                             </span>
+                          )}
+                          {matchingResult.aiEnhanced && r.aiSpec && (
+                            <div className="mt-2 pt-2 border-t border-blue-200 space-y-1.5" data-testid={`ai-spec-new-${i}`}>
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <span className="inline-flex items-center px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded" data-testid={`badge-ki-new-${i}`}>KI</span>
+                                <span className="text-xs font-semibold text-blue-800">Detaillierte Spezifikation</span>
+                              </div>
+                              {r.aiSpec.description && (
+                                <p className="text-xs text-blue-900"><span className="font-medium">Beschreibung:</span> {r.aiSpec.description}</p>
+                              )}
+                              {r.aiSpec.instructions && (
+                                <p className="text-xs text-blue-900"><span className="font-medium">Durchführung:</span> {r.aiSpec.instructions}</p>
+                              )}
+                              {r.aiSpec.duration && (
+                                <p className="text-xs text-blue-900"><span className="font-medium">Dauer:</span> {r.aiSpec.duration} Min.</p>
+                              )}
+                              {r.aiSpec.competencyMappings?.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {r.aiSpec.competencyMappings.map((c: string, ci: number) => (
+                                    <span key={ci} className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">{c}</span>
+                                  ))}
+                                </div>
+                              )}
+                              {r.aiSpec.rationale && (
+                                <p className="text-xs text-blue-700 italic mt-1">{r.aiSpec.rationale}</p>
+                              )}
+                            </div>
                           )}
                         </div>
                       ))}

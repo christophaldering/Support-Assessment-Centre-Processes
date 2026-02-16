@@ -1,0 +1,362 @@
+REPLIT PROMPT — Competency Taxonomy + Semantic Tagging + Fit-Score Rubric (for cross-model matching)
+
+Objective
+Add a “Competency Taxonomy & Semantic Tagging” layer that enables robust matching and benchmarking across:
+- different competency models (different structures, names)
+- different rating scales
+- different exercise designs
+This module must improve the Requirements → Exercise Matching engine by providing:
+1) A canonical taxonomy (multi-level) of executive-relevant competency concepts
+2) A tagging system to map:
+   - CompetencyModel nodes → taxonomy tags
+   - ExerciseLibrary items/variants → taxonomy tags
+   - RequirementsAnalysis extracted needs → taxonomy tags
+3) A fit-score rubric combining:
+   - hard filters (language, level, timebox)
+   - taxonomy overlap and coverage
+   - semantic similarity (embeddings when available)
+   - AI rationale (explainable)
+4) UI tooling to manage taxonomy and accelerate tagging (AI-assisted)
+5) Governance & versioning (taxonomy evolves, mappings must be versioned)
+
+Tech/Stack
+- Next.js + TypeScript + Prisma + Postgres
+- Reuse existing AI layer + audit/versioning + permissions/consent checks
+
+===========================================================
+A) DATA MODEL (Prisma) — add these entities
+===========================================================
+
+1) TaxonomyTag
+- id (uuid)
+- key (string unique)  // e.g. "leadership.strategy.market_orientation"
+- displayName (string) // "Market Orientation"
+- description (string)
+- parentId (nullable, self relation) // multi-level hierarchy
+- level (int) // 1..N
+- synonyms (string[]) // common alternative names (DE/EN possible)
+- languageVariantsJson (JSON) // { "DE": {...}, "EN": {...} }
+- isSystem (boolean) // true for canonical tags
+- createdAt, updatedAt
+- versionGroupId (string) // to support time-travel across taxonomy versions (optional)
+
+2) TaxonomyVersion
+- id (uuid)
+- name (string) // "Canonical v1.0"
+- status ("draft"|"active"|"archived")
+- effectiveDate (date)
+- notes (string)
+- createdAt, updatedAt
+
+Link TaxonomyTag to TaxonomyVersion:
+- taxonomyVersionId
+
+3) TagAssignment (generic tagging)
+Create a polymorphic tagging approach:
+Option A (recommended): separate tables per target
+- CompetencyNodeTag
+  - id
+  - competencyNodeId
+  - taxonomyTagId
+  - weight (float 0..1) // relevance weight
+  - assignedBy ("human"|"ai")
+  - confidence (float 0..1)
+  - rationale (string nullable)
+  - taxonomyVersionId
+  - createdAt, updatedAt
+
+- ExerciseLibraryItemTag
+  - id
+  - libraryItemId
+  - taxonomyTagId
+  - weight
+  - assignedBy
+  - confidence
+  - rationale
+  - taxonomyVersionId
+  - createdAt, updatedAt
+
+- RequirementsTag
+  - id
+  - requirementsAnalysisId
+  - taxonomyTagId
+  - weight
+  - assignedBy
+  - confidence
+  - rationale
+  - taxonomyVersionId
+  - createdAt, updatedAt
+
+4) FitScoreDefinition (workspace-configurable rubric)
+- id (uuid)
+- workspaceId (nullable for system default)
+- name
+- configJson (JSON) including weights and thresholds
+- version (string)
+- status ("draft"|"active")
+- createdAt, updatedAt
+
+===========================================================
+B) PERMISSIONS
+===========================================================
+
+Add permissions:
+- taxonomy.view
+- taxonomy.manage
+- tagging.manage
+- fitscore.manage
+
+Default mapping:
+- ADMIN: all
+- MODERATOR: taxonomy.view + tagging.manage
+- PROJECT_ASSISTANT: taxonomy.view (optional) + tagging.manage (optional)
+- others: none
+
+===========================================================
+C) CANONICAL TAXONOMY (Seed Suggestion)
+===========================================================
+
+Seed a canonical taxonomy version "Canonical v1.0" with a practical 3-level structure:
+
+Level 1 Domains:
+- leadership
+- strategy
+- execution
+- people
+- collaboration
+- communication
+- change
+- resilience
+- commercial
+- governance
+- analytics
+- innovation
+
+Level 2 Examples:
+strategy:
+- strategy.market_orientation
+- strategy.competitive_positioning
+- strategy.m_and_a
+- strategy.long_term_value
+- strategy.digital_strategy
+
+execution:
+- execution.operational_excellence
+- execution.decision_making
+- execution.prioritization
+- execution.results_orientation
+- execution.risk_management
+
+people:
+- people.talent_management
+- people.coaching
+- people.conflict_management
+- people.organizational_design
+- people.labor_relations
+
+communication:
+- communication.executive_presence
+- communication.stakeholder_management
+- communication.media_pr
+- communication.influence
+
+resilience:
+- resilience.stress_tolerance
+- resilience.crisis_leadership
+- resilience.emotional_stability
+
+commercial:
+- commercial.sales_leadership
+- commercial.customer_focus
+- commercial.pricing_value
+
+governance:
+- governance.ethics_compliance
+- governance.board_interaction
+- governance.regulatory
+
+analytics:
+- analytics.kpi_orientation
+- analytics.data_driven_decisions
+- analytics.financial_acumen
+
+innovation:
+- innovation.product_innovation
+- innovation.transformation_drive
+
+Include synonyms (DE/EN) for each tag to support mapping.
+
+===========================================================
+D) TAGGING WORKFLOWS (UI + AI Assist)
+===========================================================
+
+1) Taxonomy Admin UI (workspace admin)
+- View taxonomy hierarchy
+- Create new tags (workspace-local extension tags allowed)
+- Activate a taxonomy version (active is used for matching)
+- Versioning: edits create new version or mark changes in a new draft version
+
+2) Competency Model Tagging UI
+- On CompetencyNode editor, add “Taxonomy Tags” section:
+  - search tags
+  - assign weights (slider)
+  - show assignedBy, confidence, rationale
+- AI Assist button:
+  - “Suggest tags for this node”
+  - “Suggest tags for entire model”
+  - Bulk accept/edit suggestions
+
+3) Exercise Library Tagging UI
+- For each ExerciseLibraryItem:
+  - add tags with weights
+  - AI Assist:
+    - “Analyze file and suggest tags”
+    - “Suggest candidate level and key constraints”
+  - show what competencies the exercise tends to elicit
+
+4) Requirements Tagging UI
+- After requirements extraction:
+  - show extracted tags with weights
+  - allow human edits
+  - AI Assist:
+    - “Refine tag set”
+    - “Identify missing tags”
+    - “Propose priorities and must-test topics”
+
+All tagging actions:
+- create audit log
+- version mapping records (store taxonomyVersionId)
+
+===========================================================
+E) FIT SCORE RUBRIC (Core Matching Logic)
+===========================================================
+
+Implement Fit Score as a blended model with transparent components.
+Compute per ExerciseCandidate (library item + selected variant) a score 0–100.
+
+1) Hard Filters (gating, can set to “exclude” or “penalize”)
+- Language compatibility:
+  - If no matching language variant exists: exclude OR heavy penalty (config)
+- Seniority/level match:
+  - if mismatch: penalty
+- Timebox constraints:
+  - if exercise too long: penalty or propose “adapt”
+- Compliance constraints:
+  - if exercise restricted/deprecated: exclude
+
+2) Coverage Score (taxonomy overlap)
+Define:
+- R = set of requirement tags with weights r_i
+- E = set of exercise tags with weights e_j
+Compute weighted overlap:
+- overlap = sum over tags t in intersection(R,E) of min(r_t, e_t)
+- req_total = sum over r_t
+CoverageScore = overlap / req_total  (0..1)
+
+3) Breadth vs Depth
+- Breadth: number of distinct Level-2 tags covered
+- Depth: whether high-priority tags (weight > threshold) are covered
+Compute:
+- DepthScore = proportion of high-priority requirement tags covered
+
+4) Semantic Similarity (optional)
+If embeddings available:
+- create short “exercise summary embedding” and “requirements summary embedding”
+- SimilarityScore = cosine similarity (0..1)
+If not available, fallback to AI ranking and set SimilarityScore = null.
+
+5) Fit Score composition (configurable)
+FitScoreDefinition.configJson example:
+{
+  "excludeIfNoLanguage": true,
+  "weights": {
+    "coverage": 0.45,
+    "depth": 0.25,
+    "semantic": 0.20,
+    "constraints": 0.10
+  },
+  "thresholds": {
+    "use_as_is": 0.80,
+    "adapt": 0.55
+  }
+}
+
+Compute:
+- ConstraintsScore (0..1) from penalties (level/time/compliance)
+- Fit = 100 * (wC*Coverage + wD*Depth + wS*Semantic + wK*Constraints)
+
+6) Classification
+- If Fit >= use_as_is threshold: “use_as_is”
+- Else if Fit >= adapt threshold: “adapt”
+- Else: “create_new”
+Additionally:
+- If hard constraints fail but concept match high: classify “adapt” with constraints explanation.
+
+7) Explainability (required)
+For each recommendation, store:
+- top matching tags
+- missing high-priority tags
+- constraints penalties
+- semantic similarity (if used)
+- AI rationale text (short)
+Expose this in the UI “Why this recommendation?”
+
+===========================================================
+F) AI ASSIST INTEGRATION (Policies + Safety)
+===========================================================
+
+Use AI only when:
+- user has permissions
+- consent gating is satisfied for any candidate-related data
+- content is labeled “AI-generated”
+Record:
+- AIRequest with purpose: "tagging_suggestion" | "exercise_matching_rationale" | "taxonomy_mapping"
+- AIOutput with structured fields:
+  - suggestedTags: [{ tagKey, weight, confidence, rationale }]
+  - missingTags
+  - recommendedClassification
+  - explainability bullets
+
+===========================================================
+G) NORMALIZATION CONNECTION (optional but recommended)
+===========================================================
+
+Add optional mapping to support benchmarking across models:
+- Encourage tagging of competency nodes to canonical tags.
+- When comparing across different competency models, allow aggregation by canonical tag.
+- Store normalized scores per canonical tag via weighted mapping:
+  - canonicalScore(tag) = sum(nodeNormalizedScore * nodeTagWeight) / sum(weights)
+
+This enables cross-model benchmarks even with different structures.
+
+===========================================================
+H) IMPLEMENTATION STEPS
+===========================================================
+
+1) Add Prisma schema + migrations for taxonomy and tagging tables.
+2) Seed Canonical v1.0 taxonomy + synonyms.
+3) Build Taxonomy admin pages + version activation.
+4) Add tagging panels to:
+   - CompetencyNode editor
+   - ExerciseLibraryItem editor
+   - Requirements Analysis review page
+5) Implement FitScoreDefinition:
+   - seed a system default configJson
+   - allow workspace override config
+6) Modify Requirements → Exercise Matching engine to:
+   - use taxonomy assignments + FitScore rubric
+   - produce explainability details
+7) Add AI Assist buttons for:
+   - bulk tagging
+   - matching rationale
+8) Add unit tests for:
+   - overlap computation
+   - classification thresholds
+   - explainability payload structure
+
+Definition of Done
+- Canonical taxonomy is seeded and browsable
+- Competency nodes, exercise library items, and requirements analyses can be tagged (manual + AI-assisted)
+- Matching uses FitScore rubric and produces explainable recommendations
+- Workspace can adjust FitScore weights/thresholds
+- All actions are audited and versioned

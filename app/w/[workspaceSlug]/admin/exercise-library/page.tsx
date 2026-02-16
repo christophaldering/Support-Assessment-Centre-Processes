@@ -82,6 +82,10 @@ export default function ExerciseLibraryPage() {
   const [expandedDetail, setExpandedDetail] = useState<ExerciseLibraryItem | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
+  const [generatingVariantId, setGeneratingVariantId] = useState<string | null>(null);
+  const [generatedVariant, setGeneratedVariant] = useState<any>(null);
+  const [variantSuccess, setVariantSuccess] = useState<string | null>(null);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editType, setEditType] = useState("");
@@ -207,6 +211,34 @@ export default function ExerciseLibraryPage() {
 
   const toggleArrayItem = (arr: string[], item: string, setter: (v: string[]) => void) => {
     setter(arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item]);
+  };
+
+  const handleGenerateVariant = async (itemId: string) => {
+    setGeneratingVariantId(itemId);
+    setGeneratedVariant(null);
+    setVariantSuccess(null);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/exercise-library/${itemId}/generate-variant`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: "DE" }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Fehler bei der Varianten-Generierung");
+        return;
+      }
+      const data = await res.json();
+      setGeneratedVariant(data);
+      setVariantSuccess(itemId);
+      setExpandedId(itemId);
+      handleExpand(itemId);
+      fetchItems();
+    } catch {
+      setError("Fehler bei der Varianten-Generierung");
+    } finally {
+      setGeneratingVariantId(null);
+    }
   };
 
   return (
@@ -546,16 +578,32 @@ export default function ExerciseLibraryPage() {
                     </div>
 
                     <div className="border-t border-slate-100 px-5 py-2.5 flex items-center justify-between">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); startEdit(item); }}
-                        data-testid={`button-edit-${item.id}`}
-                        className="text-xs font-medium transition-colors"
-                        style={{ color: ACCENT }}
-                        onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-                        onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-                      >
-                        Bearbeiten
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); startEdit(item); }}
+                          data-testid={`button-edit-${item.id}`}
+                          className="text-xs font-medium transition-colors"
+                          style={{ color: ACCENT }}
+                          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                        >
+                          Bearbeiten
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleGenerateVariant(item.id); }}
+                          disabled={generatingVariantId === item.id}
+                          data-testid={`button-generate-variant-${item.id}`}
+                          className="text-xs font-medium text-white px-2.5 py-1 rounded-full transition-opacity disabled:opacity-60 flex items-center gap-1.5"
+                          style={{ backgroundColor: "#7c3aed" }}
+                        >
+                          {generatingVariantId === item.id ? (
+                            <>
+                              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                              Generiert…
+                            </>
+                          ) : "CD-Variante erstellen"}
+                        </button>
+                      </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
                         data-testid={`button-delete-${item.id}`}
@@ -567,6 +615,41 @@ export default function ExerciseLibraryPage() {
 
                     {isExpanded && (
                       <div className="border-t border-slate-200 bg-slate-50 p-5">
+                        {variantSuccess === item.id && generatedVariant && (
+                          <div className="mb-4 p-4 bg-violet-50 border border-violet-200 rounded-lg" data-testid={`variant-result-${item.id}`}>
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className="text-xs font-bold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: "#7c3aed" }}>CD</span>
+                              <span className="text-sm font-semibold text-violet-900" data-testid={`text-variant-success-${item.id}`}>CD-Variante wurde erstellt</span>
+                            </div>
+                            {generatedVariant.variant?.contentJson?.adaptedTitle && (
+                              <p className="text-sm font-medium text-slate-800 mb-2">{generatedVariant.variant.contentJson.adaptedTitle}</p>
+                            )}
+                            {generatedVariant.variant?.contentJson?.designNotes && (
+                              <div className="space-y-1.5 mb-2">
+                                {generatedVariant.variant.contentJson.designNotes.colorUsage && (
+                                  <p className="text-xs text-slate-600"><span className="font-medium">Farben:</span> {generatedVariant.variant.contentJson.designNotes.colorUsage}</p>
+                                )}
+                                {generatedVariant.variant.contentJson.designNotes.typographyNotes && (
+                                  <p className="text-xs text-slate-600"><span className="font-medium">Typografie:</span> {generatedVariant.variant.contentJson.designNotes.typographyNotes}</p>
+                                )}
+                                {generatedVariant.variant.contentJson.designNotes.toneAdaptation && (
+                                  <p className="text-xs text-slate-600"><span className="font-medium">Tonalität:</span> {generatedVariant.variant.contentJson.designNotes.toneAdaptation}</p>
+                                )}
+                                {generatedVariant.variant.contentJson.designNotes.brandingElements && (
+                                  <p className="text-xs text-slate-600"><span className="font-medium">Branding:</span> {generatedVariant.variant.contentJson.designNotes.brandingElements}</p>
+                                )}
+                              </div>
+                            )}
+                            {generatedVariant.changeLog?.length > 0 && (
+                              <div className="mt-2">
+                                <p className="text-xs font-medium text-slate-600 mb-1">Änderungen:</p>
+                                <ul className="list-disc list-inside text-xs text-slate-500 space-y-0.5">
+                                  {generatedVariant.changeLog.map((c: string, i: number) => <li key={i}>{c}</li>)}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <h4 className="text-sm font-semibold text-brand-navy mb-3">Varianten</h4>
                         {loadingDetail ? (
                           <p className="text-xs text-slate-400">Laden…</p>
@@ -574,7 +657,7 @@ export default function ExerciseLibraryPage() {
                           <div className="space-y-2">
                             {expandedDetail.variants.map(v => (
                               <div key={v.id} className="flex items-center gap-4 bg-white rounded-lg px-4 py-2.5 border border-slate-200 text-sm" data-testid={`variant-${v.id}`}>
-                                <span className="font-medium text-slate-700">{v.variantType}</span>
+                                <span className={`font-medium ${v.variantType === "cd_adapted" ? "text-violet-700" : "text-slate-700"}`}>{v.variantType === "cd_adapted" ? "CD-Angepasst" : v.variantType}</span>
                                 <span className="text-slate-400">{v.language}</span>
                                 <span className="text-slate-400">v{v.version}</span>
                                 <span className="text-slate-400 ml-auto text-xs">{new Date(v.createdAt).toLocaleDateString("de-DE")}</span>

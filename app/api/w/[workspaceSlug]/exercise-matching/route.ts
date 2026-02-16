@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+});
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -272,6 +278,115 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     useAsIs.sort((a, b) => b.fitScore - a.fitScore);
     adapt.sort((a, b) => b.fitScore - a.fitScore);
 
+    const enhance = req.nextUrl.searchParams.get("enhance") === "true";
+    let aiEnhanced = false;
+
+    if (enhance) {
+      try {
+        const allScoredItems = [
+          ...useAsIs.map((item) => ({ ...item, category: "use_as_is" })),
+          ...adapt.map((item) => ({ ...item, category: "adapt" })),
+        ];
+
+        const prompt = `Du bist ein Experte für Executive Assessment Center Design.
+
+Gegeben:
+- Anforderungsprofil: Zielrolle: ${proposal.targetRole?.title || "unbekannt"} (Level: ${proposal.targetRole?.level || "unbekannt"})
+- Kompetenzen: ${competencyNames.join(", ")}
+- Vorgeschlagene Übungen: ${proposedExercises.map((e) => `${e.name} (${e.type})`).join(", ")}
+- Bibliotheks-Übungen mit Basis-Scores: ${JSON.stringify(allScoredItems.map((item) => ({ id: item.libraryItemId, title: item.title, fitScore: item.fitScore, category: item.category, rationale: item.rationale })))}
+- Lücken (keine passende Übung): ${JSON.stringify(createNew.map((item) => ({ name: item.proposedExerciseSpec.name, type: item.proposedExerciseSpec.type, competencyMappings: item.proposedExerciseSpec.competencyMappings })))}
+
+Erstelle für jedes Element eine detaillierte Analyse:
+
+Antworte in validem JSON:
+{
+  "enhanced": [
+    {
+      "libraryItemId": "id",
+      "aiRationale": "Detaillierte Begründung auf Deutsch",
+      "aiSuggestedChanges": "Konkrete Anpassungsvorschläge (nur für adapt-Items)",
+      "contextualFitNotes": "Kontextuelle Passung zum Anforderungsprofil"
+    }
+  ],
+  "newExerciseSpecs": [
+    {
+      "name": "Vorgeschlagener Name",
+      "type": "exercise type",
+      "duration": 30,
+      "description": "Detaillierte Beschreibung",
+      "instructions": "Durchführungshinweise",
+      "competencyMappings": ["mapped competencies"],
+      "rationale": "Warum diese Übung benötigt wird"
+    }
+  ]
+}`;
+
+        const aiResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: prompt },
+            { role: "user", content: "Bitte erstelle die detaillierte Analyse." },
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 4096,
+        });
+
+        const aiContent = aiResponse.choices[0]?.message?.content || "{}";
+        const aiData = JSON.parse(aiContent) as {
+          enhanced?: {
+            libraryItemId: string;
+            aiRationale?: string;
+            aiSuggestedChanges?: string;
+            contextualFitNotes?: string;
+          }[];
+          newExerciseSpecs?: {
+            name: string;
+            type: string;
+            duration?: number;
+            description?: string;
+            instructions?: string;
+            competencyMappings?: string[];
+            rationale?: string;
+          }[];
+        };
+
+        if (aiData.enhanced) {
+          const enhancedMap = new Map(
+            aiData.enhanced.map((e) => [e.libraryItemId, e]),
+          );
+
+          for (const item of useAsIs) {
+            const enhancement = enhancedMap.get(item.libraryItemId);
+            if (enhancement) {
+              (item as any).aiRationale = enhancement.aiRationale || "";
+              (item as any).contextualFitNotes = enhancement.contextualFitNotes || "";
+            }
+          }
+
+          for (const item of adapt) {
+            const enhancement = enhancedMap.get(item.libraryItemId);
+            if (enhancement) {
+              (item as any).aiRationale = enhancement.aiRationale || "";
+              (item as any).aiSuggestedChanges = enhancement.aiSuggestedChanges || "";
+              (item as any).contextualFitNotes = enhancement.contextualFitNotes || "";
+            }
+          }
+        }
+
+        if (aiData.newExerciseSpecs && aiData.newExerciseSpecs.length > 0) {
+          for (let i = 0; i < createNew.length && i < aiData.newExerciseSpecs.length; i++) {
+            const spec = aiData.newExerciseSpecs[i];
+            (createNew[i] as any).aiSpec = spec;
+          }
+        }
+
+        aiEnhanced = true;
+      } catch (aiError) {
+        console.error("AI enhancement failed, falling back to basic recommendations:", aiError);
+      }
+    }
+
     const recommendationsJson = {
       use_as_is: useAsIs,
       adapt,
@@ -291,6 +406,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       {
         id: recommendation.id,
         recommendationsJson,
+        aiEnhanced,
         status: recommendation.status,
       },
       { status: 201 },

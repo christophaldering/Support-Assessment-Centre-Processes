@@ -46,7 +46,7 @@ const EMPTY_RULES: RulesJson = {
   slides: { titleSlide: true, sectionDividers: true, footer: "", legalLine: "" },
 };
 
-type TabKey = "rulesets" | "preview";
+type TabKey = "rulesets" | "preview" | "ai-analysis";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "–";
@@ -62,6 +62,7 @@ export default function BrandRulesPage() {
   const tabs: { key: TabKey; label: string; testId: string }[] = [
     { key: "rulesets", label: "Brand Rule Sets", testId: "tab-rulesets" },
     { key: "preview", label: "Preview & Apply", testId: "tab-preview" },
+    { key: "ai-analysis", label: "KI-Analyse", testId: "tab-ai-analysis" },
   ];
 
   return (
@@ -113,6 +114,7 @@ export default function BrandRulesPage() {
 
         {activeTab === "rulesets" && <RuleSetsTab workspaceSlug={workspaceSlug} router={router} />}
         {activeTab === "preview" && <PreviewTab workspaceSlug={workspaceSlug} />}
+        {activeTab === "ai-analysis" && <AIAnalysisTab workspaceSlug={workspaceSlug} onSwitchToEdit={() => setActiveTab("rulesets")} />}
       </main>
 
       <footer className="border-t py-6 border-slate-200">
@@ -849,6 +851,307 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+interface AIParseResult {
+  brandRuleSet: BrandRuleSet;
+  extractedText: string;
+  confidence: "high" | "medium" | "low";
+}
+
+function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: string; onSwitchToEdit: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [name, setName] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<AIParseResult | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleFileSelect = (selectedFile: File) => {
+    const validTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    const validExtensions = [".pdf", ".docx"];
+    const ext = selectedFile.name.toLowerCase().slice(selectedFile.name.lastIndexOf("."));
+
+    if (!validTypes.includes(selectedFile.type) && !validExtensions.includes(ext)) {
+      setError("Nur .pdf und .docx Dateien werden unterstützt.");
+      return;
+    }
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setError("Datei ist zu groß. Maximale Größe: 10 MB.");
+      return;
+    }
+    setFile(selectedFile);
+    setError("");
+    setResult(null);
+    setSaved(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) handleFileSelect(droppedFile);
+  };
+
+  const handleAnalyze = async () => {
+    if (!file) return;
+    setAnalyzing(true);
+    setError("");
+    setResult(null);
+    setSaved(false);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (name.trim()) formData.append("name", name.trim());
+
+      const res = await fetch(`/api/w/${workspaceSlug}/brand-rules/parse-styleguide`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.error || "Fehler bei der Analyse.");
+        return;
+      }
+
+      const data: AIParseResult = await res.json();
+      setResult(data);
+    } catch {
+      setError("Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const confidenceLabels: Record<string, { label: string; color: string }> = {
+    high: { label: "Hoch", color: "text-emerald-600 bg-emerald-50" },
+    medium: { label: "Mittel", color: "text-amber-600 bg-amber-50" },
+    low: { label: "Niedrig", color: "text-red-500 bg-red-50" },
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white border border-slate-200 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-brand-navy mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+          Style Guide analysieren
+        </h2>
+        <p className="text-sm text-slate-500 mb-6">
+          Laden Sie einen Style Guide hoch und lassen Sie die KI automatisch Markenregeln extrahieren.
+        </p>
+
+        <div
+          data-testid="dropzone-styleguide"
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+          onClick={() => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".pdf,.docx";
+            input.onchange = (e) => {
+              const f = (e.target as HTMLInputElement).files?.[0];
+              if (f) handleFileSelect(f);
+            };
+            input.click();
+          }}
+          className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+            dragOver
+              ? "border-[hsl(14,48%,44%)] bg-[hsl(14,48%,44%)]/5"
+              : file
+              ? "border-emerald-300 bg-emerald-50/50"
+              : "border-slate-200 hover:border-slate-300 bg-slate-50/50"
+          }`}
+        >
+          {file ? (
+            <div className="flex items-center justify-center gap-3">
+              <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="text-left">
+                <p className="text-sm font-medium text-slate-700">{file.name}</p>
+                <p className="text-xs text-slate-400">{formatFileSize(file.size)}</p>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setFile(null); setResult(null); setSaved(false); }}
+                className="ml-4 text-xs text-slate-400 hover:text-red-500"
+              >
+                Entfernen
+              </button>
+            </div>
+          ) : (
+            <div>
+              <svg className="w-10 h-10 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <p className="text-sm text-slate-500 mb-1">
+                Style Guide hierher ziehen oder <span className="text-[hsl(14,48%,44%)] font-medium">Datei auswählen</span>
+              </p>
+              <p className="text-xs text-slate-400">.pdf oder .docx · Max. 10 MB</p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-slate-700 mb-1">Name des Regelwerks (optional)</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            data-testid="input-styleguide-name"
+            className={inputClass}
+            placeholder="z.B. Corporate Brand Guidelines 2026"
+          />
+        </div>
+
+        {error && <p className="text-sm text-red-500 mt-4" data-testid="text-ai-error">{error}</p>}
+
+        <div className="mt-6">
+          <button
+            onClick={handleAnalyze}
+            disabled={!file || analyzing}
+            data-testid="button-analyze-styleguide"
+            className="rounded-lg text-white text-sm font-medium px-6 py-2.5 transition-colors disabled:opacity-50"
+            style={{ backgroundColor: analyzing ? "#94a3b8" : "hsl(14, 48%, 44%)" }}
+          >
+            {analyzing ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                KI analysiert Style Guide…
+              </span>
+            ) : (
+              "Style Guide analysieren"
+            )}
+          </button>
+        </div>
+      </div>
+
+      {result && (
+        <div data-testid="section-ai-results" className="space-y-6">
+          <div className="bg-white border border-slate-200 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-brand-navy" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Analyseergebnis
+              </h3>
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${confidenceLabels[result.confidence]?.color || ""}`}>
+                Konfidenz: {confidenceLabels[result.confidence]?.label || result.confidence}
+              </span>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm font-semibold text-brand-navy mb-3">Farben</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Primary", color: (result.brandRuleSet.rulesJson as RulesJson)?.colors?.primary },
+                    { label: "Secondary", color: (result.brandRuleSet.rulesJson as RulesJson)?.colors?.secondary },
+                    { label: "Accent", color: (result.brandRuleSet.rulesJson as RulesJson)?.colors?.accent },
+                    { label: "Background", color: (result.brandRuleSet.rulesJson as RulesJson)?.colors?.background },
+                  ].map((c) => (
+                    <div key={c.label} className="flex items-center gap-2">
+                      <div
+                        className="w-8 h-8 rounded-lg border border-slate-200 shrink-0"
+                        style={{ backgroundColor: c.color || "#e2e8f0" }}
+                      />
+                      <div>
+                        <p className="text-xs font-medium text-slate-600">{c.label}</p>
+                        <p className="text-xs text-slate-400 font-mono">{c.color || "–"}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold text-brand-navy mb-3">Typografie</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Heading Font</span>
+                    <span className="text-slate-700 font-medium">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.headingFont || "–"}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Body Font</span>
+                    <span className="text-slate-700 font-medium">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.bodyFont || "–"}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Heading Size</span>
+                    <span className="text-slate-700">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.headingSize || "–"}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Body Size</span>
+                    <span className="text-slate-700">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.bodySize || "–"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold text-brand-navy mb-3">Tonalität</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Stil</span>
+                    <span className="text-slate-700 capitalize">{(result.brandRuleSet.rulesJson as RulesJson)?.tone?.style || "–"}</span>
+                  </div>
+                  {(result.brandRuleSet.rulesJson as RulesJson)?.tone?.notes && (
+                    <p className="text-xs text-slate-500 mt-1">{(result.brandRuleSet.rulesJson as RulesJson)?.tone?.notes}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold text-brand-navy mb-3">Dokument- & Folien-Regeln</h4>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { label: "Deckblatt", val: (result.brandRuleSet.rulesJson as RulesJson)?.document?.coverPage },
+                    { label: "Seitenzahlen", val: (result.brandRuleSet.rulesJson as RulesJson)?.document?.pageNumbers },
+                    { label: "Titelfolie", val: (result.brandRuleSet.rulesJson as RulesJson)?.slides?.titleSlide },
+                    { label: "Trennfolien", val: (result.brandRuleSet.rulesJson as RulesJson)?.slides?.sectionDividers },
+                  ].map((r) => (
+                    <span
+                      key={r.label}
+                      className={`px-2 py-0.5 rounded text-xs font-medium ${r.val ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400"}`}
+                    >
+                      {r.label} {r.val ? "✓" : "✗"}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setSaved(true)}
+              data-testid="button-save-parsed"
+              className="rounded-lg text-white text-sm font-medium px-6 py-2.5 transition-colors"
+              style={{ backgroundColor: saved ? "#059669" : "hsl(14, 48%, 44%)" }}
+            >
+              {saved ? "✓ Gespeichert" : "Als Regelwerk speichern"}
+            </button>
+            <button
+              onClick={onSwitchToEdit}
+              data-testid="button-edit-parsed"
+              className="rounded-lg border border-slate-200 text-slate-700 text-sm font-medium px-6 py-2.5 hover:bg-slate-50 transition-colors"
+            >
+              Zur Bearbeitung
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
