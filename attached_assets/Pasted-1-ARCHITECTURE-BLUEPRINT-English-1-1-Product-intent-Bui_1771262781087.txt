@@ -1,0 +1,223 @@
+1) ARCHITECTURE BLUEPRINT (English)
+1.1 Product intent
+Build a multi-tenant, enterprise-grade Executive Diagnostics Platform with:
+Separate role-based portals (Admin / Moderator / Observer / Project Assistant / HR-Client / Candidate)
+Deep AI layer (ChatGPT-style assistance) across the system
+Offline-first Observer experience (tablet/iPad)
+Consent management (per data type and per feature)
+Full audit trails, versioning, “time travel”
+Reporting engine (DOCX/PDF/PPT)
+Analytics & benchmarking across heterogeneous models via score normalization
+Workspace theming editor (full theme editor per workspace)
+Admin access via neutral landing page, plus workspace admin passwords
+EU data residency target (production); prototype may run elsewhere but must be architected for EU-only hosting and optional on-prem.
+1.2 Tech stack decision
+Use:
+Next.js + TypeScript (App Router)
+PostgreSQL (dev can run on hosted DB; prod EU)
+Prisma ORM
+Auth:
+Candidates: individual accounts (email + initial password; forced password change at first login)
+Admin portals: neutral landing page protected by “Master Admin” password + per-workspace admin password
+Internal users (moderator/observer/assistant/hr-client): accounts with email+password; plus later SSO (Entra ID)
+Offline-first Observer: PWA + local encrypted storage + sync engine
+1.3 Core entities (data model)
+Tenant layer
+Workspace
+id, name, slug
+branding_theme_id
+security_profile (key strategy, CMK flags)
+data_residency_target (EU) and deployment_profile
+admin_password_hash (workspace-level)
+retention_policy_id
+consent_templates_id
+Theme
+logo_url, favicon_url
+primary/secondary/accent colors
+background palette, typography (font family), component styles
+layout presets, dark mode settings
+User
+id, workspace_id (nullable for global master owner)
+email, password_hash
+roles (multi-role array): ADMIN, MODERATOR, OBSERVER, PROJECT_ASSISTANT, HR_CLIENT, CANDIDATE
+status (active/disabled)
+SSO identifiers (optional later)
+Role/Permission (RBAC)
+Use permission flags rather than hard-coded role checks (roles map to permissions)
+Support multi-role (union of permissions)
+Assessment layer
+Assessment
+id, workspace_id
+title (optional), target_role, organization_name
+start_datetime, end_datetime (or single date)
+language (DE/EN)
+location (optional)
+seniority_level (optional)
+project_id (optional)
+description (optional)
+moderator_user_ids (one or many)
+status (draft/active/closed/archived)
+CandidateProfile
+id, assessment_id
+first_name, last_name
+gender (optional), birthdate (optional)
+email (for login)
+candidate_portal_state
+Exercise
+id, assessment_id
+type: INTERVIEW / SELF_PRESENTATION / CASE_STUDY / LEADERSHIP_CONVERSATION / FACT_FINDING / ROLEPLAY / PSYCHOMETRICS / CUSTOM
+title, instructions (rich text), duration, materials (files/links)
+can be adaptive (flags + difficulty metadata)
+Document
+id, workspace_id, assessment_id (optional), exercise_id (optional)
+visibility: CANDIDATE / OBSERVERS / MODERATOR / ADMIN / HR_CLIENT
+file metadata, versioning, watermark_policy
+ObserverAssignment
+assessment_id, user_id, exercise_scope (all or subset)
+CompetencyModel
+id, workspace_id
+name, description
+flexible hierarchy: stored as nodes/edges
+default scale definition
+versioned
+CompetencyNode
+id, competency_model_id
+parent_id (nullable)
+node_type (e.g., “Domain”, “Competency”, “Sub”, “Anchor”, “Custom”)
+title, description, optional anchors
+ordering
+ScaleDefinition
+id, workspace_id
+type (numeric/likert/custom)
+min/max or custom points
+labels/anchors per point
+versioned
+Mapping (Exercise ↔ Competency)
+which competencies are evaluated in which exercises
+allow weights at both levels
+WeightingProfile
+id, workspace_id, optional target_role scope
+weights per competency node, per exercise, and combined rules
+versioned
+Ratings, consolidation, and “time travel”
+Rating
+id, assessment_id, exercise_id, competency_node_id
+observer_user_id
+raw_score (stored exactly as entered)
+scale_id (what scale used)
+notes (evidence; STAR optional fields)
+timestamps + version chain (change history)
+ConsolidationConfig
+per assessment (or per workspace default)
+method: mean/median/trimmed/other
+outlier flags threshold
+moderator override rules
+consensus required flags
+ConsolidatedScore
+per competency node and per exercise
+algorithm used + parameters
+stores raw aggregated + normalized score
+Snapshot
+“Time Travel”: immutable snapshots of Assessment state at key moments (e.g., close exercise, close assessment, report exported)
+AuditLog
+append-only log of user actions, AI actions, exports, consent changes, deletions, overrides
+Consent & privacy
+ConsentTemplate
+workspace_id, language
+versioned legal text blocks
+modules: audio recording consent, transcription consent, AI report generation, HR sharing, data exports, etc.
+ConsentRecord
+who accepted what, when, which version
+gating: features cannot run without required consent flags
+RetentionPolicy
+defaults + tenant-configurable within min/max boundaries
+per data type: candidate profile, ratings, notes, audio, transcripts, reports
+legal hold capability
+AI layer (system-wide)
+AIRequest
+workspace_id, assessment_id (optional)
+user_id (actor), purpose, input references
+model config (provider, region)
+output references
+policy checks (consent, role permissions)
+stored as an audit item
+AIOutput
+structured result + citations to internal artifacts (ratings, notes, transcripts)
+must be labeled: “AI-generated”
+AI Transparency Layer
+every AI-generated block is tagged, traceable
+exportable transparency report (for DPO/regulator)
+Audio capture & transcription
+Support all modes, gated by consent:
+Live capture (device mic) → transcript
+Upload audio file → transcript
+Manual notes → AI structuring
+Store:
+AudioAsset (optional retention)
+Transcript (versioned, redacted if needed)
+StructuredSummary (AI + human edits)
+Analytics & benchmarking across heterogeneous scales/models
+Key requirement: Different competency models + different scales must still be comparable.
+Approach:
+Always store raw scores (truth)
+Additionally compute Normalized Score per rating and per consolidated node:
+Default: map to 0–100 using linear transform based on scale definition
+Optional: Z-score standardization within a defined benchmark population
+Optional: percentile ranks per target role (requires sufficient data)
+For cross-model comparison:
+Provide mapping layer: “Competency Tags/Taxonomy” (optional V1 but recommended)
+Without taxonomy, comparisons happen at abstracted dimensions (e.g., leadership domain) or “custom benchmark sets” defined by admin
+Pricing/telemetry (future-proof)
+Support combined licensing:
+Per workspace
+Per assessment
+Per user
+Per AI credit / usage
+Implement:
+Usage events: assessment created, report generated, transcription minutes, AI calls, exports
+Billing configuration (not full billing integration in V1, but logging must exist)
+1.4 UX flows (must match your intent)
+Neutral Landing Page (public)
+Neutral style (NOT aestimamus branding)
+Explains platform features (all shown)
+Footer: “© Christoph Aldering” + “Private initiative / concept”
+Admin entry:
+Master Admin Password gate
+After entering: Workspace Selector (list of workspaces)
+Admin Workspace Selector
+Shows available workspaces
+Selecting a workspace requires Workspace Admin Password
+After entry: workspace themed UI (aestimamus theme for aestimamus workspace)
+Candidate Portal
+Candidate logs in with email + initial password
+Forced password change on first login
+Candidate lands directly on their Assessment dashboard:
+schedule, materials, interactive case
+exercises they must do
+Candidate cannot see any ratings
+Optional: Candidate AI avatar experiences (interview/roleplay) with transparency
+Observer / Moderator portal
+Observer sees assigned assessments/exercises
+Offline-first rating interface:
+matrix (exercise × competency)
+notes + evidence
+sync state indicator
+Moderator has additional:
+consolidation view
+conflict flags
+consensus session
+report generation controls
+HR sharing controls (consent-gated)
+Project Assistant:
+doc upload, scheduling, invitations, templates
+HR/Client:
+configurable access, strictly gated by consents and admin permissions
+1.5 Non-negotiables (quality gates)
+RBAC everywhere + permission checks on API routes
+Consent gating for audio, transcription, AI, sharing, export
+AuditLog append-only
+Versioning for: models, scales, weightings, ratings, reports
+Time-travel snapshots
+EU production readiness: clear separation of infrastructure config, data residency toggles, key mgmt strategy
+AI transparency: tag all AI output and provide traceability
+Offline security: local encrypted cache for observer; automatic wipe on logout; device-level PIN optional
