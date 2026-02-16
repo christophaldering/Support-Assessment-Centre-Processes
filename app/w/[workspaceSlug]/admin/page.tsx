@@ -42,6 +42,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
 
   const sections = [
     { title: "Assessments", desc: "Assessment-Veranstaltungen, Übungen und Kandidatenzuweisungen verwalten.", href: `/w/${params.workspaceSlug}/admin/assessments` },
+    { title: "Anforderungsanalyse", desc: "Anforderungen analysieren und Assessment-Entwürfe per KI erstellen.", href: `/w/${params.workspaceSlug}/admin/requirements` },
     { title: "Benutzer", desc: "Workspace-Benutzer, Rollen und Berechtigungen verwalten.", href: canManageUsers ? `/w/${params.workspaceSlug}/admin/users` : null },
     { title: "Kompetenzmodelle", desc: "Kompetenzrahmen, Dimensionen und Skalen konfigurieren.", href: `/w/${params.workspaceSlug}/admin/competencies` },
     { title: "Berichte", desc: "Assessment-Berichte erstellen und prüfen.", href: null },

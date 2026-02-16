@@ -27,6 +27,7 @@ export const PERMISSIONS = [
   "reports.read",
   "reports.create",
   "competencies.manage",
+  "requirements.manage",
   "audit.read",
   "theme.manage",
   "candidate.own_assessment",
@@ -53,6 +54,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "reports.read",
     "reports.create",
     "competencies.manage",
+    "requirements.manage",
     "audit.read",
     "theme.manage",
   ],
@@ -66,6 +68,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "candidates.update",
     "reports.read",
     "reports.create",
+    "requirements.manage",
     "users.read",
   ],
   OBSERVER: [

@@ -29,6 +29,8 @@ model Workspace {
   assessments        Assessment[]
   competencyModels   CompetencyModel[]
   scaleDefinitions   ScaleDefinition[]
+  requirementsAnalyses RequirementsAnalysis[]
+  auditLogs          AuditLog[]
 
   @@map("workspaces")
 }
@@ -81,6 +83,8 @@ model Assessment {
   location     String?
   startDate    DateTime? @map("start_date")
   endDate      DateTime? @map("end_date")
+  aiGenerated  Boolean  @default(false) @map("ai_generated")
+  sourceAnalysisId String? @map("source_analysis_id")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
@@ -93,16 +97,19 @@ model Assessment {
 }
 
 model Exercise {
-  id             String   @id @default(uuid())
-  assessmentId   String   @map("assessment_id")
-  name           String
-  type           String
-  instructions   String?
-  duration       Int?
-  sortOrder      Int      @default(0) @map("sort_order")
-  status         String   @default("active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  assessmentId    String   @map("assessment_id")
+  name            String
+  type            String
+  instructions    String?
+  duration        Int?
+  sortOrder       Int      @default(0) @map("sort_order")
+  status          String   @default("active")
+  difficultyLevel String?  @map("difficulty_level")
+  difficultyMeta  Json?    @map("difficulty_meta")
+  aiGenerated     Boolean  @default(false) @map("ai_generated")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   assessment           Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   documents            Document[]
@@ -214,6 +221,48 @@ model ExerciseCompetencyMapping {
 
   @@unique([exerciseId, competencyNodeId])
   @@map("exercise_competency_mappings")
+}
+
+model RequirementsAnalysis {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  title           String
+  mode            String   @default("auto")
+  status          String   @default("pending")
+  inputType       String   @map("input_type")
+  objectPath      String?  @map("object_path")
+  originalFileName String? @map("original_file_name")
+  transcript      String?
+  proposal        Json?
+  consentGiven    Boolean  @default(false) @map("consent_given")
+  consentTimestamp DateTime? @map("consent_timestamp")
+  consentUserId   String?  @map("consent_user_id")
+  appliedAssessmentId String? @map("applied_assessment_id")
+  createdById     String   @map("created_by_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  workspace       Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@map("requirements_analyses")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  userId      String?  @map("user_id")
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String?  @map("entity_id")
+  details     Json?
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
 }
 
 model PasswordResetToken {

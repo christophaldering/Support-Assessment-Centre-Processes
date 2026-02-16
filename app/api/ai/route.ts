@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
+import { coCreationQuestion } from "@/lib/ai";
 
 export async function POST(req: NextRequest) {
   const session = getUserSession();
@@ -10,10 +11,22 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { action, context } = await req.json();
+    const body = await req.json();
+    const { action } = body;
 
     if (!action) {
       return NextResponse.json({ error: "Aktion ist erforderlich" }, { status: 400 });
+    }
+
+    if (action === "co_creation_question") {
+      const { step, history } = body;
+      try {
+        const message = await coCreationQuestion(history || [], step || "target_role");
+        return NextResponse.json({ success: true, action, message });
+      } catch (err) {
+        console.error("Co-creation AI error:", err);
+        return NextResponse.json({ error: "KI-Verarbeitung fehlgeschlagen" }, { status: 500 });
+      }
     }
 
     const stubResponses: Record<string, string> = {
