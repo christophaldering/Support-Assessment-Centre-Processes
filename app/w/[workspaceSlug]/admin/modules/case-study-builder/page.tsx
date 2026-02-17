@@ -99,8 +99,11 @@ export default function CaseStudyBuilderPage() {
       const data = await res.json();
       setUploadText(data.textContent);
       setUploadStep("review");
-    } catch {
-      setError("Fehler beim Hochladen");
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      setError(err?.message === "Failed to fetch"
+        ? "Verbindungsfehler – die Datei ist möglicherweise zu groß oder die Verbindung wurde unterbrochen. Bitte versuchen Sie es erneut."
+        : "Fehler beim Hochladen");
       setUploadStep("upload");
     }
   }
@@ -483,7 +486,7 @@ export default function CaseStudyBuilderPage() {
                   <p className="text-sm text-slate-600 font-medium mb-1">
                     Klicken Sie hier oder ziehen Sie eine Datei hinein
                   </p>
-                  <p className="text-xs text-slate-400">Unterstützt: DOCX, PDF, TXT (max. 10 MB)</p>
+                  <p className="text-xs text-slate-400">Unterstützt: DOCX, PDF, TXT (max. 50 MB)</p>
                   {uploadFile && (
                     <div className="mt-4 bg-slate-50 rounded-lg p-3 inline-block">
                       <span className="text-sm font-medium text-slate-700">{uploadFile.name}</span>

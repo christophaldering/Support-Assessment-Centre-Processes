@@ -4,9 +4,33 @@ import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
 import { extractRequirementsAnalysis } from "@/lib/ai";
 import { logAudit } from "@/lib/audit";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import { execFile } from "child_process";
 
 interface RouteContext {
   params: { workspaceSlug: string };
+}
+
+function extractPdfViaProcess(tmpFile: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const scriptPath = path.join(process.cwd(), "lib", "pdf-extract.mjs");
+    execFile("node", [scriptPath, tmpFile], { timeout: 60000, maxBuffer: 50 * 1024 * 1024 }, (err, stdout, stderr) => {
+      if (err) {
+        console.error("PDF extraction process error:", err.message, stderr);
+        reject(new Error("PDF extraction failed"));
+        return;
+      }
+      try {
+        const result = JSON.parse(stdout);
+        if (result.error) reject(new Error(result.error));
+        else resolve(result.text || "");
+      } catch {
+        reject(new Error("Failed to parse PDF extraction result"));
+      }
+    });
+  });
 }
 
 async function extractTextFromFile(file: File): Promise<string> {
@@ -20,9 +44,16 @@ async function extractTextFromFile(file: File): Promise<string> {
   }
 
   if (name.endsWith(".pdf")) {
-    const pdfParse = require("pdf-parse");
-    const result = await pdfParse(buffer);
-    return result.text || "";
+    const tmpFile = path.join(os.tmpdir(), `req_pdf_${Date.now()}.pdf`);
+    try {
+      fs.writeFileSync(tmpFile, buffer);
+      return await extractPdfViaProcess(tmpFile);
+    } catch (e: any) {
+      console.error("PDF extraction error:", e.message);
+      return "";
+    } finally {
+      if (fs.existsSync(tmpFile)) try { fs.unlinkSync(tmpFile); } catch {}
+    }
   }
 
   if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
