@@ -74,18 +74,20 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Übungselement nicht gefunden" }, { status: 404 });
     }
 
-    const { title, tags, exerciseType, targetLevels, languagesAvailable, metadataJson, qualityStatus } = await req.json();
+    const { title, description, tags, exerciseType, targetLevels, languagesAvailable, metadataJson, qualityStatus, sourceContext } = await req.json();
 
     const item = await prisma.exerciseLibraryItem.update({
       where: { id: params.itemId },
       data: {
         ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
         ...(tags !== undefined && { tags }),
         ...(exerciseType !== undefined && { exerciseType }),
         ...(targetLevels !== undefined && { targetLevels }),
         ...(languagesAvailable !== undefined && { languagesAvailable }),
         ...(metadataJson !== undefined && { metadataJson }),
         ...(qualityStatus !== undefined && { qualityStatus }),
+        ...(sourceContext !== undefined && { sourceContext }),
       },
       include: {
         variants: { orderBy: { createdAt: "desc" } },

@@ -12,6 +12,8 @@ interface RouteContext {
 const ALLOWED_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
   "application/pdf",
 ];
 
@@ -43,6 +45,14 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const tagsRaw = formData.get("tags") as string | null;
     const description = formData.get("description") as string | null;
     const sourceProjectId = formData.get("sourceProjectId") as string | null;
+    const metadataJsonRaw = formData.get("metadataJson") as string | null;
+
+    let metadataJson: any = null;
+    if (metadataJsonRaw) {
+      try {
+        metadataJson = JSON.parse(metadataJsonRaw);
+      } catch {}
+    }
 
     if (!file) {
       return NextResponse.json({ error: "File is required" }, { status: 400 });
@@ -63,7 +73,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: "Invalid file type. Allowed: .docx, .pptx, .pdf" },
+        { error: "Ungültiger Dateityp. Erlaubt: .docx, .pptx, .xlsx, .pdf" },
         { status: 400 }
       );
     }
@@ -107,6 +117,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         originalFileSize: file.size,
         originalMimeType: file.type,
         sourceProjectId: sourceProjectId || null,
+        metadataJson: metadataJson ?? undefined,
+        sourceContext: metadataJson?.sourceContext || null,
       },
       include: {
         _count: { select: { variants: true } },
