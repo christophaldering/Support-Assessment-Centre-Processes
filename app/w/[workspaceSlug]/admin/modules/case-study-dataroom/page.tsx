@@ -159,7 +159,7 @@ export default function CaseStudyDataroomPage() {
               <p className="text-xs text-slate-500 mt-0.5">Hardcodierte Referenz-Fallstudie mit vollständigem interaktivem Datenraum (6 Tabs)</p>
             </div>
             <Link
-              href={`/w/${slug}/assessment`}
+              href={`/w/${slug}/admin/modules/case-study-dataroom/varexia`}
               className="px-4 py-2 text-sm font-medium border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-100 transition"
               data-testid="link-varexia-dataroom"
             >
