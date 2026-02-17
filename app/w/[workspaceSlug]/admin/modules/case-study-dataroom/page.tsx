@@ -18,7 +18,6 @@ const ACCENT = "hsl(14, 48%, 44%)";
 const STATUS_LABELS: Record<string, { label: string; bg: string; text: string }> = {
   draft: { label: "Entwurf", bg: "bg-slate-100", text: "text-slate-600" },
   active: { label: "Aktiv", bg: "bg-emerald-100", text: "text-emerald-700" },
-  archived: { label: "Archiviert", bg: "bg-amber-100", text: "text-amber-700" },
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -65,16 +64,13 @@ export default function CaseStudyDataroomPage() {
     }
   };
 
-  const archiveStudy = async (id: string) => {
+  const deleteStudy = async (id: string) => {
+    if (!confirm("Fallstudie wirklich löschen?")) return;
     try {
-      await fetch(`/api/w/${slug}/case-studies/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "archived" }),
-      });
+      await fetch(`/api/w/${slug}/case-studies/${id}`, { method: "DELETE" });
       fetchCaseStudies();
     } catch {
-      setError("Fehler beim Archivieren");
+      setError("Fehler beim Löschen");
     }
   };
 
@@ -138,13 +134,6 @@ export default function CaseStudyDataroomPage() {
                   data-testid="link-view-active-dataroom"
                 >
                   Datenraum öffnen
-                </Link>
-                <Link
-                  href={`/w/${slug}/assessment`}
-                  className="px-4 py-2 text-sm font-medium border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition"
-                  data-testid="link-preview-portal"
-                >
-                  Portal-Vorschau
                 </Link>
               </div>
             </div>
@@ -234,15 +223,13 @@ export default function CaseStudyDataroomPage() {
                             Aktivieren
                           </button>
                         )}
-                        {cs.status !== "archived" && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); archiveStudy(cs.id); }}
-                            className="px-3 py-1.5 text-xs font-medium border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50 transition"
-                            data-testid={`button-archive-${cs.id}`}
-                          >
-                            Archivieren
-                          </button>
-                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteStudy(cs.id); }}
+                          className="px-3 py-1.5 text-xs font-medium border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition"
+                          data-testid={`button-delete-${cs.id}`}
+                        >
+                          Löschen
+                        </button>
                       </div>
                     )}
                   </div>

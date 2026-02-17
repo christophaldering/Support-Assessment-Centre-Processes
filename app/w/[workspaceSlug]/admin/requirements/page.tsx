@@ -519,7 +519,7 @@ export default function RequirementsAnalysisPage() {
                             <div>
                               <h3 className="font-semibold text-slate-800">{a.title}</h3>
                               <p className="text-xs text-slate-500 mt-0.5">
-                                {new Date(a.createdAt).toLocaleDateString("de-DE")} · {a.status}
+                                {new Date(a.createdAt).toLocaleDateString("de-DE")}, {new Date(a.createdAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr · {a.status}
                                 {a.projectName && !a.clientName && <span> · {a.projectName}</span>}
                               </p>
                             </div>
@@ -988,7 +988,7 @@ export default function RequirementsAnalysisPage() {
                           </h3>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <span className="text-xs text-slate-500">
-                              {new Date(a.createdAt).toLocaleDateString("de-DE")}
+                              {new Date(a.createdAt).toLocaleDateString("de-DE")}, {new Date(a.createdAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr
                             </span>
                             {a.clientName && (
                               <span className="text-xs text-slate-500">
