@@ -131,6 +131,7 @@ model Assessment {
   observerRatings    ObserverRating[]
   consolidatedScores ConsolidatedScore[]
   reports            Report[]
+  observationSheets  ObservationSheet[]
 
   @@map("assessments")
 }
@@ -640,6 +641,30 @@ model DiagnosticHypothesis {
   @@index([workspaceId, assessmentId])
   @@index([assessmentId, candidateId])
   @@map("diagnostic_hypotheses")
+}
+
+model ObservationSheet {
+  id             String   @id @default(uuid())
+  assessmentId   String   @map("assessment_id")
+  exerciseId     String?  @map("exercise_id")
+  name           String
+  description    String?
+  type           String   @default("manual")
+  content        Json?
+  fileKey        String?  @map("file_key")
+  fileName       String?  @map("file_name")
+  fileSize       Int?     @map("file_size")
+  mimeType       String?  @map("mime_type")
+  aiGenerated    Boolean  @default(false) @map("ai_generated")
+  status         String   @default("active")
+  createdBy      String?  @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+  @@map("observation_sheets")
 }
 
 model DemoRequest {

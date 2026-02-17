@@ -36,6 +36,34 @@ interface DocumentRecord {
   uploadedBy: { id: string; name: string } | null;
 }
 
+interface CandidateRecord {
+  id: string;
+  name: string;
+  email: string;
+  roles: string[];
+}
+
+interface ObservationSheetRecord {
+  id: string;
+  name: string;
+  description: string | null;
+  exerciseId: string | null;
+  type: string;
+  status: string;
+  aiGenerated: boolean;
+  createdAt: string;
+}
+
+interface LibraryItem {
+  id: string;
+  name: string;
+  type: string;
+  difficultyLevel: string | null;
+  tags: string[];
+  status: string;
+  description: string | null;
+}
+
 const ALL_ROLES = ["ADMIN", "MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"] as const;
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Admin",
@@ -128,6 +156,23 @@ export default function AssessmentDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
+  const [candidates, setCandidates] = useState<CandidateRecord[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<CandidateRecord[]>([]);
+  const [showAssignDropdown, setShowAssignDropdown] = useState(false);
+
+  const [observationSheets, setObservationSheets] = useState<ObservationSheetRecord[]>([]);
+  const [showCreateSheet, setShowCreateSheet] = useState(false);
+  const [sheetName, setSheetName] = useState("");
+  const [sheetDesc, setSheetDesc] = useState("");
+  const [sheetExerciseId, setSheetExerciseId] = useState("");
+  const [sheetType, setSheetType] = useState("manual");
+  const [sheetCreating, setSheetCreating] = useState(false);
+  const [sheetError, setSheetError] = useState("");
+
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+
   const apiBase = `/api/w/${workspaceSlug}/assessments/${assessmentId}`;
 
   const fetchAssessment = useCallback(async () => {
@@ -175,11 +220,44 @@ export default function AssessmentDetailPage() {
     } catch {}
   }, [apiBase]);
 
+  const fetchCandidates = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiBase}/candidates`);
+      if (res.ok) setCandidates(await res.json());
+    } catch {}
+  }, [apiBase]);
+
+  const fetchAvailableUsers = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/users`);
+      if (res.ok) setAvailableUsers(await res.json());
+    } catch {}
+  }, [workspaceSlug]);
+
+  const fetchObservationSheets = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiBase}/observation-sheets`);
+      if (res.ok) setObservationSheets(await res.json());
+    } catch {}
+  }, [apiBase]);
+
+  const fetchLibraryItems = useCallback(async () => {
+    setLibraryLoading(true);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/exercise-library`);
+      if (res.ok) setLibraryItems(await res.json());
+    } catch {}
+    finally { setLibraryLoading(false); }
+  }, [workspaceSlug]);
+
   useEffect(() => {
     fetchAssessment();
     fetchExercises();
     fetchDocuments();
-  }, [fetchAssessment, fetchExercises, fetchDocuments]);
+    fetchCandidates();
+    fetchAvailableUsers();
+    fetchObservationSheets();
+  }, [fetchAssessment, fetchExercises, fetchDocuments, fetchCandidates, fetchAvailableUsers, fetchObservationSheets]);
 
   const handleSaveAssessment = async () => {
     setSaving(true);
@@ -343,6 +421,131 @@ export default function AssessmentDetailPage() {
     }
   };
 
+  const handleAssignCandidate = async (userId: string) => {
+    try {
+      await fetch(`${apiBase}/candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      fetchCandidates();
+      fetchAvailableUsers();
+      setShowAssignDropdown(false);
+    } catch {}
+  };
+
+  const handleRemoveCandidate = async (userId: string) => {
+    try {
+      await fetch(`${apiBase}/candidates`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      fetchCandidates();
+      fetchAvailableUsers();
+    } catch {}
+  };
+
+  const handleCreateObservationSheet = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSheetError("");
+    setSheetCreating(true);
+    try {
+      const res = await fetch(`${apiBase}/observation-sheets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: sheetName,
+          description: sheetDesc || null,
+          exerciseId: sheetExerciseId || null,
+          type: sheetType,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setSheetError(data.error || "Fehler beim Erstellen.");
+        return;
+      }
+      setShowCreateSheet(false);
+      setSheetName("");
+      setSheetDesc("");
+      setSheetExerciseId("");
+      setSheetType("manual");
+      fetchObservationSheets();
+    } catch {
+      setSheetError("Etwas ist schiefgelaufen.");
+    } finally {
+      setSheetCreating(false);
+    }
+  };
+
+  const handleCreateAISheet = async () => {
+    const prompt = window.prompt("Beschreiben Sie den gewünschten Beobachtungsbogen:");
+    if (!prompt) return;
+    try {
+      await fetch(`${apiBase}/observation-sheets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "KI-Beobachtungsbogen",
+          description: prompt,
+          type: "ai",
+          aiGenerated: true,
+        }),
+      });
+      fetchObservationSheets();
+    } catch {}
+  };
+
+  const handleToggleLibrary = () => {
+    if (!showLibrary) {
+      fetchLibraryItems();
+    }
+    setShowLibrary(!showLibrary);
+  };
+
+  const handleImportFromLibrary = async (item: LibraryItem) => {
+    try {
+      await fetch(`${apiBase}/exercises`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: item.name,
+          type: item.type,
+          instructions: item.description || null,
+          duration: null,
+          sortOrder: 0,
+        }),
+      });
+      fetchExercises();
+    } catch {}
+  };
+
+  const handleAIVariantImport = async (item: LibraryItem) => {
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/exercise-library/${item.id}/generate-variant`);
+      if (res.ok) {
+        const variant = await res.json();
+        await fetch(`${apiBase}/exercises`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: variant.name || item.name + " (KI-Variante)",
+            type: variant.type || item.type,
+            instructions: variant.description || variant.instructions || item.description || null,
+            duration: variant.duration || null,
+            sortOrder: 0,
+          }),
+        });
+        fetchExercises();
+      }
+    } catch {}
+  };
+
+  const filteredAvailableUsers = availableUsers.filter(
+    (u) => !candidates.some((c) => c.id === u.id)
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-slate-50">
@@ -492,14 +695,76 @@ export default function AssessmentDetailPage() {
         <div className="bg-white border border-slate-200 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-brand-navy">Übungen</h2>
-            <button
-              onClick={() => setShowCreateExercise(!showCreateExercise)}
-              data-testid="button-create-exercise"
-              className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
-            >
-              {showCreateExercise ? "Abbrechen" : "Neue Übung"}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleToggleLibrary}
+                data-testid="button-import-library"
+                className="rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
+              >
+                {showLibrary ? "Bibliothek schließen" : "Aus Bibliothek importieren"}
+              </button>
+              <button
+                onClick={() => setShowCreateExercise(!showCreateExercise)}
+                data-testid="button-create-exercise"
+                className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
+              >
+                {showCreateExercise ? "Abbrechen" : "Neue Übung"}
+              </button>
+            </div>
           </div>
+
+          {showLibrary && (
+            <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
+              <h3 className="text-sm font-semibold text-brand-navy mb-3">Übungsbibliothek</h3>
+              {libraryLoading ? (
+                <p className="text-sm text-slate-400">Laden…</p>
+              ) : libraryItems.length === 0 ? (
+                <p className="text-sm text-slate-400">Keine Einträge in der Bibliothek.</p>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {libraryItems.map((item) => (
+                    <div key={item.id} className="border border-slate-200 rounded-lg p-3 bg-white" data-testid={`library-item-${item.id}`}>
+                      <p className="font-medium text-sm text-slate-900 mb-1">{item.name}</p>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+                          {EXERCISE_TYPE_LABELS[item.type] || item.type}
+                        </span>
+                        {item.difficultyLevel && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                            {item.difficultyLevel}
+                          </span>
+                        )}
+                        {item.tags?.map((tag) => (
+                          <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      {item.description && (
+                        <p className="text-xs text-slate-500 mb-2 line-clamp-2">{item.description}</p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleImportFromLibrary(item)}
+                          data-testid={`button-import-${item.id}`}
+                          className="text-xs font-medium text-brand-blue hover:text-brand-blue-dark"
+                        >
+                          Importieren
+                        </button>
+                        <button
+                          onClick={() => handleAIVariantImport(item)}
+                          data-testid={`button-ai-variant-${item.id}`}
+                          className="text-xs font-medium text-purple-600 hover:text-purple-800"
+                        >
+                          KI-Anpassung
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {showCreateExercise && (
             <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
@@ -853,6 +1118,194 @@ export default function AssessmentDetailPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Participants */}
+        <div id="participants" className="bg-white border border-slate-200 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-brand-navy">Teilnehmer</h2>
+            <div className="relative">
+              <button
+                onClick={() => setShowAssignDropdown(!showAssignDropdown)}
+                data-testid="button-assign-candidate"
+                className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
+              >
+                Teilnehmer zuweisen
+              </button>
+              {showAssignDropdown && (
+                <div className="absolute right-0 top-full mt-1 w-72 bg-white border border-slate-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {filteredAvailableUsers.length === 0 ? (
+                    <p className="p-3 text-sm text-slate-400">Keine verfügbaren Benutzer.</p>
+                  ) : (
+                    filteredAvailableUsers.map((user) => (
+                      <button
+                        key={user.id}
+                        onClick={() => handleAssignCandidate(user.id)}
+                        data-testid={`button-assign-user-${user.id}`}
+                        className="w-full text-left px-4 py-2 hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                      >
+                        <p className="text-sm font-medium text-slate-900">{user.name}</p>
+                        <p className="text-xs text-slate-500">{user.email}</p>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {candidates.map((candidate) => (
+              <div
+                key={candidate.id}
+                className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3"
+                data-testid={`row-candidate-${candidate.id}`}
+              >
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{candidate.name}</p>
+                  <p className="text-xs text-slate-500">{candidate.email}</p>
+                </div>
+                <button
+                  onClick={() => handleRemoveCandidate(candidate.id)}
+                  data-testid={`button-remove-candidate-${candidate.id}`}
+                  className="text-xs text-red-500 hover:text-red-700 font-medium"
+                >
+                  Entfernen
+                </button>
+              </div>
+            ))}
+            {candidates.length === 0 && (
+              <p className="text-sm text-slate-400 text-center py-6">Keine Teilnehmer zugewiesen.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Observation Sheets */}
+        <div id="observation-sheets" className="bg-white border border-slate-200 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-brand-navy">Beobachtungsbögen</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCreateAISheet}
+                data-testid="button-create-ai-sheet"
+                className="rounded-lg border border-purple-500 text-purple-600 text-sm font-medium px-4 py-2 hover:bg-purple-500 hover:text-white transition-colors"
+              >
+                KI-Bogen generieren
+              </button>
+              <button
+                onClick={() => setShowCreateSheet(!showCreateSheet)}
+                data-testid="button-create-sheet"
+                className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
+              >
+                {showCreateSheet ? "Abbrechen" : "Neuen Bogen erstellen"}
+              </button>
+            </div>
+          </div>
+
+          {showCreateSheet && (
+            <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
+              <form onSubmit={handleCreateObservationSheet} className="space-y-3" data-testid="form-create-sheet">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+                  <input
+                    type="text"
+                    value={sheetName}
+                    onChange={(e) => setSheetName(e.target.value)}
+                    required
+                    data-testid="input-sheet-name"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
+                  <textarea
+                    value={sheetDesc}
+                    onChange={(e) => setSheetDesc(e.target.value)}
+                    rows={2}
+                    data-testid="input-sheet-description"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                  />
+                </div>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Übung (optional)</label>
+                    <select
+                      value={sheetExerciseId}
+                      onChange={(e) => setSheetExerciseId(e.target.value)}
+                      data-testid="select-sheet-exercise"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    >
+                      <option value="">Keine Übung</option>
+                      {exercises.map((ex) => (
+                        <option key={ex.id} value={ex.id}>{ex.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Typ</label>
+                    <select
+                      value={sheetType}
+                      onChange={(e) => setSheetType(e.target.value)}
+                      data-testid="select-sheet-type"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    >
+                      <option value="manual">Manuell</option>
+                      <option value="template">Vorlage</option>
+                    </select>
+                  </div>
+                </div>
+                {sheetError && <p className="text-sm text-red-500" data-testid="text-sheet-error">{sheetError}</p>}
+                <button
+                  type="submit"
+                  disabled={sheetCreating || !sheetName.trim()}
+                  data-testid="button-submit-sheet"
+                  className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
+                >
+                  {sheetCreating ? "Wird erstellt…" : "Bogen erstellen"}
+                </button>
+              </form>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {observationSheets.map((sheet) => (
+              <div
+                key={sheet.id}
+                className="border border-slate-200 rounded-lg px-4 py-3"
+                data-testid={`row-sheet-${sheet.id}`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-medium text-slate-900">{sheet.name}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        sheet.type === "ai" ? "bg-purple-50 text-purple-600" :
+                        sheet.type === "template" ? "bg-blue-50 text-blue-600" :
+                        "bg-slate-100 text-slate-600"
+                      }`}>
+                        {sheet.type === "ai" ? "KI" : sheet.type === "template" ? "Vorlage" : "Manuell"}
+                      </span>
+                      {sheet.aiGenerated && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-600">KI-generiert</span>
+                      )}
+                    </div>
+                    {sheet.exerciseId && (
+                      <p className="text-xs text-brand-blue mb-1">
+                        Übung: {exercises.find((ex) => ex.id === sheet.exerciseId)?.name || sheet.exerciseId}
+                      </p>
+                    )}
+                    {sheet.description && (
+                      <p className="text-xs text-slate-500">{sheet.description}</p>
+                    )}
+                  </div>
+                  <span className="text-xs text-slate-400">{formatDate(sheet.createdAt)}</span>
+                </div>
+              </div>
+            ))}
+            {observationSheets.length === 0 && (
+              <p className="text-sm text-slate-400 text-center py-6">Keine Beobachtungsbögen vorhanden.</p>
+            )}
           </div>
         </div>
       </main>

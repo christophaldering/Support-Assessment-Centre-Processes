@@ -81,6 +81,8 @@ export default async function ProjectDetailPage({ params }: Props) {
     { label: "Berichte", value: String(assessment._count.reports) },
   ];
 
+  const assessmentBase = `${base}/assessments/${assessment.id}`;
+
   const sections = [
     {
       phase: "I",
@@ -91,20 +93,20 @@ export default async function ProjectDetailPage({ params }: Props) {
           title: "Anforderungsanalyse",
           titleEn: "REQUIREMENT ANALYSIS",
           desc: "Rollenanforderungen analysieren und Assessment-Blaupausen erstellen (KI-gestützt).",
-          href: `${base}/requirements`,
+          href: `${base}/requirements?assessmentId=${assessment.id}`,
         },
         {
           title: "Anforderungsprofil & Kompetenzmodell",
           titleEn: "COMPETENCY MODEL",
           desc: "Abgeleitet aus der Anforderungsanalyse. Kompetenzen, Gewichtung, Skalen und Verhaltensanker definieren.",
-          href: `${base}/competencies`,
+          href: `${base}/competencies?assessmentId=${assessment.id}`,
           hint: "Kompetenzmodell abgeleitet aus Anforderungsanalyse.",
         },
         {
-          title: "Assessment-Design & Module",
-          titleEn: "ASSESSMENT DESIGN",
-          desc: "Validierte Module auswählen, Reihenfolge festlegen und Kompetenzabdeckung prüfen (DIN 33430).",
-          href: `${base}/assessments`,
+          title: "Übungen & Module",
+          titleEn: "EXERCISES & MODULES",
+          desc: "Übungen verwalten, aus der Bibliothek importieren oder KI-gestützt anpassen. Kompetenzabdeckung prüfen (DIN 33430).",
+          href: assessmentBase,
           badge: `${dm.icon} ${dm.de}`,
         },
       ],
@@ -115,16 +117,22 @@ export default async function ProjectDetailPage({ params }: Props) {
       subtitleDe: "Wo Evidenz entsteht.",
       cards: [
         {
-          title: "Assessment-Management",
-          titleEn: "EXECUTION",
-          desc: "Sitzungen planen, Kandidaten zuweisen und Moderation steuern.",
-          href: `${base}/assessments`,
+          title: "Teilnehmer & Planung",
+          titleEn: "PARTICIPANTS & PLANNING",
+          desc: "Kandidaten zuweisen, Sitzungen planen und Moderation steuern.",
+          href: `${assessmentBase}#participants`,
+        },
+        {
+          title: "Beobachtungsbögen",
+          titleEn: "OBSERVATION SHEETS",
+          desc: "Beobachtungsbögen erstellen, hochladen oder KI-gestützt generieren lassen.",
+          href: `${assessmentBase}#observation-sheets`,
         },
         {
           title: "Beobachtung & Bewertung",
           titleEn: "OBSERVATION & RATINGS",
           desc: "Übungsspezifische Live-Bewertung, Audio-Aufnahme, Transkription und offline-fähige Erfassung.",
-          href: `${base}/assessments`,
+          href: `${assessmentBase}#ratings`,
         },
       ],
     },
@@ -137,13 +145,13 @@ export default async function ProjectDetailPage({ params }: Props) {
           title: "Analysen",
           titleEn: "ANALYSES",
           desc: "Kompetenzergebnisse, Muster und Statistiken einsehen.",
-          href: `${base}/analytics`,
+          href: `${base}/analytics?assessmentId=${assessment.id}`,
         },
         {
           title: "Berichte",
           titleEn: "REPORTS",
           desc: `Berichte für Assessment: ${assessment.name}. KI-gestützte Entwürfe, kompetenzbasierte Aggregation, Export (PDF/DOCX).`,
-          href: `${base}/reports`,
+          href: `${base}/reports?assessmentId=${assessment.id}`,
         },
         {
           title: "Advanced Intelligence",
