@@ -174,6 +174,15 @@ function DownloadIcon() {
   );
 }
 
+function EyeIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
 function TrashIcon() {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -316,21 +325,25 @@ function DetailModal({
         setError("Fehler beim Herunterladen");
         return;
       }
-      const data = await res.json();
-      if (data.downloadUrl) {
-        const link = document.createElement("a");
-        link.href = data.downloadUrl;
-        link.download = data.fileName || "download";
-        link.target = "_blank";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = item.originalFileName || "download";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch {
       setError("Fehler beim Herunterladen");
     } finally {
       setDownloading(false);
     }
+  };
+
+  const handlePreview = () => {
+    const url = `/api/w/${slug}/exercise-library/${item.id}/preview`;
+    window.open(url, "_blank", "width=900,height=700,scrollbars=yes,resizable=yes");
   };
 
   const handleDelete = async () => {
@@ -478,16 +491,26 @@ function DetailModal({
 
         <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex items-center gap-3 rounded-b-2xl">
           {item.originalFileKey && (
-            <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="flex items-center gap-2 px-4 py-2 text-white rounded-lg text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
-              style={{ backgroundColor: ACCENT }}
-              data-testid="button-download"
-            >
-              {downloading ? <SpinnerIcon /> : <DownloadIcon />}
-              Herunterladen
-            </button>
+            <>
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+                style={{ backgroundColor: ACCENT }}
+                data-testid="button-download"
+              >
+                {downloading ? <SpinnerIcon /> : <DownloadIcon />}
+                Herunterladen
+              </button>
+              <button
+                onClick={handlePreview}
+                className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition"
+                data-testid="button-preview"
+              >
+                <EyeIcon />
+                Vorschau
+              </button>
+            </>
           )}
 
           {isCaseStudy && (
