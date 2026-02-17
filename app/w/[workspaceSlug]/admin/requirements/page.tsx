@@ -59,6 +59,8 @@ interface Extraction {
 interface SavedAnalysis {
   id: string;
   title: string;
+  clientName: string | null;
+  projectName: string | null;
   status: string;
   createdAt: string;
   proposal: Extraction | null;
@@ -153,6 +155,9 @@ export default function RequirementsAnalysisPage() {
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
 
+  const [clientName, setClientName] = useState("");
+  const [projectName, setProjectName] = useState("");
+
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -246,6 +251,8 @@ export default function RequirementsAnalysisPage() {
       if (hasFiles) {
         const formData = new FormData();
         formData.append("text", inputText);
+        if (clientName.trim()) formData.append("clientName", clientName.trim());
+        if (projectName.trim()) formData.append("projectName", projectName.trim());
         uploadedFiles.forEach((f) => formData.append("files", f));
         res = await fetch(`/api/w/${slug}/requirements-analysis/extract`, {
           method: "POST",
@@ -255,7 +262,11 @@ export default function RequirementsAnalysisPage() {
         res = await fetch(`/api/w/${slug}/requirements-analysis/extract`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: inputText }),
+          body: JSON.stringify({
+            text: inputText,
+            ...(clientName.trim() && { clientName: clientName.trim() }),
+            ...(projectName.trim() && { projectName: projectName.trim() }),
+          }),
         });
       }
       if (!res.ok) {
@@ -279,6 +290,8 @@ export default function RequirementsAnalysisPage() {
     if (analysis.proposal) {
       setExtraction(analysis.proposal as Extraction);
       setInputText(analysis.transcript || "");
+      setClientName(analysis.clientName || "");
+      setProjectName(analysis.projectName || "");
       setCurrentAnalysisId(analysis.id);
       setShowList(false);
       setLastSaved(null);
@@ -380,6 +393,8 @@ export default function RequirementsAnalysisPage() {
     setExtraction(null);
     setCurrentAnalysisId(null);
     setInputText("");
+    setClientName("");
+    setProjectName("");
     setUploadedFiles([]);
     setLastSaved(null);
     setEditingField(null);
@@ -438,24 +453,53 @@ export default function RequirementsAnalysisPage() {
               <div className="text-center py-12 text-slate-400 border border-dashed border-slate-300 rounded-xl">
                 <p className="text-lg font-medium">Noch keine Analysen vorhanden</p>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {savedAnalyses.map((a) => (
-                  <div
-                    key={a.id}
-                    className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition"
-                    onClick={() => loadSaved(a)}
-                    data-testid={`card-analysis-${a.id}`}
-                  >
-                    <div>
-                      <h3 className="font-semibold text-slate-800">{a.title}</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">{new Date(a.createdAt).toLocaleDateString("de-DE")} · {a.status}</p>
+            ) : (() => {
+              const grouped: Record<string, SavedAnalysis[]> = {};
+              savedAnalyses.forEach((a) => {
+                const key = a.clientName
+                  ? `${a.clientName}${a.projectName ? ` — ${a.projectName}` : ""}`
+                  : "Ohne Zuordnung";
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(a);
+              });
+              const sortedKeys = Object.keys(grouped).sort((a, b) => {
+                if (a === "Ohne Zuordnung") return 1;
+                if (b === "Ohne Zuordnung") return -1;
+                return a.localeCompare(b, "de");
+              });
+              return (
+                <div className="space-y-6">
+                  {sortedKeys.map((groupKey) => (
+                    <div key={groupKey}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" /></svg>
+                        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">{groupKey}</h3>
+                        <span className="text-xs text-slate-400">({grouped[groupKey].length})</span>
+                      </div>
+                      <div className="space-y-2 ml-6">
+                        {grouped[groupKey].map((a) => (
+                          <div
+                            key={a.id}
+                            className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition"
+                            onClick={() => loadSaved(a)}
+                            data-testid={`card-analysis-${a.id}`}
+                          >
+                            <div>
+                              <h3 className="font-semibold text-slate-800">{a.title}</h3>
+                              <p className="text-xs text-slate-500 mt-0.5">
+                                {new Date(a.createdAt).toLocaleDateString("de-DE")} · {a.status}
+                                {a.projectName && !a.clientName && <span> · {a.projectName}</span>}
+                              </p>
+                            </div>
+                            <span className="text-xs text-slate-400">Laden &rarr;</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <span className="text-xs text-slate-400">Laden &rarr;</span>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         ) : (
           <>
@@ -464,6 +508,29 @@ export default function RequirementsAnalysisPage() {
                 <h2 className="text-lg font-bold text-slate-800" style={{ fontFamily: "Playfair Display, serif" }}>
                   Input — Anforderungsanalyse
                 </h2>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Kunde</label>
+                  <input
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                    placeholder="z.B. DER Touristik, Siemens AG..."
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    data-testid="input-client-name"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Projekt</label>
+                  <input
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                    placeholder="z.B. CEO-Nachfolge, Vorstandsbesetzung..."
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    data-testid="input-project-name"
+                  />
+                </div>
               </div>
 
               <div
@@ -564,6 +631,15 @@ export default function RequirementsAnalysisPage() {
             </section>
 
             {extraction && (
+              <>
+              {(clientName || projectName) && (
+                <div className="mb-4 flex items-center gap-3 text-sm" data-testid="section-project-info">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" /></svg>
+                  {clientName && <span className="font-medium text-slate-700">{clientName}</span>}
+                  {clientName && projectName && <span className="text-slate-300">|</span>}
+                  {projectName && <span className="text-slate-600">{projectName}</span>}
+                </div>
+              )}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="section-results">
                 <div className="space-y-5">
                   <h2 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2" style={{ fontFamily: "Playfair Display, serif" }}>
@@ -842,6 +918,7 @@ export default function RequirementsAnalysisPage() {
                   </div>
                 </div>
               </div>
+              </>
             )}
           </>
         )}
