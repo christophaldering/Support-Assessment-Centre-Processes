@@ -153,6 +153,10 @@ export default function RequirementsAnalysisPage() {
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
 
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [addingCompetency, setAddingCompetency] = useState(false);
   const [newCompName, setNewCompName] = useState("");
   const [newCompDesc, setNewCompDesc] = useState("");
@@ -208,19 +212,52 @@ export default function RequirementsAnalysisPage() {
     debouncedSave(data);
   }, [debouncedSave]);
 
+  const ACCEPTED_TYPES = ".docx,.doc,.pdf,.xlsx,.xls,.pptx,.ppt,.txt";
+
+  const addFiles = (files: FileList | File[]) => {
+    const arr = Array.from(files).filter((f) => {
+      const ext = f.name.toLowerCase().split(".").pop() || "";
+      return ["docx", "doc", "pdf", "xlsx", "xls", "pptx", "ppt", "txt"].includes(ext);
+    });
+    setUploadedFiles((prev) => [...prev, ...arr]);
+  };
+
+  const removeFile = (idx: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+    if (e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  };
+
   const handleAnalyze = async () => {
-    if (!inputText.trim() || inputText.trim().length < 20) {
-      setError("Bitte geben Sie einen ausreichend langen Text ein.");
+    const hasText = inputText.trim().length >= 20;
+    const hasFiles = uploadedFiles.length > 0;
+    if (!hasText && !hasFiles) {
+      setError("Bitte geben Sie einen Text ein oder laden Sie Dateien hoch.");
       return;
     }
     setError(null);
     setAnalyzing(true);
     try {
-      const res = await fetch(`/api/w/${slug}/requirements-analysis/extract`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: inputText }),
-      });
+      let res: Response;
+      if (hasFiles) {
+        const formData = new FormData();
+        formData.append("text", inputText);
+        uploadedFiles.forEach((f) => formData.append("files", f));
+        res = await fetch(`/api/w/${slug}/requirements-analysis/extract`, {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        res = await fetch(`/api/w/${slug}/requirements-analysis/extract`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: inputText }),
+        });
+      }
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Analyse fehlgeschlagen");
@@ -229,6 +266,7 @@ export default function RequirementsAnalysisPage() {
       setExtraction(data.extraction);
       setCurrentAnalysisId(data.analysisId);
       setLastSaved(new Date().toLocaleTimeString("de-DE"));
+      setUploadedFiles([]);
       fetchSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Fehler bei der Analyse");
@@ -342,6 +380,7 @@ export default function RequirementsAnalysisPage() {
     setExtraction(null);
     setCurrentAnalysisId(null);
     setInputText("");
+    setUploadedFiles([]);
     setLastSaved(null);
     setEditingField(null);
   };
@@ -425,30 +464,86 @@ export default function RequirementsAnalysisPage() {
                 <h2 className="text-lg font-bold text-slate-800" style={{ fontFamily: "Playfair Display, serif" }}>
                   Input — Anforderungsanalyse
                 </h2>
-                <div className="flex items-center gap-2">
-                  <button
-                    className="px-3 py-1.5 text-xs border border-slate-300 text-slate-500 rounded-lg cursor-not-allowed opacity-50"
-                    disabled
-                    title="Spracheingabe — kommt bald"
-                    data-testid="button-voice-input"
-                  >
-                    <svg className="w-3.5 h-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" /></svg>
-                    Spracheingabe
-                  </button>
-                </div>
               </div>
+
+              <div
+                className={`relative border-2 border-dashed rounded-xl p-5 mb-3 transition-colors text-center cursor-pointer ${
+                  dragActive ? "border-[hsl(14,48%,44%)] bg-orange-50" : "border-slate-300 hover:border-slate-400 bg-slate-50"
+                }`}
+                onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="dropzone-files"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept={ACCEPTED_TYPES}
+                  className="hidden"
+                  onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }}
+                  data-testid="input-file-upload"
+                />
+                <svg className="w-8 h-8 mx-auto text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+                <p className="text-sm text-slate-600 font-medium">Dateien hierher ziehen oder klicken</p>
+                <p className="text-xs text-slate-400 mt-1">Word, Excel, PowerPoint, PDF, TXT — mehrere Dateien möglich</p>
+              </div>
+
+              {uploadedFiles.length > 0 && (
+                <div className="mb-3 space-y-1.5" data-testid="section-uploaded-files">
+                  {uploadedFiles.map((f, i) => {
+                    const ext = f.name.split(".").pop()?.toLowerCase() || "";
+                    const iconColor =
+                      ["docx", "doc"].includes(ext) ? "text-blue-600" :
+                      ["xlsx", "xls"].includes(ext) ? "text-green-600" :
+                      ["pptx", "ppt"].includes(ext) ? "text-orange-600" :
+                      ext === "pdf" ? "text-red-600" : "text-slate-500";
+                    return (
+                      <div key={i} className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2" data-testid={`file-item-${i}`}>
+                        <svg className={`w-4 h-4 shrink-0 ${iconColor}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                        <span className="text-sm text-slate-700 flex-1 truncate">{f.name}</span>
+                        <span className="text-[10px] text-slate-400 uppercase font-medium">{ext}</span>
+                        <span className="text-[10px] text-slate-400">{(f.size / 1024).toFixed(0)} KB</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeFile(i); }}
+                          className="text-slate-400 hover:text-red-500 transition"
+                          data-testid={`button-remove-file-${i}`}
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex-1 border-t border-slate-200"></div>
+                <span className="text-xs text-slate-400">und / oder</span>
+                <div className="flex-1 border-t border-slate-200"></div>
+              </div>
+
+              <p className="text-xs font-medium text-slate-600 mb-1.5">Transkript / Freitext eingeben</p>
               <textarea
-                className="w-full h-48 border border-slate-300 rounded-xl p-4 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)] resize-y"
+                className="w-full h-40 border border-slate-300 rounded-xl p-4 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)] resize-y"
                 placeholder="Fügen Sie hier die Ergebnisse, den Mitschrieb oder das Transkript einer Anforderungsanalyse ein..."
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 data-testid="textarea-input"
               />
               <div className="flex items-center justify-between mt-3">
-                <span className="text-xs text-slate-400">{inputText.length} Zeichen</span>
+                <span className="text-xs text-slate-400">
+                  {uploadedFiles.length > 0 && <span className="text-slate-600 font-medium">{uploadedFiles.length} Datei(en) + </span>}
+                  {inputText.length} Zeichen
+                </span>
                 <button
                   onClick={handleAnalyze}
-                  disabled={analyzing || inputText.trim().length < 20}
+                  disabled={analyzing || (inputText.trim().length < 20 && uploadedFiles.length === 0)}
                   className="px-6 py-2.5 text-white rounded-lg font-medium text-sm shadow-sm hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   style={{ backgroundColor: ACCENT }}
                   data-testid="button-analyze"
@@ -456,12 +551,12 @@ export default function RequirementsAnalysisPage() {
                   {analyzing ? (
                     <>
                       <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                      Wird analysiert...
+                      {uploadedFiles.length > 0 ? "Dateien werden verarbeitet..." : "Wird analysiert..."}
                     </>
                   ) : (
                     <>
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
-                      Analysieren
+                      Analyse starten
                     </>
                   )}
                 </button>

@@ -9,6 +9,49 @@ interface RouteContext {
   params: { workspaceSlug: string };
 }
 
+async function extractTextFromFile(file: File): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const name = file.name.toLowerCase();
+
+  if (name.endsWith(".docx") || name.endsWith(".doc")) {
+    const mammoth = require("mammoth");
+    const result = await mammoth.extractRawText({ buffer });
+    return result.value || "";
+  }
+
+  if (name.endsWith(".pdf")) {
+    const pdfParse = require("pdf-parse");
+    const result = await pdfParse(buffer);
+    return result.text || "";
+  }
+
+  if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+    const XLSX = require("xlsx");
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const texts: string[] = [];
+    for (const sheetName of workbook.SheetNames) {
+      const sheet = workbook.Sheets[sheetName];
+      const csv = XLSX.utils.sheet_to_csv(sheet);
+      if (csv.trim()) {
+        texts.push(`[Blatt: ${sheetName}]\n${csv}`);
+      }
+    }
+    return texts.join("\n\n");
+  }
+
+  if (name.endsWith(".pptx") || name.endsWith(".ppt")) {
+    const officeparser = require("officeparser");
+    const text = await officeparser.parseOfficeAsync(buffer);
+    return text || "";
+  }
+
+  if (name.endsWith(".txt")) {
+    return buffer.toString("utf-8");
+  }
+
+  return "";
+}
+
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
   const master = hasMasterAuth();
@@ -30,12 +73,41 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
     }
 
-    const body = await req.json();
-    const { text, analysisId } = body;
+    const contentType = req.headers.get("content-type") || "";
+    let text = "";
+    let analysisId: string | undefined;
+    const fileNames: string[] = [];
 
-    if (!text || typeof text !== "string" || text.trim().length < 20) {
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      const manualText = formData.get("text") as string || "";
+      analysisId = (formData.get("analysisId") as string) || undefined;
+
+      const extractedTexts: string[] = [];
+      const files = formData.getAll("files");
+      for (const entry of files) {
+        if (entry instanceof File && entry.size > 0) {
+          const extracted = await extractTextFromFile(entry);
+          if (extracted.trim()) {
+            fileNames.push(entry.name);
+            extractedTexts.push(`--- ${entry.name} ---\n${extracted}`);
+          }
+        }
+      }
+
+      const parts: string[] = [];
+      if (manualText.trim()) parts.push(manualText.trim());
+      if (extractedTexts.length > 0) parts.push(extractedTexts.join("\n\n"));
+      text = parts.join("\n\n---\n\n");
+    } else {
+      const body = await req.json();
+      text = body.text || "";
+      analysisId = body.analysisId;
+    }
+
+    if (!text || text.trim().length < 20) {
       return NextResponse.json(
-        { error: "Bitte geben Sie einen ausreichend langen Text ein (mind. 20 Zeichen)." },
+        { error: "Bitte geben Sie einen ausreichend langen Text ein oder laden Sie Dateien hoch (mind. 20 Zeichen)." },
         { status: 400 }
       );
     }
@@ -56,15 +128,18 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         },
       });
     } else {
+      const titleParts = [];
+      if (extraction.company) titleParts.push(extraction.company);
+      if (extraction.targetRole) titleParts.push(extraction.targetRole);
+      const titleSuffix = titleParts.length > 0 ? titleParts.join(" – ") : new Date().toLocaleDateString("de-DE");
+
       const analysis = await prisma.requirementsAnalysis.create({
         data: {
           workspaceId: workspace.id,
-          title: extraction.company
-            ? `Anforderungsanalyse: ${extraction.company} – ${extraction.targetRole || "Rolle"}`
-            : `Anforderungsanalyse ${new Date().toLocaleDateString("de-DE")}`,
+          title: `Anforderungsanalyse: ${titleSuffix}`,
           mode: "auto",
           status: "proposal_ready",
-          inputType: "transcript",
+          inputType: fileNames.length > 0 ? "files" : "transcript",
           transcript: text.trim(),
           proposal: extraction as unknown as Record<string, unknown>,
           consentGiven: true,
@@ -86,6 +161,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
           competencyCount: extraction.competencies?.length,
           moduleCount: extraction.assessmentModules?.length,
           candidateCount: extraction.candidates?.length,
+          fileCount: fileNames.length,
+          fileNames,
         },
       });
     }
