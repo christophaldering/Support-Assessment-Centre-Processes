@@ -7,13 +7,6 @@ interface Props {
   params: { workspaceSlug: string; projectId: string };
 }
 
-const processSteps = [
-  { num: 1, label: "Anforderung", desc: "Rollenanalyse & Anforderungsprofil" },
-  { num: 2, label: "Design", desc: "Kompetenzen, Skalen & Architektur" },
-  { num: 3, label: "Durchführung", desc: "Beobachtung & Bewertung" },
-  { num: 4, label: "Analyse", desc: "Konsolidierung & Ergebnisse" },
-  { num: 5, label: "Berichterstattung", desc: "Reports & Export" },
-];
 
 export default async function ProjectDetailPage({ params }: Props) {
   const wsAuth = getWorkspaceAuth();
@@ -83,7 +76,7 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   const sections = [
     {
-      step: 1,
+      phase: "I",
       titleDe: "Auftrag & Diagnostik-Design",
       subtitleDe: "Wo Struktur dem Urteil vorausgeht.",
       cards: [
@@ -94,73 +87,42 @@ export default async function ProjectDetailPage({ params }: Props) {
           href: `${base}/requirements`,
         },
         {
-          title: "Kompetenzrahmen",
-          titleEn: "COMPETENCY FRAMEWORKS",
-          desc: "Kompetenzen, Skalen, Anker und Gewichtungslogik konfigurieren.",
+          title: "Anforderungsprofil & Kompetenzmodell",
+          titleEn: "COMPETENCY MODEL",
+          desc: "Abgeleitet aus der Anforderungsanalyse. Kompetenzen, Gewichtung, Skalen und Verhaltensanker definieren.",
           href: `${base}/competencies`,
+          hint: "Kompetenzmodell abgeleitet aus Anforderungsanalyse.",
         },
         {
-          title: "Assessment-Architektur",
-          titleEn: "ASSESSMENT ARCHITECTURE",
-          desc: "Validierte Module im Einklang mit DIN 33430 zusammenstellen.",
+          title: "Assessment-Design & Module",
+          titleEn: "ASSESSMENT DESIGN",
+          desc: "Validierte Module auswählen, Reihenfolge festlegen und Kompetenzabdeckung prüfen (DIN 33430).",
           href: `${base}/assessments`,
         },
       ],
     },
     {
-      step: 3,
+      phase: "II",
       titleDe: "Durchführung & Beobachtung",
       subtitleDe: "Wo Evidenz entsteht.",
       cards: [
         {
-          title: "Assessments",
-          titleEn: "ASSESSMENTS",
-          desc: "Sitzungen verwalten, Kandidaten zuweisen und Moderation steuern.",
+          title: "Assessment-Management",
+          titleEn: "EXECUTION",
+          desc: "Sitzungen planen, Kandidaten zuweisen und Moderation steuern.",
           href: `${base}/assessments`,
         },
         {
           title: "Beobachtung & Bewertung",
           titleEn: "OBSERVATION & RATINGS",
-          desc: "Live-Bewertung, Sitzungs-Tracking, offline-fähige Erfassung.",
+          desc: "Übungsspezifische Live-Bewertung, Audio-Aufnahme, Transkription und offline-fähige Erfassung.",
           href: `${base}/assessments`,
         },
-        {
-          title: "Audio & Transkripte",
-          titleEn: "AUDIO & TRANSCRIPTS",
-          desc: "Audio hochladen, transkribieren und zusammenfassen.",
-          href: `${base}/audio`,
-        },
       ],
     },
     {
-      step: 3,
-      titleDe: "Tools & Module",
-      subtitleDe: "Wiederverwendbare Diagnostik-Instrumente und Fallstudien.",
-      cards: [
-        {
-          title: "Tools & Module",
-          titleEn: "TOOLS & MODULES",
-          desc: "Fallstudien, Übungen und Assessment-Instrumente verwalten und einsetzen.",
-          href: `${base}/modules`,
-          badge: "1 aktiv",
-        },
-        {
-          title: "Übungsbibliothek",
-          titleEn: "EXERCISE LIBRARY",
-          desc: "Übungen hochladen, taggen, durchsuchen und für Assessments bereitstellen.",
-          href: `/w/${params.workspaceSlug}/admin/exercise-library`,
-        },
-        {
-          title: "Brand & Style",
-          titleEn: "BRAND RULES",
-          desc: "Corporate-Identity-Regeln definieren, Farben und Typografie auf das Workspace-Theme anwenden.",
-          href: `/w/${params.workspaceSlug}/admin/brand-rules`,
-        },
-      ],
-    },
-    {
-      step: 4,
-      titleDe: "Analyse & Urteilsbildung",
+      phase: "III",
+      titleDe: "Berichte & Diagnostik-Zusammenfassungen",
       subtitleDe: "Von strukturierten Daten zu belastbaren Erkenntnissen.",
       cards: [
         {
@@ -172,8 +134,14 @@ export default async function ProjectDetailPage({ params }: Props) {
         {
           title: "Berichte",
           titleEn: "REPORTS",
-          desc: "Vorstandstaugliche Berichte erstellen, prüfen und exportieren (PDF/DOCX).",
+          desc: `Berichte für Assessment: ${assessment.name}. KI-gestützte Entwürfe, kompetenzbasierte Aggregation, Export (PDF/DOCX).`,
           href: `${base}/reports`,
+        },
+        {
+          title: "Advanced Intelligence",
+          titleEn: "INTELLIGENCE",
+          desc: "Prädiktive Analysen, Entwicklungspfade und Diagnostik-Hypothesen (KI-gestützt).",
+          href: `${base}/intelligence?assessmentId=${assessment.id}`,
         },
       ],
     },
@@ -237,34 +205,6 @@ export default async function ProjectDetailPage({ params }: Props) {
           </div>
         </section>
 
-        <section className="mb-10" data-testid="section-process-bar">
-          <div className="flex items-center gap-0 overflow-x-auto">
-            {processSteps.map((step, i) => (
-              <div key={step.num} className="flex items-center">
-                <div
-                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-full whitespace-nowrap"
-                  style={{
-                    backgroundColor: `${primary}08`,
-                    color: primary,
-                    border: `1px solid ${primary}20`,
-                  }}
-                >
-                  <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ backgroundColor: primary }}
-                  >
-                    {step.num}
-                  </span>
-                  {step.label}
-                </div>
-                {i < processSteps.length - 1 && (
-                  <div className="w-6 h-px mx-1" style={{ backgroundColor: `${primary}30` }} />
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-
         {sections.map((section) => (
           <section
             key={section.titleDe}
@@ -272,13 +212,21 @@ export default async function ProjectDetailPage({ params }: Props) {
             data-testid={`section-${section.titleDe.toLowerCase().replace(/\s+/g, "-")}`}
           >
             <div className="mb-4">
-              <h2
-                className="text-xl font-bold tracking-tight"
-                style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
-              >
-                {section.titleDe}
-              </h2>
-              <p className="mt-0.5 text-sm italic opacity-40">{section.subtitleDe}</p>
+              <div className="flex items-center gap-3">
+                <span
+                  className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded"
+                  style={{ backgroundColor: `${primary}10`, color: primary }}
+                >
+                  Phase {section.phase}
+                </span>
+                <h2
+                  className="text-xl font-bold tracking-tight"
+                  style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
+                >
+                  {section.titleDe}
+                </h2>
+              </div>
+              <p className="mt-1 text-sm italic opacity-40 ml-0">{section.subtitleDe}</p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -306,6 +254,9 @@ export default async function ProjectDetailPage({ params }: Props) {
                       </span>
                     )}
                   </div>
+                  {card.hint && (
+                    <p className="text-[11px] mt-1.5 italic opacity-40">{card.hint}</p>
+                  )}
                   <p className="text-sm mt-1.5 opacity-50 leading-relaxed">{card.desc}</p>
                   <p className="text-[10px] mt-2 opacity-30 uppercase tracking-wider">{card.titleEn}</p>
                   <span className="text-[11px] mt-3 inline-block opacity-40">→ Öffnen</span>

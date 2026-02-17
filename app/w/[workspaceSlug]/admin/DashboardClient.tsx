@@ -240,42 +240,65 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
               <Link
                 key={a.id}
                 href={`${base}/projects/${a.id}`}
-                className="rounded-xl border p-6 transition-all hover:shadow-lg group"
+                className="rounded-xl border overflow-hidden transition-all hover:shadow-lg group flex"
                 style={{ borderColor: `${primary}15`, backgroundColor: bgColor }}
                 data-testid={`link-project-${a.id}`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3
-                        className="text-lg font-bold tracking-tight truncate"
-                        style={{ fontFamily: `'${headingFont}', serif`, color: textColor }}
-                      >
-                        {a.name}
-                      </h3>
-                      <span
-                        className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full whitespace-nowrap"
-                        style={{ backgroundColor: `${st.color}15`, color: st.color, border: `1px solid ${st.color}30` }}
-                      >
-                        {st.de}
-                      </span>
+                <div
+                  className="w-1.5 shrink-0 rounded-l-xl"
+                  style={{ backgroundColor: st.color }}
+                />
+                <div className="flex-1 p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3
+                          className="text-lg font-bold tracking-tight truncate"
+                          style={{ fontFamily: `'${headingFont}', serif`, color: textColor }}
+                        >
+                          {a.name}
+                        </h3>
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full whitespace-nowrap"
+                          style={{ backgroundColor: `${st.color}15`, color: st.color, border: `1px solid ${st.color}30` }}
+                        >
+                          {st.de}
+                        </span>
+                      </div>
+                      {a.description && (
+                        <p className="text-sm opacity-50 mt-1 line-clamp-2">{a.description}</p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs opacity-40">
+                        <span>{formatDate(a.startDate)} — {formatDate(a.endDate)}</span>
+                        <span>{a.candidateCount} Kandidat{a.candidateCount !== 1 ? "en" : ""}</span>
+                        <span>{a.exerciseCount} Übung{a.exerciseCount !== 1 ? "en" : ""}</span>
+                        <span>{a.reportCount} Bericht{a.reportCount !== 1 ? "e" : ""}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2.5">
+                        {a.exerciseCount > 0 && (
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${primary}10`, color: primary }}>
+                            {a.exerciseCount} Module
+                          </span>
+                        )}
+                        {a.reportCount > 0 && (
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                            {a.reportCount} Berichte
+                          </span>
+                        )}
+                        {a.candidateCount > 0 && a.reportCount === 0 && (
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                            Berichte ausstehend
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {a.description && (
-                      <p className="text-sm opacity-50 mt-1 line-clamp-2">{a.description}</p>
-                    )}
-                    <div className="flex items-center gap-5 mt-3 text-xs opacity-40">
-                      <span>{formatDate(a.startDate)} — {formatDate(a.endDate)}</span>
-                      <span>{a.candidateCount} Kandidat{a.candidateCount !== 1 ? "en" : ""}</span>
-                      <span>{a.exerciseCount} Übung{a.exerciseCount !== 1 ? "en" : ""}</span>
-                      <span>{a.reportCount} Bericht{a.reportCount !== 1 ? "e" : ""}</span>
-                    </div>
+                    <span
+                      className="text-sm font-medium opacity-0 group-hover:opacity-60 transition-opacity whitespace-nowrap"
+                      style={{ color: primary }}
+                    >
+                      Öffnen →
+                    </span>
                   </div>
-                  <span
-                    className="text-sm font-medium opacity-0 group-hover:opacity-60 transition-opacity whitespace-nowrap"
-                    style={{ color: primary }}
-                  >
-                    Öffnen →
-                  </span>
                 </div>
               </Link>
             );
