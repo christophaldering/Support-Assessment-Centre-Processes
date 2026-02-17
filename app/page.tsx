@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const WS = "aestimamus";
 
@@ -196,6 +199,88 @@ const modules = [
 ];
 
 export default function ModuleOverviewPage() {
+  const [authenticated, setAuthenticated] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/w/${WS}/case-studies`, { credentials: "include" })
+      .then((res) => {
+        setAuthenticated(res.ok);
+        setChecking(false);
+      })
+      .catch(() => setChecking(false));
+  }, []);
+
+  const handleLogin = async () => {
+    setLoggingIn(true);
+    setError("");
+    try {
+      const res = await fetch("/api/auth/master", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+        credentials: "include",
+      });
+      if (res.ok) {
+        setAuthenticated(true);
+      } else {
+        setError("Falsches Passwort");
+      }
+    } catch {
+      setError("Verbindungsfehler");
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-slate-400 text-sm">Laden...</div>
+      </div>
+    );
+  }
+
+  if (!authenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 w-full max-w-sm">
+          <h1 className="text-xl font-bold text-slate-800 mb-1 font-serif" data-testid="text-login-title">
+            Executive Diagnostics Suite
+          </h1>
+          <p className="text-sm text-slate-500 mb-6">Bitte Passwort eingeben, um fortzufahren.</p>
+          {error && (
+            <div className="mb-4 p-2 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs" data-testid="text-login-error">
+              {error}
+            </div>
+          )}
+          <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Passwort"
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              autoFocus
+              data-testid="input-password"
+            />
+            <button
+              type="submit"
+              disabled={loggingIn || !password}
+              className="w-full mt-3 px-4 py-2.5 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700 disabled:opacity-50 transition"
+              data-testid="button-login"
+            >
+              {loggingIn ? "Anmelden..." : "Anmelden"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-brand-navy text-white border-b border-white/5">
@@ -204,7 +289,7 @@ export default function ModuleOverviewPage() {
             Executive Diagnostics Suite
           </span>
           <span className="text-xs text-slate-400">
-            Modul-Übersicht · Entwicklungsmodus
+            Modul-Übersicht
           </span>
         </div>
       </header>
@@ -217,12 +302,6 @@ export default function ModuleOverviewPage() {
           <p className="text-slate-500 mt-2">
             Alle Plattform-Module im Überblick. Klicken Sie auf eine Kachel, um das jeweilige Modul zu öffnen.
           </p>
-          <div className="mt-3 inline-flex items-center gap-2 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-3 py-1">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
-            Entwicklungsmodus — Kein Login erforderlich
-          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
