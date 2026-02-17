@@ -29,6 +29,18 @@ interface PendingFile {
   sourceContext: string;
 }
 
+interface AnalysisResult {
+  fileIndex: number;
+  fileName: string;
+  generatedTitle: string;
+  suggestedTags: string[];
+  exerciseType: string;
+  targetLevels: string[];
+  author: string;
+  sourceContext: string;
+  file: File;
+}
+
 const ACCENT = "hsl(14, 48%, 44%)";
 
 const EXERCISE_CATEGORIES: { key: string; label: string }[] = [
@@ -170,6 +182,14 @@ function DownloadIcon() {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 }
@@ -566,6 +586,10 @@ export default function ExerciseLibraryPage() {
   const [uploadError, setUploadError] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState("");
 
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeProgress, setAnalyzeProgress] = useState({ current: 0, total: 0 });
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
+
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -658,19 +682,18 @@ export default function ExerciseLibraryPage() {
     setPendingFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const handleUploadAll = useCallback(async () => {
+  const handleAnalyzeAll = useCallback(async () => {
     if (pendingFiles.length === 0) return;
-    setUploading(true);
+    setAnalyzing(true);
     setUploadError("");
     setUploadSuccess("");
-    setUploadProgress({ current: 0, total: pendingFiles.length });
+    setAnalyzeProgress({ current: 0, total: pendingFiles.length });
 
-    let successCount = 0;
-    let lastError = "";
+    const results: AnalysisResult[] = [];
 
     for (let i = 0; i < pendingFiles.length; i++) {
       const pf = pendingFiles[i];
-      setUploadProgress({ current: i + 1, total: pendingFiles.length });
+      setAnalyzeProgress({ current: i + 1, total: pendingFiles.length });
 
       const title = generateTitle(
         pf.exerciseType,
@@ -679,19 +702,102 @@ export default function ExerciseLibraryPage() {
         pf.author
       );
 
+      try {
+        const res = await fetch(`/api/w/${slug}/exercise-library/analyze`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            exerciseType: pf.exerciseType,
+            fileName: pf.file.name,
+            description: "",
+          }),
+        });
+        const data = res.ok ? await res.json() : { tags: [], title };
+        results.push({
+          fileIndex: i,
+          fileName: pf.file.name,
+          generatedTitle: data.title || title,
+          suggestedTags: data.tags || [],
+          exerciseType: pf.exerciseType,
+          targetLevels: [...pf.targetLevels],
+          author: pf.author,
+          sourceContext: pf.sourceContext,
+          file: pf.file,
+        });
+      } catch {
+        results.push({
+          fileIndex: i,
+          fileName: pf.file.name,
+          generatedTitle: title,
+          suggestedTags: [],
+          exerciseType: pf.exerciseType,
+          targetLevels: [...pf.targetLevels],
+          author: pf.author,
+          sourceContext: pf.sourceContext,
+          file: pf.file,
+        });
+      }
+    }
+
+    setAnalysisResults(results);
+    setAnalyzing(false);
+  }, [pendingFiles, slug]);
+
+  const updateAnalysisResult = useCallback((index: number, updates: Partial<AnalysisResult>) => {
+    setAnalysisResults((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, ...updates } : r))
+    );
+  }, []);
+
+  const removeTagFromResult = useCallback((resultIndex: number, tagIndex: number) => {
+    setAnalysisResults((prev) =>
+      prev.map((r, i) =>
+        i === resultIndex
+          ? { ...r, suggestedTags: r.suggestedTags.filter((_, ti) => ti !== tagIndex) }
+          : r
+      )
+    );
+  }, []);
+
+  const addTagToResult = useCallback((resultIndex: number, tag: string) => {
+    if (!tag.trim()) return;
+    setAnalysisResults((prev) =>
+      prev.map((r, i) =>
+        i === resultIndex
+          ? { ...r, suggestedTags: [...r.suggestedTags, tag.trim()] }
+          : r
+      )
+    );
+  }, []);
+
+  const handleSaveAll = useCallback(async () => {
+    if (analysisResults.length === 0) return;
+    setUploading(true);
+    setUploadError("");
+    setUploadSuccess("");
+    setUploadProgress({ current: 0, total: analysisResults.length });
+
+    let successCount = 0;
+    let lastError = "";
+
+    for (let i = 0; i < analysisResults.length; i++) {
+      const ar = analysisResults[i];
+      setUploadProgress({ current: i + 1, total: analysisResults.length });
+
       const metadataJson = JSON.stringify({
-        author: pf.author,
-        sourceContext: pf.sourceContext,
+        author: ar.author,
+        sourceContext: ar.sourceContext,
       });
 
       const formData = new FormData();
-      formData.append("file", pf.file);
-      formData.append("title", title);
-      formData.append("exerciseType", pf.exerciseType);
-      formData.append("targetLevels", pf.targetLevels.join(","));
+      formData.append("file", ar.file);
+      formData.append("title", ar.generatedTitle);
+      formData.append("exerciseType", ar.exerciseType);
+      formData.append("targetLevels", ar.targetLevels.join(","));
       formData.append("description", "");
       formData.append("sourceProjectId", "");
-      formData.append("tags", "");
+      formData.append("tags", ar.suggestedTags.join(","));
       formData.append("languagesAvailable", "DE");
       formData.append("metadataJson", metadataJson);
 
@@ -702,29 +808,31 @@ export default function ExerciseLibraryPage() {
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          lastError = data.error || `Upload von "${pf.file.name}" fehlgeschlagen.`;
+          lastError = data.error || `Upload von "${ar.fileName}" fehlgeschlagen.`;
         } else {
           successCount++;
         }
       } catch {
-        lastError = `Upload von "${pf.file.name}" fehlgeschlagen.`;
+        lastError = `Upload von "${ar.fileName}" fehlgeschlagen.`;
       }
     }
 
-    if (successCount === pendingFiles.length) {
-      setUploadSuccess(`${successCount} Datei(en) erfolgreich hochgeladen.`);
+    if (successCount === analysisResults.length) {
+      setUploadSuccess(`${successCount} Datei(en) erfolgreich gespeichert.`);
       setPendingFiles([]);
+      setAnalysisResults([]);
     } else if (successCount > 0) {
-      setUploadSuccess(`${successCount} von ${pendingFiles.length} Datei(en) hochgeladen.`);
+      setUploadSuccess(`${successCount} von ${analysisResults.length} Datei(en) gespeichert.`);
       setUploadError(lastError);
       setPendingFiles([]);
+      setAnalysisResults([]);
     } else {
-      setUploadError(lastError || "Upload fehlgeschlagen.");
+      setUploadError(lastError || "Speichern fehlgeschlagen.");
     }
 
     setUploading(false);
     fetchItems();
-  }, [pendingFiles, slug, fetchItems]);
+  }, [analysisResults, slug, fetchItems]);
 
   const handleModalClose = useCallback(() => {
     setSelectedItem(null);
@@ -862,36 +970,170 @@ export default function ExerciseLibraryPage() {
                 />
               ))}
 
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  onClick={handleUploadAll}
-                  disabled={uploading}
-                  className="flex items-center gap-2 px-6 py-2.5 text-white rounded-lg font-medium text-sm shadow-sm hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: ACCENT }}
-                  data-testid="button-upload-all"
-                >
-                  {uploading ? (
-                    <>
-                      <SpinnerIcon />
-                      Hochladen ({uploadProgress.current}/{uploadProgress.total})...
-                    </>
-                  ) : (
-                    "Analysieren & Speichern"
-                  )}
-                </button>
-                {!uploading && (
+              {analysisResults.length === 0 && (
+                <div className="flex items-center gap-3 pt-2">
                   <button
-                    onClick={() => {
-                      setPendingFiles([]);
-                      setUploadError("");
-                    }}
-                    className="px-4 py-2.5 text-slate-500 hover:text-slate-700 text-sm transition"
-                    data-testid="button-clear-files"
+                    onClick={handleAnalyzeAll}
+                    disabled={analyzing}
+                    className="flex items-center gap-2 px-6 py-2.5 text-white rounded-lg font-medium text-sm shadow-sm hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: ACCENT }}
+                    data-testid="button-analyze-all"
                   >
-                    Alle entfernen
+                    {analyzing ? (
+                      <>
+                        <SpinnerIcon />
+                        Analysiere ({analyzeProgress.current}/{analyzeProgress.total})...
+                      </>
+                    ) : (
+                      "Analysieren"
+                    )}
                   </button>
-                )}
-              </div>
+                  {!analyzing && (
+                    <button
+                      onClick={() => {
+                        setPendingFiles([]);
+                        setUploadError("");
+                      }}
+                      className="px-4 py-2.5 text-slate-500 hover:text-slate-700 text-sm transition"
+                      data-testid="button-clear-files"
+                    >
+                      Alle entfernen
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {analysisResults.length > 0 && (
+                <div className="mt-4 space-y-4" data-testid="analysis-results">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckIcon />
+                    <h4
+                      className="text-sm font-bold text-emerald-700"
+                      style={{ fontFamily: "Playfair Display, serif" }}
+                    >
+                      Analyse abgeschlossen — bitte prüfen und bestätigen
+                    </h4>
+                  </div>
+
+                  {analysisResults.map((ar, idx) => (
+                    <div
+                      key={`analysis-${idx}`}
+                      className="border border-emerald-200 bg-emerald-50/30 rounded-lg p-4"
+                      data-testid={`analysis-result-${idx}`}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <FileIcon className="h-5 w-5 text-slate-400" />
+                          <span className="text-sm font-medium text-slate-800">
+                            {ar.fileName}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">
+                            Generierter Titel
+                          </label>
+                          <input
+                            type="text"
+                            value={ar.generatedTitle}
+                            onChange={(e) => updateAnalysisResult(idx, { generatedTitle: e.target.value })}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            data-testid={`input-title-${idx}`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">
+                            Übungstyp
+                          </label>
+                          <select
+                            value={ar.exerciseType}
+                            onChange={(e) => updateAnalysisResult(idx, { exerciseType: e.target.value })}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            data-testid={`select-type-result-${idx}`}
+                          >
+                            {EXERCISE_CATEGORIES.map((c) => (
+                              <option key={c.key} value={c.key}>{c.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <label className="block text-xs font-medium text-slate-600 mb-1">
+                          KI-generierte Tags
+                          <span className="ml-1 text-xs text-slate-400 font-normal">(klicken zum Entfernen)</span>
+                        </label>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {ar.suggestedTags.length > 0 ? (
+                            ar.suggestedTags.map((tag, ti) => (
+                              <span
+                                key={`${tag}-${ti}`}
+                                onClick={() => removeTagFromResult(idx, ti)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(14,48%,44%)]/10 text-[hsl(14,48%,44%)] border border-[hsl(14,48%,44%)]/20 cursor-pointer hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                                data-testid={`tag-${idx}-${ti}`}
+                              >
+                                {tag}
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-slate-400 italic">Keine Tags generiert</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Neuen Tag hinzufügen…"
+                            className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                addTagToResult(idx, (e.target as HTMLInputElement).value);
+                                (e.target as HTMLInputElement).value = "";
+                              }
+                            }}
+                            data-testid={`input-add-tag-${idx}`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      onClick={handleSaveAll}
+                      disabled={uploading}
+                      className="flex items-center gap-2 px-6 py-2.5 text-white rounded-lg font-medium text-sm shadow-sm hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: ACCENT }}
+                      data-testid="button-save-all"
+                    >
+                      {uploading ? (
+                        <>
+                          <SpinnerIcon />
+                          Speichere ({uploadProgress.current}/{uploadProgress.total})...
+                        </>
+                      ) : (
+                        "Speichern"
+                      )}
+                    </button>
+                    {!uploading && (
+                      <button
+                        onClick={() => {
+                          setAnalysisResults([]);
+                          setUploadError("");
+                        }}
+                        className="px-4 py-2.5 text-slate-500 hover:text-slate-700 text-sm transition"
+                        data-testid="button-discard-analysis"
+                      >
+                        Verwerfen
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>
