@@ -146,6 +146,9 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       }
       const titleSuffix = titleParts.length > 0 ? titleParts.join(" – ") : new Date().toLocaleDateString("de-DE");
 
+      const autoDeleteAt = new Date();
+      autoDeleteAt.setDate(autoDeleteAt.getDate() + 56);
+
       const analysis = await prisma.requirementsAnalysis.create({
         data: {
           workspaceId: workspace.id,
@@ -161,6 +164,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
           consentTimestamp: new Date(),
           consentUserId: userId,
           createdById: userId,
+          autoDeleteAt,
         },
       });
 

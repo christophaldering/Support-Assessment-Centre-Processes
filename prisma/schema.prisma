@@ -284,6 +284,7 @@ model RequirementsAnalysis {
   consentTimestamp DateTime? @map("consent_timestamp")
   consentUserId   String?  @map("consent_user_id")
   appliedAssessmentId String? @map("applied_assessment_id")
+  autoDeleteAt    DateTime? @map("auto_delete_at")
   createdById     String   @map("created_by_id")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")

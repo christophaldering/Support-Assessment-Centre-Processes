@@ -54,7 +54,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
 
   try {
     const body = await req.json();
-    const { proposal, status, clientName, projectName } = body;
+    const { proposal, status, clientName, projectName, autoDeleteAt } = body;
 
     const updated = await prisma.requirementsAnalysis.update({
       where: { id: analysis.id },
@@ -63,6 +63,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         ...(status !== undefined && { status }),
         ...(clientName !== undefined && { clientName }),
         ...(projectName !== undefined && { projectName }),
+        ...(autoDeleteAt !== undefined && { autoDeleteAt: autoDeleteAt ? new Date(autoDeleteAt) : null }),
       },
     });
 

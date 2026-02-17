@@ -63,6 +63,7 @@ interface SavedAnalysis {
   projectName: string | null;
   status: string;
   createdAt: string;
+  autoDeleteAt: string | null;
   proposal: Extraction | null;
   transcript: string | null;
 }
@@ -398,6 +399,37 @@ export default function RequirementsAnalysisPage() {
     setUploadedFiles([]);
     setLastSaved(null);
     setEditingField(null);
+  };
+
+  const handleDeleteAnalysis = async (id: string) => {
+    if (!confirm("Diese Analyse wirklich löschen?")) return;
+    try {
+      const res = await fetch(`/api/w/${slug}/requirements-analysis/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        if (currentAnalysisId === id) startNew();
+        fetchSaved();
+      }
+    } catch {}
+  };
+
+  const handleUpdateAutoDelete = async (id: string, date: string | null) => {
+    try {
+      await fetch(`/api/w/${slug}/requirements-analysis/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoDeleteAt: date }),
+      });
+      fetchSaved();
+    } catch {}
+  };
+
+  const formatDaysLeft = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return "überfällig";
+    if (diff === 0) return "heute";
+    if (diff === 1) return "morgen";
+    return `in ${diff} Tagen`;
   };
 
   return (
@@ -921,6 +953,105 @@ export default function RequirementsAnalysisPage() {
               </>
             )}
           </>
+        )}
+
+        {!showList && savedAnalyses.length > 0 && (
+          <section className="mt-10 mb-6" data-testid="section-saved-analyses">
+            <div className="border-t border-slate-200 pt-8">
+              <h2
+                className="text-lg font-bold text-slate-800 mb-4"
+                style={{ fontFamily: "Playfair Display, serif" }}
+              >
+                Bisherige Anforderungsanalysen
+              </h2>
+              <div className="space-y-3">
+                {savedAnalyses.map((a) => {
+                  const daysLeft = formatDaysLeft(a.autoDeleteAt);
+                  const isActive = currentAnalysisId === a.id;
+                  return (
+                    <div
+                      key={a.id}
+                      className={`border rounded-xl p-4 transition ${
+                        isActive
+                          ? "border-[hsl(14,48%,44%)]/40 bg-[hsl(14,48%,44%)]/5"
+                          : "border-slate-200 hover:bg-slate-50"
+                      }`}
+                      data-testid={`saved-analysis-${a.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => loadSaved(a)}
+                        >
+                          <h3 className="text-sm font-semibold text-slate-800 truncate">
+                            {a.title}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className="text-xs text-slate-500">
+                              {new Date(a.createdAt).toLocaleDateString("de-DE")}
+                            </span>
+                            {a.clientName && (
+                              <span className="text-xs text-slate-500">
+                                &middot; {a.clientName}
+                              </span>
+                            )}
+                            {a.projectName && (
+                              <span className="text-xs text-slate-500">
+                                &middot; {a.projectName}
+                              </span>
+                            )}
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                              a.status === "applied"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : a.status === "proposal_ready"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-slate-100 text-slate-600"
+                            }`}>
+                              {a.status === "applied" ? "Übernommen" : a.status === "proposal_ready" ? "Bereit" : a.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <input
+                              type="date"
+                              value={a.autoDeleteAt ? new Date(a.autoDeleteAt).toISOString().split("T")[0] : ""}
+                              onChange={(e) => handleUpdateAutoDelete(a.id, e.target.value || null)}
+                              className="text-xs border border-slate-200 rounded px-1.5 py-0.5 text-slate-600 w-[120px] focus:outline-none focus:ring-1 focus:ring-[hsl(14,48%,44%)]/30"
+                              title="Automatisches Löschdatum"
+                              data-testid={`input-auto-delete-${a.id}`}
+                            />
+                            {daysLeft && (
+                              <span className={`text-[10px] whitespace-nowrap ${
+                                daysLeft === "überfällig" ? "text-red-500 font-medium" : "text-slate-400"
+                              }`}>
+                                ({daysLeft})
+                              </span>
+                            )}
+                          </div>
+
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteAnalysis(a.id); }}
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                            title="Analyse löschen"
+                            data-testid={`button-delete-analysis-${a.id}`}
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
         )}
       </main>
 
