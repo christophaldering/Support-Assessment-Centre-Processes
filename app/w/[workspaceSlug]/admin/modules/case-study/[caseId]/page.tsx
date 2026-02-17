@@ -13,7 +13,16 @@ const caseDataMap: Record<string, typeof varexiaData> = {
   varexia: varexiaData,
 };
 
+function safeBalanceItem(item: any): { item: string; value: number } {
+  return {
+    item: item?.item || "Unknown",
+    value: typeof item?.value === "number" ? item.value : parseFloat(item?.value) || 0,
+  };
+}
+
 function safeData(raw: any): CaseStudyData {
+  const n = (v: any) => (typeof v === "number" ? v : parseFloat(v) || 0);
+
   return {
     id: raw.id || "unknown",
     name: raw.name || "Unnamed Case Study",
@@ -23,23 +32,23 @@ function safeData(raw: any): CaseStudyData {
       ? raw.businessUnits.map((bu: any) => ({
           id: bu.id || "bu-unknown",
           name: bu.name || "Unknown Unit",
-          revenue: bu.revenue ?? 0,
-          ebitda: bu.ebitda ?? 0,
-          margin: bu.margin ?? 0,
-          employees: bu.employees ?? 0,
+          revenue: n(bu.revenue),
+          ebitda: n(bu.ebitda),
+          margin: n(bu.margin),
+          employees: n(bu.employees),
           tension: bu.tension || "",
           kpis: Array.isArray(bu.kpis) ? bu.kpis : [],
           financials: {
-            revenue: bu.financials?.revenue ?? bu.revenue ?? 0,
-            ebitda: bu.financials?.ebitda ?? bu.ebitda ?? 0,
-            margin: bu.financials?.margin ?? bu.margin ?? 0,
-            employees: bu.financials?.employees ?? bu.employees ?? 0,
+            revenue: n(bu.financials?.revenue ?? bu.revenue),
+            ebitda: n(bu.financials?.ebitda ?? bu.ebitda),
+            margin: n(bu.financials?.margin ?? bu.margin),
+            employees: n(bu.financials?.employees ?? bu.employees),
           },
           yoy: {
-            revenue: bu.yoy?.revenue ?? 0,
-            ebitda: bu.yoy?.ebitda ?? 0,
-            deltaRevenue: bu.yoy?.deltaRevenue ?? 0,
-            deltaEbitda: bu.yoy?.deltaEbitda ?? 0,
+            revenue: n(bu.yoy?.revenue),
+            ebitda: n(bu.yoy?.ebitda),
+            deltaRevenue: n(bu.yoy?.deltaRevenue),
+            deltaEbitda: n(bu.yoy?.deltaEbitda),
           },
         }))
       : [],
@@ -57,25 +66,31 @@ function safeData(raw: any): CaseStudyData {
     detailedBalanceSheet: {
       assets: {
         nonCurrent: Array.isArray(raw.detailedBalanceSheet?.assets?.nonCurrent)
-          ? raw.detailedBalanceSheet.assets.nonCurrent
+          ? raw.detailedBalanceSheet.assets.nonCurrent.map(safeBalanceItem)
           : [],
         current: Array.isArray(raw.detailedBalanceSheet?.assets?.current)
-          ? raw.detailedBalanceSheet.assets.current
+          ? raw.detailedBalanceSheet.assets.current.map(safeBalanceItem)
           : [],
       },
       equityLiabilities: {
         equity: Array.isArray(raw.detailedBalanceSheet?.equityLiabilities?.equity)
-          ? raw.detailedBalanceSheet.equityLiabilities.equity
+          ? raw.detailedBalanceSheet.equityLiabilities.equity.map(safeBalanceItem)
           : [],
         nonCurrentLiabilities: Array.isArray(raw.detailedBalanceSheet?.equityLiabilities?.nonCurrentLiabilities)
-          ? raw.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities
+          ? raw.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities.map(safeBalanceItem)
           : [],
         currentLiabilities: Array.isArray(raw.detailedBalanceSheet?.equityLiabilities?.currentLiabilities)
-          ? raw.detailedBalanceSheet.equityLiabilities.currentLiabilities
+          ? raw.detailedBalanceSheet.equityLiabilities.currentLiabilities.map(safeBalanceItem)
           : [],
       },
     },
-    balanceSheet: Array.isArray(raw.balanceSheet) ? raw.balanceSheet : [],
+    balanceSheet: Array.isArray(raw.balanceSheet)
+      ? raw.balanceSheet.map((b: any) => ({
+          name: b.name || "Unknown",
+          value: n(b.value),
+          type: b.type === "asset" || b.type === "liability" ? b.type : "asset",
+        }))
+      : [],
   };
 }
 

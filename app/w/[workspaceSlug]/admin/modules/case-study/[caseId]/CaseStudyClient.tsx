@@ -27,7 +27,7 @@ interface Props {
 
 export default function CaseStudyClient({ data, questions, workspaceSlug }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const [selectedEmailId, setSelectedEmailId] = useState<string>("e1");
+  const [selectedEmailId, setSelectedEmailId] = useState<string>(data.emails[0]?.id || "");
 
   const selectedEmail = data.emails.find((e) => e.id === selectedEmailId);
   const base = `/w/${workspaceSlug}/admin`;
@@ -460,7 +460,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
               <p className="text-xs text-slate-400 mb-5">€ Billions</p>
               <div className="space-y-4">
                 {data.businessUnits.map((bu) => {
-                  const maxRevenue = Math.max(...data.businessUnits.map((b) => b.revenue));
+                  const maxRevenue = Math.max(1, ...data.businessUnits.map((b) => b.revenue));
                   return (
                     <div key={bu.id} className="space-y-1.5">
                       <div className="flex justify-between text-xs">
