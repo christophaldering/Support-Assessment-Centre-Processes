@@ -198,3 +198,127 @@ export async function coCreationExtract(
 
   return extractProposal(fullConversation);
 }
+
+export interface Person {
+  firstName: string;
+  lastName: string;
+  role: string;
+  phone: string;
+  email: string;
+}
+
+export interface Candidate {
+  firstName: string;
+  lastName: string;
+  currentRole: string;
+  currentCompany: string;
+  phone: string;
+  email: string;
+}
+
+export interface Competency {
+  name: string;
+  description: string;
+  selected: boolean;
+}
+
+export interface AssessmentModule {
+  name: string;
+  type: string;
+  description: string;
+  adaptationNotes: string;
+  generationPrompt: string;
+  selected: boolean;
+}
+
+export interface RequirementsExtraction {
+  analysisDate: string;
+  analysisForm: string;
+  participants: string[];
+
+  company: string;
+  targetRole: string;
+  startDate: string;
+
+  assessmentDate: string;
+  assessmentType: string;
+  assessmentDuration: string;
+
+  leadConsultant: Person;
+  secondConsultant: Person | null;
+  additionalObservers: Person[];
+
+  candidates: Candidate[];
+
+  specificQuestions: string[];
+  successCriteria: string[];
+
+  competencies: Competency[];
+  assessmentModules: AssessmentModule[];
+}
+
+const REQUIREMENTS_EXTRACTION_PROMPT = `Du bist ein Experte für Executive Assessment Center und Kompetenzdiagnostik.
+Analysiere den folgenden Text — dies ist ein Mitschrieb, eine Zusammenfassung oder ein Transkript einer Anforderungsanalyse.
+Extrahiere alle verfügbaren Informationen und generiere Empfehlungen.
+
+Antworte ausschließlich in validem JSON mit folgender Struktur:
+{
+  "analysisDate": "Datum der Anforderungsanalyse (z.B. 15.03.2025) oder '' wenn unbekannt",
+  "analysisForm": "telefonisch|remote|persönlich oder '' wenn unbekannt",
+  "participants": ["Name 1", "Name 2"],
+
+  "company": "Unternehmensname oder '' wenn unbekannt",
+  "targetRole": "Ziel-Funktion/Rolle oder '' wenn unbekannt",
+  "startDate": "Besetzung ab wann oder '' wenn unbekannt",
+
+  "assessmentDate": "Durchführungstermin oder '' wenn unbekannt",
+  "assessmentType": "präsent|remote|hybrid oder '' wenn unbekannt",
+  "assessmentDuration": "Dauer in Stunden oder '' wenn unbekannt",
+
+  "leadConsultant": {"firstName": "", "lastName": "", "role": "Berater", "phone": "", "email": ""},
+  "secondConsultant": {"firstName": "", "lastName": "", "role": "Zweit-Berater", "phone": "", "email": ""} oder null,
+  "additionalObservers": [{"firstName": "", "lastName": "", "role": "", "phone": "", "email": ""}],
+
+  "candidates": [{"firstName": "", "lastName": "", "currentRole": "", "currentCompany": "", "phone": "", "email": ""}],
+
+  "specificQuestions": ["Ausführliche spezifische Fragestellung 1", "Fragestellung 2"],
+  "successCriteria": ["Stellenspezifisches Erfolgsmerkmal 1 (was muss der Kandidat besonders gut können)", "Erfolgsmerkmal 2"],
+
+  "competencies": [
+    {"name": "Kompetenzname", "description": "Kurzbeschreibung der Kompetenz im Kontext der Anforderung", "selected": true}
+  ],
+  "assessmentModules": [
+    {
+      "name": "Modulname (z.B. Strategische Fallstudie)",
+      "type": "presentation|interview|case_study|role_play|group_discussion|in_tray|fact_finding|psychometric|other",
+      "description": "Was dieses Modul beobachtbar macht und warum es passt",
+      "adaptationNotes": "Wie dieses Modul spezifisch für diese Anforderung angepasst werden sollte",
+      "generationPrompt": "Detaillierter Prompt/Anweisung zur Erstellung dieses Assessment-Bausteins: Beschreibe Szenario, Aufgabenstellung, Zeitrahmen, erwartetes Verhalten, Bewertungskriterien",
+      "selected": true
+    }
+  ]
+}
+
+Wichtige Regeln:
+- Extrahiere NUR Informationen, die tatsächlich im Text enthalten sind. Felder ohne Info = leer lassen ('')
+- Bei Erfolgsmerkmalen: Formuliere prägnant, was der Kandidat insbesondere gut können muss (z.B. "versteht es, komplexe Zusammenhänge einfach zu vermitteln")
+- Generiere 3-8 stellenspezifische Erfolgsmerkmale
+- Bei Kompetenzen: Extrahiere relevante Anforderungskriterien/Kompetenzen, die im Assessment beobachtet und beurteilt werden sollen. Möglichst NICHT zu viele (max 6-8). Kurze, prägnante Namen (z.B. "Einfühlungsvermögen", "Komplexitätsreduzierung")
+- Bei Assessment-Bausteinen: Identifiziere relevante Beurteilungsmodule. Möglichst NICHT zu viele (3-5). Jedes Modul MUSS einen detaillierten generationPrompt enthalten
+- Alle spezifischen Fragestellungen ausführlich in Bullet-Points extrahieren
+- Alle Texte auf Deutsch`;
+
+export async function extractRequirementsAnalysis(text: string): Promise<RequirementsExtraction> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: REQUIREMENTS_EXTRACTION_PROMPT },
+      { role: "user", content: text },
+    ],
+    response_format: { type: "json_object" },
+    max_completion_tokens: 8192,
+  });
+
+  const content = response.choices[0]?.message?.content || "{}";
+  return JSON.parse(content) as RequirementsExtraction;
+}
