@@ -37,8 +37,12 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     }
 
     const userId = master ? "master" : session!.userId;
-    const userName = master ? "Admin" : (session!.roles.includes("ADMIN") ? "Admin" : userId);
+    let userName = "Admin";
     const userRole = master ? "ADMIN" : (session!.roles[0] || "OBSERVER");
+    if (!master) {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+      userName = user?.name || "Benutzer";
+    }
 
     await prisma.presenceSession.upsert({
       where: {

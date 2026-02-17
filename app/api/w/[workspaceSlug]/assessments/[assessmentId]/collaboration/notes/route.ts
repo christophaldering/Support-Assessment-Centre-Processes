@@ -80,7 +80,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     }
 
     const authorId = master ? "master" : session!.userId;
-    const authorName = master ? "Admin" : (session!.userId);
+    let authorName = "Admin";
+    if (!master) {
+      const user = await prisma.user.findUnique({ where: { id: authorId }, select: { name: true } });
+      authorName = user?.name || "Benutzer";
+    }
 
     const note = await prisma.sharedObserverNote.create({
       data: {

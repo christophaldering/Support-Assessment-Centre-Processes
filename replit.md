@@ -46,6 +46,7 @@ The platform is built on a modern full-stack architecture utilizing Next.js 14 (
     - **Diagnostic Hypothesis Engine:** Evidence-linked hypotheses with alternative interpretations, supporting/counter evidence, validation steps. Entity: DiagnosticHypothesis.
     - All outputs are confidence-scored, evidence-coverage-tracked, AI-labeled, and audit-logged. UI: `/w/{slug}/admin/intelligence` with 3 tabs.
     - Permissions: ADMIN (full), MODERATOR (view+generate), HR_CLIENT (view only), OBSERVER/CANDIDATE (none).
+- **Real-Time Collaboration:** Polling-based collaboration system for observers and assessors during assessments. Entities: CollaborationEvent, PresenceSession, SharedObserverNote. Features: live presence indicators (15s heartbeat), activity feed (10s polling with cursor-based pagination), shared observer notes with pin/delete. UI: slide-out "Zusammenarbeit" panel with FAB button on assessment detail page, three tabs (Aktive Beobachter, Aktivitäts-Feed, Gemeinsame Notizen). CollaborationEvents emitted on rating submissions (fire-and-forget). API: `/api/w/{slug}/assessments/{id}/collaboration/presence`, `/collaboration/events`, `/collaboration/notes`. Permissions: ADMIN/MODERATOR/OBSERVER can collaborate, HR_CLIENT view-only, CANDIDATE blocked.
 
 ## External Dependencies
 
