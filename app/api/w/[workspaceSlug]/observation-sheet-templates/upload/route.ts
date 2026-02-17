@@ -1,0 +1,89 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { getUserSession, hasMasterAuth } from "@/lib/session";
+import { hasAnyPermission } from "@/lib/rbac";
+import { Client } from "@replit/object-storage";
+
+interface RouteContext {
+  params: { workspaceSlug: string };
+}
+
+const ALLOWED_MIME_TYPES = [
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/pdf",
+];
+
+const client = new Client();
+
+export async function POST(req: NextRequest, { params }: RouteContext) {
+  const session = getUserSession();
+  const master = hasMasterAuth();
+
+  if (!master && (!session || session.workspaceSlug !== params.workspaceSlug)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (session && !master && !hasAnyPermission(session.roles, ["exerciselibrary.upload", "exerciselibrary.manage"])) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const formData = await req.formData();
+    const file = formData.get("file") as File | null;
+    const name = formData.get("name") as string | null;
+
+    if (!file) {
+      return NextResponse.json({ error: "File is required" }, { status: 400 });
+    }
+
+    if (!name) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
+
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "Datei darf maximal 50 MB groß sein" }, { status: 400 });
+    }
+
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: "Invalid file type. Allowed: .docx, .pptx, .pdf" },
+        { status: 400 }
+      );
+    }
+
+    const workspace = await prisma.workspace.findUnique({
+      where: { slug: params.workspaceSlug },
+    });
+
+    if (!workspace) {
+      return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+    }
+
+    const uuid = crypto.randomUUID();
+    const objectPath = `.private/observation-sheets/${workspace.id}/${uuid}_${file.name}`;
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await client.uploadFromBytes(objectPath, buffer);
+
+    const template = await prisma.observationSheetTemplate.create({
+      data: {
+        name,
+        workspaceId: workspace.id,
+        type: "uploaded",
+        fileKey: objectPath,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+        originalFileKey: objectPath,
+        originalFileName: file.name,
+      },
+    });
+
+    return NextResponse.json(template, { status: 201 });
+  } catch (error) {
+    console.error("Observation sheet template upload error:", error);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+  }
+}

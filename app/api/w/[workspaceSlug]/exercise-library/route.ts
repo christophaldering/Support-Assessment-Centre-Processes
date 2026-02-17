@@ -88,7 +88,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const { title, exerciseType, tags, targetLevels, languagesAvailable, metadataJson } = await req.json();
+    const { title, description, exerciseType, tags, targetLevels, languagesAvailable, metadataJson, sourceProjectId, sourceContext, basedOnId } = await req.json();
 
     if (!title) {
       return NextResponse.json({ error: "Titel ist erforderlich" }, { status: 400 });
@@ -109,12 +109,16 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const item = await prisma.exerciseLibraryItem.create({
       data: {
         title,
+        description: description ?? null,
         exerciseType,
         workspaceId: workspace.id,
         tags: tags ?? [],
         targetLevels: targetLevels ?? [],
         languagesAvailable: languagesAvailable ?? [],
         metadataJson: metadataJson ?? null,
+        sourceProjectId: sourceProjectId ?? null,
+        sourceContext: sourceContext ?? null,
+        basedOnId: basedOnId ?? null,
       },
       include: {
         _count: { select: { variants: true } },
