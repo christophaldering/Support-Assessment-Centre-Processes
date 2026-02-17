@@ -147,6 +147,18 @@ const TABS: { key: TabKey; label: string; iconPath: string }[] = [
   },
 ];
 
+type ToolKey = "exercise-library" | "intelligence" | "observation-sheets";
+
+interface ToolDetail {
+  key: ToolKey;
+  title: string;
+  href: string;
+  shortDesc: string;
+  description: string;
+  features: string[];
+  icon: JSX.Element;
+}
+
 export default function DashboardClient({ assessments, workspaceSlug, primary, textColor, bgColor, headingFont, toolLinks, governanceLinks }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>("projects");
@@ -160,8 +172,53 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
     designMode: "classic",
   });
   const [error, setError] = useState("");
+  const [selectedTool, setSelectedTool] = useState<ToolKey>("exercise-library");
 
   const base = `/w/${workspaceSlug}/admin`;
+
+  const toolDetails: ToolDetail[] = [
+    {
+      key: "exercise-library",
+      title: "Modul- & Übungsbibliothek",
+      href: `${base}/exercise-library`,
+      shortDesc: "Assessment-Übungen verwalten",
+      description: "Verwalten Sie Assessment-Übungen: Interview-Leitfäden, Fallstudien, Fact-Finding-Simulationen, Präsentationen, Verhaltenssimulationen und psychometrische Tests.",
+      features: ["Upload & KI-Analyse", "CD-Anpassung", "Original + angepasste Version", "8 Übungstypen", "4 Hierarchie-Level"],
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>
+      ),
+    },
+    {
+      key: "intelligence",
+      title: "Advanced Intelligence",
+      href: `${base}/intelligence`,
+      shortDesc: "KI-gestützte Diagnostik",
+      description: "Drei KI-gestützte Diagnostik-Module für prädiktive Analyse, Entwicklungspfade und diagnostische Hypothesen.",
+      features: ["Predictive Success Intelligence", "Development Path Generator", "Diagnostic Hypothesis Engine"],
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+        </svg>
+      ),
+    },
+    {
+      key: "observation-sheets",
+      title: "Beobachtungsbögen",
+      href: `${base}/observation-sheets`,
+      shortDesc: "Bögen erstellen & verwalten",
+      description: "Erstellen, importieren und verwalten Sie Beobachtungsbögen. Upload bestehender Bögen mit automatischer CD-Anpassung.",
+      features: ["Upload (Word/PDF)", "KI-generierte Bögen", "CD-Anpassung", "Projektverknüpfung"],
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+        </svg>
+      ),
+    },
+  ];
+
+  const currentTool = toolDetails.find((t) => t.key === selectedTool) ?? toolDetails[0];
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -257,6 +314,111 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
         ))}
       </div>
     );
+  }
+
+  function renderExerciseLibraryIllustration() {
+    const rows = [
+      { name: "Strategische Fallstudie", type: "Fallstudie", level: "C-Level" },
+      { name: "Führungs-Interview", type: "Interview", level: "VP" },
+      { name: "Fact-Finding Simulation", type: "Fact-Finding", level: "Director" },
+      { name: "Gruppendiskussion", type: "Verhaltenssim.", level: "Manager" },
+    ];
+    return (
+      <div className="rounded-lg border overflow-hidden" style={{ borderColor: `${primary}20` }}>
+        <div className="grid grid-cols-4 text-[10px] font-semibold uppercase tracking-wider px-3 py-2" style={{ backgroundColor: `${primary}08`, color: `${primary}cc` }}>
+          <span>Übung</span>
+          <span>Typ</span>
+          <span>Level</span>
+          <span>Status</span>
+        </div>
+        {rows.map((row, i) => (
+          <div key={i} className="grid grid-cols-4 text-xs px-3 py-2.5 border-t items-center" style={{ borderColor: `${primary}10` }}>
+            <span className="font-medium truncate" style={{ color: textColor }}>{row.name}</span>
+            <span className="opacity-60">{row.type}</span>
+            <span className="opacity-60">{row.level}</span>
+            <span>
+              <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: i < 2 ? "#22c55e" : `${primary}60` }} />
+              <span className="opacity-50 text-[10px]">{i < 2 ? "Aktiv" : "Entwurf"}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function renderIntelligenceIllustration() {
+    const modules = [
+      { name: "Predictive Success", pct: 87 },
+      { name: "Development Path", pct: 62 },
+      { name: "Hypothesis Engine", pct: 45 },
+    ];
+    return (
+      <div className="space-y-3">
+        {modules.map((m, i) => (
+          <div key={i} className="rounded-lg border p-3" style={{ borderColor: `${primary}20`, backgroundColor: `${primary}04` }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold" style={{ color: textColor }}>{m.name}</span>
+              <span className="text-[10px] font-bold" style={{ color: primary }}>{m.pct}%</span>
+            </div>
+            <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${primary}15` }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${m.pct}%`, backgroundColor: primary, opacity: 0.7 + i * 0.1 }} />
+            </div>
+            <div className="flex gap-2 mt-2">
+              {[1, 2, 3].map((dot) => (
+                <span key={dot} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: dot <= (3 - i) ? primary : `${primary}25` }} />
+              ))}
+              <span className="text-[9px] opacity-40 ml-1">{i === 0 ? "Analyse abgeschlossen" : i === 1 ? "In Bearbeitung" : "Ausstehend"}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function renderObservationSheetIllustration() {
+    const criteria = [
+      { name: "Analytisches Denken", rating: 4 },
+      { name: "Kommunikation", rating: 3 },
+      { name: "Entscheidungsfähigkeit", rating: 5 },
+      { name: "Teamführung", rating: 2 },
+    ];
+    return (
+      <div className="rounded-lg border overflow-hidden" style={{ borderColor: `${primary}20` }}>
+        <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ backgroundColor: `${primary}08`, color: `${primary}cc` }}>
+          Beobachtungsbogen — Bewertungsskala
+        </div>
+        {criteria.map((c, i) => (
+          <div key={i} className="flex items-center justify-between px-3 py-2.5 border-t" style={{ borderColor: `${primary}10` }}>
+            <span className="text-xs font-medium" style={{ color: textColor }}>{c.name}</span>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((v) => (
+                <span
+                  key={v}
+                  className="w-5 h-5 rounded text-[9px] font-bold flex items-center justify-center"
+                  style={{
+                    backgroundColor: v <= c.rating ? primary : `${primary}10`,
+                    color: v <= c.rating ? "#fff" : `${primary}40`,
+                  }}
+                >
+                  {v}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function renderToolIllustration(key: ToolKey) {
+    switch (key) {
+      case "exercise-library":
+        return renderExerciseLibraryIllustration();
+      case "intelligence":
+        return renderIntelligenceIllustration();
+      case "observation-sheets":
+        return renderObservationSheetIllustration();
+    }
   }
 
   return (
@@ -616,7 +778,111 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
               Assessment-Instrumente, Bibliotheken und Design-Werkzeuge
             </p>
           </div>
-          {renderLinkGrid(toolLinks)}
+          <div className="flex gap-6" data-testid="tools-split-layout">
+            <div className="w-[30%] shrink-0 space-y-2" data-testid="tools-sidebar">
+              {toolDetails.map((tool) => {
+                const isSelected = selectedTool === tool.key;
+                return (
+                  <button
+                    key={tool.key}
+                    onClick={() => setSelectedTool(tool.key)}
+                    className="w-full text-left rounded-xl border p-4 transition-all"
+                    style={{
+                      borderColor: isSelected ? primary : `${primary}15`,
+                      backgroundColor: isSelected ? `${primary}08` : bgColor,
+                      boxShadow: isSelected ? `0 0 0 1px ${primary}40, 0 2px 8px ${primary}10` : "none",
+                    }}
+                    data-testid={`tool-menu-${tool.key}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                        style={{
+                          backgroundColor: isSelected ? primary : `${primary}10`,
+                          color: isSelected ? "#fff" : primary,
+                        }}
+                      >
+                        {tool.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4
+                          className="text-sm font-semibold leading-tight"
+                          style={{
+                            color: isSelected ? primary : textColor,
+                            fontFamily: `'${headingFont}', serif`,
+                          }}
+                        >
+                          {tool.title}
+                        </h4>
+                        <p className="text-[11px] mt-0.5 opacity-50 leading-snug">{tool.shortDesc}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex-1 min-w-0" data-testid="tools-detail-panel">
+              <div
+                className="rounded-xl border p-6"
+                style={{ borderColor: `${primary}15`, backgroundColor: bgColor }}
+                data-testid={`tool-detail-${currentTool.key}`}
+              >
+                <div className="flex items-start gap-4 mb-5">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${primary}10`, color: primary }}
+                  >
+                    <div className="scale-125">{currentTool.icon}</div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3
+                      className="text-lg font-bold tracking-tight"
+                      style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
+                    >
+                      {currentTool.title}
+                    </h3>
+                    <p className="text-sm mt-1 opacity-60 leading-relaxed">{currentTool.description}</p>
+                  </div>
+                </div>
+
+                <div className="mb-5">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: `${primary}99` }}>
+                    Features
+                  </h4>
+                  <ul className="space-y-1.5">
+                    {currentTool.features.map((f, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm">
+                        <span
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: primary }}
+                        />
+                        <span style={{ color: textColor }}>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mb-5">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: `${primary}99` }}>
+                    Vorschau
+                  </h4>
+                  {renderToolIllustration(currentTool.key)}
+                </div>
+
+                <div className="pt-2">
+                  <Link
+                    href={currentTool.href}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
+                    style={{ backgroundColor: primary }}
+                    data-testid={`button-open-tool-${currentTool.key}`}
+                  >
+                    Öffnen →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
       )}
 
