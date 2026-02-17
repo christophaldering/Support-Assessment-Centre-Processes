@@ -1,0 +1,162 @@
+Replit Prompt
+Executive Diagnostics Suite – Structural & Process Redesign
+Objective
+Redesign the Executive Diagnostics Suite so it reflects a clear diagnostic workflow instead of appearing as a collection of loosely connected tools.
+The platform must guide users logically from:
+Requirement Analysis → Competency Modeling → Assessment Design → Execution → Observation → Reporting
+The system should always make clear:
+Where the user is in the process
+What the next logical step is
+Which elements belong to the current assessment
+The suite must feel methodologically rigorous, structured, and intelligent — not tool-based.
+1️⃣ Enterprise Cockpit – Visual & Structural Improvements
+A. Strengthen Assessment Card Differentiation
+Assessment cards (e.g., “CEO DER Tour”, “Leadership Assessment Q1 2026”) currently appear too uniform.
+Implement:
+Subtle color differentiation for:
+Draft
+Active
+Completed
+Left-side color accent or status badge system
+Clear visual hierarchy
+Goal: Reduce visual monotony and improve orientation.
+B. Merge “Tools & Modules” and “Exercise Library”
+These are conceptually redundant and should be unified.
+Rename to:
+Module & Exercise Library
+This unified library contains:
+Case studies
+Interview guides
+Simulations
+Role plays
+Assessment exercises
+AI-generated modules
+Classic validated modules
+Add filtering options:
+Linked competencies
+Difficulty level
+Exercise type
+AI-generated vs. classic
+The library must serve as the central repository for assessment design.
+C. Remove Red 1–5 Step Bars
+Eliminate the numbered red step indicators above “Assignment & Diagnostic Design”.
+Reason:
+They impose artificial linearity
+They dominate visually without functional value
+The process flow should emerge from structure and navigation, not decorative steps
+2️⃣ Core Structural Redesign – Process-Based Architecture
+The suite must reflect a logical three-phase workflow:
+PHASE 1 – Assignment & Diagnostic Design
+1. Requirement Analysis
+Keep as is.
+2. Rename:
+“Competency Framework” →
+Requirement Profile & Competency Model
+Function:
+Derived directly from requirement analysis
+Weighting logic
+Behavioral anchors
+Clear competency definitions
+UI Requirement:
+Make the transition visible:
+“Competency Model derived from Requirement Analysis.”
+3. Rename “Assessment Architecture” to:
+Assessment Design & Modules
+This section must not remain abstract. It should concretely define:
+Which modules are used
+Which exercises are selected
+In what sequence
+When opening this section:
+The system must:
+Recognize the active assessment context
+Only display relevant modules from the Module & Exercise Library
+Provide Three Design Modes:
+Full AI Design
+AI generates complete assessment structure
+Suggests modules
+Displays competency coverage
+AI-Supported Design
+AI proposes options
+User selects and modifies
+Classic Manual Design
+User selects modules manually
+The selected mode must be visible within the assessment overview.
+PHASE 2 – Execution & Observation
+Restructure the current “Execution & Observation” section.
+1. Execution (Assessment Management)
+Includes:
+Session planning
+Candidate assignment
+Moderation tools
+2. Observation & Evaluation
+Evaluation must:
+Be exercise-specific
+Be based on the defined competency model
+Support live and offline scoring
+Observer Interface (Critical Change)
+Create a separate, reduced, observer-focused interface:
+Clean
+Independent from full suite
+Optimized for focus
+Optional feature:
+Record observer discussion
+AI analyzes discussion
+AI proposes competency ratings
+Human validates final scoring
+Remove Separate “Audio & Transcripts” Section
+Instead:
+Integrate audio recording & transcription features into:
+Execution & Observation
+Audio must function as a capability, not a standalone module.
+PHASE 3 – Reports
+Rename:
+Reports & Diagnostic Summaries
+Requirements:
+Reports must be clearly linked to the active assessment.
+No generic report area.
+System must indicate:
+“Reports for Assessment: [Assessment Name]”
+Features:
+AI-assisted report drafting
+Competency-based aggregation
+Exercise-level synthesis
+Export options (Word / PDF / CI compliant)
+3️⃣ Structural Philosophy
+Shift from:
+“Toolbox with modules”
+To:
+“Guided Diagnostic Workflow”
+Users should never wonder:
+“What do I do next?”
+The system must implicitly guide the next logical step.
+4️⃣ UX Design Principles
+Stronger visual hierarchy
+Reduced uniformity
+Context awareness (system always knows current assessment)
+No redundant navigation
+AI integrated invisibly and intelligently
+Clean, method-driven appearance
+The suite must feel:
+Methodologically rigorous
+DIN 33430 aligned
+Executive-grade
+Structurally superior
+Subtle, not flashy
+Core principle:
+Structure before judgment.
+5️⃣ Enterprise Cockpit Enhancements (Optional but Recommended)
+Add status overview elements per assessment:
+Design mode (AI / Hybrid / Classic)
+Competency coverage %
+Evaluation progress
+Report completion status
+Overall assessment status
+🎯 Final Goal
+The Executive Diagnostics Suite should feel like:
+A structured, intelligent diagnostic operating system — not a digital folder of tools.
+It must reflect:
+Professional depth
+Conceptual clarity
+Workflow intelligence
+Integrated AI capability
+Methodological credibility
