@@ -62,13 +62,14 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     }
 
     const client = getStorageClient();
-    const { ok, value: buffer, error } = await client.downloadAsBytes(item.originalFileKey);
+    const { ok, value: rawBuffer, error } = await client.downloadAsBytes(item.originalFileKey);
 
-    if (!ok || !buffer) {
+    if (!ok || !rawBuffer) {
       console.error("Object storage download error:", error);
       return NextResponse.json({ error: "Datei konnte nicht geladen werden" }, { status: 500 });
     }
 
+    const buffer = Array.isArray(rawBuffer) ? Buffer.concat(rawBuffer) : Buffer.from(rawBuffer);
     const fileName = item.originalFileName || "download";
     const mimeType = getMimeType(fileName, item.originalMimeType);
 

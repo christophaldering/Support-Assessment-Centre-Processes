@@ -14,16 +14,48 @@ function getStorageClient() {
   return new Client({ bucketId });
 }
 
+function errorHtml(title: string, message: string, status: number): NextResponse {
+  const html = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vorschau – ${escapeHtml(title)}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, -apple-system, sans-serif; color: #1e293b; background: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 40px 48px; max-width: 480px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .icon { font-size: 40px; margin-bottom: 16px; }
+    h1 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #0f172a; }
+    p { font-size: 14px; color: #64748b; line-height: 1.6; }
+    .code { font-size: 11px; color: #94a3b8; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">⚠️</div>
+    <h1>${escapeHtml(title)}</h1>
+    <p>${escapeHtml(message)}</p>
+    <p class="code">Fehlercode: ${status}</p>
+  </div>
+</body>
+</html>`;
+  return new NextResponse(html, {
+    status,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
+}
+
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
   const master = hasMasterAuth();
 
   if (!master && (!session || session.workspaceSlug !== params.workspaceSlug)) {
-    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+    return errorHtml("Nicht autorisiert", "Bitte melden Sie sich an, um die Vorschau anzuzeigen.", 401);
   }
 
   if (session && !master && !hasPermission(session.roles, "exerciselibrary.manage")) {
-    return NextResponse.json({ error: "Zugriff verweigert" }, { status: 403 });
+    return errorHtml("Zugriff verweigert", "Sie haben keine Berechtigung, diese Datei anzuzeigen.", 403);
   }
 
   try {
@@ -32,7 +64,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     });
 
     if (!workspace) {
-      return NextResponse.json({ error: "Workspace nicht gefunden" }, { status: 404 });
+      return errorHtml("Workspace nicht gefunden", "Der angegebene Workspace existiert nicht.", 404);
     }
 
     const item = await prisma.exerciseLibraryItem.findFirst({
@@ -40,20 +72,33 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     });
 
     if (!item) {
-      return NextResponse.json({ error: "Übung nicht gefunden" }, { status: 404 });
+      return errorHtml("Übung nicht gefunden", "Die angeforderte Übung konnte nicht gefunden werden.", 404);
     }
 
     if (!item.originalFileKey) {
-      return NextResponse.json({ error: "Keine Datei vorhanden" }, { status: 404 });
+      return errorHtml("Keine Datei vorhanden", "Zu dieser Übung wurde keine Datei hochgeladen.", 404);
     }
 
-    const client = getStorageClient();
-    const { ok, value: buffer, error } = await client.downloadAsBytes(item.originalFileKey);
-
-    if (!ok || !buffer) {
-      console.error("Object storage preview error:", error);
-      return NextResponse.json({ error: "Datei konnte nicht geladen werden" }, { status: 500 });
+    let client: Client;
+    try {
+      client = getStorageClient();
+    } catch (e) {
+      console.error("Object storage config error:", e);
+      return errorHtml("Speicher nicht konfiguriert", "Der Dateispeicher ist nicht verfügbar. Bitte kontaktieren Sie den Administrator.", 500);
     }
+
+    const { ok, value: rawBuffer, error } = await client.downloadAsBytes(item.originalFileKey);
+
+    if (!ok || !rawBuffer) {
+      console.error("Object storage preview error:", error, "key:", item.originalFileKey);
+      return errorHtml(
+        "Datei nicht verfügbar",
+        `Die Datei "${item.originalFileName || "unbekannt"}" konnte nicht aus dem Speicher geladen werden. Möglicherweise wurde sie gelöscht oder der Speicherpfad ist ungültig.`,
+        500
+      );
+    }
+
+    const buffer = Array.isArray(rawBuffer) ? Buffer.concat(rawBuffer) : Buffer.from(rawBuffer);
 
     const fileName = (item.originalFileName || "").toLowerCase();
     const mimeType = item.originalMimeType || "";
@@ -83,7 +128,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
         });
       } catch (convErr) {
         console.error("mammoth conversion error:", convErr);
-        return NextResponse.json({ error: "Vorschau konnte nicht erstellt werden" }, { status: 500 });
+        return errorHtml("Konvertierung fehlgeschlagen", "Die Word-Datei konnte nicht in eine Vorschau umgewandelt werden. Bitte versuchen Sie den Download.", 500);
       }
     }
 
@@ -104,7 +149,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
         });
       } catch (convErr) {
         console.error("officeparser conversion error:", convErr);
-        return NextResponse.json({ error: "Vorschau konnte nicht erstellt werden" }, { status: 500 });
+        return errorHtml("Konvertierung fehlgeschlagen", "Die PowerPoint-Datei konnte nicht in eine Vorschau umgewandelt werden. Bitte versuchen Sie den Download.", 500);
       }
     }
 
@@ -131,17 +176,18 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
         });
       } catch (convErr) {
         console.error("xlsx conversion error:", convErr);
-        return NextResponse.json({ error: "Vorschau konnte nicht erstellt werden" }, { status: 500 });
+        return errorHtml("Konvertierung fehlgeschlagen", "Die Excel-Datei konnte nicht in eine Vorschau umgewandelt werden. Bitte versuchen Sie den Download.", 500);
       }
     }
 
-    return NextResponse.json(
-      { error: "Vorschau für diesen Dateityp nicht verfügbar" },
-      { status: 415 }
+    return errorHtml(
+      "Dateityp nicht unterstützt",
+      `Für den Dateityp "${item.originalFileName || "unbekannt"}" ist keine Vorschau verfügbar. Bitte verwenden Sie die Download-Funktion.`,
+      415
     );
   } catch (err) {
     console.error("Preview error:", err);
-    return NextResponse.json({ error: "Fehler bei der Vorschau" }, { status: 500 });
+    return errorHtml("Unerwarteter Fehler", "Bei der Vorschau ist ein unerwarteter Fehler aufgetreten. Bitte versuchen Sie es erneut oder nutzen Sie die Download-Funktion.", 500);
   }
 }
 
