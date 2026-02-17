@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasAnyPermission } from "@/lib/rbac";
 import { Client } from "@replit/object-storage";
+import { generateTags } from "@/lib/ai";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -84,6 +85,22 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         originalFileKey: objectPath,
         originalFileName: file.name,
       },
+    });
+
+    generateTags({
+      title: name,
+      description: null,
+      type: "observation_sheet",
+      fileName: file.name,
+    }).then(async (aiTags) => {
+      if (aiTags.length > 0) {
+        await prisma.observationSheetTemplate.update({
+          where: { id: template.id },
+          data: { tags: aiTags },
+        });
+      }
+    }).catch((err) => {
+      console.error("Async AI tag generation failed for observation sheet template:", template.id, err);
     });
 
     return NextResponse.json(template, { status: 201 });

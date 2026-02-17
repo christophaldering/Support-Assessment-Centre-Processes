@@ -129,6 +129,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       consolidatedCount: a._count.consolidatedScores,
       competencyCoverage,
       ratingProgress,
+      autoDeleteDays: a.autoDeleteDays ?? null,
     };
   });
 

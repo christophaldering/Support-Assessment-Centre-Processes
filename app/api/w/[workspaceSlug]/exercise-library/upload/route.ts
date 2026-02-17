@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasAnyPermission } from "@/lib/rbac";
 import { Client } from "@replit/object-storage";
+import { generateTags } from "@/lib/ai";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const languagesAvailableRaw = formData.get("languagesAvailable") as string | null;
     const tagsRaw = formData.get("tags") as string | null;
     const description = formData.get("description") as string | null;
+    const sourceProjectId = formData.get("sourceProjectId") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "File is required" }, { status: 400 });
@@ -104,10 +106,28 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         originalFileName: file.name,
         originalFileSize: file.size,
         originalMimeType: file.type,
+        sourceProjectId: sourceProjectId || null,
       },
       include: {
         _count: { select: { variants: true } },
       },
+    });
+
+    generateTags({
+      title,
+      description: description ?? null,
+      type: exerciseType,
+      fileName: file.name,
+    }).then(async (aiTags) => {
+      if (aiTags.length > 0) {
+        const mergedTags = Array.from(new Set([...tags, ...aiTags]));
+        await prisma.exerciseLibraryItem.update({
+          where: { id: item.id },
+          data: { tags: mergedTags },
+        });
+      }
+    }).catch((err) => {
+      console.error("Async AI tag generation failed for exercise:", item.id, err);
     });
 
     return NextResponse.json(item, { status: 201 });

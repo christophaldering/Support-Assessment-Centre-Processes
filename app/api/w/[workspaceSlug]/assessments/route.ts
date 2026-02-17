@@ -48,7 +48,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const { name, description, location, startDate, endDate, status, designMode } = await req.json();
+    const { name, description, location, startDate, endDate, status, designMode, autoDeleteDays } = await req.json();
 
     if (!name) {
       return NextResponse.json({ error: "Name ist erforderlich" }, { status: 400 });
@@ -72,6 +72,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         endDate: endDate ? new Date(endDate) : null,
         status: status ?? "draft",
         designMode: ["ai_full", "ai_supported", "classic"].includes(designMode) ? designMode : "classic",
+        autoDeleteDays: autoDeleteDays != null ? parseInt(autoDeleteDays) : null,
       },
     });
 

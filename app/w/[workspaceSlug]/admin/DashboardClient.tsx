@@ -20,6 +20,7 @@ interface AssessmentItem {
   consolidatedCount: number;
   competencyCoverage: number;
   ratingProgress: number;
+  autoDeleteDays: number | null;
 }
 
 interface LinkItem {
@@ -183,6 +184,7 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
     endDate: "",
     designMode: "classic",
     copyFromId: "",
+    autoDeleteDays: "",
   });
   const [error, setError] = useState("");
   const [selectedTool, setSelectedTool] = useState<ToolKey>("exercise-library");
@@ -311,6 +313,7 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
           endDate: form.endDate || null,
           status: "draft",
           designMode: form.designMode,
+          autoDeleteDays: form.autoDeleteDays ? parseInt(form.autoDeleteDays) : null,
           ...(form.copyFromId ? { copyFromId: form.copyFromId } : {}),
         }),
       });
@@ -324,7 +327,7 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
 
       const newAssessment = await res.json();
       setShowCreate(false);
-      setForm({ name: "", description: "", startDate: "", endDate: "", designMode: "classic", copyFromId: "" });
+      setForm({ name: "", description: "", startDate: "", endDate: "", designMode: "classic", copyFromId: "", autoDeleteDays: "" });
       router.push(`${base}/projects/${newAssessment.id}`);
     } catch {
       setError("Netzwerkfehler");
@@ -568,6 +571,14 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
                   <span>{a.candidateCount} Kandidat{a.candidateCount !== 1 ? "en" : ""}</span>
                   <span>{a.exerciseCount} Übung{a.exerciseCount !== 1 ? "en" : ""}</span>
                   <span>{a.reportCount} Bericht{a.reportCount !== 1 ? "e" : ""}</span>
+                  {a.autoDeleteDays && (
+                    <span className="flex items-center gap-1" data-testid={`status-auto-delete-${a.id}`}>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Auto-Löschung: {a.autoDeleteDays} Tage
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 mt-2.5" data-testid={`status-indicators-${a.id}`}>
                   {(() => {
@@ -799,6 +810,18 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
                  form.designMode === "ai_supported" ? "KI schlägt Optionen vor, Sie wählen und modifizieren." :
                  "Sie wählen Module manuell aus der Bibliothek."}
               </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: textColor, opacity: 0.8 }}>Automatische Löschung</label>
+              <select value={form.autoDeleteDays} onChange={(e) => setForm({ ...form, autoDeleteDays: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: `${primary}30`, color: textColor, backgroundColor: bgColor }} data-testid="select-auto-delete-days">
+                <option value="">Keine automatische Löschung</option>
+                <option value="30">30 Tage nach Abschluss</option>
+                <option value="60">60 Tage nach Abschluss</option>
+                <option value="90">90 Tage nach Abschluss</option>
+                <option value="180">180 Tage nach Abschluss</option>
+                <option value="365">365 Tage nach Abschluss</option>
+              </select>
             </div>
 
             {error && (

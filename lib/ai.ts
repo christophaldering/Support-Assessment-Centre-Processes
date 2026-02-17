@@ -154,6 +154,41 @@ Wenn du genügend Informationen hast, fasse zusammen und frage nach Bestätigung
   return response.choices[0]?.message?.content || "";
 }
 
+export async function generateTags(params: {
+  title: string;
+  description?: string | null;
+  type: string;
+  fileName?: string | null;
+}): Promise<string[]> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-5-nano",
+      messages: [
+        {
+          role: "system",
+          content: `Du bist ein Experte für Assessment Center und Kompetenzdiagnostik. Generiere relevante Tags/Schlagwörter für eine Übung oder Vorlage basierend auf den gegebenen Informationen. Antworte ausschließlich in validem JSON mit folgender Struktur: {"tags": ["Tag1", "Tag2", ...]}. Generiere 3-8 prägnante, relevante Tags auf Deutsch. Tags sollten Themen, Kompetenzen, Methoden oder Zielgruppen beschreiben.`,
+        },
+        {
+          role: "user",
+          content: `Titel: ${params.title}\nTyp: ${params.type}${params.description ? `\nBeschreibung: ${params.description}` : ""}${params.fileName ? `\nDateiname: ${params.fileName}` : ""}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 256,
+    });
+
+    const content = response.choices[0]?.message?.content || "{}";
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed.tags)) {
+      return parsed.tags.filter((t: unknown) => typeof t === "string" && t.trim().length > 0);
+    }
+    return [];
+  } catch (error) {
+    console.error("AI tag generation failed:", error);
+    return [];
+  }
+}
+
 export async function coCreationExtract(
   conversationHistory: { role: "user" | "assistant"; content: string }[]
 ): Promise<AIProposal> {

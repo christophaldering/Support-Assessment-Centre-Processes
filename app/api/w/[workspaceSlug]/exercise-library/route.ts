@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission, hasAnyPermission } from "@/lib/rbac";
+import { generateTags } from "@/lib/ai";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -123,6 +124,23 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       include: {
         _count: { select: { variants: true } },
       },
+    });
+
+    generateTags({
+      title,
+      description: description ?? null,
+      type: exerciseType,
+    }).then(async (aiTags) => {
+      if (aiTags.length > 0) {
+        const existingTags = tags ?? [];
+        const mergedTags = Array.from(new Set([...existingTags, ...aiTags]));
+        await prisma.exerciseLibraryItem.update({
+          where: { id: item.id },
+          data: { tags: mergedTags },
+        });
+      }
+    }).catch((err) => {
+      console.error("Async AI tag generation failed for exercise:", item.id, err);
     });
 
     return NextResponse.json(item, { status: 201 });

@@ -129,6 +129,10 @@ export default function ExerciseLibraryPage() {
   const [generateBasedOn, setGenerateBasedOn] = useState("");
   const [generateProjectId, setGenerateProjectId] = useState("");
 
+  const [projects, setProjects] = useState<{id: string; name: string}[]>([]);
+  const [createProjectId, setCreateProjectId] = useState("");
+  const [uploadProjectId, setUploadProjectId] = useState("");
+
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const generateIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -156,6 +160,13 @@ export default function ExerciseLibraryPage() {
 
   useEffect(() => { fetchItems(); }, []);
 
+  useEffect(() => {
+    fetch(`/api/w/${workspaceSlug}/assessments`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setProjects(Array.isArray(data) ? data.map((a: any) => ({ id: a.id, name: a.name })) : []))
+      .catch(() => {});
+  }, [workspaceSlug]);
+
   const handleSearchChange = (val: string) => {
     setSearch(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -167,17 +178,17 @@ export default function ExerciseLibraryPage() {
     setCreateError("");
     setCreating(true);
     try {
-      const tags = createTags.split(",").map(t => t.trim()).filter(Boolean);
       const res = await fetch(`/api/w/${workspaceSlug}/exercise-library`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: createTitle,
           exerciseType: createType,
-          tags,
+          tags: [],
           targetLevels: createLevels,
           languagesAvailable: createLanguages,
           metadataJson: createMetadata ? JSON.parse(createMetadata) : null,
+          sourceProjectId: createProjectId || null,
         }),
       });
       if (!res.ok) { const d = await res.json(); setCreateError(d.error || "Fehler beim Erstellen."); return; }
@@ -188,6 +199,7 @@ export default function ExerciseLibraryPage() {
       setCreateLevels([]);
       setCreateLanguages([]);
       setCreateMetadata("");
+      setCreateProjectId("");
       fetchItems();
     } catch { setCreateError("Ungültige Eingabe oder JSON-Format."); }
     finally { setCreating(false); }
@@ -400,8 +412,8 @@ export default function ExerciseLibraryPage() {
       formData.append("title", uploadTitle);
       formData.append("exerciseType", uploadType);
       formData.append("targetLevels", uploadLevels.join(","));
-      formData.append("tags", uploadTags);
       formData.append("description", uploadDesc);
+      formData.append("sourceProjectId", uploadProjectId);
       setUploadProgress(40);
 
       const res = await fetch(`/api/w/${workspaceSlug}/exercise-library/upload`, {
@@ -423,6 +435,7 @@ export default function ExerciseLibraryPage() {
       setUploadLevels([]);
       setUploadTags("");
       setUploadDesc("");
+      setUploadProjectId("");
       fetchItems();
     } catch {
       setUploadError("Upload fehlgeschlagen. Bitte versuchen Sie es erneut.");
@@ -569,16 +582,16 @@ export default function ExerciseLibraryPage() {
                   ))}
                 </div>
               </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-violet-50 border border-violet-100 rounded-lg">
+                <svg className="h-4 w-4 text-violet-500 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg>
+                <span className="text-xs text-violet-700">Tags werden automatisch per KI generiert</span>
+              </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tags (kommagetrennt)</label>
-                <input
-                  type="text"
-                  value={uploadTags}
-                  onChange={(e) => setUploadTags(e.target.value)}
-                  placeholder="z.B. Führung, Strategie, Kommunikation"
-                  data-testid="input-upload-tags"
-                  className={inputClass}
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Projekt-Zuordnung (optional)</label>
+                <select value={uploadProjectId} onChange={(e) => setUploadProjectId(e.target.value)} data-testid="select-upload-project" className={inputClass}>
+                  <option value="">— Kein Projekt —</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
@@ -723,16 +736,16 @@ export default function ExerciseLibraryPage() {
                   </select>
                 </div>
               </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-violet-50 border border-violet-100 rounded-lg">
+                <svg className="h-4 w-4 text-violet-500 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg>
+                <span className="text-xs text-violet-700">Tags werden automatisch per KI generiert</span>
+              </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tags (kommagetrennt)</label>
-                <input
-                  type="text"
-                  value={createTags}
-                  onChange={(e) => setCreateTags(e.target.value)}
-                  placeholder="z.B. Führung, Strategie, Kommunikation"
-                  data-testid="input-tags"
-                  className={inputClass}
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Projekt-Zuordnung (optional)</label>
+                <select value={createProjectId} onChange={(e) => setCreateProjectId(e.target.value)} data-testid="select-create-project" className={inputClass}>
+                  <option value="">— Kein Projekt —</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Zielniveaus</label>
@@ -1040,11 +1053,14 @@ export default function ExerciseLibraryPage() {
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {item.tags.map(tag => (
-                          <span key={tag} className="text-[10px] bg-slate-100 text-slate-500 rounded-full px-2 py-0.5">{tag}</span>
-                        ))}
-                      </div>
+                      {item.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2 items-center">
+                          <svg className="h-3 w-3 text-violet-400 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg>
+                          {item.tags.map(tag => (
+                            <span key={tag} className="text-[10px] bg-slate-100 text-slate-500 rounded-full px-2 py-0.5">{tag}</span>
+                          ))}
+                        </div>
+                      )}
 
                       <div className="flex flex-wrap gap-1 mb-2">
                         {item.targetLevels.map(level => (
