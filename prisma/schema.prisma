@@ -271,6 +271,8 @@ model RequirementsAnalysis {
   id              String   @id @default(uuid())
   workspaceId     String   @map("workspace_id")
   title           String
+  clientName      String?  @map("client_name")
+  projectName     String?  @map("project_name")
   mode            String   @default("auto")
   status          String   @default("pending")
   inputType       String   @map("input_type")

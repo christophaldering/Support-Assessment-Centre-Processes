@@ -78,10 +78,15 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     let analysisId: string | undefined;
     const fileNames: string[] = [];
 
+    let clientName: string | undefined;
+    let projectName: string | undefined;
+
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       const manualText = formData.get("text") as string || "";
       analysisId = (formData.get("analysisId") as string) || undefined;
+      clientName = (formData.get("clientName") as string) || undefined;
+      projectName = (formData.get("projectName") as string) || undefined;
 
       const extractedTexts: string[] = [];
       const files = formData.getAll("files");
@@ -103,6 +108,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       const body = await req.json();
       text = body.text || "";
       analysisId = body.analysisId;
+      clientName = body.clientName;
+      projectName = body.projectName;
     }
 
     if (!text || text.trim().length < 20) {
@@ -125,18 +132,26 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
           transcript: text.trim(),
           proposal: extraction as unknown as Record<string, unknown>,
           status: "proposal_ready",
+          ...(clientName !== undefined && { clientName }),
+          ...(projectName !== undefined && { projectName }),
         },
       });
     } else {
       const titleParts = [];
-      if (extraction.company) titleParts.push(extraction.company);
-      if (extraction.targetRole) titleParts.push(extraction.targetRole);
+      if (clientName) titleParts.push(clientName);
+      if (projectName) titleParts.push(projectName);
+      if (titleParts.length === 0) {
+        if (extraction.company) titleParts.push(extraction.company);
+        if (extraction.targetRole) titleParts.push(extraction.targetRole);
+      }
       const titleSuffix = titleParts.length > 0 ? titleParts.join(" – ") : new Date().toLocaleDateString("de-DE");
 
       const analysis = await prisma.requirementsAnalysis.create({
         data: {
           workspaceId: workspace.id,
           title: `Anforderungsanalyse: ${titleSuffix}`,
+          clientName: clientName || null,
+          projectName: projectName || null,
           mode: "auto",
           status: "proposal_ready",
           inputType: fileNames.length > 0 ? "files" : "transcript",

@@ -54,13 +54,15 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
 
   try {
     const body = await req.json();
-    const { proposal, status } = body;
+    const { proposal, status, clientName, projectName } = body;
 
     const updated = await prisma.requirementsAnalysis.update({
       where: { id: analysis.id },
       data: {
         ...(proposal !== undefined && { proposal }),
         ...(status !== undefined && { status }),
+        ...(clientName !== undefined && { clientName }),
+        ...(projectName !== undefined && { projectName }),
       },
     });
 
