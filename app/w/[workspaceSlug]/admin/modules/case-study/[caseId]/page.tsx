@@ -56,11 +56,14 @@ function safeData(raw: any): CaseStudyData {
       ? raw.emails.map((e: any) => ({
           id: e.id || "e-unknown",
           from: e.from || "Unknown",
+          to: e.to,
+          cc: e.cc,
           subject: e.subject || "No Subject",
           date: e.date || "",
           read: e.read ?? true,
           important: e.important ?? false,
           content: e.content || "",
+          category: e.category || "internal",
         }))
       : [],
     detailedBalanceSheet: {
@@ -91,6 +94,16 @@ function safeData(raw: any): CaseStudyData {
           type: b.type === "asset" || b.type === "liability" ? b.type : "asset",
         }))
       : [],
+    cashFlow: Array.isArray(raw.cashFlow) ? raw.cashFlow : [],
+    stressScenario: raw.stressScenario || { title: "", items: [], keyDrivers: [], implications: [] },
+    managementTeam: Array.isArray(raw.managementTeam) ? raw.managementTeam : [],
+    boardImpressions: Array.isArray(raw.boardImpressions) ? raw.boardImpressions : [],
+    newsArticles: Array.isArray(raw.newsArticles) ? raw.newsArticles : [],
+    analystReport: raw.analystReport || { source: "", observations: [], criticalQuestions: [], indicators: [], conclusion: "" },
+    protocols: Array.isArray(raw.protocols) ? raw.protocols : [],
+    hrSurvey: raw.hrSurvey || { title: "", participantsInvited: 0, responseRate: 0, categories: [], comments: [], hrComment: "" },
+    leadershipSummary: raw.leadershipSummary || "",
+    leadershipConference: raw.leadershipConference || "",
   };
 }
 
