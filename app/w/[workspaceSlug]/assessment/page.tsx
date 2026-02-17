@@ -35,6 +35,12 @@ interface DocumentItem {
   createdAt: string;
 }
 
+interface CaseStudyFromDB {
+  id: string;
+  dataJson: any;
+  questionsJson: any;
+}
+
 interface AssessmentData {
   id: string;
   name: string;
@@ -45,6 +51,7 @@ interface AssessmentData {
   endDate: string | null;
   exercises: Exercise[];
   documents: DocumentItem[];
+  caseStudyData?: CaseStudyFromDB | null;
 }
 
 interface ConsentInfo {
@@ -279,9 +286,10 @@ export default function CandidateAssessmentPortal() {
     year: "numeric",
   });
 
-  const data = varexiaData;
-  const questions = assessmentQuestions;
-  const selectedEmail = data.emails.find((e) => e.id === selectedEmailId);
+  const dbCaseStudy = assessment.caseStudyData;
+  const data = dbCaseStudy?.dataJson || varexiaData;
+  const questions = dbCaseStudy?.questionsJson || assessmentQuestions;
+  const selectedEmail = data.emails?.find((e: any) => e.id === selectedEmailId);
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExerciseId(exercise.id);

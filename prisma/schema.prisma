@@ -50,6 +50,7 @@ model Workspace {
   developmentBlueprints DevelopmentBlueprint[]
   diagnosticHypotheses DiagnosticHypothesis[]
   observationSheetTemplates ObservationSheetTemplate[]
+  caseStudies        CaseStudy[]
 
   @@map("workspaces")
 }
@@ -745,6 +746,32 @@ model SharedObserverNote {
 
   @@index([assessmentId, createdAt])
   @@map("shared_observer_notes")
+}
+
+model CaseStudy {
+  id                String   @id @default(uuid())
+  workspaceId       String   @map("workspace_id")
+  title             String
+  subtitle          String?
+  description       String?
+  companyName       String   @map("company_name")
+  type              String   @default("turnaround")
+  difficulty        String   @default("medium")
+  dataJson          Json     @map("data_json")
+  questionsJson     Json?    @map("questions_json")
+  sourceType        String   @default("manual") @map("source_type")
+  sourceFilePath    String?  @map("source_file_path")
+  sourceFileName    String?  @map("source_file_name")
+  status            String   @default("draft")
+  aiGenerated       Boolean  @default(false) @map("ai_generated")
+  createdById       String?  @map("created_by_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  workspace         Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@map("case_studies")
 }
 
 model DemoRequest {

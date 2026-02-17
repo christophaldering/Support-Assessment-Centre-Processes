@@ -64,5 +64,24 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
   }
 
-  return NextResponse.json(assessment);
+  const hasCaseStudyExercise = assessment.exercises.some(e => e.type === "case_study");
+  let caseStudyData = null;
+  if (hasCaseStudyExercise) {
+    const activeCaseStudy = await prisma.caseStudy.findFirst({
+      where: {
+        workspaceId: workspace.id,
+        status: "active",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    if (activeCaseStudy) {
+      caseStudyData = {
+        id: activeCaseStudy.id,
+        dataJson: activeCaseStudy.dataJson,
+        questionsJson: activeCaseStudy.questionsJson,
+      };
+    }
+  }
+
+  return NextResponse.json({ ...assessment, caseStudyData });
 }

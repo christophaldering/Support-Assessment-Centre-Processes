@@ -86,6 +86,41 @@ export default async function ModulesPage({ params }: Props) {
           <p className="text-xs opacity-40 mb-4 italic">Case Studies for executive assessment exercises</p>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <Link href={`${base}/modules/case-study-builder`} data-testid="link-case-study-builder">
+              <div
+                className="rounded-xl border p-6 transition-all hover:shadow-lg group cursor-pointer"
+                style={{ borderColor: `${primary}20`, backgroundColor: bgColor }}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3
+                      className="font-semibold text-base group-hover:underline"
+                      style={{ color: primary, fontFamily: `'${headingFont}', serif` }}
+                    >
+                      Fallstudien-Builder
+                    </h3>
+                    <p className="text-xs opacity-50 mt-0.5">Fallstudien erstellen & verwalten</p>
+                  </div>
+                  <span
+                    className="text-[10px] font-bold text-white rounded-full px-2.5 py-1"
+                    style={{ backgroundColor: "#3b82f6" }}
+                  >
+                    Neu
+                  </span>
+                </div>
+                <p className="text-sm opacity-60 leading-relaxed mb-3">
+                  Bestehende Fallstudien hochladen und per KI in den Datenraum überführen oder neue Fallstudien auf Basis von Kernfragen generieren.
+                </p>
+                <div className="flex items-center gap-3 text-[11px] opacity-40">
+                  <span>Upload</span>
+                  <span>·</span>
+                  <span>KI-Generierung</span>
+                  <span>·</span>
+                  <span>Datenraum</span>
+                </div>
+                <span className="text-xs mt-3 inline-block opacity-40">→ Öffnen</span>
+              </div>
+            </Link>
             {cases.map((c) => {
               const isActive = c.status === "active";
               return (
