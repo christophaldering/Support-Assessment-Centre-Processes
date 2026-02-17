@@ -6,6 +6,34 @@ export async function register() {
     const prisma = new PrismaClient();
 
     try {
+      const workspace = await prisma.workspace.findUnique({ where: { slug: "aestimamus" } });
+      if (workspace) {
+        const candidateExists = await prisma.user.findFirst({
+          where: { email: "kandidat@test.de", workspaceId: workspace.id },
+        });
+        if (!candidateExists) {
+          const candidateHash = await bcrypt.hash("Christoph", 10);
+          const firstAssessment = await prisma.assessment.findFirst({
+            where: { workspaceId: workspace.id },
+            orderBy: { createdAt: "asc" },
+          });
+          await prisma.user.create({
+            data: {
+              id: "test-candidate-001",
+              email: "kandidat@test.de",
+              name: "Dr. Anna Müller",
+              passwordHash: candidateHash,
+              roles: ["CANDIDATE"],
+              workspaceId: workspace.id,
+              forcePasswordChange: false,
+              status: "active",
+              assessmentId: firstAssessment?.id ?? null,
+            },
+          });
+          console.log("[seed] Created test candidate: kandidat@test.de");
+        }
+      }
+
       const count = await prisma.workspace.count();
       if (count === 0) {
         console.log("[seed] No workspaces found, auto-seeding...");
