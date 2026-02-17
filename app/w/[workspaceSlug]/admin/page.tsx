@@ -41,7 +41,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   const userRoles = userSession?.roles ?? [];
   const canManageUsers = masterAuth || hasPermission(userRoles, "users.read");
 
-  const [pendingCount, assessmentCount, reportCount, consentCount, userCount, assessments] = await Promise.all([
+  const [pendingCount, assessmentCount, reportCount, consentCount, userCount, assessments, competencyNodes] = await Promise.all([
     prisma.accessRequest.count({ where: { workspaceId: workspace.id, status: "pending" } }),
     prisma.assessment.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
     prisma.report.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
@@ -56,10 +56,21 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
             candidates: true,
             exercises: true,
             reports: true,
+            observerRatings: true,
+            consolidatedScores: true,
+          },
+        },
+        exercises: {
+          select: {
+            id: true,
+            competencyMappings: { select: { competencyNodeId: true } },
           },
         },
       },
     }),
+    prisma.competencyNode.count({
+      where: { competencyModel: { workspaceId: workspace.id } },
+    }).catch(() => 0),
   ]);
 
   const base = `/w/${params.workspaceSlug}/admin`;
@@ -80,18 +91,36 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
     { title: "Theme Editor", href: `${base}/theme`, desc: "Branding anpassen" },
   ];
 
-  const serializedAssessments = assessments.map((a) => ({
-    id: a.id,
-    name: a.name,
-    status: a.status,
-    description: a.description,
-    startDate: a.startDate?.toISOString() ?? null,
-    endDate: a.endDate?.toISOString() ?? null,
-    createdAt: a.createdAt.toISOString(),
-    candidateCount: a._count.candidates,
-    exerciseCount: a._count.exercises,
-    reportCount: a._count.reports,
-  }));
+  const serializedAssessments = assessments.map((a) => {
+    const mappedNodeIds = new Set(
+      a.exercises.flatMap((ex) => ex.competencyMappings.map((m) => m.competencyNodeId))
+    );
+    const competencyCoverage = competencyNodes > 0
+      ? Math.round((mappedNodeIds.size / competencyNodes) * 100)
+      : 0;
+
+    const totalExpectedRatings = a._count.exercises * a._count.candidates;
+    const ratingProgress = totalExpectedRatings > 0
+      ? Math.round((a._count.observerRatings / totalExpectedRatings) * 100)
+      : 0;
+
+    return {
+      id: a.id,
+      name: a.name,
+      status: a.status,
+      description: a.description,
+      startDate: a.startDate?.toISOString() ?? null,
+      endDate: a.endDate?.toISOString() ?? null,
+      createdAt: a.createdAt.toISOString(),
+      candidateCount: a._count.candidates,
+      exerciseCount: a._count.exercises,
+      reportCount: a._count.reports,
+      ratingCount: a._count.observerRatings,
+      consolidatedCount: a._count.consolidatedScores,
+      competencyCoverage,
+      ratingProgress,
+    };
+  });
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: bgColor, color: textColor }}>

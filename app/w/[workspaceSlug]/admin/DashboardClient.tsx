@@ -15,6 +15,10 @@ interface AssessmentItem {
   candidateCount: number;
   exerciseCount: number;
   reportCount: number;
+  ratingCount: number;
+  consolidatedCount: number;
+  competencyCoverage: number;
+  ratingProgress: number;
 }
 
 interface Props {
@@ -274,22 +278,53 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
                         <span>{a.exerciseCount} Übung{a.exerciseCount !== 1 ? "en" : ""}</span>
                         <span>{a.reportCount} Bericht{a.reportCount !== 1 ? "e" : ""}</span>
                       </div>
-                      <div className="flex items-center gap-2 mt-2.5">
-                        {a.exerciseCount > 0 && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${primary}10`, color: primary }}>
-                            {a.exerciseCount} Module
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2.5" data-testid={`status-indicators-${a.id}`}>
+                        <span
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-full border"
+                          style={{
+                            backgroundColor: a.status === "draft" ? "#f8fafc" : a.status === "active" ? "#f0fdf4" : a.status === "completed" ? "#eff6ff" : "#f9fafb",
+                            color: st.color,
+                            borderColor: `${st.color}30`,
+                          }}
+                          data-testid={`status-mode-${a.id}`}
+                        >
+                          {a.status === "draft" ? "Design-Modus" : a.status === "active" ? "Durchführung" : a.status === "completed" ? "Abgeschlossen" : "Archiviert"}
+                        </span>
+
+                        <span
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                          style={{
+                            backgroundColor: a.competencyCoverage >= 80 ? "#f0fdf4" : a.competencyCoverage > 0 ? "#fffbeb" : "#f8fafc",
+                            color: a.competencyCoverage >= 80 ? "#16a34a" : a.competencyCoverage > 0 ? "#d97706" : "#94a3b8",
+                          }}
+                          data-testid={`status-competency-${a.id}`}
+                        >
+                          Kompetenz {a.competencyCoverage}%
+                        </span>
+
+                        {(a.status === "active" || a.status === "completed") && (
+                          <span
+                            className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                            style={{
+                              backgroundColor: a.ratingProgress >= 100 ? "#f0fdf4" : a.ratingProgress > 0 ? "#eff6ff" : "#fffbeb",
+                              color: a.ratingProgress >= 100 ? "#16a34a" : a.ratingProgress > 0 ? "#2563eb" : "#d97706",
+                            }}
+                            data-testid={`status-evaluation-${a.id}`}
+                          >
+                            Bewertung {a.ratingProgress}%
                           </span>
                         )}
-                        {a.reportCount > 0 && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
-                            {a.reportCount} Berichte
-                          </span>
-                        )}
-                        {a.candidateCount > 0 && a.reportCount === 0 && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
-                            Berichte ausstehend
-                          </span>
-                        )}
+
+                        <span
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                          style={{
+                            backgroundColor: a.reportCount > 0 ? "#f0fdf4" : a.candidateCount > 0 ? "#fffbeb" : "#f8fafc",
+                            color: a.reportCount > 0 ? "#16a34a" : a.candidateCount > 0 ? "#d97706" : "#94a3b8",
+                          }}
+                          data-testid={`status-reports-${a.id}`}
+                        >
+                          {a.reportCount > 0 ? `${a.reportCount} Bericht${a.reportCount !== 1 ? "e" : ""}` : a.candidateCount > 0 ? "Berichte ausstehend" : "Keine Berichte"}
+                        </span>
                       </div>
                     </div>
                     <span
