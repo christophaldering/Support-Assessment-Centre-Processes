@@ -56,3 +56,6 @@ integrations = ["javascript_object_storage:2.0.0", "javascript_openai_ai_integra
 
 [userenv.shared]
 MASTER_ADMIN_PASSWORD_HASH = "$2b$10$pccP7f2mFoQqSR3pHmgmW.n8b1HTuD4IxCRee42/wGWSw9ec.RSRy"
+
+[userenv.development]
+DEV_BYPASS_AUTH = "true"

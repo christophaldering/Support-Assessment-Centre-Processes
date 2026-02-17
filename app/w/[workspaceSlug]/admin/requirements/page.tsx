@@ -531,6 +531,7 @@ export default function RequirementsAnalysisPage() {
       <header className="border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Link href="/" className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="link-module-overview">Modul-Übersicht</Link>
             <Link
               href={`/w/${slug}/admin`}
               className="text-gray-500 hover:text-gray-700"

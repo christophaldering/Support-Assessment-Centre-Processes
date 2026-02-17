@@ -5,6 +5,8 @@ const WORKSPACE_COOKIE = "edp_workspace_auth";
 const USER_COOKIE = "edp_user_session";
 const TOKEN = "authenticated";
 
+const DEV_BYPASS = process.env.DEV_BYPASS_AUTH === "true" && process.env.NODE_ENV !== "production";
+
 export function setMasterAuth() {
   cookies().set(MASTER_COOKIE, TOKEN, {
     httpOnly: true,
@@ -15,6 +17,7 @@ export function setMasterAuth() {
 }
 
 export function hasMasterAuth(): boolean {
+  if (DEV_BYPASS) return true;
   return cookies().get(MASTER_COOKIE)?.value === TOKEN;
 }
 
@@ -32,6 +35,7 @@ export function setWorkspaceAuth(workspaceSlug: string) {
 }
 
 export function getWorkspaceAuth(): string | null {
+  if (DEV_BYPASS) return "aestimamus";
   return cookies().get(WORKSPACE_COOKIE)?.value ?? null;
 }
 
@@ -56,12 +60,21 @@ export function setUserSession(session: UserSession) {
 
 export function getUserSession(): UserSession | null {
   const raw = cookies().get(USER_COOKIE)?.value;
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as UserSession;
-  } catch {
-    return null;
+  if (raw) {
+    try {
+      return JSON.parse(raw) as UserSession;
+    } catch {
+      return null;
+    }
   }
+  if (DEV_BYPASS) {
+    return {
+      userId: "dev-bypass-user",
+      workspaceSlug: "aestimamus",
+      roles: ["ADMIN"],
+    };
+  }
+  return null;
 }
 
 export function clearUserSession() {

@@ -115,6 +115,7 @@ export default function ThemeEditorPage() {
       <header className="text-white sticky top-0 z-50" style={{ backgroundColor: ACCENT }}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <Link href="/" className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="link-module-overview">Modul-Übersicht</Link>
             <Link
               href={`/w/${workspaceSlug}/admin`}
               className="text-lg font-bold tracking-tight hover:opacity-80 transition-opacity"

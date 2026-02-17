@@ -626,6 +626,7 @@ export default function ObserverPortal() {
       <header className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <a href="/" className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="link-module-overview">Modul-Übersicht</a>
             <Link
               href={`/w/${workspaceSlug}/login`}
               className="text-slate-400 hover:text-slate-600 transition-colors"

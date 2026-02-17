@@ -149,6 +149,13 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
             {workspace.name}
           </span>
           <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
+              data-testid="link-module-overview"
+            >
+              Modul-Übersicht
+            </Link>
             {userSession && (
               <span className="text-xs text-white/70">{userSession.roles.join(", ")}</span>
             )}
