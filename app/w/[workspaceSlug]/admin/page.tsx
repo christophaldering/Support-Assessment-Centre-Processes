@@ -75,20 +75,29 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
 
   const base = `/w/${params.workspaceSlug}/admin`;
 
-  const quickLinks = [
+  const toolLinks = [
+    { title: "Modul- & Übungsbibliothek", href: `${base}/exercise-library`, desc: "Fallstudien, Übungen & Assessment-Instrumente", icon: "library" },
+    { title: "Kompetenzmodelle", href: `${base}/competencies`, desc: "Kompetenzmodelle & Verhaltensanker", icon: "competency" },
+    { title: "Brand & Style", href: `${base}/brand-rules`, desc: "Corporate-Identity-Regeln", icon: "brand" },
+    { title: "Advanced Intelligence", href: `${base}/intelligence`, desc: "KI-gestützte Diagnostik-Analyse", icon: "intelligence" },
+    { title: "Anforderungsanalyse", href: `${base}/requirements`, desc: "Anforderungsprofile & Stellenanalyse", icon: "requirements" },
+    { title: "Theme Editor", href: `${base}/theme`, desc: "Workspace-Branding anpassen", icon: "theme" },
+    { title: "Module & Fallstudien", href: `${base}/modules`, desc: "Interaktive Fallstudien & Assessment-Module", icon: "modules" },
+  ];
+
+  const governanceLinks = [
     ...(canManageUsers
       ? [
-          { title: "Benutzer & Rollen", href: `${base}/users`, desc: "Workspace-Benutzer verwalten" },
+          { title: "Benutzer & Rollen", href: `${base}/users`, desc: "Workspace-Benutzer verwalten", icon: "users" },
           ...(pendingCount > 0
-            ? [{ title: "Zugangsanfragen", href: `${base}/access-requests`, desc: `${pendingCount} offen`, badge: String(pendingCount) }]
+            ? [{ title: "Zugangsanfragen", href: `${base}/access-requests`, desc: `${pendingCount} offen`, badge: String(pendingCount), icon: "requests" }]
             : []),
         ]
       : []),
-    { title: "Einwilligungen", href: `${base}/consents`, desc: "Einwilligungsvorlagen verwalten" },
-    { title: "Modul- & Übungsbibliothek", href: `${base}/exercise-library`, desc: "Fallstudien, Übungen & Assessment-Instrumente" },
-    { title: "Brand & Style", href: `${base}/brand-rules`, desc: "Corporate-Identity-Regeln" },
-    { title: "Advanced Intelligence", href: `${base}/intelligence`, desc: "KI-gestützte Diagnostik-Analyse" },
-    { title: "Theme Editor", href: `${base}/theme`, desc: "Branding anpassen" },
+    { title: "Einwilligungen", href: `${base}/consents`, desc: "DSGVO-Einwilligungsvorlagen", icon: "consent" },
+    { title: "Berichte", href: `${base}/reports`, desc: "Ergebnisberichte & Exporte", icon: "reports" },
+    { title: "Analytik", href: `${base}/analytics`, desc: "Auswertungen & Dashboard", icon: "analytics" },
+    { title: "Audio-Verarbeitung", href: `${base}/audio`, desc: "Transkription & KI-Zusammenfassungen", icon: "audio" },
   ];
 
   const serializedAssessments = assessments.map((a) => {
@@ -156,8 +165,8 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
 
-        <section className="mb-8" data-testid="section-cockpit">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+        <section className="mb-6" data-testid="section-cockpit">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <h1
                 className="text-2xl font-bold tracking-tight"
@@ -171,7 +180,6 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
               </p>
             </div>
           </div>
-
         </section>
 
         <DashboardClient
@@ -181,46 +189,9 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
           textColor={textColor}
           bgColor={bgColor}
           headingFont={headingFont}
+          toolLinks={toolLinks}
+          governanceLinks={governanceLinks}
         />
-
-        <section className="mb-8" data-testid="section-quick-links">
-          <h2
-            className="text-lg font-bold tracking-tight mb-4"
-            style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
-          >
-            Governance & Werkzeuge
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {quickLinks.map((link) => (
-              <Link
-                key={link.title}
-                href={link.href}
-                className="rounded-xl border p-4 transition-all hover:shadow-md"
-                style={{ borderColor: `${primary}15`, backgroundColor: bgColor }}
-                data-testid={`link-quick-${link.title.toLowerCase().replace(/\s+/g, "-")}`}
-              >
-                <div className="flex items-start justify-between">
-                  <h3
-                    className="text-sm font-semibold"
-                    style={{ color: primary, fontFamily: `'${headingFont}', serif` }}
-                  >
-                    {link.title}
-                  </h3>
-                  {link.badge && (
-                    <span
-                      className="text-[10px] font-bold text-white rounded-full px-2 py-0.5"
-                      style={{ backgroundColor: primary }}
-                    >
-                      {link.badge}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs mt-1 opacity-50">{link.desc}</p>
-                <span className="text-[11px] mt-2 inline-block opacity-40">→ Öffnen</span>
-              </Link>
-            ))}
-          </div>
-        </section>
       </main>
 
       <footer className="border-t py-6" style={{ borderColor: `${primary}10` }}>
