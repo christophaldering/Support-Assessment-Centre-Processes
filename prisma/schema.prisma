@@ -705,6 +705,48 @@ model ObservationSheetTemplate {
   @@map("observation_sheet_templates")
 }
 
+model CollaborationEvent {
+  id           String   @id @default(uuid())
+  assessmentId String   @map("assessment_id")
+  userId       String   @map("user_id")
+  userName     String   @map("user_name")
+  eventType    String   @map("event_type")
+  payload      Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([assessmentId, createdAt])
+  @@map("collaboration_events")
+}
+
+model PresenceSession {
+  id           String   @id @default(uuid())
+  assessmentId String   @map("assessment_id")
+  userId       String   @map("user_id")
+  userName     String   @map("user_name")
+  userRole     String   @map("user_role")
+  status       String   @default("active")
+  lastSeenAt   DateTime @default(now()) @map("last_seen_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@unique([assessmentId, userId])
+  @@index([assessmentId])
+  @@map("presence_sessions")
+}
+
+model SharedObserverNote {
+  id           String   @id @default(uuid())
+  assessmentId String   @map("assessment_id")
+  authorId     String   @map("author_id")
+  authorName   String   @map("author_name")
+  content      String
+  pinned       Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([assessmentId, createdAt])
+  @@map("shared_observer_notes")
+}
+
 model DemoRequest {
   id        String   @id @default(uuid())
   name      String

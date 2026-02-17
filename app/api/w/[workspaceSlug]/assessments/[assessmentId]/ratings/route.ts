@@ -164,6 +164,25 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       details: { exerciseId, competencyNodeId, candidateId, observerId },
     });
 
+    const eventUserName = session
+      ? (await prisma.user.findUnique({ where: { id: session.userId }, select: { name: true } }))?.name || "Benutzer"
+      : "Admin";
+
+    prisma.collaborationEvent.create({
+      data: {
+        assessmentId: params.assessmentId,
+        userId: session?.userId || "master",
+        userName: eventUserName,
+        eventType: existing ? "rating_updated" : "rating_submitted",
+        payload: {
+          exerciseId: body.exerciseId,
+          competencyNodeId: body.competencyNodeId,
+          candidateId: body.candidateId,
+          rating: body.rating,
+        },
+      },
+    }).catch((err: any) => console.error("Failed to emit collaboration event:", err));
+
     return NextResponse.json(result, { status: existing ? 200 : 201 });
   } catch {
     return NextResponse.json({ error: "Ungültige Anfrage" }, { status: 400 });
