@@ -289,13 +289,16 @@ export default function ExerciseLibraryPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: generateSpec.name,
-          type: generateSpec.type,
-          duration: generateSpec.duration,
-          targetLevel: generateSpec.targetLevel,
-          competencies: generateSpec.competencies.split(",").map(c => c.trim()).filter(Boolean),
-          description: generateSpec.description,
-          context: generateSpec.context || undefined,
+          spec: {
+            name: generateSpec.name,
+            type: generateSpec.type,
+            duration: generateSpec.duration,
+            targetLevel: generateSpec.targetLevel,
+            competencyMappings: generateSpec.competencies.split(",").map(c => c.trim()).filter(Boolean),
+            description: generateSpec.description,
+            context: generateSpec.context || undefined,
+          },
+          language: "DE",
         }),
       });
       if (res.ok) {

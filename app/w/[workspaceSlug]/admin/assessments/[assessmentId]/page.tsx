@@ -56,12 +56,14 @@ interface ObservationSheetRecord {
 
 interface LibraryItem {
   id: string;
-  name: string;
-  type: string;
-  difficultyLevel: string | null;
+  title: string;
+  exerciseType: string;
   tags: string[];
-  status: string;
-  description: string | null;
+  targetLevels: string[];
+  languagesAvailable: string[];
+  qualityStatus: string;
+  metadataJson: any;
+  _count?: { variants: number };
 }
 
 const ALL_ROLES = ["ADMIN", "MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"] as const;
@@ -173,6 +175,18 @@ export default function AssessmentDetailPage() {
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
 
+  const [basisExercise, setBasisExercise] = useState<LibraryItem | null>(null);
+  const [showBasisPicker, setShowBasisPicker] = useState(false);
+  const [basisChanges, setBasisChanges] = useState("");
+
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiProgress, setAiProgress] = useState(0);
+  const [aiProgressLabel, setAiProgressLabel] = useState("");
+  const [aiError, setAiError] = useState("");
+
+  const [seedingVarexia, setSeedingVarexia] = useState(false);
+  const [varexiaSeeded, setVarexiaSeeded] = useState(false);
+
   const apiBase = `/api/w/${workspaceSlug}/assessments/${assessmentId}`;
 
   const fetchAssessment = useCallback(async () => {
@@ -245,10 +259,136 @@ export default function AssessmentDetailPage() {
     setLibraryLoading(true);
     try {
       const res = await fetch(`/api/w/${workspaceSlug}/exercise-library`);
-      if (res.ok) setLibraryItems(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setLibraryItems(data);
+        if (data.some((item: LibraryItem) => item.title?.toLowerCase().includes("varexia"))) {
+          setVarexiaSeeded(true);
+        }
+      }
     } catch {}
     finally { setLibraryLoading(false); }
   }, [workspaceSlug]);
+
+  const handleSeedVarexia = async () => {
+    setSeedingVarexia(true);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/exercise-library/seed-varexia`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        setVarexiaSeeded(true);
+        fetchLibraryItems();
+      }
+    } catch {}
+    finally { setSeedingVarexia(false); }
+  };
+
+  const simulateProgress = (setter: (v: number) => void, labelSetter: (v: string) => void) => {
+    const steps = [
+      { pct: 10, label: "Spezifikation analysieren…" },
+      { pct: 25, label: "Übungskonzept entwickeln…" },
+      { pct: 45, label: "Szenario generieren…" },
+      { pct: 60, label: "Bewertungskriterien erstellen…" },
+      { pct: 75, label: "Materialien zusammenstellen…" },
+      { pct: 90, label: "Qualitätsprüfung…" },
+    ];
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < steps.length) {
+        setter(steps[i].pct);
+        labelSetter(steps[i].label);
+        i++;
+      }
+    }, 2000);
+    return interval;
+  };
+
+  const handleAIGenerateExercise = async () => {
+    if (!exName.trim()) {
+      setAiError("Bitte geben Sie einen Namen für die Übung ein.");
+      return;
+    }
+    setAiGenerating(true);
+    setAiProgress(0);
+    setAiProgressLabel("Vorbereitung…");
+    setAiError("");
+
+    const progressInterval = simulateProgress(setAiProgress, setAiProgressLabel);
+
+    try {
+      const spec: any = {
+        name: exName,
+        type: exType,
+        duration: exDuration ? parseInt(exDuration) : 30,
+        targetLevel: "C-Level",
+        competencyMappings: [],
+        description: exInstructions || "",
+      };
+
+      if (basisExercise) {
+        spec.context = `Basierend auf bestehender Übung: "${basisExercise.title}" (Typ: ${basisExercise.exerciseType}). ${basisChanges ? `Gewünschte Änderungen: ${basisChanges}` : ""} ${basisExercise.metadataJson?.description ? `Originalbeschreibung: ${basisExercise.metadataJson.description}` : ""}`;
+      }
+
+      const res = await fetch(`/api/w/${workspaceSlug}/automation/generate-exercise`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spec, language: "DE" }),
+      });
+
+      clearInterval(progressInterval);
+
+      if (!res.ok) {
+        const data = await res.json();
+        setAiError(data.error || "Fehler bei der KI-Generierung.");
+        setAiProgress(0);
+        setAiProgressLabel("");
+        return;
+      }
+
+      setAiProgress(95);
+      setAiProgressLabel("Übung wird erstellt…");
+
+      const data = await res.json();
+      const generated = data.generatedContent || {};
+
+      await fetch(`${apiBase}/exercises`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: generated.title || exName,
+          type: generated.exerciseType || exType,
+          instructions: generated.scenario || generated.instructions?.forCandidates || exInstructions || null,
+          duration: generated.timing?.total || (exDuration ? parseInt(exDuration) : null),
+          sortOrder: exSortOrder ? parseInt(exSortOrder) : 0,
+        }),
+      });
+
+      setAiProgress(100);
+      setAiProgressLabel("Fertig!");
+
+      setTimeout(() => {
+        setShowCreateExercise(false);
+        setExName("");
+        setExType("presentation");
+        setExInstructions("");
+        setExDuration("");
+        setExSortOrder("");
+        setBasisExercise(null);
+        setBasisChanges("");
+        setAiProgress(0);
+        setAiProgressLabel("");
+        setAiGenerating(false);
+        fetchExercises();
+      }, 1000);
+    } catch {
+      clearInterval(progressInterval);
+      setAiError("Etwas ist schiefgelaufen bei der KI-Generierung.");
+      setAiProgress(0);
+      setAiProgressLabel("");
+      setAiGenerating(false);
+    }
+  };
 
   useEffect(() => {
     fetchAssessment();
@@ -510,10 +650,10 @@ export default function AssessmentDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: item.name,
-          type: item.type,
-          instructions: item.description || null,
-          duration: null,
+          name: item.title,
+          type: item.exerciseType,
+          instructions: item.metadataJson?.description || item.metadataJson?.instructions || null,
+          duration: item.metadataJson?.duration || null,
           sortOrder: 0,
         }),
       });
@@ -522,24 +662,52 @@ export default function AssessmentDetailPage() {
   };
 
   const handleAIVariantImport = async (item: LibraryItem) => {
+    setAiGenerating(true);
+    setAiProgress(0);
+    setAiProgressLabel("Variante wird generiert…");
+    const progressInterval = simulateProgress(setAiProgress, setAiProgressLabel);
     try {
-      const res = await fetch(`/api/w/${workspaceSlug}/exercise-library/${item.id}/generate-variant`);
+      const res = await fetch(`/api/w/${workspaceSlug}/exercise-library/${item.id}/generate-variant`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: "DE" }),
+      });
+      clearInterval(progressInterval);
       if (res.ok) {
-        const variant = await res.json();
+        const data = await res.json();
+        const content = data.variant?.contentJson || {};
+        setAiProgress(90);
+        setAiProgressLabel("Übung wird erstellt…");
         await fetch(`${apiBase}/exercises`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: variant.name || item.name + " (KI-Variante)",
-            type: variant.type || item.type,
-            instructions: variant.description || variant.instructions || item.description || null,
-            duration: variant.duration || null,
+            name: content.title || data.item?.title || item.title + " (KI-Variante)",
+            type: content.exerciseType || data.item?.exerciseType || item.exerciseType,
+            instructions: content.scenario || content.instructions?.forCandidates || null,
+            duration: content.timing?.total || null,
             sortOrder: 0,
           }),
         });
-        fetchExercises();
+        setAiProgress(100);
+        setAiProgressLabel("Fertig!");
+        setTimeout(() => {
+          setAiProgress(0);
+          setAiProgressLabel("");
+          setAiGenerating(false);
+          fetchExercises();
+        }, 1000);
+      } else {
+        setAiProgress(0);
+        setAiProgressLabel("");
+        setAiGenerating(false);
       }
-    } catch {}
+    } catch {
+      clearInterval(progressInterval);
+      setAiProgress(0);
+      setAiProgressLabel("");
+      setAiGenerating(false);
+    }
   };
 
   const filteredAvailableUsers = availableUsers.filter(
@@ -715,33 +883,48 @@ export default function AssessmentDetailPage() {
 
           {showLibrary && (
             <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
-              <h3 className="text-sm font-semibold text-brand-navy mb-3">Übungsbibliothek</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-brand-navy">Übungsbibliothek</h3>
+                <button
+                  onClick={handleSeedVarexia}
+                  disabled={seedingVarexia || varexiaSeeded}
+                  data-testid="button-seed-varexia"
+                  className="text-xs font-medium px-3 py-1.5 rounded-full border border-purple-400 text-purple-600 hover:bg-purple-500 hover:text-white disabled:opacity-50 transition-colors"
+                >
+                  {varexiaSeeded ? "✓ Varexia SE geladen" : seedingVarexia ? "Wird geladen…" : "Varexia SE laden"}
+                </button>
+              </div>
               {libraryLoading ? (
                 <p className="text-sm text-slate-400">Laden…</p>
               ) : libraryItems.length === 0 ? (
-                <p className="text-sm text-slate-400">Keine Einträge in der Bibliothek.</p>
+                <p className="text-sm text-slate-400">Keine Einträge in der Bibliothek. Laden Sie die Varexia-Fallstudie oder erstellen Sie Übungen in der Bibliothek.</p>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {libraryItems.map((item) => (
                     <div key={item.id} className="border border-slate-200 rounded-lg p-3 bg-white" data-testid={`library-item-${item.id}`}>
-                      <p className="font-medium text-sm text-slate-900 mb-1">{item.name}</p>
+                      <p className="font-medium text-sm text-slate-900 mb-1">{item.title}</p>
                       <div className="flex flex-wrap gap-1 mb-2">
                         <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
-                          {EXERCISE_TYPE_LABELS[item.type] || item.type}
+                          {EXERCISE_TYPE_LABELS[item.exerciseType] || item.exerciseType}
                         </span>
-                        {item.difficultyLevel && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
-                            {item.difficultyLevel}
+                        {item.targetLevels?.map((level) => (
+                          <span key={level} className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                            {level}
                           </span>
-                        )}
-                        {item.tags?.map((tag) => (
+                        ))}
+                        {item.tags?.slice(0, 3).map((tag) => (
                           <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
                             {tag}
                           </span>
                         ))}
+                        {(item.tags?.length || 0) > 3 && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">
+                            +{item.tags.length - 3}
+                          </span>
+                        )}
                       </div>
-                      {item.description && (
-                        <p className="text-xs text-slate-500 mb-2 line-clamp-2">{item.description}</p>
+                      {item.metadataJson?.description && (
+                        <p className="text-xs text-slate-500 mb-2 line-clamp-2">{typeof item.metadataJson.description === "string" ? item.metadataJson.description : ""}</p>
                       )}
                       <div className="flex gap-2">
                         <button
@@ -758,6 +941,21 @@ export default function AssessmentDetailPage() {
                         >
                           KI-Anpassung
                         </button>
+                        <button
+                          onClick={() => {
+                            setBasisExercise(item);
+                            setShowBasisPicker(false);
+                            setShowLibrary(false);
+                            setShowCreateExercise(true);
+                            setExName(item.title + " (angepasst)");
+                            setExType(item.exerciseType);
+                            setExInstructions(item.metadataJson?.instructions || item.metadataJson?.description || "");
+                          }}
+                          data-testid={`button-basis-${item.id}`}
+                          className="text-xs font-medium text-emerald-600 hover:text-emerald-800"
+                        >
+                          Als Basis
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -769,6 +967,78 @@ export default function AssessmentDetailPage() {
           {showCreateExercise && (
             <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
               <form onSubmit={handleCreateExercise} className="space-y-3" data-testid="form-create-exercise">
+                {basisExercise && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-emerald-700">Basierend auf:</span>
+                      <button
+                        type="button"
+                        onClick={() => { setBasisExercise(null); setBasisChanges(""); }}
+                        className="text-xs text-red-500 hover:text-red-700"
+                      >
+                        Basis entfernen
+                      </button>
+                    </div>
+                    <p className="text-sm font-medium text-emerald-900">{basisExercise.title}</p>
+                    <p className="text-xs text-emerald-600">{EXERCISE_TYPE_LABELS[basisExercise.exerciseType] || basisExercise.exerciseType}</p>
+                    <div className="mt-2">
+                      <label className="block text-xs font-medium text-emerald-700 mb-1">Gewünschte Änderungen / Kontext-Verknüpfung</label>
+                      <textarea
+                        value={basisChanges}
+                        onChange={(e) => setBasisChanges(e.target.value)}
+                        rows={2}
+                        placeholder="z.B. Mitarbeitergespräch im Kontext der Fallstudie Varexia SE einbetten…"
+                        data-testid="input-basis-changes"
+                        className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 bg-white"
+                      />
+                    </div>
+                  </div>
+                )}
+                {!basisExercise && (
+                  <div className="flex items-center gap-2 mb-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!showLibrary) fetchLibraryItems();
+                        setShowBasisPicker(!showBasisPicker);
+                      }}
+                      data-testid="button-select-basis"
+                      className="text-xs font-medium px-3 py-1.5 rounded-full border border-emerald-400 text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    >
+                      Bestehende Übung als Basis verwenden
+                    </button>
+                  </div>
+                )}
+                {showBasisPicker && !basisExercise && (
+                  <div className="border border-emerald-200 rounded-lg p-3 bg-emerald-50/50 max-h-48 overflow-y-auto">
+                    {libraryLoading ? (
+                      <p className="text-xs text-slate-400">Laden…</p>
+                    ) : libraryItems.length === 0 ? (
+                      <p className="text-xs text-slate-400">Keine Übungen in der Bibliothek.</p>
+                    ) : (
+                      <div className="space-y-1">
+                        {libraryItems.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              setBasisExercise(item);
+                              setShowBasisPicker(false);
+                              setExName(item.title + " (angepasst)");
+                              setExType(item.exerciseType);
+                              setExInstructions(item.metadataJson?.instructions || item.metadataJson?.description || "");
+                            }}
+                            className="w-full text-left px-3 py-2 rounded hover:bg-emerald-100 transition-colors"
+                            data-testid={`button-pick-basis-${item.id}`}
+                          >
+                            <p className="text-sm font-medium text-slate-900">{item.title}</p>
+                            <p className="text-xs text-slate-500">{EXERCISE_TYPE_LABELS[item.exerciseType] || item.exerciseType}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="grid md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
@@ -830,14 +1100,51 @@ export default function AssessmentDetailPage() {
                   </div>
                 </div>
                 {exError && <p className="text-sm text-red-500" data-testid="text-exercise-error">{exError}</p>}
-                <button
-                  type="submit"
-                  disabled={exCreating || !exName.trim()}
-                  data-testid="button-submit-exercise"
-                  className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
-                >
-                  {exCreating ? "Wird erstellt…" : "Übung erstellen"}
-                </button>
+                {aiError && <p className="text-sm text-red-500" data-testid="text-ai-error">{aiError}</p>}
+
+                {aiGenerating && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4" data-testid="ai-progress">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-purple-700">KI-Generierung</span>
+                      <span className="text-sm font-bold text-purple-700">{aiProgress}%</span>
+                    </div>
+                    <div className="w-full bg-purple-200 rounded-full h-2.5 mb-2">
+                      <div
+                        className="bg-purple-600 h-2.5 rounded-full transition-all duration-500"
+                        style={{ width: `${aiProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-purple-600">{aiProgressLabel}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={exCreating || aiGenerating || !exName.trim()}
+                    data-testid="button-submit-exercise"
+                    className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
+                  >
+                    {exCreating ? "Wird erstellt…" : "Übung erstellen"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAIGenerateExercise}
+                    disabled={aiGenerating || exCreating || !exName.trim()}
+                    data-testid="button-ai-generate-exercise"
+                    className="rounded-lg bg-purple-600 text-white text-sm font-medium px-6 py-2 hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                  >
+                    {aiGenerating ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                        </svg>
+                        Generiert…
+                      </>
+                    ) : "KI-Generierung"}
+                  </button>
+                </div>
               </form>
             </div>
           )}
