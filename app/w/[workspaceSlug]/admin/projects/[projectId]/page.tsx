@@ -67,6 +67,13 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   const st = statusLabels[assessment.status] ?? { de: assessment.status, color: "#94a3b8" };
 
+  const designModeLabels: Record<string, { de: string; icon: string }> = {
+    ai_full: { de: "KI-Vollautomatik", icon: "⚡" },
+    ai_supported: { de: "KI-Unterstützt", icon: "🤖" },
+    classic: { de: "Manuell", icon: "✋" },
+  };
+  const dm = designModeLabels[assessment.designMode] ?? designModeLabels.classic;
+
   const projectKpis = [
     { label: "Kandidaten", value: String(assessment._count.candidates) },
     { label: "Übungen", value: String(assessment._count.exercises) },
@@ -98,6 +105,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           titleEn: "ASSESSMENT DESIGN",
           desc: "Validierte Module auswählen, Reihenfolge festlegen und Kompetenzabdeckung prüfen (DIN 33430).",
           href: `${base}/assessments`,
+          badge: `${dm.icon} ${dm.de}`,
         },
       ],
     },
@@ -173,6 +181,13 @@ export default async function ProjectDetailPage({ params }: Props) {
               style={{ backgroundColor: `${st.color}40`, color: "white" }}
             >
               {st.de}
+            </span>
+            <span
+              className="text-[10px] font-medium px-2.5 py-0.5 rounded-full"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
+              data-testid="badge-design-mode"
+            >
+              {dm.icon} {dm.de}
             </span>
           </div>
           <div className="flex items-center gap-4">

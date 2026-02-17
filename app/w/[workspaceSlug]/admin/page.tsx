@@ -108,6 +108,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       id: a.id,
       name: a.name,
       status: a.status,
+      designMode: a.designMode,
       description: a.description,
       startDate: a.startDate?.toISOString() ?? null,
       endDate: a.endDate?.toISOString() ?? null,

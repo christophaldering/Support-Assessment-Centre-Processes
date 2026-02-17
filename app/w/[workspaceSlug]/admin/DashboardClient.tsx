@@ -8,6 +8,7 @@ interface AssessmentItem {
   id: string;
   name: string;
   status: string;
+  designMode: string;
   description: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -20,6 +21,12 @@ interface AssessmentItem {
   competencyCoverage: number;
   ratingProgress: number;
 }
+
+const designModeLabels: Record<string, { de: string; icon: string }> = {
+  ai_full: { de: "KI-Vollautomatik", icon: "⚡" },
+  ai_supported: { de: "KI-Unterstützt", icon: "🤖" },
+  classic: { de: "Manuell", icon: "✋" },
+};
 
 interface Props {
   assessments: AssessmentItem[];
@@ -51,6 +58,7 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
     description: "",
     startDate: "",
     endDate: "",
+    designMode: "classic",
   });
   const [error, setError] = useState("");
 
@@ -75,6 +83,7 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
           startDate: form.startDate || null,
           endDate: form.endDate || null,
           status: "draft",
+          designMode: form.designMode,
         }),
       });
 
@@ -87,7 +96,7 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
 
       const newAssessment = await res.json();
       setShowCreate(false);
-      setForm({ name: "", description: "", startDate: "", endDate: "" });
+      setForm({ name: "", description: "", startDate: "", endDate: "", designMode: "classic" });
       router.push(`${base}/projects/${newAssessment.id}`);
     } catch {
       setError("Netzwerkfehler");
@@ -190,6 +199,41 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
                 </div>
               </div>
 
+              <div>
+                <label className="text-sm font-medium block mb-2" style={{ color: textColor }}>
+                  Design-Modus
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["ai_full", "ai_supported", "classic"] as const).map((mode) => {
+                    const ml = designModeLabels[mode];
+                    const selected = form.designMode === mode;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setForm({ ...form, designMode: mode })}
+                        className="rounded-lg border px-3 py-2.5 text-xs font-medium transition-all text-center"
+                        style={{
+                          borderColor: selected ? primary : `${primary}20`,
+                          backgroundColor: selected ? `${primary}08` : "transparent",
+                          color: selected ? primary : textColor,
+                          boxShadow: selected ? `0 0 0 1px ${primary}` : "none",
+                        }}
+                        data-testid={`button-design-mode-${mode}`}
+                      >
+                        <span className="block text-base mb-0.5">{ml.icon}</span>
+                        {ml.de}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] mt-1.5 opacity-40 italic">
+                  {form.designMode === "ai_full" ? "KI generiert komplette Assessment-Struktur mit Modul-Vorschlägen." :
+                   form.designMode === "ai_supported" ? "KI schlägt Optionen vor, Sie wählen und modifizieren." :
+                   "Sie wählen Module manuell aus der Bibliothek."}
+                </p>
+              </div>
+
               {error && (
                 <p className="text-sm text-red-600 font-medium" data-testid="text-create-error">{error}</p>
               )}
@@ -279,17 +323,22 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
                         <span>{a.reportCount} Bericht{a.reportCount !== 1 ? "e" : ""}</span>
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2.5" data-testid={`status-indicators-${a.id}`}>
-                        <span
-                          className="text-[10px] font-medium px-2 py-0.5 rounded-full border"
-                          style={{
-                            backgroundColor: a.status === "draft" ? "#f8fafc" : a.status === "active" ? "#f0fdf4" : a.status === "completed" ? "#eff6ff" : "#f9fafb",
-                            color: st.color,
-                            borderColor: `${st.color}30`,
-                          }}
-                          data-testid={`status-mode-${a.id}`}
-                        >
-                          {a.status === "draft" ? "Design-Modus" : a.status === "active" ? "Durchführung" : a.status === "completed" ? "Abgeschlossen" : "Archiviert"}
-                        </span>
+                        {(() => {
+                          const dm = designModeLabels[a.designMode] ?? designModeLabels.classic;
+                          return (
+                            <span
+                              className="text-[10px] font-medium px-2 py-0.5 rounded-full border"
+                              style={{
+                                backgroundColor: a.designMode === "ai_full" ? "#faf5ff" : a.designMode === "ai_supported" ? "#eff6ff" : "#f8fafc",
+                                color: a.designMode === "ai_full" ? "#7c3aed" : a.designMode === "ai_supported" ? "#2563eb" : "#64748b",
+                                borderColor: a.designMode === "ai_full" ? "#7c3aed30" : a.designMode === "ai_supported" ? "#2563eb30" : "#64748b30",
+                              }}
+                              data-testid={`status-design-mode-${a.id}`}
+                            >
+                              {dm.icon} {dm.de}
+                            </span>
+                          );
+                        })()}
 
                         <span
                           className="text-[10px] font-medium px-2 py-0.5 rounded-full"
@@ -325,6 +374,31 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
                         >
                           {a.reportCount > 0 ? `${a.reportCount} Bericht${a.reportCount !== 1 ? "e" : ""}` : a.candidateCount > 0 ? "Berichte ausstehend" : "Keine Berichte"}
                         </span>
+
+                        {(() => {
+                          const steps = [
+                            a.competencyCoverage > 0,
+                            a.exerciseCount > 0,
+                            a.candidateCount > 0,
+                            a.ratingCount > 0,
+                            a.reportCount > 0,
+                          ];
+                          const done = steps.filter(Boolean).length;
+                          const pct = Math.round((done / steps.length) * 100);
+                          return (
+                            <span
+                              className="text-[10px] font-medium px-2 py-0.5 rounded-full border"
+                              style={{
+                                backgroundColor: pct >= 100 ? "#f0fdf4" : pct >= 60 ? "#eff6ff" : pct > 0 ? "#fffbeb" : "#f8fafc",
+                                color: pct >= 100 ? "#16a34a" : pct >= 60 ? "#2563eb" : pct > 0 ? "#d97706" : "#94a3b8",
+                                borderColor: pct >= 100 ? "#16a34a20" : pct >= 60 ? "#2563eb20" : pct > 0 ? "#d9770620" : "#94a3b820",
+                              }}
+                              data-testid={`status-overall-${a.id}`}
+                            >
+                              Gesamt {pct}%
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                     <span

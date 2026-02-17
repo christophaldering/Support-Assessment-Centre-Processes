@@ -118,6 +118,7 @@ model Assessment {
   location     String?
   startDate    DateTime? @map("start_date")
   endDate      DateTime? @map("end_date")
+  designMode   String   @default("classic") @map("design_mode")
   aiGenerated  Boolean  @default(false) @map("ai_generated")
   sourceAnalysisId String? @map("source_analysis_id")
   createdAt    DateTime @default(now()) @map("created_at")
