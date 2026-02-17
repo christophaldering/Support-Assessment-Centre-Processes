@@ -90,6 +90,7 @@ export default function ExerciseLibraryPage() {
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [expandedDetail, setExpandedDetail] = useState<ExerciseLibraryItem | null>(null);
+  const [viewingVariantId, setViewingVariantId] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   const [generatingVariantId, setGeneratingVariantId] = useState<string | null>(null);
@@ -215,7 +216,8 @@ export default function ExerciseLibraryPage() {
   };
 
   const handleExpand = async (id: string) => {
-    if (expandedId === id) { setExpandedId(null); setExpandedDetail(null); return; }
+    if (expandedId === id) { setExpandedId(null); setExpandedDetail(null); setViewingVariantId(null); return; }
+    setViewingVariantId(null);
     setExpandedId(id);
     setLoadingDetail(true);
     try {
@@ -286,6 +288,28 @@ export default function ExerciseLibraryPage() {
       setError("Fehler bei der Varianten-Generierung");
     } finally {
       setGeneratingVariantId(null);
+    }
+  };
+
+  const handleDownload = async (itemId: string, fileName: string) => {
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/exercise-library/${itemId}/download`);
+      if (!res.ok) {
+        setError("Fehler beim Herunterladen");
+        return;
+      }
+      const data = await res.json();
+      if (data.downloadUrl) {
+        const link = document.createElement("a");
+        link.href = data.downloadUrl;
+        link.download = data.fileName || fileName;
+        link.target = "_blank";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch {
+      setError("Fehler beim Herunterladen");
     }
   };
 
@@ -1114,9 +1138,19 @@ export default function ExerciseLibraryPage() {
                     </div>
 
                     {item.originalFileName && (
-                      <div className="border-t border-slate-100 px-5 py-2 flex items-center gap-2 text-xs text-slate-400" data-testid={`file-info-${item.id}`}>
-                        <FileIcon />
-                        <span className="truncate">{item.originalFileName}</span>
+                      <div className="border-t border-slate-100 px-5 py-2 flex items-center justify-between text-xs text-slate-400" data-testid={`file-info-${item.id}`}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileIcon />
+                          <span className="truncate">{item.originalFileName}</span>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDownload(item.id, item.originalFileName || "download"); }}
+                          className="shrink-0 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors hover:bg-slate-100"
+                          style={{ color: ACCENT }}
+                          data-testid={`button-download-${item.id}`}
+                        >
+                          Herunterladen
+                        </button>
                       </div>
                     )}
 
@@ -1162,12 +1196,54 @@ export default function ExerciseLibraryPage() {
                           <p className="text-xs text-slate-400">Laden…</p>
                         ) : expandedDetail?.variants && expandedDetail.variants.length > 0 ? (
                           <div className="space-y-2">
-                            {expandedDetail.variants.map(v => (
-                              <div key={v.id} className="flex items-center gap-4 bg-white rounded-lg px-4 py-2.5 border border-slate-200 text-sm" data-testid={`variant-${v.id}`}>
-                                <span className={`font-medium ${v.variantType === "cd_adapted" ? "text-violet-700" : "text-slate-700"}`}>{v.variantType === "cd_adapted" ? "CD-Angepasst" : v.variantType}</span>
-                                <span className="text-slate-400">{v.language}</span>
-                                <span className="text-slate-400">v{v.version}</span>
-                                <span className="text-slate-400 ml-auto text-xs">{new Date(v.createdAt).toLocaleDateString("de-DE")}</span>
+                            {expandedDetail.variants.map((v: any) => (
+                              <div key={v.id} className="bg-white rounded-lg border border-slate-200 text-sm" data-testid={`variant-${v.id}`}>
+                                <div className="flex items-center gap-4 px-4 py-2.5">
+                                  <span className={`font-medium ${v.variantType === "cd_adapted" ? "text-violet-700" : "text-slate-700"}`}>{v.variantType === "cd_adapted" ? "CD-Angepasst" : v.variantType}</span>
+                                  <span className="text-slate-400">{v.language}</span>
+                                  <span className="text-slate-400">v{v.version}</span>
+                                  <span className="text-slate-400 ml-auto text-xs">{new Date(v.createdAt).toLocaleDateString("de-DE")}</span>
+                                  {v.variantType === "cd_adapted" && v.contentJson && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setViewingVariantId(viewingVariantId === v.id ? null : v.id);
+                                      }}
+                                      className="text-xs font-medium px-2.5 py-1 rounded-lg transition-colors hover:bg-violet-50"
+                                      style={{ color: "#7c3aed" }}
+                                      data-testid={`button-view-variant-${v.id}`}
+                                    >
+                                      {viewingVariantId === v.id ? "Schließen" : "Inhalt anzeigen"}
+                                    </button>
+                                  )}
+                                </div>
+                                {viewingVariantId === v.id && v.contentJson && (
+                                  <div className="border-t border-slate-100 px-4 py-3 bg-violet-50/50 space-y-2">
+                                    {v.contentJson.adaptedTitle && (
+                                      <p className="text-sm font-semibold text-violet-900">{v.contentJson.adaptedTitle}</p>
+                                    )}
+                                    {v.contentJson.adaptedContent && (
+                                      <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">{v.contentJson.adaptedContent}</p>
+                                    )}
+                                    {v.contentJson.designNotes && (
+                                      <div className="mt-2 pt-2 border-t border-violet-100 space-y-1">
+                                        <p className="text-[11px] font-semibold text-violet-700 uppercase tracking-wider">Design-Anpassungen</p>
+                                        {v.contentJson.designNotes.colorUsage && (
+                                          <p className="text-xs text-slate-600"><span className="font-medium">Farben:</span> {v.contentJson.designNotes.colorUsage}</p>
+                                        )}
+                                        {v.contentJson.designNotes.typographyNotes && (
+                                          <p className="text-xs text-slate-600"><span className="font-medium">Typografie:</span> {v.contentJson.designNotes.typographyNotes}</p>
+                                        )}
+                                        {v.contentJson.designNotes.toneAdaptation && (
+                                          <p className="text-xs text-slate-600"><span className="font-medium">Tonalität:</span> {v.contentJson.designNotes.toneAdaptation}</p>
+                                        )}
+                                        {v.contentJson.designNotes.brandingElements && (
+                                          <p className="text-xs text-slate-600"><span className="font-medium">Branding:</span> {v.contentJson.designNotes.brandingElements}</p>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>

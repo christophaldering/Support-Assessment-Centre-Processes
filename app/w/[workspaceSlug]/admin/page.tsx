@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { getWorkspaceAuth, hasMasterAuth, getUserSession } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
+import { ensureHex } from "@/lib/color-utils";
 import Link from "next/link";
 import DashboardClient from "./DashboardClient";
 
@@ -33,9 +34,9 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   }
 
   const t = workspace.theme;
-  const primary = t?.primaryColor ?? "#3b82f6";
-  const textColor = t?.textColor ?? "#1a1a1a";
-  const bgColor = t?.backgroundColor ?? "#ffffff";
+  const primary = ensureHex(t?.primaryColor ?? "#3b82f6");
+  const textColor = ensureHex(t?.textColor ?? "#1a1a1a");
+  const bgColor = ensureHex(t?.backgroundColor ?? "#ffffff");
   const headingFont = t?.fontFamilyHeading ?? "Playfair Display";
 
   const userRoles = userSession?.roles ?? [];

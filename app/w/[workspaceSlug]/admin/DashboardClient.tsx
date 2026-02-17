@@ -937,166 +937,151 @@ export default function DashboardClient({ assessments, workspaceSlug, primary, t
 
       {activeTab === "projects" && (
         <section data-testid="section-projects">
-          <div className="mb-5">
-            <h2
-              className="text-xl font-bold tracking-tight"
-              style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2
+                className="text-xl font-bold tracking-tight"
+                style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
+              >
+                Bestehende Projekte
+              </h2>
+              <p className="text-sm mt-0.5 opacity-70" style={{ color: textColor }}>
+                {localAssessments.length} Projekt{localAssessments.length !== 1 ? "e" : ""} vorhanden
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
+              style={{ backgroundColor: primary }}
+              data-testid="button-create-project"
             >
-              Projekte & Assessments
-            </h2>
-            <p className="text-sm mt-0.5 opacity-70 italic" style={{ color: textColor }}>
-              Wählen Sie ein Projekt oder erstellen Sie ein neues.
-            </p>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Neues Projekt erstellen
+            </button>
           </div>
 
-          <div className="flex gap-6" data-testid="projects-split-layout">
-            <div className="w-[30%] shrink-0 space-y-2" data-testid="projects-sidebar">
-              <button
-                onClick={() => setSelectedProjectView("all")}
-                className="w-full text-left rounded-xl border p-4 transition-all"
-                style={{
-                  borderColor: selectedProjectView === "all" ? primary : `${primary}15`,
-                  backgroundColor: selectedProjectView === "all" ? `${primary}08` : bgColor,
-                  boxShadow: selectedProjectView === "all" ? `0 0 0 1px ${primary}40, 0 2px 8px ${primary}10` : "none",
-                }}
-                data-testid="project-menu-all"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                    style={{
-                      backgroundColor: selectedProjectView === "all" ? primary : `${primary}10`,
-                      color: selectedProjectView === "all" ? "#fff" : primary,
-                    }}
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4
-                      className="text-sm font-semibold leading-tight"
-                      style={{
-                        color: selectedProjectView === "all" ? primary : textColor,
-                        fontFamily: `'${headingFont}', serif`,
-                      }}
-                    >
-                      Alle Projekte
-                    </h4>
-                    <p className="text-[11px] mt-0.5 opacity-70 leading-snug" style={{ color: textColor }}>
-                      {localAssessments.length} Projekt{localAssessments.length !== 1 ? "e" : ""}
-                    </p>
-                  </div>
-                </div>
-              </button>
-
+          {localAssessments.length === 0 ? (
+            <div
+              className="rounded-xl border-2 border-dashed p-12 text-center"
+              style={{ borderColor: `${primary}20` }}
+              data-testid="empty-projects"
+            >
+              <p className="text-lg font-medium opacity-70 mb-2" style={{ color: textColor }}>Noch keine Projekte vorhanden</p>
+              <p className="text-sm opacity-60 mb-4" style={{ color: textColor }}>Erstellen Sie Ihr erstes Assessment-Projekt, um loszulegen.</p>
               <button
                 onClick={() => setShowCreate(true)}
-                className="w-full text-left rounded-xl border p-4 transition-all hover:shadow-sm"
-                style={{
-                  borderColor: `${primary}15`,
-                  backgroundColor: bgColor,
-                }}
-                data-testid="project-menu-new"
+                className="px-5 py-2.5 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
+                style={{ backgroundColor: primary }}
+                data-testid="button-create-first-project"
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${primary}10`, color: primary }}
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4
-                      className="text-sm font-semibold leading-tight"
-                      style={{ color: primary, fontFamily: `'${headingFont}', serif` }}
-                    >
-                      Neues Projekt
-                    </h4>
-                    <p className="text-[11px] mt-0.5 opacity-70 leading-snug" style={{ color: textColor }}>
-                      Projekt erstellen
-                    </p>
-                  </div>
-                </div>
+                + Erstes Projekt erstellen
               </button>
-
+            </div>
+          ) : (
+            <div
+              className="rounded-xl border overflow-hidden"
+              style={{ borderColor: `${primary}20` }}
+              data-testid="projects-table"
+            >
+              <div
+                className="grid text-[11px] font-semibold uppercase tracking-wider px-5 py-3"
+                style={{
+                  gridTemplateColumns: "1fr 100px 110px 80px 80px 80px 50px",
+                  backgroundColor: `${primary}08`,
+                  color: `${primary}cc`,
+                }}
+              >
+                <span>Projektname</span>
+                <span>Status</span>
+                <span>Modus</span>
+                <span className="text-center">Kandidaten</span>
+                <span className="text-center">Übungen</span>
+                <span className="text-center">Berichte</span>
+                <span></span>
+              </div>
               {localAssessments.map((a) => {
                 const st = statusLabels[a.status] ?? { de: a.status, color: "#94a3b8" };
-                const isSelected = selectedProjectView === a.id;
+                const dm = designModeLabels[a.designMode] ?? designModeLabels.classic;
                 return (
-                  <button
+                  <div
                     key={a.id}
-                    onClick={() => router.push(`${base}/projects/${a.id}`)}
-                    className="w-full text-left rounded-xl border p-4 transition-all"
+                    className="grid items-center px-5 py-3.5 border-t cursor-pointer transition-colors group"
                     style={{
-                      borderColor: isSelected ? primary : `${primary}15`,
-                      backgroundColor: isSelected ? `${primary}08` : bgColor,
-                      boxShadow: isSelected ? `0 0 0 1px ${primary}40, 0 2px 8px ${primary}10` : "none",
+                      gridTemplateColumns: "1fr 100px 110px 80px 80px 80px 50px",
+                      borderColor: `${primary}10`,
                     }}
-                    data-testid={`project-menu-${a.id}`}
+                    onClick={() => router.push(`${base}/projects/${a.id}`)}
+                    data-testid={`row-project-${a.id}`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                        style={{
-                          backgroundColor: isSelected ? primary : `${primary}10`,
-                          color: isSelected ? "#fff" : primary,
-                        }}
+                    <div className="min-w-0 pr-4">
+                      <p
+                        className="text-sm font-semibold truncate group-hover:underline"
+                        style={{ color: textColor, fontFamily: `'${headingFont}', serif` }}
                       >
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: st.color }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4
-                          className="text-sm font-semibold leading-tight truncate"
-                          style={{
-                            color: isSelected ? primary : textColor,
-                            fontFamily: `'${headingFont}', serif`,
-                          }}
-                        >
-                          {a.name}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span
-                            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-                            style={{ backgroundColor: `${st.color}15`, color: st.color }}
-                          >
-                            {st.de}
+                        {a.name}
+                      </p>
+                      {a.description && (
+                        <p className="text-[11px] mt-0.5 opacity-60 truncate" style={{ color: textColor }}>
+                          {a.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-1 text-[10px] opacity-50" style={{ color: textColor }}>
+                        <span>{formatDate(a.startDate)} — {formatDate(a.endDate)}</span>
+                        {a.autoDeleteDays && (
+                          <span className="flex items-center gap-0.5" data-testid={`status-auto-delete-${a.id}`}>
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {a.autoDeleteDays}d
                           </span>
-                        </div>
+                        )}
                       </div>
                     </div>
-                  </button>
+                    <div>
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: `${st.color}15`, color: st.color, border: `1px solid ${st.color}30` }}
+                      >
+                        {st.de}
+                      </span>
+                    </div>
+                    <div>
+                      <span
+                        className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: a.designMode === "ai_full" ? "#faf5ff" : a.designMode === "ai_supported" ? "#eff6ff" : "#f8fafc",
+                          color: a.designMode === "ai_full" ? "#7c3aed" : a.designMode === "ai_supported" ? "#2563eb" : "#64748b",
+                        }}
+                      >
+                        {dm.icon} {dm.de}
+                      </span>
+                    </div>
+                    <p className="text-sm text-center" style={{ color: textColor }}>{a.candidateCount}</p>
+                    <p className="text-sm text-center" style={{ color: textColor }}>{a.exerciseCount}</p>
+                    <p className="text-sm text-center" style={{ color: textColor }}>{a.reportCount}</p>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmDelete(a.id);
+                        }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                        style={{ color: "#ef4444" }}
+                        data-testid={`button-delete-project-${a.id}`}
+                        title="Projekt löschen"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 );
               })}
             </div>
-
-            <div className="flex-1 min-w-0" data-testid="projects-detail-panel">
-              {localAssessments.length === 0 ? (
-                <div
-                  className="rounded-xl border-2 border-dashed p-12 text-center"
-                  style={{ borderColor: `${primary}20` }}
-                  data-testid="empty-projects"
-                >
-                  <p className="text-lg font-medium opacity-70 mb-2" style={{ color: textColor }}>Noch keine Projekte vorhanden</p>
-                  <p className="text-sm opacity-60 mb-4" style={{ color: textColor }}>Erstellen Sie Ihr erstes Assessment-Projekt, um loszulegen.</p>
-                  <button
-                    onClick={() => setShowCreate(true)}
-                    className="px-5 py-2.5 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
-                    style={{ backgroundColor: primary }}
-                    data-testid="button-create-first-project"
-                  >
-                    + Erstes Projekt erstellen
-                  </button>
-                </div>
-              ) : (
-                <div className="grid gap-4">
-                  {localAssessments.map((a) => renderProjectCard(a))}
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </section>
       )}
 
