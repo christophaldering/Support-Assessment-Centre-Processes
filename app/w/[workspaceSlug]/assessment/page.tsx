@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import Link from "next/link";
 
 interface UserData {
   id: string;
@@ -56,7 +55,7 @@ interface ConsentInfo {
 }
 
 const exerciseTypeLabels: Record<string, string> = {
-  presentation: "Pr\u00e4sentation",
+  presentation: "Präsentation",
   interview: "Interview",
   group_discussion: "Gruppendiskussion",
   case_study: "Fallstudie",
@@ -125,8 +124,6 @@ function daysUntil(dateStr: string): number {
   return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-type TabView = "overview" | "exercises" | "documents" | "consent";
-
 export default function CandidateAssessmentPortal() {
   const router = useRouter();
   const params = useParams();
@@ -138,9 +135,9 @@ export default function CandidateAssessmentPortal() {
   const [assessmentLoading, setAssessmentLoading] = useState(false);
   const [noAssessment, setNoAssessment] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabView>("overview");
   const [consents, setConsents] = useState<ConsentInfo[]>([]);
-  const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+  const [showConsent, setShowConsent] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -176,6 +173,9 @@ export default function CandidateAssessmentPortal() {
         if (!res.ok) return;
         const data = await res.json();
         setAssessment(data);
+        if (data.exercises && data.exercises.length > 0) {
+          setSelectedExercise(data.exercises[0].id);
+        }
       })
       .catch(() => {})
       .finally(() => setAssessmentLoading(false));
@@ -223,19 +223,15 @@ export default function CandidateAssessmentPortal() {
 
   const totalDuration = assessment?.exercises.reduce((sum, ex) => sum + (ex.duration || 0), 0) || 0;
   const generalDocs = assessment?.documents.filter(d => !d.exerciseId) || [];
-  const exerciseDocs = assessment?.documents.filter(d => d.exerciseId) || [];
-
-  const tabs: { id: TabView; label: string; count?: number }[] = [
-    { id: "overview", label: "\u00dcbersicht" },
-    { id: "exercises", label: "\u00dcbungen", count: assessment?.exercises.length },
-    { id: "documents", label: "Unterlagen", count: assessment?.documents.length },
-    { id: "consent", label: "Einwilligungen", count: consents.length },
-  ];
+  const currentExercise = assessment?.exercises.find(e => e.id === selectedExercise) || null;
+  const exerciseDocs = currentExercise
+    ? (assessment?.documents.filter(d => d.exerciseId === currentExercise.id) || [])
+    : [];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="bg-brand-navy text-white shadow-lg">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-slate-50" data-testid="candidate-portal">
+      <header className="bg-brand-navy text-white shadow-lg shrink-0">
+        <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-brand-blue/20 flex items-center justify-center">
               <svg className="w-4 h-4 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -267,21 +263,19 @@ export default function CandidateAssessmentPortal() {
         </div>
       </header>
 
-      <main className="flex-1">
+      <main className="flex-1 flex overflow-hidden">
         {assessmentLoading && (
-          <div className="max-w-4xl mx-auto w-full px-6 py-16">
-            <div className="bg-white border border-slate-200 rounded-xl p-12">
-              <div className="text-center">
-                <div className="w-8 h-8 border-2 border-brand-blue border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-sm text-slate-400">Assessment wird geladen&hellip;</p>
-              </div>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-brand-blue border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm text-slate-400">Assessment wird geladen&hellip;</p>
             </div>
           </div>
         )}
 
         {!assessmentLoading && noAssessment && (
-          <div className="max-w-3xl mx-auto w-full px-6 py-16">
-            <div className="bg-white border border-slate-200 rounded-2xl p-12" data-testid="text-no-assessment">
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="bg-white border border-slate-200 rounded-2xl p-12 max-w-lg" data-testid="text-no-assessment">
               <div className="text-center">
                 <div className="w-20 h-20 rounded-2xl bg-brand-blue/10 flex items-center justify-center mx-auto mb-6">
                   <svg className="w-10 h-10 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -290,7 +284,7 @@ export default function CandidateAssessmentPortal() {
                 </div>
                 <h2 className="text-xl font-bold text-brand-navy mb-2">Kein Assessment zugewiesen</h2>
                 <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                  Ihnen wurde noch kein Assessment zugewiesen. Sie werden benachrichtigt, sobald ein Assessment f&uuml;r Sie bereitsteht.
+                  Ihnen wurde noch kein Assessment zugewiesen. Sie werden benachrichtigt, sobald ein Assessment für Sie bereitsteht.
                 </p>
               </div>
             </div>
@@ -298,516 +292,445 @@ export default function CandidateAssessmentPortal() {
         )}
 
         {!assessmentLoading && assessment && (
-          <div className="max-w-4xl mx-auto w-full px-6 py-8">
-            <div className="mb-6">
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div>
-                  <p className="text-sm text-slate-400 mb-1">Willkommen, {user.name}</p>
-                  <h1 className="text-2xl font-bold text-brand-navy font-serif" data-testid="text-welcome">
-                    Kandidat*innen-Portal
-                  </h1>
+          <>
+            <aside className="w-[280px] bg-white border-r border-slate-200 flex flex-col shrink-0 overflow-hidden" data-testid="sidebar">
+              <div className="p-4 border-b border-slate-100">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 rounded-lg bg-brand-navy/5 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-brand-navy" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-sm font-bold text-brand-navy truncate" data-testid="text-assessment-name">
+                      {assessment.name}
+                    </h2>
+                  </div>
                 </div>
-                <span
-                  className={`text-xs font-medium px-3 py-1.5 rounded-full border ${statusColor(assessment.status)}`}
-                  data-testid="text-assessment-status"
-                >
-                  {statusLabel(assessment.status)}
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm" data-testid="card-assessment-info">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-brand-navy/5 flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-brand-navy" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-bold text-brand-navy" data-testid="text-assessment-name">
-                    {assessment.name}
-                  </h2>
-                  {assessment.description && (
-                    <p className="text-sm text-slate-500 mt-1 leading-relaxed" data-testid="text-assessment-description">
-                      {assessment.description}
-                    </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span
+                    className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${statusColor(assessment.status)}`}
+                    data-testid="text-assessment-status"
+                  >
+                    {statusLabel(assessment.status)}
+                  </span>
+                  {totalDuration > 0 && (
+                    <span className="text-[10px] text-slate-400">ca. {totalDuration} Min.</span>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100">
-                {assessment.startDate && (
-                  <div data-testid="text-assessment-dates">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Datum</p>
-                    <p className="text-sm font-medium text-slate-700">
-                      {formatDate(assessment.startDate)}
-                      {assessment.endDate && ` \u2013 ${formatDate(assessment.endDate)}`}
-                    </p>
-                    {assessment.startDate && daysUntil(assessment.startDate) > 0 && (
-                      <p className="text-[10px] text-brand-blue font-medium mt-0.5">
-                        in {daysUntil(assessment.startDate)} Tagen
-                      </p>
-                    )}
-                  </div>
-                )}
-                {assessment.location && (
-                  <div data-testid="text-assessment-location">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Ort</p>
-                    <p className="text-sm font-medium text-slate-700">{assessment.location}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">&Uuml;bungen</p>
-                  <p className="text-sm font-medium text-slate-700">{assessment.exercises.length}</p>
-                </div>
-                {totalDuration > 0 && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Gesamtdauer</p>
-                    <p className="text-sm font-medium text-slate-700">ca. {totalDuration} Min.</p>
-                  </div>
-                )}
-              </div>
-            </div>
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-2">
+                  <button
+                    onClick={() => setSelectedExercise(null)}
+                    data-testid="button-overview"
+                    className={`w-full text-left rounded-lg px-3 py-2.5 mb-1 transition-all text-xs font-medium flex items-center gap-2 ${
+                      selectedExercise === null
+                        ? "bg-brand-navy text-white shadow-sm"
+                        : "text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    <svg className={`w-4 h-4 shrink-0 ${selectedExercise === null ? "text-brand-blue" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                    </svg>
+                    Übersicht
+                  </button>
 
-            <div className="flex gap-1 mb-6 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 rounded-lg py-2.5 text-xs font-medium transition-all ${
-                    activeTab === tab.id
-                      ? "bg-brand-navy text-white shadow-sm"
-                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-                  }`}
-                  data-testid={`tab-${tab.id}`}
-                >
-                  {tab.label}
-                  {tab.count !== undefined && tab.count > 0 && (
-                    <span className={`ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full ${
-                      activeTab === tab.id ? "bg-white/20" : "bg-slate-100"
-                    }`}>
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+                  <div className="px-3 pt-3 pb-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Übungen ({assessment.exercises.length})</p>
+                  </div>
 
-            {activeTab === "overview" && (
-              <div className="space-y-6" data-testid="tab-content-overview">
-                {assessment.startDate && (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                    <h3 className="text-base font-semibold text-brand-navy mb-4 flex items-center gap-2">
-                      <svg className="w-5 h-5 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                      </svg>
-                      Zeitplan
-                    </h3>
-                    <div className="bg-brand-navy/5 rounded-xl p-5">
-                      <p className="text-sm font-medium text-brand-navy mb-1">
-                        {formatDateLong(assessment.startDate)}
-                      </p>
-                      {assessment.endDate && assessment.startDate !== assessment.endDate && (
-                        <p className="text-sm text-slate-500">
-                          bis {formatDateLong(assessment.endDate)}
-                        </p>
-                      )}
-                      {assessment.location && (
-                        <p className="text-sm text-slate-500 mt-2 flex items-center gap-1.5">
-                          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z" />
-                          </svg>
-                          {assessment.location}
-                        </p>
-                      )}
-                      {daysUntil(assessment.startDate) > 0 && (
-                        <div className="mt-4 pt-4 border-t border-brand-navy/10">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-brand-blue/10 flex items-center justify-center">
-                              <span className="text-xs font-bold text-brand-blue">{daysUntil(assessment.startDate)}</span>
-                            </div>
-                            <span className="text-sm text-slate-600">Tage bis zum Assessment</span>
-                          </div>
+                  {assessment.exercises.map((exercise, index) => (
+                    <button
+                      key={exercise.id}
+                      onClick={() => setSelectedExercise(exercise.id)}
+                      data-testid={`button-exercise-${exercise.id}`}
+                      className={`w-full text-left rounded-lg px-3 py-2.5 mb-0.5 transition-all group ${
+                        selectedExercise === exercise.id
+                          ? "bg-brand-navy text-white shadow-sm"
+                          : "text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5 ${
+                          selectedExercise === exercise.id
+                            ? "bg-white/20 text-white"
+                            : "bg-brand-blue/10 text-brand-blue"
+                        }`}>
+                          {index + 1}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {assessment.exercises.length > 0 && (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-semibold text-brand-navy flex items-center gap-2">
-                        <svg className="w-5 h-5 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-                        </svg>
-                        Ihre &Uuml;bungen
-                      </h3>
-                      <button
-                        onClick={() => setActiveTab("exercises")}
-                        className="text-xs font-medium text-brand-blue hover:text-brand-blue-dark transition-colors"
-                        data-testid="link-view-exercises"
-                      >
-                        Details ansehen &rarr;
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {assessment.exercises.slice(0, 6).map((exercise) => (
-                        <div
-                          key={exercise.id}
-                          className="bg-slate-50 rounded-xl p-4 border border-slate-100"
-                          data-testid={`card-exercise-preview-${exercise.id}`}
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-7 h-7 rounded-lg bg-brand-blue/10 flex items-center justify-center shrink-0">
-                              <svg className="w-3.5 h-3.5 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d={exerciseTypeIcons[exercise.type] || exerciseTypeIcons.other} />
-                              </svg>
-                            </div>
-                            <span className="text-[10px] font-medium text-brand-blue bg-brand-blue/10 px-1.5 py-0.5 rounded-full">
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-xs font-medium leading-snug ${
+                            selectedExercise === exercise.id ? "text-white" : "text-slate-700"
+                          }`}>
+                            {exercise.name}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                              selectedExercise === exercise.id
+                                ? "bg-white/15 text-white/80"
+                                : "bg-brand-blue/10 text-brand-blue"
+                            }`}>
                               {exerciseTypeLabels[exercise.type] || exercise.type}
                             </span>
+                            {exercise.duration && (
+                              <span className={`text-[10px] ${
+                                selectedExercise === exercise.id ? "text-white/60" : "text-slate-400"
+                              }`}>
+                                {exercise.duration} Min.
+                              </span>
+                            )}
                           </div>
-                          <p className="text-sm font-medium text-slate-700 line-clamp-2">{exercise.name}</p>
-                          {exercise.duration && (
-                            <p className="text-xs text-slate-400 mt-1">{exercise.duration} Min.</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {generalDocs.length > 0 && (
+                  <div className="p-2 border-t border-slate-100 mt-2">
+                    <div className="px-3 pt-1 pb-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Unterlagen ({generalDocs.length})</p>
+                    </div>
+                    {generalDocs.map((doc) => (
+                      <button
+                        key={doc.id}
+                        onClick={() => handleDownload(doc.id)}
+                        disabled={downloadingId === doc.id}
+                        data-testid={`button-download-sidebar-${doc.id}`}
+                        className="w-full text-left rounded-lg px-3 py-2 mb-0.5 hover:bg-slate-50 transition-colors group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                          </svg>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs text-slate-600 truncate group-hover:text-brand-navy transition-colors">{doc.name}</p>
+                            <p className="text-[10px] text-slate-400">{formatFileSize(doc.fileSize)}</p>
+                          </div>
+                          {downloadingId === doc.id ? (
+                            <div className="w-3.5 h-3.5 border border-brand-blue border-t-transparent rounded-full animate-spin shrink-0" />
+                          ) : (
+                            <svg className="w-3.5 h-3.5 text-slate-300 group-hover:text-brand-blue transition-colors shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {assessment.documents.length > 0 && (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-semibold text-brand-navy flex items-center gap-2">
-                        <svg className="w-5 h-5 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-                        Unterlagen
-                      </h3>
-                      <button
-                        onClick={() => setActiveTab("documents")}
-                        className="text-xs font-medium text-brand-blue hover:text-brand-blue-dark transition-colors"
-                        data-testid="link-view-documents"
-                      >
-                        Alle anzeigen &rarr;
                       </button>
-                    </div>
-                    <p className="text-sm text-slate-500">
-                      {assessment.documents.length} Unterlage{assessment.documents.length !== 1 ? "n" : ""} verf&uuml;gbar
-                    </p>
+                    ))}
                   </div>
                 )}
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                        <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                        </svg>
-                      </div>
-                      <h3 className="font-semibold text-slate-700">Datenschutz</h3>
-                    </div>
-                    <p className="text-sm text-slate-500 leading-relaxed mb-3">
-                      Ihre Einwilligungen und Datenschutzinformationen k&ouml;nnen Sie jederzeit einsehen.
-                    </p>
+                {consents.length > 0 && (
+                  <div className="p-2 border-t border-slate-100">
                     <button
-                      onClick={() => setActiveTab("consent")}
-                      className="text-xs font-medium text-brand-blue hover:text-brand-blue-dark transition-colors"
-                      data-testid="link-view-consents"
+                      onClick={() => setShowConsent(!showConsent)}
+                      data-testid="button-toggle-consent"
+                      className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-50 transition-colors"
                     >
-                      Einwilligungen ansehen &rarr;
-                    </button>
-                  </div>
-
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Einwilligungen ({consents.length})</p>
+                        <svg className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showConsent ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                         </svg>
                       </div>
-                      <h3 className="font-semibold text-slate-700">Konto</h3>
-                    </div>
-                    <p className="text-sm text-slate-500 leading-relaxed mb-3">
-                      Passwort &auml;ndern oder Ihre Kontoinformationen verwalten.
-                    </p>
-                    <Link
-                      href={`/w/${workspaceSlug}/change-password`}
-                      className="text-xs font-medium text-brand-blue hover:text-brand-blue-dark transition-colors"
-                    >
-                      Passwort &auml;ndern &rarr;
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "exercises" && (
-              <div className="space-y-4" data-testid="tab-content-exercises">
-                {assessment.exercises.length === 0 ? (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm">
-                    <div className="w-16 h-16 rounded-2xl bg-brand-blue/10 flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-brand-navy mb-2">Noch keine &Uuml;bungen</h3>
-                    <p className="text-sm text-slate-500">Die &Uuml;bungen werden in K&uuml;rze bereitgestellt.</p>
-                  </div>
-                ) : (
-                  assessment.exercises.map((exercise, idx) => {
-                    const relatedDocs = exerciseDocs.filter(d => d.exerciseId === exercise.id);
-                    const isExpanded = expandedExercise === exercise.id;
-                    return (
+                    </button>
+                    {showConsent && consents.map((consent) => (
                       <div
-                        key={exercise.id}
-                        className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm transition-shadow hover:shadow-md"
-                        data-testid={`card-exercise-${exercise.id}`}
+                        key={consent.id}
+                        className="px-3 py-2 ml-1"
+                        data-testid={`consent-item-${consent.id}`}
                       >
-                        <button
-                          onClick={() => setExpandedExercise(isExpanded ? null : exercise.id)}
-                          className="w-full text-left p-6 flex items-start gap-4"
-                          data-testid={`button-toggle-exercise-${exercise.id}`}
-                        >
-                          <div className="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center shrink-0">
-                            <span className="text-sm font-bold text-brand-blue">{idx + 1}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <h4 className="font-semibold text-brand-navy text-base" data-testid={`text-exercise-name-${exercise.id}`}>
-                                  {exercise.name}
-                                </h4>
-                                <div className="flex items-center gap-3 mt-1.5">
-                                  <span className="text-xs font-medium bg-brand-blue/10 text-brand-blue px-2 py-0.5 rounded-full">
-                                    {exerciseTypeLabels[exercise.type] || exercise.type}
-                                  </span>
-                                  {exercise.duration && (
-                                    <span className="text-xs text-slate-400 flex items-center gap-1">
-                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                      </svg>
-                                      {exercise.duration} Minuten
-                                    </span>
-                                  )}
-                                  {relatedDocs.length > 0 && (
-                                    <span className="text-xs text-slate-400 flex items-center gap-1">
-                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
-                                      </svg>
-                                      {relatedDocs.length} Unterlage{relatedDocs.length !== 1 ? "n" : ""}
-                                    </span>
-                                  )}
-                                </div>
+                        <p className="text-xs text-slate-600">{consent.templateName}</p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          {consent.status === "granted" ? (
+                            <svg className="w-3 h-3 text-green-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                          ) : (
+                            <svg className="w-3 h-3 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          )}
+                          <span className={`text-[10px] font-medium ${consent.status === "granted" ? "text-green-600" : "text-amber-600"}`}>
+                            {consent.status === "granted" ? "Erteilt" : "Ausstehend"}
+                          </span>
+                          {consent.grantedAt && (
+                            <span className="text-[10px] text-slate-400 ml-1">{formatDate(consent.grantedAt)}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </aside>
+
+            <div className="flex-1 overflow-y-auto p-6" data-testid="main-content">
+              {selectedExercise === null && (
+                <div className="max-w-3xl mx-auto space-y-6" data-testid="overview-panel">
+                  <div>
+                    <p className="text-sm text-slate-400 mb-1">Willkommen, {user.name}</p>
+                    <h1 className="text-2xl font-bold text-brand-navy font-serif" data-testid="text-welcome">
+                      Kandidat*innen-Portal
+                    </h1>
+                  </div>
+
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm" data-testid="card-assessment-info">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-brand-navy/5 flex items-center justify-center shrink-0">
+                        <svg className="w-6 h-6 text-brand-navy" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-xl font-bold text-brand-navy" data-testid="text-overview-assessment-name">
+                          {assessment.name}
+                        </h2>
+                        {assessment.description && (
+                          <p className="text-sm text-slate-500 mt-1 leading-relaxed" data-testid="text-assessment-description">
+                            {assessment.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100">
+                      {assessment.startDate && (
+                        <div data-testid="text-assessment-dates">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Datum</p>
+                          <p className="text-sm font-medium text-slate-700">
+                            {formatDate(assessment.startDate)}
+                            {assessment.endDate && ` – ${formatDate(assessment.endDate)}`}
+                          </p>
+                          {daysUntil(assessment.startDate) > 0 && (
+                            <p className="text-[10px] text-brand-blue font-medium mt-0.5">
+                              in {daysUntil(assessment.startDate)} Tagen
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {assessment.location && (
+                        <div data-testid="text-assessment-location">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Ort</p>
+                          <p className="text-sm font-medium text-slate-700">{assessment.location}</p>
+                        </div>
+                      )}
+                      <div data-testid="text-exercise-count">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Übungen</p>
+                        <p className="text-sm font-medium text-slate-700">{assessment.exercises.length}</p>
+                      </div>
+                      {totalDuration > 0 && (
+                        <div data-testid="text-total-duration">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Gesamtdauer</p>
+                          <p className="text-sm font-medium text-slate-700">ca. {totalDuration} Min.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {assessment.startDate && (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm" data-testid="card-schedule">
+                      <h3 className="text-base font-semibold text-brand-navy mb-4 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                        </svg>
+                        Zeitplan
+                      </h3>
+                      <div className="bg-brand-navy/5 rounded-xl p-5">
+                        <p className="text-sm font-medium text-brand-navy mb-1">
+                          {formatDateLong(assessment.startDate)}
+                        </p>
+                        {assessment.endDate && assessment.startDate !== assessment.endDate && (
+                          <p className="text-sm text-slate-500">
+                            bis {formatDateLong(assessment.endDate)}
+                          </p>
+                        )}
+                        {assessment.location && (
+                          <p className="text-sm text-slate-500 mt-2 flex items-center gap-1.5">
+                            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z" />
+                            </svg>
+                            {assessment.location}
+                          </p>
+                        )}
+                        {daysUntil(assessment.startDate) > 0 && (
+                          <div className="mt-4 pt-4 border-t border-brand-navy/10">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-brand-blue/10 flex items-center justify-center">
+                                <span className="text-xs font-bold text-brand-blue">{daysUntil(assessment.startDate)}</span>
                               </div>
-                              <svg className={`w-5 h-5 text-slate-300 transition-transform shrink-0 mt-1 ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                              </svg>
+                              <span className="text-sm text-slate-600">Tage bis zum Assessment</span>
                             </div>
-                          </div>
-                        </button>
-                        {isExpanded && (
-                          <div className="px-6 pb-6 pt-0 ml-14 border-t border-slate-100 mt-0 pt-4">
-                            {exercise.instructions && (
-                              <div className="mb-4">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Instruktionen</p>
-                                <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line" data-testid={`text-exercise-instructions-${exercise.id}`}>
-                                  {exercise.instructions}
-                                </p>
-                              </div>
-                            )}
-                            {relatedDocs.length > 0 && (
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Zugeordnete Unterlagen</p>
-                                <div className="space-y-2">
-                                  {relatedDocs.map((doc) => (
-                                    <div key={doc.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-3">
-                                      <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-slate-700 truncate">{doc.name}</p>
-                                        <p className="text-xs text-slate-400">{formatFileSize(doc.fileSize)}</p>
-                                      </div>
-                                      <button
-                                        onClick={() => handleDownload(doc.id)}
-                                        disabled={downloadingId === doc.id}
-                                        data-testid={`button-download-${doc.id}`}
-                                        className="ml-3 text-xs font-medium text-brand-blue hover:text-brand-blue-dark transition-colors disabled:opacity-50"
-                                      >
-                                        {downloadingId === doc.id ? "Laden\u2026" : "Herunterladen"}
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {!exercise.instructions && relatedDocs.length === 0 && (
-                              <p className="text-sm text-slate-400 italic">Keine weiteren Details verf&uuml;gbar.</p>
-                            )}
                           </div>
                         )}
                       </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-
-            {activeTab === "documents" && (
-              <div className="space-y-6" data-testid="tab-content-documents">
-                {assessment.documents.length === 0 ? (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm">
-                    <div className="w-16 h-16 rounded-2xl bg-brand-blue/10 flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-brand-navy mb-2">Keine Unterlagen</h3>
-                    <p className="text-sm text-slate-500">Es sind derzeit keine Unterlagen f&uuml;r Sie verf&uuml;gbar.</p>
-                  </div>
-                ) : (
-                  <>
-                    {generalDocs.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-700 mb-3">Allgemeine Unterlagen</h3>
-                        <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100 shadow-sm">
-                          {generalDocs.map((doc) => (
-                            <div key={doc.id} className="flex items-center justify-between px-5 py-4" data-testid={`row-document-${doc.id}`}>
-                              <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <div className="w-9 h-9 rounded-lg bg-brand-blue/10 flex items-center justify-center shrink-0">
-                                  <svg className="w-4 h-4 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                  </svg>
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-medium text-brand-navy truncate" data-testid={`text-document-name-${doc.id}`}>{doc.name}</p>
-                                  <p className="text-xs text-slate-400 mt-0.5">{doc.fileName} &middot; {formatFileSize(doc.fileSize)}</p>
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => handleDownload(doc.id)}
-                                disabled={downloadingId === doc.id}
-                                data-testid={`button-download-${doc.id}`}
-                                className="ml-4 text-xs font-medium text-white bg-brand-blue hover:bg-brand-blue-dark rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50 shrink-0"
-                              >
-                                {downloadingId === doc.id ? "Laden\u2026" : "Download"}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {exerciseDocs.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-700 mb-3">&Uuml;bungsbezogene Unterlagen</h3>
-                        <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100 shadow-sm">
-                          {exerciseDocs.map((doc) => {
-                            const exercise = assessment.exercises.find(e => e.id === doc.exerciseId);
-                            return (
-                              <div key={doc.id} className="flex items-center justify-between px-5 py-4" data-testid={`row-document-${doc.id}`}>
-                                <div className="flex items-center gap-3 min-w-0 flex-1">
-                                  <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                                    <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
-                                    </svg>
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-sm font-medium text-brand-navy truncate">{doc.name}</p>
-                                    <p className="text-xs text-slate-400 mt-0.5">
-                                      {exercise ? exercise.name : "\u00dcbung"} &middot; {formatFileSize(doc.fileSize)}
-                                    </p>
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => handleDownload(doc.id)}
-                                  disabled={downloadingId === doc.id}
-                                  data-testid={`button-download-${doc.id}`}
-                                  className="ml-4 text-xs font-medium text-white bg-brand-blue hover:bg-brand-blue-dark rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50 shrink-0"
-                                >
-                                  {downloadingId === doc.id ? "Laden\u2026" : "Download"}
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {activeTab === "consent" && (
-              <div className="space-y-4" data-testid="tab-content-consent">
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-700">Datenschutz & Einwilligungen</h3>
-                      <p className="text-xs text-slate-400">DSGVO-konformes Consent-Management</p>
-                    </div>
-                  </div>
-
-                  {consents.length === 0 ? (
-                    <div className="bg-slate-50 rounded-xl p-6 text-center">
-                      <p className="text-sm text-slate-500">
-                        Derzeit liegen keine Einwilligungsanfragen vor.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {consents.map((consent) => (
-                        <div key={consent.id} className="flex items-center justify-between bg-slate-50 rounded-xl px-5 py-4" data-testid={`row-consent-${consent.id}`}>
-                          <div>
-                            <p className="text-sm font-medium text-slate-700">{consent.templateName}</p>
-                            <p className="text-xs text-slate-400 mt-0.5">
-                              {consent.status === "granted" && consent.grantedAt
-                                ? `Erteilt am ${formatDate(consent.grantedAt)}`
-                                : consent.status === "pending"
-                                ? "Ausstehend"
-                                : consent.status}
-                            </p>
-                          </div>
-                          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                            consent.status === "granted"
-                              ? "bg-green-100 text-green-700"
-                              : consent.status === "pending"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-slate-100 text-slate-600"
-                          }`}>
-                            {consent.status === "granted" ? "Erteilt" : consent.status === "pending" ? "Ausstehend" : consent.status}
-                          </span>
-                        </div>
-                      ))}
                     </div>
                   )}
 
-                  <div className="mt-6 pt-4 border-t border-slate-100">
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Ihre Daten werden gem&auml;&szlig; der DSGVO verarbeitet. Sie k&ouml;nnen Ihre Einwilligungen jederzeit widerrufen.
-                      Wenden Sie sich bei Fragen an den Workspace-Administrator.
-                    </p>
-                  </div>
+                  {assessment.exercises.length > 0 && (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm" data-testid="card-exercise-overview">
+                      <h3 className="text-base font-semibold text-brand-navy mb-4 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                        </svg>
+                        Ihre Übungen
+                      </h3>
+                      <div className="space-y-2">
+                        {assessment.exercises.map((exercise, index) => (
+                          <button
+                            key={exercise.id}
+                            onClick={() => setSelectedExercise(exercise.id)}
+                            data-testid={`button-overview-exercise-${exercise.id}`}
+                            className="w-full text-left bg-slate-50 hover:bg-slate-100 rounded-xl p-4 border border-slate-100 transition-colors flex items-center gap-3"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-brand-blue">{index + 1}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-700">{exercise.name}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] font-medium text-brand-blue bg-brand-blue/10 px-1.5 py-0.5 rounded-full">
+                                  {exerciseTypeLabels[exercise.type] || exercise.type}
+                                </span>
+                                {exercise.duration && (
+                                  <span className="text-[10px] text-slate-400">{exercise.duration} Min.</span>
+                                )}
+                              </div>
+                            </div>
+                            <svg className="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+
+              {currentExercise && (
+                <div className="max-w-3xl mx-auto space-y-6" data-testid="exercise-detail-panel">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <button
+                        onClick={() => setSelectedExercise(null)}
+                        data-testid="button-back-overview"
+                        className="text-xs text-slate-400 hover:text-brand-blue transition-colors flex items-center gap-1"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                        Übersicht
+                      </button>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-brand-blue/10 flex items-center justify-center shrink-0">
+                        <svg className="w-6 h-6 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d={exerciseTypeIcons[currentExercise.type] || exerciseTypeIcons.other} />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h1 className="text-xl font-bold text-brand-navy" data-testid="text-exercise-name">
+                          {currentExercise.name}
+                        </h1>
+                        <div className="flex items-center gap-3 mt-1.5">
+                          <span className="text-xs font-medium text-brand-blue bg-brand-blue/10 px-2 py-0.5 rounded-full" data-testid="text-exercise-type">
+                            {exerciseTypeLabels[currentExercise.type] || currentExercise.type}
+                          </span>
+                          {currentExercise.duration && (
+                            <span className="text-xs text-slate-500 flex items-center gap-1" data-testid="text-exercise-duration">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {currentExercise.duration} Minuten
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {currentExercise.instructions && (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm" data-testid="card-exercise-instructions">
+                      <h3 className="text-sm font-semibold text-brand-navy mb-3 flex items-center gap-2">
+                        <svg className="w-4 h-4 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        </svg>
+                        Anweisungen
+                      </h3>
+                      <div
+                        className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap"
+                        data-testid="text-exercise-instructions"
+                      >
+                        {currentExercise.instructions}
+                      </div>
+                    </div>
+                  )}
+
+                  {exerciseDocs.length > 0 && (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm" data-testid="card-exercise-documents">
+                      <h3 className="text-sm font-semibold text-brand-navy mb-3 flex items-center gap-2">
+                        <svg className="w-4 h-4 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                        Dokumente zu dieser Übung
+                      </h3>
+                      <div className="space-y-2">
+                        {exerciseDocs.map((doc) => (
+                          <div
+                            key={doc.id}
+                            className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3 border border-slate-100"
+                            data-testid={`doc-item-${doc.id}`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                              </svg>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-slate-700 truncate">{doc.name}</p>
+                                <p className="text-xs text-slate-400">{formatFileSize(doc.fileSize)}</p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleDownload(doc.id)}
+                              disabled={downloadingId === doc.id}
+                              data-testid={`button-download-${doc.id}`}
+                              className="flex items-center gap-1.5 text-xs font-medium text-brand-blue hover:text-brand-navy bg-white border border-slate-200 hover:border-brand-blue/30 rounded-lg px-3 py-1.5 transition-colors shrink-0 ml-3"
+                            >
+                              {downloadingId === doc.id ? (
+                                <div className="w-3.5 h-3.5 border border-brand-blue border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                </svg>
+                              )}
+                              Herunterladen
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {!currentExercise.instructions && exerciseDocs.length === 0 && (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-12 shadow-sm text-center" data-testid="text-no-exercise-content">
+                      <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-slate-500">Für diese Übung sind noch keine Anweisungen oder Dokumente hinterlegt.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </main>
-
-      <footer className="border-t py-6 border-slate-200 bg-white">
-        <p className="text-center text-xs text-slate-400">
-          &copy; Christoph Aldering &middot; Private initiative / concept
-        </p>
-      </footer>
     </div>
   );
 }

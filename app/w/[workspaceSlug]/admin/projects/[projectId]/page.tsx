@@ -229,6 +229,49 @@ export default async function ProjectDetailPage({ params }: Props) {
           </div>
         </section>
 
+        <section className="mb-8" data-testid="section-candidate-portal">
+          <div
+            className="rounded-xl border p-5 flex items-center justify-between"
+            style={{ borderColor: `${primary}20`, backgroundColor: bgColor }}
+          >
+            <div className="flex items-center gap-4">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                style={{ backgroundColor: `${primary}10`, color: primary }}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold" style={{ color: textColor, fontFamily: `'${headingFont}', serif` }}>
+                  Kandidat*innen-Portal
+                </h3>
+                <p className="text-xs opacity-50 mt-0.5">
+                  Zugewiesene Kandidat*innen sehen hier ihre Übungen und Unterlagen.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-xs opacity-40 hidden sm:inline" style={{ color: textColor }}>
+                /w/{params.workspaceSlug}/assessment
+              </span>
+              <Link
+                href={`/w/${params.workspaceSlug}/assessment`}
+                target="_blank"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
+                style={{ backgroundColor: primary }}
+                data-testid="link-candidate-portal"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                Portal öffnen
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {sections.map((section) => (
           <section
             key={section.titleDe}

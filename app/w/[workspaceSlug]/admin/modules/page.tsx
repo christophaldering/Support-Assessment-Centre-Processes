@@ -160,6 +160,55 @@ export default async function ModulesPage({ params }: Props) {
             className="text-lg font-bold mb-1 tracking-tight"
             style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
           >
+            Governance & Corporate Design
+          </h2>
+          <p className="text-xs opacity-40 mb-4 italic">Corporate identity guidelines and branding rule management</p>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <Link href={`${base}/brand-rules`} data-testid="link-brand-rules-module">
+              <div
+                className="rounded-xl border p-6 transition-all hover:shadow-lg group cursor-pointer"
+                style={{ borderColor: `${primary}20`, backgroundColor: bgColor }}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3
+                      className="font-semibold text-base group-hover:underline"
+                      style={{ color: primary, fontFamily: `'${headingFont}', serif` }}
+                    >
+                      Corporate Design hochladen
+                    </h3>
+                    <p className="text-xs opacity-50 mt-0.5">Brand & Style Guide Management</p>
+                  </div>
+                  <span
+                    className="text-[10px] font-bold text-white rounded-full px-2.5 py-1"
+                    style={{ backgroundColor: "#16a34a" }}
+                  >
+                    Aktiv
+                  </span>
+                </div>
+                <p className="text-sm opacity-60 leading-relaxed mb-3">
+                  Style Guides hochladen (PDF/DOCX), Branding-Regeln definieren und per KI-Analyse automatisch extrahieren lassen.
+                  Regeln auf Übungen, Dokumente und Exporte anwenden.
+                </p>
+                <div className="flex items-center gap-3 text-[11px] opacity-40">
+                  <span>KI-Analyse</span>
+                  <span>&middot;</span>
+                  <span>Regelsets</span>
+                  <span>&middot;</span>
+                  <span>CD-Varianten</span>
+                </div>
+                <span className="text-xs mt-3 inline-block opacity-40">&rarr; &Ouml;ffnen</span>
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2
+            className="text-lg font-bold mb-1 tracking-tight"
+            style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
+          >
             Weitere Module
           </h2>
           <p className="text-xs opacity-40 mb-4 italic">Additional tools and assessment instruments</p>

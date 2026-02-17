@@ -99,6 +99,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
     { title: "Berichte", href: `${base}/reports`, desc: "Ergebnisberichte & Exporte", icon: "reports" },
     { title: "Analytik", href: `${base}/analytics`, desc: "Auswertungen & Dashboard", icon: "analytics" },
     { title: "Audio-Verarbeitung", href: `${base}/audio`, desc: "Transkription & KI-Zusammenfassungen", icon: "audio" },
+    { title: "Corporate Design", href: `${base}/brand-rules`, desc: "CD-Richtlinien & Style Guides", icon: "brand" },
   ];
 
   const serializedAssessments = assessments.map((a) => {
