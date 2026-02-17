@@ -175,7 +175,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
               >
                 Enterprise Cockpit
               </h1>
-              <p className="text-sm mt-1 opacity-50">
+              <p className="text-sm mt-1 opacity-60" style={{ color: textColor }}>
                 {workspace.name} · Diagnostik-Plattform
               </p>
             </div>
@@ -195,7 +195,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       </main>
 
       <footer className="border-t py-6" style={{ borderColor: `${primary}10` }}>
-        <p className="text-center text-xs opacity-40">
+        <p className="text-center text-xs opacity-60" style={{ color: textColor }}>
           &copy; Christoph Aldering &middot; Private initiative / concept
         </p>
       </footer>

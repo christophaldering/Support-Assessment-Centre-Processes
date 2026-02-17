@@ -14,7 +14,11 @@ const ALLOWED_MIME_TYPES = [
   "application/pdf",
 ];
 
-const client = new Client();
+function getStorageClient() {
+  const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || process.env.REPLIT_DEFAULT_BUCKET_ID;
+  if (!bucketId) throw new Error("Object storage bucket not configured");
+  return new Client({ bucketId });
+}
 
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
@@ -65,6 +69,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const objectPath = `.private/observation-sheets/${workspace.id}/${uuid}_${file.name}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    const client = getStorageClient();
     await client.uploadFromBytes(objectPath, buffer);
 
     const template = await prisma.observationSheetTemplate.create({
