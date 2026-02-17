@@ -1,0 +1,44 @@
+Ich möchte mit dem Modul „Anforderungsanalyse“ beginnen.
+
+Das soll ganz einfach eine Texteingabe vorsehen (ggf. reinkopieren, später auch mit der Option „Spracheingabe“ versehen werden), über die die Ergebnisse oder Mitschnitte einer Anforderungsanalyse eingegeben werden.
+
+Auf Knopfdruck sollen dann folgende Informationen extrahiert bzw. generiert werden:
+
+Datum der Anforderungsanalyse:
+Form (telefonisch/remote/persönlich):
+Teilnehmende der Anforderungsanalyse:
+
+Unternehmen:
+Rolle/ Ziel-Funktion:	
+Besetzung ab wann:
+
+Assessment:
+Durchführungstermin:
+Art (präsent, remote, hybrid):
+Dauer (in Stunden):
+
+Durchführende (jeweils mit allen relevanten Daten: Vor-/Nachnahme, Funktion, Telefon, Email)
+Berater:
+Zweit-Berater:
+Weitere Beobachter:
+
+Kandidaten (jeweils mit allen relevanten Daten: Vor-/Nachnahme, Funktion, Telefon, Email):
+Vor- / Nachname (wenn mehrere, dann für jeden Kandidaten eine eigene Variable):
+Aktuelle Funktion:
+Aktuelles Unternehmen:
+
+Spezifische Fragestellung im Assessment / Fragen, hinsichtlich derer man sich eine Antwort wünscht: - ausführlicher in Bullit-Points
+
+Stellenspezifische Erfolgsmerkmale – zwischen 3 und 8:
+ (Was muss der Kandidat insbesondere gut können) (z. B.: versteht es, komplexe Zusammenhänge einfach zu vermitteln):
+
+Anforderungsprofil:
+a) optional: Zuordnung zu bestehendem Kompetenzmodell (hier Platzhalter, um zukünftig mit bestehenden Modellen zu verknüpfen)
+b) wenn keines ausgewählt wurde: Extrahierung relevanter Anforderungskriterien/Kompetenzen, die im Assessment beobachtet und beurteilt werden sollen (z. B. Einfühlungsvermögen, Komplexitätsreduzierung etc.) möglichst nicht zu viele!!!) – mit Auswahl- und Ergänzungs- und Lösch-Option
+
+Vorschlag geeigneter Assessment-Bausteine
+a)	Optional: Rückgriff auf bestehende Baustein-Bibliothek (hier Platzhalter, um zukünftig mit bestehenden Modellen zu verknüpfen) – mit Auswahl- und Ergänzungs- und Lösch-Option – jeweils mit Anmerkungen, wie die Übungen spezifiziert werden können bzw. mit komplexer Anweisung zur Erstellung in Form eines Prompts
+
+b)	wenn keine ausgewählt wurden: Identifizierung relevanter Beurteilungsmodule, die helfen, im Assessment die relevanten Anforderungen beobachtbar und beurteilbar zu machen (möglichst nicht zu viele!!!) – mit Auswahl- und Ergänzungs- und Lösch-Option – jeweils mit Anmerkungen, wie die Übungen spezifiziert werden können bzw. mit komplexer Anweisung zur Erstellung in Form eines Prompts
+
+Unterscheide in Input (oben auf der Seite); Output (linke Spalte) und Empfehlungen (rechte Spalte)
