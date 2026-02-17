@@ -104,12 +104,14 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     const mimeType = item.originalMimeType || "";
 
     if (fileName.endsWith(".pdf") || mimeType === "application/pdf") {
-      return new NextResponse(buffer, {
+      const bytes = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+      return new Response(bytes, {
         status: 200,
         headers: {
           "Content-Type": "application/pdf",
           "Content-Disposition": `inline; filename="${encodeURIComponent(item.originalFileName || "preview.pdf")}"`,
-          "Content-Length": buffer.length.toString(),
+          "Content-Length": buffer.byteLength.toString(),
+          "Cache-Control": "no-store",
         },
       });
     }

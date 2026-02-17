@@ -72,13 +72,15 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     const buffer = Array.isArray(rawBuffer) ? Buffer.concat(rawBuffer) : Buffer.from(rawBuffer);
     const fileName = item.originalFileName || "download";
     const mimeType = getMimeType(fileName, item.originalMimeType);
+    const bytes = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
 
-    return new NextResponse(buffer, {
+    return new Response(bytes, {
       status: 200,
       headers: {
         "Content-Type": mimeType,
         "Content-Disposition": `attachment; filename="${encodeURIComponent(fileName)}"`,
-        "Content-Length": buffer.length.toString(),
+        "Content-Length": buffer.byteLength.toString(),
+        "Cache-Control": "no-store",
       },
     });
   } catch (err) {
