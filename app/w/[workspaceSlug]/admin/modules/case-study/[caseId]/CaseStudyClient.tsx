@@ -143,22 +143,21 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
               <h2 className="text-lg font-serif font-bold text-slate-900">Your Role</h2>
               <p>
                 You have been appointed as an <strong>independent external assessor</strong> to evaluate the
-                strategic situation of <strong>Varexia SE</strong>, a diversified European conglomerate with a dual management structure.
+                strategic situation of <strong>{data.name}</strong>.
               </p>
-              <hr className="border-slate-100" />
-              <h2 className="text-lg font-serif font-bold text-slate-900">Situation</h2>
-              <p>
-                The Supervisory Board has called an extraordinary session following a <strong>significant decline in
-                market capitalization</strong> and <strong>growing investor concerns</strong> about the group&apos;s
-                conglomerate structure. Multiple business units face diverging strategic tensions,
-                and the CFO has flagged potential covenant breach risk.
-              </p>
+              {data.description && (
+                <>
+                  <hr className="border-slate-100" />
+                  <h2 className="text-lg font-serif font-bold text-slate-900">Situation</h2>
+                  <p>{data.description}</p>
+                </>
+              )}
               <hr className="border-slate-100" />
               <h2 className="text-lg font-serif font-bold text-slate-900">Your Task</h2>
               <ol className="list-decimal pl-5 space-y-3">
                 <li>Review all available materials: financial data, business unit profiles, internal communications, and balance sheet details.</li>
                 <li>Identify key patterns, tensions, and interdependencies across the organization.</li>
-                <li>Formulate a structured assessment with clear recommendations for the Executive Board.</li>
+                <li>Formulate a structured assessment with clear recommendations for the leadership team.</li>
               </ol>
               <hr className="border-slate-100" />
               <h2 className="text-lg font-serif font-bold text-slate-900">Constraints</h2>
@@ -312,7 +311,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
                     ))}
                     <tr className="bg-slate-100 border-t-2 border-slate-200">
                       <td className="px-6 py-2 font-bold text-xs text-slate-900">Total Non-Current Assets</td>
-                      <td className="text-right px-6 py-2 font-bold text-xs font-mono text-slate-900">€61,747.00</td>
+                      <td className="text-right px-6 py-2 font-bold text-xs font-mono text-slate-900">{formatCurrency(data.detailedBalanceSheet.assets.nonCurrent.reduce((s, i) => s + i.value, 0))}</td>
                     </tr>
                     <tr className="bg-slate-50/50"><td className="px-6 py-2 font-bold text-slate-700 text-xs uppercase" colSpan={2}>Current Assets</td></tr>
                     {data.detailedBalanceSheet.assets.current.map((item) => (
@@ -323,11 +322,11 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
                     ))}
                     <tr className="bg-slate-100 border-t-2 border-slate-200">
                       <td className="px-6 py-2 font-bold text-xs text-slate-900">Total Current Assets</td>
-                      <td className="text-right px-6 py-2 font-bold text-xs font-mono text-slate-900">€17,993.00</td>
+                      <td className="text-right px-6 py-2 font-bold text-xs font-mono text-slate-900">{formatCurrency(data.detailedBalanceSheet.assets.current.reduce((s, i) => s + i.value, 0))}</td>
                     </tr>
                     <tr className="bg-slate-800 text-white">
                       <td className="px-6 py-2 font-bold text-xs">TOTAL ASSETS</td>
-                      <td className="text-right px-6 py-2 font-bold text-xs font-mono">€79,740.00</td>
+                      <td className="text-right px-6 py-2 font-bold text-xs font-mono">{formatCurrency([...data.detailedBalanceSheet.assets.nonCurrent, ...data.detailedBalanceSheet.assets.current].reduce((s, i) => s + i.value, 0))}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -355,7 +354,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
                     ))}
                     <tr className="bg-slate-100 border-t-2 border-slate-200">
                       <td className="px-6 py-2 font-bold text-xs text-slate-900">Total Equity</td>
-                      <td className="text-right px-6 py-2 font-bold text-xs font-mono text-slate-900">€21,904.00</td>
+                      <td className="text-right px-6 py-2 font-bold text-xs font-mono text-slate-900">{formatCurrency(data.detailedBalanceSheet.equityLiabilities.equity.reduce((s, i) => s + i.value, 0))}</td>
                     </tr>
                     <tr className="bg-slate-50/50"><td className="px-6 py-2 font-bold text-slate-700 text-xs uppercase" colSpan={2}>Non-Current Liabilities</td></tr>
                     {data.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities.map((item) => (
@@ -366,7 +365,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
                     ))}
                     <tr className="bg-slate-100 border-t-2 border-slate-200">
                       <td className="px-6 py-2 font-bold text-xs text-slate-900">Total Non-Current Liab.</td>
-                      <td className="text-right px-6 py-2 font-bold text-xs font-mono text-slate-900">€43,853.00</td>
+                      <td className="text-right px-6 py-2 font-bold text-xs font-mono text-slate-900">{formatCurrency(data.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities.reduce((s, i) => s + i.value, 0))}</td>
                     </tr>
                     <tr className="bg-slate-50/50"><td className="px-6 py-2 font-bold text-slate-700 text-xs uppercase" colSpan={2}>Current Liabilities</td></tr>
                     {data.detailedBalanceSheet.equityLiabilities.currentLiabilities.map((item) => (
@@ -377,11 +376,11 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
                     ))}
                     <tr className="bg-slate-100 border-t-2 border-slate-200">
                       <td className="px-6 py-2 font-bold text-xs text-slate-900">Total Current Liab.</td>
-                      <td className="text-right px-6 py-2 font-bold text-xs font-mono text-slate-900">€13,983.00</td>
+                      <td className="text-right px-6 py-2 font-bold text-xs font-mono text-slate-900">{formatCurrency(data.detailedBalanceSheet.equityLiabilities.currentLiabilities.reduce((s, i) => s + i.value, 0))}</td>
                     </tr>
                     <tr className="bg-slate-800 text-white">
                       <td className="px-6 py-2 font-bold text-xs">TOTAL EQUITY & LIAB.</td>
-                      <td className="text-right px-6 py-2 font-bold text-xs font-mono">€79,740.00</td>
+                      <td className="text-right px-6 py-2 font-bold text-xs font-mono">{formatCurrency([...data.detailedBalanceSheet.equityLiabilities.equity, ...data.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities, ...data.detailedBalanceSheet.equityLiabilities.currentLiabilities].reduce((s, i) => s + i.value, 0))}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -427,24 +426,21 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
             </div>
 
             <div className="rounded-xl border border-slate-200 p-6">
-              <h3 className="font-serif font-bold text-slate-900 mb-4">Corporate Structure & Governance</h3>
+              <h3 className="font-serif font-bold text-slate-900 mb-4">Key Figures</h3>
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-700 mb-2">Organization</h4>
+                  <h4 className="text-sm font-semibold text-slate-700 mb-2">Overview</h4>
                   <ul className="list-disc pl-5 space-y-1.5 text-sm text-slate-600">
-                    <li><strong>Legal Form:</strong> European Stock Corporation (SE)</li>
-                    <li><strong>Management Structure:</strong> Dual Board (Management Board + Supervisory Board)</li>
-                    <li><strong>Headquarters:</strong> Europe</li>
-                    <li><strong>Listing:</strong> Publicly Listed</li>
+                    <li><strong>Company:</strong> {data.name}</li>
+                    <li><strong>Business Units:</strong> {data.businessUnits.length}</li>
+                    <li><strong>Total Employees:</strong> {data.businessUnits.reduce((s, bu) => s + bu.employees, 0).toLocaleString()} FTE</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-700 mb-2">Key Figures</h4>
+                  <h4 className="text-sm font-semibold text-slate-700 mb-2">Financial Summary</h4>
                   <ul className="list-disc pl-5 space-y-1.5 text-sm text-slate-600">
-                    <li><strong>Total Employees:</strong> 284,000 FTE</li>
-                    <li><strong>Market Cap:</strong> €28.7 bn (Significant recent decline)</li>
-                    <li><strong>Group Revenue:</strong> €42.0 bn</li>
-                    <li><strong>Group EBIT:</strong> €1.4 bn</li>
+                    <li><strong>Group Revenue:</strong> €{data.businessUnits.reduce((s, bu) => s + bu.revenue, 0).toFixed(1)} bn</li>
+                    <li><strong>Group EBITDA:</strong> €{data.businessUnits.reduce((s, bu) => s + bu.ebitda, 0).toFixed(1)} bn</li>
                   </ul>
                 </div>
               </div>
@@ -503,7 +499,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
                   ))}
                   <div className="flex justify-between py-2 font-bold text-sm border-t-2 border-slate-200 mt-1">
                     <span>Total</span>
-                    <span className="font-mono">€79.74bn</span>
+                    <span className="font-mono">€{data.balanceSheet.filter((b) => b.type === "asset").reduce((s, i) => s + i.value, 0).toFixed(2)}bn</span>
                   </div>
                 </div>
                 <div>
@@ -516,7 +512,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
                   ))}
                   <div className="flex justify-between py-2 font-bold text-sm border-t-2 border-slate-200 mt-1">
                     <span>Total</span>
-                    <span className="font-mono">€79.74bn</span>
+                    <span className="font-mono">€{data.balanceSheet.filter((b) => b.type === "liability").reduce((s, i) => s + i.value, 0).toFixed(2)}bn</span>
                   </div>
                 </div>
               </div>
