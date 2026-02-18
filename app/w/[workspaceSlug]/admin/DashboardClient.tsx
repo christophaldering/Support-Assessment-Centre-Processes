@@ -156,7 +156,7 @@ export default function DashboardClient({
       const newAssessment = await res.json();
       setShowCreate(false);
       setForm({ name: "", description: "", clientName: "", startDate: "", endDate: "", designMode: "classic", copyFromId: "", autoDeleteDays: "" });
-      router.push(`${base}/projects/${newAssessment.id}`);
+      router.push(`${base}/assessments/${newAssessment.id}`);
     } catch {
       setError("Netzwerkfehler");
       setCreating(false);
@@ -456,7 +456,7 @@ export default function DashboardClient({
                       <div
                         key={a.id}
                         className="flex items-center gap-4 px-5 py-3.5 cursor-pointer transition-colors hover:bg-slate-50/50 group"
-                        onClick={() => router.push(`${base}/projects/${a.id}`)}
+                        onClick={() => router.push(`${base}/assessments/${a.id}`)}
                         data-testid={`row-assessment-${a.id}`}
                       >
                         <div
