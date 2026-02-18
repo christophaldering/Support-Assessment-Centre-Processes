@@ -154,39 +154,63 @@ Wenn du genügend Informationen hast, fasse zusammen und frage nach Bestätigung
   return response.choices[0]?.message?.content || "";
 }
 
-export async function generateTags(params: {
+export async function generateTagsAndTitle(params: {
   title: string;
   description?: string | null;
   type: string;
   fileName?: string | null;
-}): Promise<string[]> {
+  sourceContext?: string | null;
+  author?: string | null;
+}): Promise<{ tags: string[]; suggestedTitle: string }> {
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-5-nano",
       messages: [
         {
           role: "system",
-          content: `Du bist ein Experte für Assessment Center und Kompetenzdiagnostik. Generiere relevante Tags/Schlagwörter für eine Übung oder Vorlage basierend auf den gegebenen Informationen. Antworte ausschließlich in validem JSON mit folgender Struktur: {"tags": ["Tag1", "Tag2", ...]}. Generiere 3-8 prägnante, relevante Tags auf Deutsch. Tags sollten Themen, Kompetenzen, Methoden oder Zielgruppen beschreiben.`,
+          content: `Du bist ein Experte für Assessment Center und Kompetenzdiagnostik. Analysiere die folgenden Informationen über einen Assessment-Baustein und generiere:
+1. Einen spezifischen, beschreibenden Titel (suggestedTitle) basierend auf dem Inhalt. Format: "[Übungstyp] – [Kontext/Unternehmen] – [Kurzbeschreibung]" z.B. "Interview-Leitfaden – Varexia SE – CFO-Nachfolge Strategiegespräch"
+2. 5-10 relevante Tags auf Deutsch, die UNBEDINGT enthalten sollen (wenn aus den Informationen ableitbar):
+   - Name des simulierten Unternehmens (z.B. "Varexia SE", "TechCorp GmbH")
+   - Rolle/Position (z.B. "CFO", "Vorstandsvorsitzender", "Bereichsleiter")
+   - Gesprächspartner / wer spricht mit wem (z.B. "Mitarbeitergespräch", "Vorstandsdialog", "Kundengespräch")
+   - Kompetenzen und Themen (z.B. "Strategisches Denken", "Konfliktmanagement")
+   - Methode/Format (z.B. "Einzelinterview", "Gruppendiskussion", "Rollenspiel")
+
+Antworte ausschließlich in validem JSON: {"suggestedTitle": "...", "tags": ["Tag1", "Tag2", ...]}`,
         },
         {
           role: "user",
-          content: `Titel: ${params.title}\nTyp: ${params.type}${params.description ? `\nBeschreibung: ${params.description}` : ""}${params.fileName ? `\nDateiname: ${params.fileName}` : ""}`,
+          content: `Titel: ${params.title}\nTyp: ${params.type}${params.description ? `\nBeschreibung: ${params.description}` : ""}${params.fileName ? `\nDateiname: ${params.fileName}` : ""}${params.sourceContext ? `\nUrsprünglich konzipiert für: ${params.sourceContext}` : ""}${params.author ? `\nAutor: ${params.author}` : ""}`,
         },
       ],
       response_format: { type: "json_object" },
-      max_completion_tokens: 256,
+      max_completion_tokens: 512,
     });
 
     const content = response.choices[0]?.message?.content || "{}";
     const parsed = JSON.parse(content);
-    if (Array.isArray(parsed.tags)) {
-      return parsed.tags.filter((t: unknown) => typeof t === "string" && t.trim().length > 0);
-    }
-    return [];
+    const tags = Array.isArray(parsed.tags)
+      ? parsed.tags.filter((t: unknown) => typeof t === "string" && t.trim().length > 0)
+      : [];
+    const suggestedTitle = typeof parsed.suggestedTitle === "string" && parsed.suggestedTitle.trim()
+      ? parsed.suggestedTitle.trim()
+      : params.title;
+    return { tags, suggestedTitle };
   } catch (error) {
-    console.error("AI tag generation failed:", error);
-    return [];
+    console.error("AI tag+title generation failed:", error);
+    return { tags: [], suggestedTitle: params.title };
   }
+}
+
+export async function generateTags(params: {
+  title: string;
+  description?: string | null;
+  type: string;
+  fileName?: string | null;
+}): Promise<string[]> {
+  const result = await generateTagsAndTitle(params);
+  return result.tags;
 }
 
 export async function coCreationExtract(

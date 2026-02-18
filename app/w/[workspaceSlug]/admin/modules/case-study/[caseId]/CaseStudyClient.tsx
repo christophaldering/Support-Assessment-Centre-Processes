@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import type { CaseStudyData, AssessmentQuestions } from "@/lib/case-studies/varexia";
 
@@ -37,13 +37,18 @@ interface Props {
   data: CaseStudyData;
   questions: AssessmentQuestions;
   workspaceSlug: string;
+  logoUrl?: string | null;
+  caseStudyId?: string | null;
 }
 
-export default function CaseStudyClient({ data, questions, workspaceSlug }: Props) {
+export default function CaseStudyClient({ data, questions, workspaceSlug, logoUrl, caseStudyId }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("briefing");
   const [selectedEmailId, setSelectedEmailId] = useState<string>("");
   const [selectedProtocolId, setSelectedProtocolId] = useState<string>("");
   const [selectedNewsId, setSelectedNewsId] = useState<string>("");
+  const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(logoUrl || null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const internalEmails = data.emails.filter((e) => e.category === "internal");
   const externalEmails = data.emails.filter((e) => e.category === "external");
@@ -67,6 +72,9 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
             >
               ← Module
             </Link>
+            {currentLogoUrl && (
+              <img src={currentLogoUrl} alt={`${data.name} Logo`} className="h-7 w-auto object-contain" data-testid="img-case-logo" />
+            )}
             <span className="text-sm font-bold tracking-tight font-serif">{data.name}</span>
             <span className="text-[10px] text-white/40 uppercase tracking-widest">Case Study</span>
           </div>
@@ -98,6 +106,61 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
               </button>
             ))}
           </div>
+
+          {caseStudyId && (
+            <div className="px-3 py-4 border-t border-slate-200 mt-auto">
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-2 px-1">Branding</p>
+              <div className="flex items-center gap-2">
+                {currentLogoUrl ? (
+                  <div className="flex items-center gap-2 w-full">
+                    <img src={currentLogoUrl} alt="Logo" className="h-8 w-auto object-contain rounded bg-white border border-slate-200 p-1" />
+                    <button
+                      onClick={() => logoInputRef.current?.click()}
+                      className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
+                      data-testid="button-change-logo"
+                    >
+                      Ändern
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={uploadingLogo}
+                    className="w-full text-xs text-slate-500 hover:text-slate-700 bg-white border border-dashed border-slate-300 hover:border-slate-400 rounded-lg px-3 py-2 transition-colors text-center"
+                    data-testid="button-upload-logo"
+                  >
+                    {uploadingLogo ? "Wird hochgeladen..." : "Logo hochladen"}
+                  </button>
+                )}
+              </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !caseStudyId) return;
+                  setUploadingLogo(true);
+                  try {
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    const res = await fetch(`/api/w/${workspaceSlug}/case-studies/${caseStudyId}/logo`, {
+                      method: "POST",
+                      body: formData,
+                    });
+                    if (res.ok) {
+                      const data = await res.json();
+                      setCurrentLogoUrl(data.logoUrl + "?t=" + Date.now());
+                    }
+                  } catch {}
+                  setUploadingLogo(false);
+                  e.target.value = "";
+                }}
+                data-testid="input-logo-file"
+              />
+            </div>
+          )}
         </nav>
 
         <main className="flex-1 min-w-0 overflow-y-auto">
@@ -247,9 +310,16 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
 
             {activeTab === "strategy" && (
               <div className="space-y-8" data-testid="section-strategy">
-                <div>
-                  <h1 className="text-2xl font-serif font-bold text-slate-900 mb-1">Strategie</h1>
-                  <p className="text-sm text-slate-400">Key strategic tensions, analyst assessment & leadership insights</p>
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-amber-900 via-amber-800 to-amber-700 p-8 text-white">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute bottom-0 left-0 w-40 h-40 bg-amber-500/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-100 border border-white/20 text-xs font-medium mb-3">
+                      Strategic Analysis
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold mb-1">Strategie</h1>
+                    <p className="text-amber-200 text-sm">Key strategic tensions, analyst assessment & leadership insights</p>
+                  </div>
                 </div>
 
                 <div className="rounded-xl border border-slate-200 p-6">
@@ -322,9 +392,15 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
 
             {activeTab === "products" && (
               <div className="space-y-8" data-testid="section-products">
-                <div>
-                  <h1 className="text-2xl font-serif font-bold text-slate-900 mb-1">Business Unit Profiles</h1>
-                  <p className="text-sm text-slate-400">FY 2025 Snapshot · Detailed business unit analysis</p>
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-800 p-8 text-white">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-blue-100 border border-white/20 text-xs font-medium mb-3">
+                      Business Units
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold mb-1">Business Unit Profiles</h1>
+                    <p className="text-blue-200 text-sm">FY 2025 Snapshot · Detailed business unit analysis</p>
+                  </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-5">
                   {data.businessUnits.map((bu) => (
@@ -410,9 +486,15 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
 
             {activeTab === "financials" && (
               <div className="space-y-8" data-testid="section-financials">
-                <div>
-                  <h1 className="text-2xl font-serif font-bold text-slate-900 mb-1">Financials</h1>
-                  <p className="text-sm text-slate-400">Consolidated financial data · FY 2025</p>
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-800 p-8 text-white">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-emerald-100 border border-white/20 text-xs font-medium mb-3">
+                      Financial Analysis
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold mb-1">Financials</h1>
+                    <p className="text-emerald-200 text-sm">Consolidated financial data · FY 2025</p>
+                  </div>
                 </div>
 
                 <div className="rounded-xl border border-slate-200 p-6">
@@ -658,9 +740,15 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
 
             {activeTab === "protocols" && (
               <div className="space-y-6" data-testid="section-protocols">
-                <div>
-                  <h1 className="text-2xl font-serif font-bold text-slate-900 mb-1">Protokolle</h1>
-                  <p className="text-sm text-slate-400">Meeting minutes, workshop protocols & committee notes</p>
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-violet-800 p-8 text-white">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-purple-100 border border-white/20 text-xs font-medium mb-3">
+                      Meeting Protocols
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold mb-1">Protokolle</h1>
+                    <p className="text-purple-200 text-sm">Meeting minutes, workshop protocols & committee notes</p>
+                  </div>
                 </div>
                 {data.protocols && data.protocols.length > 0 ? (
                   <div className="flex gap-4 h-[calc(100vh-14rem)]">
@@ -718,9 +806,15 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
 
             {activeTab === "news" && (
               <div className="space-y-6" data-testid="section-news">
-                <div>
-                  <h1 className="text-2xl font-serif font-bold text-slate-900 mb-1">News</h1>
-                  <p className="text-sm text-slate-400">External press coverage & industry analysis</p>
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-rose-900 via-rose-800 to-pink-800 p-8 text-white">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-rose-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-rose-100 border border-white/20 text-xs font-medium mb-3">
+                      News & Media
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold mb-1">News</h1>
+                    <p className="text-rose-200 text-sm">External press coverage & industry analysis</p>
+                  </div>
                 </div>
                 {data.newsArticles && data.newsArticles.length > 0 ? (
                   selectedNews ? (
@@ -768,9 +862,15 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
 
             {activeTab === "internal-comms" && (
               <div className="space-y-6" data-testid="section-internal-comms">
-                <div>
-                  <h1 className="text-2xl font-serif font-bold text-slate-900 mb-1">Interne Kommunikation</h1>
-                  <p className="text-sm text-slate-400">Internal emails, memos & correspondence</p>
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-cyan-900 via-cyan-800 to-teal-700 p-8 text-white">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-cyan-100 border border-white/20 text-xs font-medium mb-3">
+                      Internal Communications
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold mb-1">Interne Kommunikation</h1>
+                    <p className="text-cyan-200 text-sm">Internal emails, memos & correspondence</p>
+                  </div>
                 </div>
                 <EmailListPanel
                   emails={internalEmails}
@@ -782,9 +882,15 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
 
             {activeTab === "external-comms" && (
               <div className="space-y-6" data-testid="section-external-comms">
-                <div>
-                  <h1 className="text-2xl font-serif font-bold text-slate-900 mb-1">Externe Kommunikation</h1>
-                  <p className="text-sm text-slate-400">External correspondence, analyst requests & customer communications</p>
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-900 via-indigo-800 to-blue-900 p-8 text-white">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-indigo-100 border border-white/20 text-xs font-medium mb-3">
+                      External Communications
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold mb-1">Externe Kommunikation</h1>
+                    <p className="text-indigo-200 text-sm">External correspondence, analyst requests & customer communications</p>
+                  </div>
                 </div>
                 <EmailListPanel
                   emails={externalEmails}
@@ -796,9 +902,15 @@ export default function CaseStudyClient({ data, questions, workspaceSlug }: Prop
 
             {activeTab === "hr-dashboard" && (
               <div className="space-y-8" data-testid="section-hr-dashboard">
-                <div>
-                  <h1 className="text-2xl font-serif font-bold text-slate-900 mb-1">HR-Dashboard</h1>
-                  <p className="text-sm text-slate-400">Leadership pulse survey, employee feedback & organizational health</p>
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-orange-900 via-orange-800 to-amber-800 p-8 text-white">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-orange-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-orange-100 border border-white/20 text-xs font-medium mb-3">
+                      HR Analytics
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold mb-1">HR-Dashboard</h1>
+                    <p className="text-orange-200 text-sm">Leadership pulse survey, employee feedback & organizational health</p>
+                  </div>
                 </div>
 
                 {data.hrSurvey && data.hrSurvey.categories.length > 0 && (

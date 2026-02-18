@@ -68,7 +68,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 
   try {
     const body = await req.json();
-    const { title, subtitle, companyName, description, type, difficulty, dataJson, questionsJson, status } = body;
+    const { title, subtitle, companyName, description, type, difficulty, dataJson, questionsJson, status, referenceDate, logoUrl } = body;
 
     const updated = await prisma.caseStudy.update({
       where: { id: params.caseStudyId },
@@ -82,6 +82,8 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
         ...(dataJson !== undefined && { dataJson }),
         ...(questionsJson !== undefined && { questionsJson }),
         ...(status !== undefined && { status }),
+        ...(referenceDate !== undefined && { referenceDate }),
+        ...(logoUrl !== undefined && { logoUrl }),
       },
     });
 

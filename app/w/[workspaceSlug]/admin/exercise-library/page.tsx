@@ -711,13 +711,15 @@ export default function ExerciseLibraryPage() {
             exerciseType: pf.exerciseType,
             fileName: pf.file.name,
             description: "",
+            sourceContext: pf.sourceContext,
+            author: pf.author,
           }),
         });
         const data = res.ok ? await res.json() : { tags: [], title };
         results.push({
           fileIndex: i,
           fileName: pf.file.name,
-          generatedTitle: data.title || title,
+          generatedTitle: data.suggestedTitle || data.title || title,
           suggestedTags: data.tags || [],
           exerciseType: pf.exerciseType,
           targetLevels: [...pf.targetLevels],

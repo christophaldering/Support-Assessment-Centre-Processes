@@ -177,6 +177,8 @@ export default async function CaseStudyPage({ params }: Props) {
       data={data}
       questions={questions}
       workspaceSlug={params.workspaceSlug}
+      logoUrl={caseStudy.logoUrl}
+      caseStudyId={caseStudy.id}
     />
   );
 }

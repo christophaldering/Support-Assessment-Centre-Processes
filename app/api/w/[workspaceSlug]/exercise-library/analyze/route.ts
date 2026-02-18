@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasAnyPermission } from "@/lib/rbac";
-import { generateTags } from "@/lib/ai";
+import { generateTagsAndTitle } from "@/lib/ai";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -21,20 +21,22 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   try {
     const body = await req.json();
-    const { title, exerciseType, fileName, description } = body;
+    const { title, exerciseType, fileName, description, sourceContext, author } = body;
 
     if (!title || !exerciseType) {
       return NextResponse.json({ error: "Title and exerciseType are required" }, { status: 400 });
     }
 
-    const tags = await generateTags({
+    const { tags, suggestedTitle } = await generateTagsAndTitle({
       title,
       description: description || null,
       type: exerciseType,
       fileName: fileName || null,
+      sourceContext: sourceContext || null,
+      author: author || null,
     });
 
-    return NextResponse.json({ tags, title });
+    return NextResponse.json({ tags, suggestedTitle, title });
   } catch (error) {
     console.error("Analyze error:", error);
     return NextResponse.json({ error: "Analyse fehlgeschlagen" }, { status: 500 });

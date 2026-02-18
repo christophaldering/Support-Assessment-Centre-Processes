@@ -81,7 +81,9 @@ Wichtige Regeln:
 - Realistische Finanzkennzahlen die zueinander passen
 - 4 Analysefragen und 4 Schlussfolgerungsfragen
 - Alle Texte auf Englisch (wie Varexia SE Referenz)
-- Antworte AUSSCHLIESSLICH mit validem JSON, kein zusätzlicher Text`;
+- Antworte AUSSCHLIESSLICH mit validem JSON, kein zusätzlicher Text
+
+Wenn ein Referenzdatum (Stichtag) angegeben ist, MÜSSEN alle Datumsangaben, Geschäftsjahre, E-Mail-Daten und Finanzkennzahlen konsistent zu diesem Stichtag sein. Das Referenzdatum ist der "heutige Tag" in der Fallstudie. Alle E-Mails sollten Daten innerhalb der letzten 1-3 Monate vor dem Stichtag haben. Finanzberichte sollten das Geschäftsjahr vor dem Stichtag abdecken.`;
 
 const UPLOAD_PARSE_PROMPT = `Du bist ein Experte für Executive Assessment Center. Dir wird der Textinhalt eines hochgeladenen Dokuments gegeben, das eine Fallstudie für ein Assessment Center enthält.
 
@@ -130,12 +132,30 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         targetLevel,
         difficulty,
         language,
+        referenceDate,
+        documentPlan,
       } = genParams || {};
 
       if (!industry || !strategicSituation) {
         return NextResponse.json({
           error: "Branche und strategische Situation sind erforderlich",
         }, { status: 400 });
+      }
+
+      let documentPlanInstructions = "";
+      if (documentPlan && Array.isArray(documentPlan.documents)) {
+        const selected = documentPlan.documents.filter((d: any) => d.selected !== false);
+        const emailDocs = selected.filter((d: any) => d.category === "email");
+        const protocolDocs = selected.filter((d: any) => d.category === "protocol");
+        const newsDocs = selected.filter((d: any) => d.category === "news");
+        const otherDocs = selected.filter((d: any) => !["email", "protocol", "news"].includes(d.category));
+
+        documentPlanInstructions = `\n\nDer Benutzer hat folgende Dokumente ausgewählt. Erstelle die Fallstudie mit GENAU diesen Dokumenten:
+Unternehmensname: ${documentPlan.companyName || "Bitte wählen"}
+${emailDocs.length > 0 ? `\nE-Mails (${emailDocs.length}):\n${emailDocs.map((d: any) => `- "${d.title}" von ${d.author}: ${d.description}`).join("\n")}` : ""}
+${protocolDocs.length > 0 ? `\nProtokolle (${protocolDocs.length}):\n${protocolDocs.map((d: any) => `- "${d.title}" von ${d.author}: ${d.description}`).join("\n")}` : ""}
+${newsDocs.length > 0 ? `\nNachrichtenartikel (${newsDocs.length}):\n${newsDocs.map((d: any) => `- "${d.title}": ${d.description}`).join("\n")}` : ""}
+${otherDocs.length > 0 ? `\nWeitere Dokumente (${otherDocs.length}):\n${otherDocs.map((d: any) => `- [${d.category}] "${d.title}": ${d.description}`).join("\n")}` : ""}`;
       }
 
       const userPrompt = `Erstelle eine Fallstudie mit folgenden Parametern:
@@ -147,7 +167,7 @@ Finanzielles Szenario: ${financialScenario || "Herausfordernd"}
 Kernspannungen: ${keyTensions || "Nicht spezifiziert"}
 Zielgruppe/Level: ${targetLevel || "SE-Level/Vorstand"}
 Schwierigkeitsgrad: ${difficulty || "Hoch"}
-Sprache der Inhalte: ${language || "Englisch"}`;
+Sprache der Inhalte: ${language || "Englisch"}${referenceDate ? `\nReferenzdatum (Stichtag): ${referenceDate}` : ""}${documentPlanInstructions}`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -185,6 +205,7 @@ Sprache der Inhalte: ${language || "Englisch"}`;
           sourceType: "ai_generated",
           aiGenerated: true,
           status: "draft",
+          referenceDate: referenceDate || null,
           createdById: session?.userId || null,
         },
       });

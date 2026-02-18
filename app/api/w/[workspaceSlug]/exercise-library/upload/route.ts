@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasAnyPermission } from "@/lib/rbac";
 import { Client } from "@replit/object-storage";
-import { generateTags } from "@/lib/ai";
+import { generateTagsAndTitle } from "@/lib/ai";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -125,17 +125,20 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       },
     });
 
-    generateTags({
+    generateTagsAndTitle({
       title,
       description: description ?? null,
       type: exerciseType,
       fileName: file.name,
-    }).then(async (aiTags) => {
-      if (aiTags.length > 0) {
-        const mergedTags = Array.from(new Set([...tags, ...aiTags]));
+      sourceContext: metadataJson?.sourceContext || null,
+      author: metadataJson?.author || null,
+    }).then(async (result) => {
+      if (result.tags.length > 0 || result.suggestedTitle !== title) {
+        const mergedTags = Array.from(new Set([...tags, ...result.tags]));
+        const updateData: any = { tags: mergedTags };
         await prisma.exerciseLibraryItem.update({
           where: { id: item.id },
-          data: { tags: mergedTags },
+          data: updateData,
         });
       }
     }).catch((err) => {

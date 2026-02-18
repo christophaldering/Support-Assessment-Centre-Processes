@@ -15,10 +15,11 @@ interface CaseStudySummary {
   sourceType: string;
   status: string;
   aiGenerated: boolean;
+  referenceDate: string | null;
   createdAt: string;
 }
 
-type Mode = "list" | "choose" | "upload" | "generate" | "preview";
+type Mode = "list" | "choose" | "upload" | "generate" | "plan" | "preview";
 
 interface GenerateParams {
   industry: string;
@@ -28,6 +29,23 @@ interface GenerateParams {
   keyTensions: string;
   targetLevel: string;
   difficulty: string;
+  referenceDate: string;
+}
+
+interface PlannedDocument {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  author: string;
+  importance: string;
+  selected: boolean;
+}
+
+interface DocumentPlan {
+  companyName: string;
+  companyDescription: string;
+  documents: PlannedDocument[];
 }
 
 export default function CaseStudyBuilderPage() {
@@ -54,9 +72,12 @@ export default function CaseStudyBuilderPage() {
     keyTensions: "",
     targetLevel: "SE-Level / Vorstand",
     difficulty: "Hoch",
+    referenceDate: "",
   });
 
   const [previewData, setPreviewData] = useState<any>(null);
+  const [documentPlan, setDocumentPlan] = useState<DocumentPlan | null>(null);
+  const [planning, setPlanning] = useState(false);
 
   useEffect(() => {
     fetchCaseStudies();
@@ -144,7 +165,93 @@ export default function CaseStudyBuilderPage() {
     }
   }
 
-  async function handleGenerate() {
+  async function handlePlanDocuments() {
+    if (!genParams.industry || !genParams.strategicSituation) {
+      setError("Branche und strategische Situation sind Pflichtfelder");
+      return;
+    }
+    setError("");
+    setPlanning(true);
+
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/case-studies/plan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(genParams),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Planung fehlgeschlagen");
+        setPlanning(false);
+        return;
+      }
+
+      const plan = await res.json();
+      setDocumentPlan(plan);
+      setMode("plan");
+    } catch {
+      setError("Fehler bei der Dokumentenplanung");
+    } finally {
+      setPlanning(false);
+    }
+  }
+
+  function toggleDocument(docId: string) {
+    if (!documentPlan) return;
+    setDocumentPlan({
+      ...documentPlan,
+      documents: documentPlan.documents.map((d) =>
+        d.id === docId ? { ...d, selected: !d.selected } : d
+      ),
+    });
+  }
+
+  function updateDocumentField(docId: string, field: keyof PlannedDocument, value: string) {
+    if (!documentPlan) return;
+    setDocumentPlan({
+      ...documentPlan,
+      documents: documentPlan.documents.map((d) =>
+        d.id === docId ? { ...d, [field]: value } : d
+      ),
+    });
+  }
+
+  async function handleGenerateFromPlan() {
+    if (!documentPlan) return;
+    setError("");
+    setGenerating(true);
+
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/case-studies/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "generate",
+          params: { ...genParams, documentPlan },
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Generierung fehlgeschlagen");
+        setGenerating(false);
+        return;
+      }
+
+      const data = await res.json();
+      setPreviewData(data);
+      setSuccess("Fallstudie erfolgreich generiert!");
+      setMode("preview");
+      fetchCaseStudies();
+    } catch {
+      setError("Fehler bei der Generierung");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function handleGenerateDirect() {
     if (!genParams.industry || !genParams.strategicSituation) {
       setError("Branche und strategische Situation sind Pflichtfelder");
       return;
@@ -218,7 +325,6 @@ export default function CaseStudyBuilderPage() {
     const map: Record<string, { label: string; color: string }> = {
       draft: { label: "Entwurf", color: "#f59e0b" },
       active: { label: "Aktiv", color: "#16a34a" },
-      archived: { label: "Archiviert", color: "#6b7280" },
     };
     const info = map[s] || { label: s, color: "#6b7280" };
     return (
@@ -367,15 +473,6 @@ export default function CaseStudyBuilderPage() {
                             data-testid={`button-activate-${cs.id}`}
                           >
                             Aktivieren
-                          </button>
-                        )}
-                        {cs.status === "active" && (
-                          <button
-                            onClick={() => handleStatusChange(cs.id, "archived")}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
-                            data-testid={`button-archive-${cs.id}`}
-                          >
-                            Archivieren
                           </button>
                         )}
                         <button
@@ -639,7 +736,7 @@ export default function CaseStudyBuilderPage() {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Zielgruppe / Level</label>
                   <select
@@ -667,9 +764,25 @@ export default function CaseStudyBuilderPage() {
                     <option value="Niedrig">Niedrig</option>
                   </select>
                 </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Referenzdatum (Stichtag)
+                </label>
+                <input
+                  type="date"
+                  value={genParams.referenceDate}
+                  onChange={(e) => setGenParams({ ...genParams, referenceDate: e.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                  data-testid="input-reference-date"
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Alle Daten, Geschäftsjahre und E-Mails werden konsistent zu diesem Stichtag generiert
+                </p>
+              </div>
               </div>
 
-              <div className="pt-4 flex justify-between">
+              <div className="pt-4 flex justify-between items-center">
                 <button
                   onClick={() => setMode("choose")}
                   className="px-5 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:border-slate-300 transition-colors"
@@ -677,22 +790,164 @@ export default function CaseStudyBuilderPage() {
                 >
                   ← Zurück
                 </button>
-                <button
-                  onClick={handleGenerate}
-                  disabled={generating || !genParams.industry || !genParams.strategicSituation}
-                  className="px-6 py-2.5 rounded-lg text-white text-sm font-medium disabled:opacity-50 hover:opacity-90 transition-colors"
-                  style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
-                  data-testid="button-generate"
-                >
-                  {generating ? (
-                    <span className="flex items-center gap-2">
-                      <span className="animate-spin">⚙️</span> KI generiert Fallstudie...
-                    </span>
-                  ) : (
-                    "Fallstudie generieren →"
-                  )}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleGenerateDirect}
+                    disabled={generating || planning || !genParams.industry || !genParams.strategicSituation}
+                    className="px-5 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:border-slate-300 transition-colors disabled:opacity-50"
+                    data-testid="button-generate-direct"
+                  >
+                    {generating ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin">⚙️</span> Generiert...
+                      </span>
+                    ) : (
+                      "Direkt generieren"
+                    )}
+                  </button>
+                  <button
+                    onClick={handlePlanDocuments}
+                    disabled={planning || generating || !genParams.industry || !genParams.strategicSituation}
+                    className="px-6 py-2.5 rounded-lg text-white text-sm font-medium disabled:opacity-50 hover:opacity-90 transition-colors"
+                    style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
+                    data-testid="button-plan-documents"
+                  >
+                    {planning ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin">⚙️</span> Dokumente werden geplant...
+                      </span>
+                    ) : (
+                      "Dokumente planen →"
+                    )}
+                  </button>
+                </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {mode === "plan" && documentPlan && (
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-2xl font-bold tracking-tight mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Dokumentenplan
+            </h1>
+            <p className="text-sm text-slate-400 mb-6">
+              Die KI hat folgende Dokumente für den Datenraum geplant. Wählen Sie Dokumente ab oder passen Sie Beschreibungen an.
+            </p>
+
+            <div className="bg-slate-50 rounded-xl p-5 mb-6">
+              <div className="flex items-center gap-4 mb-2">
+                <h3 className="text-base font-semibold" style={{ fontFamily: "'Playfair Display', serif", color: "hsl(14, 48%, 44%)" }}>
+                  {documentPlan.companyName}
+                </h3>
+                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                  {documentPlan.documents.filter((d) => d.selected).length} / {documentPlan.documents.length} Dokumente ausgewählt
+                </span>
+              </div>
+              <p className="text-sm text-slate-500">{documentPlan.companyDescription}</p>
+            </div>
+
+            {(() => {
+              const categories: Record<string, { label: string; icon: string }> = {
+                briefing: { label: "Strategisches Briefing", icon: "📋" },
+                email: { label: "E-Mails", icon: "📧" },
+                protocol: { label: "Sitzungsprotokolle", icon: "📝" },
+                news: { label: "Nachrichtenartikel", icon: "📰" },
+                report: { label: "Interne Berichte", icon: "📊" },
+                financial: { label: "Finanzdaten", icon: "💰" },
+                hr: { label: "HR-Dashboard", icon: "👥" },
+              };
+              const groupedDocs: Record<string, PlannedDocument[]> = {};
+              for (const doc of documentPlan.documents) {
+                const cat = doc.category || "other";
+                if (!groupedDocs[cat]) groupedDocs[cat] = [];
+                groupedDocs[cat].push(doc);
+              }
+
+              return Object.entries(groupedDocs).map(([cat, docs]) => {
+                const catInfo = categories[cat] || { label: cat, icon: "📄" };
+                const selectedCount = docs.filter((d) => d.selected).length;
+                return (
+                  <div key={cat} className="mb-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span>{catInfo.icon}</span>
+                      <h3 className="text-sm font-semibold text-slate-700">{catInfo.label}</h3>
+                      <span className="text-xs text-slate-400">({selectedCount}/{docs.length})</span>
+                    </div>
+                    <div className="space-y-2">
+                      {docs.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className={`rounded-lg border p-4 transition-all ${
+                            doc.selected
+                              ? "border-slate-200 bg-white"
+                              : "border-slate-100 bg-slate-50 opacity-60"
+                          }`}
+                          data-testid={`plan-doc-${doc.id}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={doc.selected}
+                              onChange={() => toggleDocument(doc.id)}
+                              className="mt-1 rounded border-slate-300 text-[hsl(14,48%,44%)] focus:ring-[hsl(14,48%,44%)]"
+                              data-testid={`checkbox-doc-${doc.id}`}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <input
+                                  value={doc.title}
+                                  onChange={(e) => updateDocumentField(doc.id, "title", e.target.value)}
+                                  className="text-sm font-medium text-slate-800 bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-[hsl(14,48%,44%)] focus:ring-0 p-0 w-full transition-colors"
+                                  data-testid={`input-doc-title-${doc.id}`}
+                                />
+                                {doc.importance === "high" && (
+                                  <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded shrink-0">Wichtig</span>
+                                )}
+                              </div>
+                              {doc.author && (
+                                <p className="text-xs text-slate-400 mb-1">Von: {doc.author}</p>
+                              )}
+                              <textarea
+                                value={doc.description}
+                                onChange={(e) => updateDocumentField(doc.id, "description", e.target.value)}
+                                rows={1}
+                                className="text-xs text-slate-500 bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-[hsl(14,48%,44%)] focus:ring-0 p-0 w-full resize-none transition-colors"
+                                data-testid={`textarea-doc-desc-${doc.id}`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+
+            <div className="pt-6 border-t border-slate-200 flex justify-between items-center">
+              <button
+                onClick={() => { setMode("generate"); setDocumentPlan(null); }}
+                className="px-5 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:border-slate-300 transition-colors"
+                data-testid="button-back-generate"
+              >
+                ← Parameter anpassen
+              </button>
+              <button
+                onClick={handleGenerateFromPlan}
+                disabled={generating || documentPlan.documents.filter((d) => d.selected).length === 0}
+                className="px-6 py-2.5 rounded-lg text-white text-sm font-medium disabled:opacity-50 hover:opacity-90 transition-colors"
+                style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
+                data-testid="button-generate-from-plan"
+              >
+                {generating ? (
+                  <span className="flex items-center gap-2">
+                    <span className="animate-spin">⚙️</span> KI generiert Fallstudie...
+                  </span>
+                ) : (
+                  `Fallstudie mit ${documentPlan.documents.filter((d) => d.selected).length} Dokumenten generieren →`
+                )}
+              </button>
             </div>
           </div>
         )}
