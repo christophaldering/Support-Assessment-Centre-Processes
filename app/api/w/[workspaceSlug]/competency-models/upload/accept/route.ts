@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   try {
     const body = await req.json();
-    const { modelName, modelDescription, hierarchy, assessment, fileName } = body;
+    const { modelName, modelDescription, hierarchy, assessment, fileName, companyName, modelYear } = body;
 
     if (!modelName || !hierarchy || !Array.isArray(hierarchy)) {
       return NextResponse.json({ error: "Modellname und Hierarchie sind erforderlich" }, { status: 400 });

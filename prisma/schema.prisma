@@ -189,6 +189,8 @@ model CompetencyModel {
   workspaceId    String   @map("workspace_id")
   name           String
   description    String?
+  companyName    String?  @map("company_name")
+  modelYear      Int?     @map("model_year")
   version        Int      @default(1)
   status         String   @default("draft")
   sourceType     String   @default("manual") @map("source_type")
