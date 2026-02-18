@@ -83,5 +83,28 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     }
   }
 
-  return NextResponse.json({ ...assessment, caseStudyData });
+  const portalDocuments = await prisma.portalDocument.findMany({
+    where: { assessmentId: assessment.id },
+    orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
+  });
+
+  const selfAssessments = await prisma.selfAssessment.findMany({
+    where: { assessmentId: assessment.id },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  const selfAssessmentResponses = await prisma.selfAssessmentResponse.findMany({
+    where: {
+      candidateId: session.userId,
+      selfAssessmentId: { in: selfAssessments.map(sa => sa.id) },
+    },
+  });
+
+  return NextResponse.json({
+    ...assessment,
+    caseStudyData,
+    portalDocuments,
+    selfAssessments,
+    selfAssessmentResponses,
+  });
 }

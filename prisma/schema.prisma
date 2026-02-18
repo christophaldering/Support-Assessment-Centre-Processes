@@ -165,6 +165,8 @@ model Assessment {
   reports            Report[]
   observationSheets  ObservationSheet[]
   mtmmSnapshots      MtmmSnapshot[]
+  portalDocuments    PortalDocument[]
+  selfAssessments    SelfAssessment[]
 
   @@map("assessments")
 }
@@ -854,4 +856,63 @@ model DemoRequest {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("demo_requests")
+}
+
+model PortalDocument {
+  id             String   @id @default(uuid())
+  assessmentId   String   @map("assessment_id")
+  exerciseId     String?  @map("exercise_id")
+  category       String   @default("general")
+  title          String
+  description    String?
+  objectPath     String?  @map("object_path")
+  fileName       String?  @map("file_name")
+  fileSize       Int?     @map("file_size")
+  mimeType       String?  @map("mime_type")
+  releaseStatus  String   @default("locked") @map("release_status")
+  releasedAt     DateTime? @map("released_at")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId, category])
+  @@map("portal_documents")
+}
+
+model SelfAssessment {
+  id             String   @id @default(uuid())
+  assessmentId   String   @map("assessment_id")
+  title          String
+  description    String?
+  schemaJson     Json     @map("schema_json")
+  releaseStatus  String   @default("locked") @map("release_status")
+  releasedAt     DateTime? @map("released_at")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  responses      SelfAssessmentResponse[]
+
+  @@index([assessmentId])
+  @@map("self_assessments")
+}
+
+model SelfAssessmentResponse {
+  id                 String   @id @default(uuid())
+  selfAssessmentId   String   @map("self_assessment_id")
+  candidateId        String   @map("candidate_id")
+  responsesJson      Json     @map("responses_json")
+  status             String   @default("in_progress")
+  submittedAt        DateTime? @map("submitted_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  selfAssessment     SelfAssessment @relation(fields: [selfAssessmentId], references: [id], onDelete: Cascade)
+
+  @@unique([selfAssessmentId, candidateId])
+  @@index([candidateId])
+  @@map("self_assessment_responses")
 }
