@@ -145,6 +145,7 @@ export default function AssessmentManagementPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Möchten Sie dieses Assessment wirklich unwiderruflich löschen? Alle zugehörigen Daten gehen verloren.")) return;
     try {
       await fetch(`/api/w/${workspaceSlug}/assessments/${id}`, {
         method: "DELETE",

@@ -52,31 +52,41 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const industry = caseStudy.subtitle || "";
     const description = dataJson?.description || "";
 
-    const prompt = `Create a professional, modern corporate logo for a company called "${companyName}". ${industry ? `The company operates in: ${industry}.` : ""} ${description ? `Company description: ${description.substring(0, 200)}.` : ""} The logo should be clean, minimal, and suitable for a corporate annual report. Use a professional color palette. The design should work well at small sizes. White or transparent-style background. No text in the logo, just an abstract icon/symbol.`;
-
-    const imageResponse = await openai.images.generate({
-      model: "dall-e-3",
-      prompt,
-      n: 1,
-      size: "1024x1024",
-      quality: "standard",
+    const svgResponse = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional graphic designer. Generate clean, minimal SVG logos for corporate companies. Return ONLY valid SVG code, nothing else. The SVG should be 200x200 pixels, use a professional color palette, and contain only geometric shapes/paths — no text elements. Keep it simple and elegant.",
+        },
+        {
+          role: "user",
+          content: `Create a professional corporate logo SVG for "${companyName}". ${industry ? `Industry: ${industry}.` : ""} ${description ? `Description: ${description.substring(0, 150)}.` : ""} Return only the SVG code.`,
+        },
+      ],
+      max_tokens: 2000,
+      temperature: 0.7,
     });
 
-    const imageUrl = imageResponse.data[0]?.url;
-    if (!imageUrl) {
-      return NextResponse.json({ error: "Keine Bild-URL von der KI erhalten" }, { status: 500 });
+    let svgContent = svgResponse.choices[0]?.message?.content || "";
+    svgContent = svgContent.replace(/```svg\n?/g, "").replace(/```\n?/g, "").trim();
+
+    if (!svgContent.includes("<svg") || !svgContent.includes("</svg>")) {
+      return NextResponse.json({ error: "Kein gültiges SVG generiert" }, { status: 500 });
     }
 
-    const imageRes = await fetch(imageUrl);
-    if (!imageRes.ok) {
-      return NextResponse.json({ error: "Bild konnte nicht heruntergeladen werden" }, { status: 500 });
-    }
+    svgContent = svgContent.replace(/<script[\s\S]*?<\/script>/gi, "");
+    svgContent = svgContent.replace(/on\w+\s*=\s*"[^"]*"/gi, "");
+    svgContent = svgContent.replace(/on\w+\s*=\s*'[^']*'/gi, "");
 
-    const imageBuffer = Buffer.from(await imageRes.arrayBuffer());
+    const svgStart = svgContent.indexOf("<svg");
+    const svgEnd = svgContent.lastIndexOf("</svg>") + 6;
+    svgContent = svgContent.substring(svgStart, svgEnd);
 
-    const key = `.private/case-study-logos/${params.caseStudyId}.png`;
+    const svgBuffer = Buffer.from(svgContent, "utf-8");
+    const key = `.private/case-study-logos/${params.caseStudyId}.svg`;
     const storageClient = getStorageClient();
-    await storageClient.uploadFromBytes(key, imageBuffer);
+    await storageClient.uploadFromBytes(key, svgBuffer);
 
     const logoUrl = `/api/w/${params.workspaceSlug}/case-studies/${params.caseStudyId}/logo`;
 
