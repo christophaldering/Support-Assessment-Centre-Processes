@@ -191,12 +191,24 @@ export default function CompetencyManagementPage() {
   );
 }
 
+const SOURCE_TYPE_LABELS: Record<string, { label: string; bg: string; text: string }> = {
+  manual: { label: "Manuell erstellt", bg: "bg-slate-50", text: "text-slate-600" },
+  uploaded: { label: "Hochgeladen", bg: "bg-emerald-50", text: "text-emerald-600" },
+  ai_generated: { label: "KI-generiert", bg: "bg-purple-50", text: "text-purple-600" },
+  analysis_derived: { label: "Aus Anforderungsanalyse", bg: "bg-amber-50", text: "text-amber-700" },
+  client_provided: { label: "Vom Klienten erhalten", bg: "bg-cyan-50", text: "text-cyan-700" },
+  co_developed: { label: "Gemeinsam definiert", bg: "bg-indigo-50", text: "text-indigo-600" },
+  standard: { label: "Standardmodell", bg: "bg-slate-100", text: "text-slate-700" },
+};
+
 function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: ReturnType<typeof useRouter> }) {
   const [models, setModels] = useState<CompetencyModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
+  const [filterCompany, setFilterCompany] = useState<string>("");
+  const [newSourceType, setNewSourceType] = useState("manual");
   const [newDescription, setNewDescription] = useState("");
   const [newCompanyName, setNewCompanyName] = useState("");
   const [newModelYear, setNewModelYear] = useState("");
@@ -231,7 +243,7 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
       const res = await fetch(`/api/w/${workspaceSlug}/competency-models`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName, description: newDescription || null, companyName: newCompanyName || null, modelYear: newModelYear || null }),
+        body: JSON.stringify({ name: newName, description: newDescription || null, companyName: newCompanyName || null, modelYear: newModelYear || null, sourceType: newSourceType }),
       });
       if (!res.ok) { const d = await res.json(); setCreateError(d.error || "Fehler beim Erstellen."); return; }
       setShowCreate(false);
@@ -329,10 +341,30 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
     }
   };
 
+  const uniqueCompanies = [...new Set(models.map((m) => m.companyName).filter(Boolean))] as string[];
+  const filteredModels = filterCompany
+    ? models.filter((m) => m.companyName === filterCompany)
+    : models;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500" data-testid="text-model-count">{models.length} Modelle</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-slate-500" data-testid="text-model-count">{filteredModels.length} von {models.length} Modelle{filterCompany ? ` (Kunde: ${filterCompany})` : ""}</p>
+          {uniqueCompanies.length > 0 && (
+            <select
+              value={filterCompany}
+              onChange={(e) => setFilterCompany(e.target.value)}
+              className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-blue/30"
+              data-testid="select-filter-company"
+            >
+              <option value="">Alle Kunden</option>
+              {uniqueCompanies.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          )}
+        </div>
         <div className="flex gap-2">
           <button 
             onClick={() => { setUploadMode("uploading"); setUploadFile(null); setUploadResult(null); setUploadError(""); }}
@@ -727,6 +759,18 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
                 <input type="number" value={newModelYear} onChange={(e) => setNewModelYear(e.target.value)} data-testid="input-model-year" className={inputClass} placeholder={`z.B. ${new Date().getFullYear()}`} min="1990" max="2099" />
               </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Herkunft / Quelle</label>
+              <select value={newSourceType} onChange={(e) => setNewSourceType(e.target.value)} data-testid="select-model-source-type" className={inputClass}>
+                <option value="manual">Manuell erstellt</option>
+                <option value="client_provided">Vom Klienten erhalten</option>
+                <option value="co_developed">Gemeinsam definiert</option>
+                <option value="standard">Standardmodell</option>
+                <option value="uploaded">Hochgeladen</option>
+                <option value="ai_generated">KI-generiert</option>
+                <option value="analysis_derived">Aus Anforderungsanalyse</option>
+              </select>
+            </div>
             {createError && <p className="text-sm text-red-500" data-testid="text-create-error">{createError}</p>}
             <button type="submit" disabled={creating || !newName.trim()} data-testid="button-submit-model" className={`${btnPrimary} px-6 disabled:opacity-50`}>
               {creating ? "Wird erstellt…" : "Modell erstellen"}
@@ -738,19 +782,18 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
       {loading && <p className="text-sm text-slate-400">Laden…</p>}
 
       <div className="space-y-4">
-        {models.map((model) => {
+        {filteredModels.map((model) => {
           const badge = STATUS_BADGES[model.status] || STATUS_BADGES.draft;
           const isExpanded = expandedModelId === model.id;
+          const sourceBadge = SOURCE_TYPE_LABELS[model.sourceType || "manual"] || SOURCE_TYPE_LABELS.manual;
           return (
             <div key={model.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden" data-testid={`card-model-${model.id}`}>
               <div className="p-6 flex items-center justify-between cursor-pointer" onClick={() => setExpandedModelId(isExpanded ? null : model.id)}>
                 <div>
-                  <div className="flex items-center gap-3 mb-1">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
                     <h3 className="font-semibold text-brand-navy">{model.name}</h3>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge.bg} ${badge.text}`} data-testid={`badge-status-${model.id}`}>{badge.label}</span>
-                    {model.sourceType === "uploaded" && (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">Hochgeladen</span>
-                    )}
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${sourceBadge.bg} ${sourceBadge.text}`} data-testid={`badge-source-${model.id}`}>{sourceBadge.label}</span>
                     {model.modelYear && (
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500" data-testid={`badge-year-${model.id}`}>{model.modelYear}</span>
                     )}
@@ -779,9 +822,9 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
             </div>
           );
         })}
-        {models.length === 0 && !loading && (
+        {filteredModels.length === 0 && !loading && (
           <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
-            Keine Kompetenzmodelle vorhanden.
+            {filterCompany ? `Keine Kompetenzmodelle für "${filterCompany}" vorhanden.` : "Keine Kompetenzmodelle vorhanden."}
           </div>
         )}
       </div>
@@ -1402,7 +1445,10 @@ function WeightsTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
         <label className="block text-sm font-medium text-slate-700 mb-2">Kompetenzmodell auswählen</label>
         <select value={selectedModelId} onChange={(e) => { setSelectedModelId(e.target.value); setEditingProfileId(null); }} data-testid="select-weight-model" className={inputClass}>
           <option value="">– Bitte wählen –</option>
-          {models.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+          {models.map((m) => {
+            const src = SOURCE_TYPE_LABELS[m.sourceType || "manual"] || SOURCE_TYPE_LABELS.manual;
+            return <option key={m.id} value={m.id}>{m.name} ({src.label}{m.companyName ? ` · ${m.companyName}` : ""})</option>;
+          })}
         </select>
       </div>
 
@@ -1834,7 +1880,10 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
             <label className="block text-sm font-medium text-slate-700 mb-2">Kompetenzmodell auswählen</label>
             <select value={selectedModelId} onChange={(e) => { setSelectedModelId(e.target.value); setSelectedLevel(""); }} data-testid="select-mapping-model" className={inputClass}>
               <option value="">– Bitte wählen –</option>
-              {models.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              {models.map((m) => {
+                const src = SOURCE_TYPE_LABELS[m.sourceType || "manual"] || SOURCE_TYPE_LABELS.manual;
+                return <option key={m.id} value={m.id}>{m.name} ({src.label}{m.companyName ? ` · ${m.companyName}` : ""})</option>;
+              })}
             </select>
           </div>
         </div>

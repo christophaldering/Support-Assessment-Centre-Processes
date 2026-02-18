@@ -53,7 +53,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const { name, description, status, companyName, modelYear } = await req.json();
+    const { name, description, status, companyName, modelYear, sourceType } = await req.json();
 
     if (!name) {
       return NextResponse.json({ error: "Name ist erforderlich" }, { status: 400 });
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         status: status ?? "draft",
         companyName: companyName ?? null,
         modelYear: modelYear ? parseInt(String(modelYear), 10) || null : null,
+        sourceType: sourceType || "manual",
       },
     });
 

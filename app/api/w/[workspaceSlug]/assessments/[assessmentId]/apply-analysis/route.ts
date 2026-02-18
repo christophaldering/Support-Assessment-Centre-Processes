@@ -99,7 +99,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
               workspaceId: workspace.id,
               name: `Kompetenzmodell — ${analysis.title || assessment.name}`,
               description: "Automatisch erstellt aus Anforderungsanalyse",
-              source: "ai",
+              sourceType: "analysis_derived",
+              companyName: analysis.clientName || assessment.clientName || null,
             },
           });
         }
