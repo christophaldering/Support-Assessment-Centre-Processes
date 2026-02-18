@@ -22,6 +22,9 @@ interface ExerciseLibraryItem {
   originalFileKey?: string;
   createdAt: string;
   _count?: { variants: number };
+  clientId?: string;
+  clientName?: string;
+  projectName?: string;
 }
 
 interface PendingFile {
@@ -30,6 +33,8 @@ interface PendingFile {
   targetLevels: string[];
   author: string;
   sourceContext: string;
+  clientName: string;
+  projectName: string;
 }
 
 interface AnalysisResult {
@@ -43,6 +48,8 @@ interface AnalysisResult {
   sourceContext: string;
   description: string;
   file: File;
+  clientName: string;
+  projectName: string;
 }
 
 const ACCENT = "hsl(14, 48%, 44%)";
@@ -299,6 +306,30 @@ function PendingFileRow({
         </div>
 
         <div>
+          <label className="block text-xs font-medium text-slate-600 mb-1">Kunde</label>
+          <input
+            type="text"
+            value={pf.clientName}
+            onChange={(e) => onUpdate(index, { clientName: e.target.value })}
+            placeholder="z.B. REWE Group"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+            data-testid={`input-client-${index}`}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-slate-600 mb-1">Projekt</label>
+          <input
+            type="text"
+            value={pf.projectName}
+            onChange={(e) => onUpdate(index, { projectName: e.target.value })}
+            placeholder="z.B. Führungskräfte-Assessment 2024"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+            data-testid={`input-project-${index}`}
+          />
+        </div>
+
+        <div>
           <label className="block text-xs font-medium text-slate-600 mb-1">Zielgruppe</label>
           <div className="flex flex-wrap gap-1.5">
             {TARGET_LEVELS.map((level) => (
@@ -534,6 +565,22 @@ function DetailModal({
                 <p className="text-slate-800 mt-0.5" data-testid="text-modal-source">{sourceCtx || "–"}</p>
               )}
             </div>
+            {(item.clientName || item.projectName) && (
+              <>
+                {item.clientName && (
+                  <div>
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Kunde</span>
+                    <p className="text-slate-800 mt-0.5" data-testid="text-modal-client">{item.clientName}</p>
+                  </div>
+                )}
+                {item.projectName && (
+                  <div>
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Projekt</span>
+                    <p className="text-slate-800 mt-0.5" data-testid="text-modal-project">{item.projectName}</p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {item.targetLevels.length > 0 && (
@@ -723,9 +770,18 @@ export default function ExerciseLibraryPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [clients, setClients] = useState<{id: string; name: string; _count?: {exerciseLibraryItems: number}}[]>([]);
+  const [activeClientFilter, setActiveClientFilter] = useState<string | null>(null);
+
   const fetchItems = useCallback(async () => {
     try {
-      const res = await fetch(`/api/w/${slug}/exercise-library`);
+      let url = `/api/w/${slug}/exercise-library`;
+      if (activeClientFilter === "neutral") {
+        url += `?client=neutral`;
+      } else if (activeClientFilter) {
+        url += `?clientId=${activeClientFilter}`;
+      }
+      const res = await fetch(url);
       if (res.status === 401) return;
       if (res.status === 403) {
         setError("Keine Berechtigung für die Baustein-Bibliothek.");
@@ -738,11 +794,21 @@ export default function ExerciseLibraryPage() {
     } finally {
       setLoading(false);
     }
+  }, [slug, activeClientFilter]);
+
+  const fetchClients = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/w/${slug}/clients`);
+      if (res.ok) {
+        setClients(await res.json());
+      }
+    } catch {}
   }, [slug]);
 
   useEffect(() => {
     fetchItems();
-  }, [fetchItems]);
+    fetchClients();
+  }, [fetchItems, fetchClients]);
 
   const categoryCounts = useCallback(() => {
     const counts: Record<string, number> = {};
@@ -766,6 +832,8 @@ export default function ExerciseLibraryPage() {
           targetLevels: [],
           author: "",
           sourceContext: "",
+          clientName: "",
+          projectName: "",
         });
       }
     }
@@ -852,6 +920,8 @@ export default function ExerciseLibraryPage() {
             sourceContext: data.sourceContext || pf.sourceContext,
             description: data.description || "",
             file: pf.file,
+            clientName: data.clientName || pf.clientName,
+            projectName: data.projectName || pf.projectName,
           });
         } else {
           const metaRes = await fetch(`/api/w/${slug}/exercise-library/analyze`, {
@@ -878,6 +948,8 @@ export default function ExerciseLibraryPage() {
             sourceContext: pf.sourceContext,
             description: "",
             file: pf.file,
+            clientName: pf.clientName,
+            projectName: pf.projectName,
           });
         }
       } catch {
@@ -892,6 +964,8 @@ export default function ExerciseLibraryPage() {
           sourceContext: pf.sourceContext,
           description: "",
           file: pf.file,
+          clientName: pf.clientName,
+          projectName: pf.projectName,
         });
       }
     }
@@ -954,6 +1028,8 @@ export default function ExerciseLibraryPage() {
       formData.append("description", ar.description || "");
       formData.append("sourceProjectId", "");
       formData.append("tags", ar.suggestedTags.join(","));
+      formData.append("clientName", ar.clientName || "");
+      formData.append("projectName", ar.projectName || "");
       formData.append("languagesAvailable", "DE");
       formData.append("metadataJson", metadataJson);
 
@@ -1237,6 +1313,28 @@ export default function ExerciseLibraryPage() {
                           />
                         </div>
                         <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">Kunde</label>
+                          <input
+                            type="text"
+                            value={ar.clientName}
+                            onChange={(e) => updateAnalysisResult(idx, { clientName: e.target.value })}
+                            placeholder="z.B. REWE Group"
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            data-testid={`input-client-result-${idx}`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">Projekt</label>
+                          <input
+                            type="text"
+                            value={ar.projectName}
+                            onChange={(e) => updateAnalysisResult(idx, { projectName: e.target.value })}
+                            placeholder="z.B. Führungskräfte-Assessment 2024"
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            data-testid={`input-project-result-${idx}`}
+                          />
+                        </div>
+                        <div>
                           <label className="block text-xs font-medium text-slate-600 mb-1">Zielgruppe</label>
                           <div className="flex flex-wrap gap-1.5">
                             {TARGET_LEVELS.map((level) => (
@@ -1424,6 +1522,52 @@ export default function ExerciseLibraryPage() {
                   </button>
                 ))}
               </div>
+
+              <div className="mt-6">
+                <h3 className="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide" style={{ fontFamily: "Playfair Display, serif" }}>
+                  Kunden
+                </h3>
+                <div className="space-y-1">
+                  <button
+                    onClick={() => setActiveClientFilter(null)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                      activeClientFilter === null ? "text-white font-medium" : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                    style={activeClientFilter === null ? { backgroundColor: ACCENT } : undefined}
+                    data-testid="button-client-all"
+                  >
+                    <span>Alle Kunden</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveClientFilter("neutral")}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                      activeClientFilter === "neutral" ? "text-white font-medium" : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                    style={activeClientFilter === "neutral" ? { backgroundColor: ACCENT } : undefined}
+                    data-testid="button-client-neutral"
+                  >
+                    <span>Allgemein / Neutral</span>
+                  </button>
+                  {clients.map((client) => (
+                    <button
+                      key={client.id}
+                      onClick={() => setActiveClientFilter(client.id)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                        activeClientFilter === client.id ? "text-white font-medium" : "text-slate-700 hover:bg-slate-50"
+                      }`}
+                      style={activeClientFilter === client.id ? { backgroundColor: ACCENT } : undefined}
+                      data-testid={`button-client-${client.id}`}
+                    >
+                      <span>{client.name}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        activeClientFilter === client.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                      }`}>
+                        {client._count?.exerciseLibraryItems || 0}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </aside>
 
             <div className="flex-1 min-w-0" data-testid="document-list">
@@ -1512,6 +1656,13 @@ export default function ExerciseLibraryPage() {
                                 Ursprünglich konzipiert für:
                               </span>{" "}
                               {sourceCtx}
+                            </p>
+                          )}
+                          {(item.clientName || item.projectName) && (
+                            <p data-testid={`text-item-client-${item.id}`}>
+                              {item.clientName && <><span className="text-slate-400">Kunde:</span> {item.clientName}</>}
+                              {item.clientName && item.projectName && " · "}
+                              {item.projectName && <><span className="text-slate-400">Projekt:</span> {item.projectName}</>}
                             </p>
                           )}
                           {item.description && (

@@ -27,9 +27,21 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
   }
 
+  const url = new URL(_req.url);
+  const clientIdFilter = url.searchParams.get("clientId");
+
+  const assessmentWhere: any = { workspaceId: workspace.id };
+  if (clientIdFilter) {
+    assessmentWhere.clientId = clientIdFilter;
+  }
+
   const assessments = await prisma.assessment.findMany({
-    where: { workspaceId: workspace.id },
+    where: assessmentWhere,
     orderBy: { createdAt: "desc" },
+    include: {
+      _count: { select: { candidates: true } },
+      client: { select: { id: true, name: true } },
+    },
   });
 
   return NextResponse.json(assessments);
@@ -48,7 +60,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const { name, description, location, startDate, endDate, status, designMode, autoDeleteDays } = await req.json();
+    const { name, description, location, startDate, endDate, status, designMode, autoDeleteDays, clientId, clientName } = await req.json();
 
     if (!name) {
       return NextResponse.json({ error: "Name ist erforderlich" }, { status: 400 });
@@ -62,6 +74,25 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
     }
 
+    let resolvedClientId: string | null = clientId || null;
+    let resolvedClientName: string | null = clientName?.trim() || null;
+    if (!resolvedClientId && resolvedClientName) {
+      const existing = await prisma.client.findFirst({
+        where: { workspaceId: workspace.id, name: resolvedClientName },
+      });
+      if (existing) {
+        resolvedClientId = existing.id;
+      } else {
+        const newClient = await prisma.client.create({
+          data: { workspaceId: workspace.id, name: resolvedClientName },
+        });
+        resolvedClientId = newClient.id;
+      }
+    } else if (resolvedClientId && !resolvedClientName) {
+      const c = await prisma.client.findUnique({ where: { id: resolvedClientId } });
+      resolvedClientName = c?.name || null;
+    }
+
     const assessment = await prisma.assessment.create({
       data: {
         name,
@@ -73,6 +104,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         status: status ?? "draft",
         designMode: ["ai_full", "ai_supported", "classic"].includes(designMode) ? designMode : "classic",
         autoDeleteDays: autoDeleteDays != null ? parseInt(autoDeleteDays) : null,
+        clientId: resolvedClientId,
+        clientName: resolvedClientName,
       },
     });
 

@@ -46,6 +46,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const description = formData.get("description") as string | null;
     const sourceProjectId = formData.get("sourceProjectId") as string | null;
     const metadataJsonRaw = formData.get("metadataJson") as string | null;
+    const clientNameRaw = formData.get("clientName") as string | null;
+    const projectNameRaw = formData.get("projectName") as string | null;
 
     let metadataJson: any = null;
     if (metadataJsonRaw) {
@@ -96,12 +98,29 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       ? tagsRaw.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
 
+    let resolvedClientId: string | null = null;
+    const clientName = clientNameRaw?.trim() || null;
+    const projectName = projectNameRaw?.trim() || null;
+    if (clientName) {
+      const existingClient = await prisma.client.findFirst({
+        where: { workspaceId: workspace.id, name: clientName },
+      });
+      if (existingClient) {
+        resolvedClientId = existingClient.id;
+      } else {
+        const newClient = await prisma.client.create({
+          data: { workspaceId: workspace.id, name: clientName },
+        });
+        resolvedClientId = newClient.id;
+      }
+    }
+
     const uuid = crypto.randomUUID();
     const objectPath = `.private/exercises/${workspace.id}/${uuid}_${file.name}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const client = getStorageClient();
-    await client.uploadFromBytes(objectPath, buffer);
+    const storageClient = getStorageClient();
+    await storageClient.uploadFromBytes(objectPath, buffer);
 
     const item = await prisma.exerciseLibraryItem.create({
       data: {
@@ -119,6 +138,9 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         sourceProjectId: sourceProjectId || null,
         metadataJson: metadataJson ?? undefined,
         sourceContext: metadataJson?.sourceContext || null,
+        clientId: resolvedClientId,
+        clientName,
+        projectName,
       },
       include: {
         _count: { select: { variants: true } },

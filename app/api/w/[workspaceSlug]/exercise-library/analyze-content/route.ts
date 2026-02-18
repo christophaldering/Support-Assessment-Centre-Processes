@@ -90,6 +90,8 @@ Antworte ausschließlich in validem JSON mit genau diesen Feldern:
   "targetLevels": ["passende aus: ${TARGET_LEVELS.join(", ")}"],
   "author": "Name des Autors falls erkennbar, sonst leer",
   "sourceContext": "Für welchen Kunden/welches Unternehmen die Übung ursprünglich konzipiert wurde, falls erkennbar, sonst leer",
+  "clientName": "Name des Kunden/Unternehmens für das die Übung erstellt wurde (z.B. 'REWE Group', 'Siemens AG'). Kann aus Briefköpfen, Logos, Unternehmensnennung im Text, Copyright-Hinweisen etc. erkannt werden. Leer wenn nicht erkennbar.",
+  "projectName": "Name des konkreten Projekts/Programms falls erkennbar (z.B. 'Führungskräfte-Assessment 2024', 'Talent Review Q3'). Leer wenn nicht erkennbar.",
   "suggestedTitle": "Aussagekräftiger Titel im Format: [Übungstyp] – [Kontext/Unternehmen] – [Kurzbeschreibung]",
   "tags": ["5-10 relevante Tags auf Deutsch, z.B. Kompetenzen, Rollen, Methoden, Unternehmensnamen, Themen"],
   "description": "Eine prägnante Kurzbeschreibung (3-5 Sätze) des Bausteins: Was wird gemessen/simuliert? Welche Situation wird dargestellt? Was muss der Kandidat tun? Diese Beschreibung soll eine schnelle Entscheidung ermöglichen, ob der Baustein für einen bestimmten Bedarf geeignet ist."
@@ -98,6 +100,8 @@ Antworte ausschließlich in validem JSON mit genau diesen Feldern:
 Regeln:
 - exerciseType MUSS einer der vorgegebenen Werte sein
 - targetLevels MUSS aus der vorgegebenen Liste stammen (können mehrere sein)
+- clientName: Der Kunde, dem die Übung zugeordnet werden soll. Achte auf Unternehmensnennung, Briefköpfe, Logo-Hinweise, Copyright, "erstellt für...", Projektbezeichnung etc.
+- projectName: Konkreter Projektname falls vorhanden (z.B. aus Header, Fußzeile, Titelseite)
 - Die description soll informativ und entscheidungsrelevant sein – nicht zu lang, aber aussagekräftig
 - Tags sollen das Matching mit Anforderungsprofilen unterstützen
 - Bei Unsicherheit: Bestes Schätzung basierend auf dem Inhalt`,
@@ -121,6 +125,8 @@ Regeln:
         : [],
       author: typeof parsed.author === "string" ? parsed.author.trim() : "",
       sourceContext: typeof parsed.sourceContext === "string" ? parsed.sourceContext.trim() : "",
+      clientName: typeof parsed.clientName === "string" ? parsed.clientName.trim() : "",
+      projectName: typeof parsed.projectName === "string" ? parsed.projectName.trim() : "",
       suggestedTitle: typeof parsed.suggestedTitle === "string" ? parsed.suggestedTitle.trim() : file.name,
       tags: Array.isArray(parsed.tags)
         ? parsed.tags.filter((t: unknown) => typeof t === "string" && (t as string).trim().length > 0)

@@ -35,6 +35,8 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   const language = url.searchParams.get("language");
   const status = url.searchParams.get("status");
   const tag = url.searchParams.get("tag");
+  const clientId = url.searchParams.get("clientId");
+  const clientFilter = url.searchParams.get("client");
 
   const where: any = { workspaceId: workspace.id };
 
@@ -63,6 +65,14 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
   if (tag) {
     where.tags = { has: tag };
+  }
+
+  if (clientId) {
+    where.clientId = clientId;
+  } else if (clientFilter === "neutral") {
+    where.clientId = null;
+  } else if (clientFilter) {
+    where.clientName = { contains: clientFilter, mode: "insensitive" };
   }
 
   const items = await prisma.exerciseLibraryItem.findMany({
@@ -126,7 +136,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const { title, description, exerciseType, tags, targetLevels, languagesAvailable, metadataJson, sourceProjectId, sourceContext, basedOnId } = await req.json();
+    const { title, description, exerciseType, tags, targetLevels, languagesAvailable, metadataJson, sourceProjectId, sourceContext, basedOnId, clientName, projectName } = await req.json();
 
     if (!title) {
       return NextResponse.json({ error: "Titel ist erforderlich" }, { status: 400 });
@@ -144,6 +154,21 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
     }
 
+    let clientId: string | null = null;
+    if (clientName?.trim()) {
+      const existing = await prisma.client.findFirst({
+        where: { workspaceId: workspace.id, name: clientName.trim() },
+      });
+      if (existing) {
+        clientId = existing.id;
+      } else {
+        const newClient = await prisma.client.create({
+          data: { workspaceId: workspace.id, name: clientName.trim() },
+        });
+        clientId = newClient.id;
+      }
+    }
+
     const item = await prisma.exerciseLibraryItem.create({
       data: {
         title,
@@ -157,6 +182,9 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         sourceProjectId: sourceProjectId ?? null,
         sourceContext: sourceContext ?? null,
         basedOnId: basedOnId ?? null,
+        clientId,
+        clientName: clientName?.trim() || null,
+        projectName: projectName?.trim() || null,
       },
       include: {
         _count: { select: { variants: true } },

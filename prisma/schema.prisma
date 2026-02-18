@@ -46,6 +46,7 @@ model Workspace {
   brandRuleSets      BrandRuleSet[]
   exerciseLibraryItems ExerciseLibraryItem[]
   exerciseRecommendations ExerciseRecommendation[]
+  clients            Client[]
   predictiveProfiles PredictiveProfile[]
   developmentBlueprints DevelopmentBlueprint[]
   diagnosticHypotheses DiagnosticHypothesis[]
@@ -53,6 +54,24 @@ model Workspace {
   caseStudies        CaseStudy[]
 
   @@map("workspaces")
+}
+
+model Client {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  name        String
+  industry    String?
+  contactInfo String?  @map("contact_info")
+  status      String   @default("active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  assessments Assessment[]
+  exerciseLibraryItems ExerciseLibraryItem[]
+
+  @@index([workspaceId])
+  @@map("clients")
 }
 
 model AccessRequest {
@@ -115,6 +134,8 @@ model Assessment {
   id           String   @id @default(uuid())
   name         String
   workspaceId  String   @map("workspace_id")
+  clientId     String?  @map("client_id")
+  clientName   String?  @map("client_name")
   status       String   @default("draft")
   description  String?
   location     String?
@@ -128,6 +149,7 @@ model Assessment {
   autoDeleteDays Int?     @map("auto_delete_days")
 
   workspace          Workspace @relation(fields: [workspaceId], references: [id])
+  client             Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
   candidates         User[]
   exercises          Exercise[]
   documents          Document[]
@@ -552,6 +574,9 @@ model BrandRuleSet {
 model ExerciseLibraryItem {
   id                 String   @id @default(uuid())
   workspaceId        String   @map("workspace_id")
+  clientId           String?  @map("client_id")
+  clientName         String?  @map("client_name")
+  projectName        String?  @map("project_name")
   title              String
   description        String?
   tags               String[]
@@ -571,10 +596,12 @@ model ExerciseLibraryItem {
   updatedAt          DateTime @updatedAt @map("updated_at")
 
   workspace          Workspace @relation(fields: [workspaceId], references: [id])
+  client             Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
   variants           ExerciseLibraryVariant[]
 
   @@index([workspaceId])
   @@index([workspaceId, exerciseType])
+  @@index([workspaceId, clientId])
   @@map("exercise_library_items")
 }
 
