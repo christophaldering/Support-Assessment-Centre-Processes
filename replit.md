@@ -21,7 +21,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 **Key Architectural Decisions:**
 
 *   **UI/UX:** Features a multi-step candidate portal and an enterprise cockpit with detailed project views. It supports per-workspace dual-branding and theming with live preview.
-*   **Authentication & Authorization:** Employs HTTP-only cookies and a granular Role-Based Access Control (RBAC) system with six distinct roles (ADMIN, MODERATOR, OBSERVER, PROJECT_ASSISTANT, HR_CLIENT, CANDIDATE) for secure access.
+*   **Authentication & Authorization:** Employs HTTP-only cookies and a granular Role-Based Access Control (RBAC) system with seven distinct roles (MASTER_ADMIN, WORKSPACE_ADMIN, MODERATOR, OBSERVER, PROJECT_OFFICE, CLIENT, CANDIDATE) for secure access. Legacy role names (ADMIN, PROJECT_ASSISTANT, HR_CLIENT) are supported via backward-compatible aliases.
 *   **Data Processing Pipelines:**
     *   **Observer Rating System:** Offline-first UI with localStorage caching, auto-sync, and conflict resolution.
     *   **Consolidation Engine:** Configurable methods (mean, median, trimmed_mean) for score consolidation.
@@ -37,7 +37,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 *   **Advanced Intelligence Layer:** Includes three AI-powered diagnostic modules: Predictive Success Intelligence, Development Path Generator, and Diagnostic Hypothesis Engine, all with confidence scoring, evidence tracking, and audit logging.
 *   **Collaboration:** Features a real-time (polling-based) collaboration system for observers and assessors with live presence indicators, activity feeds, and shared notes.
 *   **Versioning & Locking:** MTMM matrices are versioned, with automatic locking upon rating submission to prevent modifications.
-*   **Theming & Branding:** Provides a brand rule set management system for defining and applying corporate identity rules, with future plans for AI parsing of style guides.
+*   **Theming & Branding:** Provides a brand rule set management system for defining and applying corporate identity rules, with AI parsing of style guides (restricted to MASTER_ADMIN role).
 *   **Exercise Matching:** Implements a scoring algorithm to match library exercises to requirements, with planned AI enhancement for contextual fit and adaptation suggestions.
 
 ## External Dependencies
