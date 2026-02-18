@@ -90,7 +90,32 @@ Das JSON muss EXAKT diese Struktur haben:
     ],
     "organigramm": [
       { "name": "<Name>", "role": "<Funktion/Position>", "department": "<Abteilung/Bereich>", "reportsTo": "<Name des Vorgesetzten oder null>" }
-    ]
+    ],
+    "strategicAnalysis": {
+      "executiveSummary": "<Zusammenfassende strategische Bewertung der Ausgangslage, 3-4 Sätze>",
+      "swot": {
+        "strengths": ["<Stärke 1>", "<Stärke 2>", "<Stärke 3>", "<Stärke 4>"],
+        "weaknesses": ["<Schwäche 1>", "<Schwäche 2>", "<Schwäche 3>", "<Schwäche 4>"],
+        "opportunities": ["<Chance 1>", "<Chance 2>", "<Chance 3>"],
+        "threats": ["<Risiko 1>", "<Risiko 2>", "<Risiko 3>"]
+      },
+      "solutionApproaches": {
+        "strategic": [
+          { "title": "<Strategischer Ansatz 1>", "description": "<Beschreibung>" },
+          { "title": "<Strategischer Ansatz 2>", "description": "<Beschreibung>" }
+        ],
+        "bscPerspectives": {
+          "financial": ["<Finanzmaßnahme 1>", "<Finanzmaßnahme 2>"],
+          "customer": ["<Kundenmaßnahme 1>", "<Kundenmaßnahme 2>"],
+          "processes": ["<Prozessmaßnahme 1>", "<Prozessmaßnahme 2>"],
+          "learningGrowth": ["<Lern-/Entwicklungsmaßnahme 1>", "<Lern-/Entwicklungsmaßnahme 2>"]
+        },
+        "quickwins": [
+          { "title": "<Quickwin 1>", "impact": "<hoch|mittel|niedrig>", "effort": "<gering|mittel|hoch>" },
+          { "title": "<Quickwin 2>", "impact": "<hoch|mittel|niedrig>", "effort": "<gering|mittel|hoch>" }
+        ]
+      }
+    }
   },
   "briefing": {
     "role": "<Rollenbeschreibung des Kandidaten im konkreten Unternehmenskontext>",
@@ -151,6 +176,7 @@ Wichtige Regeln:
 - 4 Analysefragen und 4 Schlussfolgerungsfragen
 - Ein Organigramm mit ALLEN in der Fallstudie vorkommenden Personen (mindestens 8-10 bei Konzernen, 5-8 bei KMU), inklusive Name, Funktion, Abteilung und Berichtslinie
 - Eine individuelle Briefing-Sektion mit Rollenbeschreibung, Situationsbeschreibung und Aufgabenstellung, die exakt auf das generierte Unternehmen zugeschnitten ist (NICHT generisch)
+- Eine detaillierte strategische Analyse (SWOT, BSC-Perspektiven, Quickwins) basierend auf dem Fallstudien-Szenario
 - Die Sprache aller Inhalte richtet sich nach der vom Benutzer gewählten Sprache
 - Antworte AUSSCHLIESSLICH mit validem JSON, kein zusätzlicher Text
 

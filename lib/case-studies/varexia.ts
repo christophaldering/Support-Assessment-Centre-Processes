@@ -116,6 +116,26 @@ export interface HRSurveyData {
   hrComment: string;
 }
 
+export interface StrategicAnalysis {
+  executiveSummary: string;
+  swot: {
+    strengths: string[];
+    weaknesses: string[];
+    opportunities: string[];
+    threats: string[];
+  };
+  solutionApproaches: {
+    strategic: { title: string; description: string }[];
+    bscPerspectives: {
+      financial: string[];
+      customer: string[];
+      processes: string[];
+      learningGrowth: string[];
+    };
+    quickwins: { title: string; impact: string; effort: string }[];
+  };
+}
+
 export interface CaseStudyData {
   id: string;
   name: string;
@@ -147,6 +167,7 @@ export interface CaseStudyData {
   leadershipConference: string;
   organigramm?: OrganigrammEntry[];
   briefing?: BriefingData;
+  strategicAnalysis?: StrategicAnalysis;
 }
 
 export interface CaseEntry {

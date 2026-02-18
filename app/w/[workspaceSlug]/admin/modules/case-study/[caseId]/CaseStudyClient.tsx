@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import type { CaseStudyData, AssessmentQuestions, Email } from "@/lib/case-studies/varexia";
+import type { CaseStudyData, AssessmentQuestions, Email, StrategicAnalysis } from "@/lib/case-studies/varexia";
 
 const RichTextEditor = dynamic(() => import("@/app/components/RichTextEditor"), { ssr: false });
 
@@ -18,6 +18,7 @@ type Tab =
   | "news"
   | "internal-comms"
   | "external-comms"
+  | "strategic-analysis"
   | "hr-dashboard";
 
 const tabList: { id: Tab; labelDe: string; icon: string }[] = [
@@ -31,6 +32,7 @@ const tabList: { id: Tab; labelDe: string; icon: string }[] = [
   { id: "news", labelDe: "News", icon: "📰" },
   { id: "internal-comms", labelDe: "Interne Kommunikation", icon: "📨" },
   { id: "external-comms", labelDe: "Externe Kommunikation", icon: "📤" },
+  { id: "strategic-analysis", labelDe: "Strategische Analyse", icon: "🔍" },
   { id: "hr-dashboard", labelDe: "HR-Dashboard", icon: "👥" },
 ];
 
@@ -184,6 +186,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
       case "news": return !!(localData.newsArticles && localData.newsArticles.length > 0);
       case "internal-comms": return internalEmails.length > 0;
       case "external-comms": return externalEmails.length > 0;
+      case "strategic-analysis": return !!(localData.strategicAnalysis);
       case "hr-dashboard": return !!(localData.hrSurvey && localData.hrSurvey.categories.length > 0);
       default: return true;
     }
@@ -1309,6 +1312,182 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                   onCancel={editingDoc?.type === "email" ? () => setEditingDoc(null) : undefined}
                   saving={saving}
                 />
+              </div>
+            )}
+
+            {activeTab === "strategic-analysis" && localData.strategicAnalysis && (
+              <div className="space-y-8" data-testid="section-strategic-analysis">
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-violet-900 via-violet-800 to-purple-800 p-8 text-white">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-violet-100 border border-white/20 text-xs font-medium mb-3">
+                      Strategic Assessment
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold mb-1">Strategische Analyse</h1>
+                    <p className="text-violet-200 text-sm">SWOT, BSC-Perspektiven & operative Quickwins</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 p-6">
+                  <h2 className="text-lg font-serif font-bold text-slate-900 mb-3">Executive Summary</h2>
+                  <p className="text-sm text-slate-700 leading-relaxed">{localData.strategicAnalysis.executiveSummary}</p>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 p-6">
+                  <h2 className="text-lg font-serif font-bold text-slate-900 mb-6">SWOT-Analyse</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
+                      <h3 className="text-sm font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">S</span>
+                        Stärken
+                      </h3>
+                      <ul className="space-y-1.5">
+                        {localData.strategicAnalysis.swot.strengths.map((s, i) => (
+                          <li key={i} className="text-xs text-emerald-900 flex items-start gap-2">
+                            <span className="text-emerald-400 mt-0.5">•</span>
+                            <span>{s}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+                      <h3 className="text-sm font-bold text-red-800 mb-3 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded bg-red-600 text-white flex items-center justify-center text-xs font-bold">W</span>
+                        Schwächen
+                      </h3>
+                      <ul className="space-y-1.5">
+                        {localData.strategicAnalysis.swot.weaknesses.map((w, i) => (
+                          <li key={i} className="text-xs text-red-900 flex items-start gap-2">
+                            <span className="text-red-400 mt-0.5">•</span>
+                            <span>{w}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+                      <h3 className="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center text-xs font-bold">O</span>
+                        Chancen
+                      </h3>
+                      <ul className="space-y-1.5">
+                        {localData.strategicAnalysis.swot.opportunities.map((o, i) => (
+                          <li key={i} className="text-xs text-blue-900 flex items-start gap-2">
+                            <span className="text-blue-400 mt-0.5">•</span>
+                            <span>{o}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+                      <h3 className="text-sm font-bold text-amber-800 mb-3 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded bg-amber-600 text-white flex items-center justify-center text-xs font-bold">T</span>
+                        Risiken
+                      </h3>
+                      <ul className="space-y-1.5">
+                        {localData.strategicAnalysis.swot.threats.map((t, i) => (
+                          <li key={i} className="text-xs text-amber-900 flex items-start gap-2">
+                            <span className="text-amber-400 mt-0.5">•</span>
+                            <span>{t}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 p-6">
+                  <h2 className="text-lg font-serif font-bold text-slate-900 mb-6">Lösungsansätze — Strategie</h2>
+                  <div className="space-y-4">
+                    {localData.strategicAnalysis.solutionApproaches.strategic.map((s, i) => (
+                      <div key={i} className="rounded-lg border border-slate-200 p-4">
+                        <h3 className="text-sm font-bold text-slate-800 mb-1">{s.title}</h3>
+                        <p className="text-xs text-slate-600 leading-relaxed">{s.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 p-6">
+                  <h2 className="text-lg font-serif font-bold text-slate-900 mb-6">BSC-Perspektiven</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-lg border border-slate-200 p-4">
+                      <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <span className="text-lg">💰</span> Finanzen
+                      </h3>
+                      <ul className="space-y-1.5">
+                        {localData.strategicAnalysis.solutionApproaches.bscPerspectives.financial.map((f, i) => (
+                          <li key={i} className="text-xs text-slate-700 flex items-start gap-2">
+                            <span className="text-slate-400 mt-0.5">→</span>
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 p-4">
+                      <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <span className="text-lg">👥</span> Kunden
+                      </h3>
+                      <ul className="space-y-1.5">
+                        {localData.strategicAnalysis.solutionApproaches.bscPerspectives.customer.map((c, i) => (
+                          <li key={i} className="text-xs text-slate-700 flex items-start gap-2">
+                            <span className="text-slate-400 mt-0.5">→</span>
+                            <span>{c}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 p-4">
+                      <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <span className="text-lg">⚙️</span> Prozesse
+                      </h3>
+                      <ul className="space-y-1.5">
+                        {localData.strategicAnalysis.solutionApproaches.bscPerspectives.processes.map((p, i) => (
+                          <li key={i} className="text-xs text-slate-700 flex items-start gap-2">
+                            <span className="text-slate-400 mt-0.5">→</span>
+                            <span>{p}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 p-4">
+                      <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <span className="text-lg">📚</span> Lernen & Entwicklung
+                      </h3>
+                      <ul className="space-y-1.5">
+                        {localData.strategicAnalysis.solutionApproaches.bscPerspectives.learningGrowth.map((l, i) => (
+                          <li key={i} className="text-xs text-slate-700 flex items-start gap-2">
+                            <span className="text-slate-400 mt-0.5">→</span>
+                            <span>{l}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 p-6">
+                  <h2 className="text-lg font-serif font-bold text-slate-900 mb-6">Operative Quickwins</h2>
+                  <div className="space-y-3">
+                    {localData.strategicAnalysis.solutionApproaches.quickwins.map((q, i) => (
+                      <div key={i} className="flex items-start gap-4 rounded-lg border border-slate-200 p-4">
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-sm font-bold text-emerald-700 shrink-0">
+                          {i + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-bold text-slate-800">{q.title}</h3>
+                          <div className="flex gap-4 mt-1.5">
+                            <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+                              Impact: {q.impact}
+                            </span>
+                            <span className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                              Aufwand: {q.effort}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
