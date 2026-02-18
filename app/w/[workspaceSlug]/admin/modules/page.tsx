@@ -1,9 +1,1272 @@
-import { redirect } from "next/navigation";
+"use client";
 
-interface Props {
-  params: { workspaceSlug: string };
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
+
+interface AssessmentModuleData {
+  name: string;
+  type: string;
+  description: string;
+  adaptationNotes: string;
+  generationPrompt: string;
+  selected: boolean;
 }
 
-export default function ModulesPage({ params }: Props) {
-  redirect(`/w/${params.workspaceSlug}/admin`);
+interface SavedAnalysis {
+  id: string;
+  title: string;
+  clientName: string | null;
+  projectName: string | null;
+  status: string;
+  proposal: any;
+}
+
+interface LibraryItem {
+  id: string;
+  title: string;
+  description: string | null;
+  exerciseType: string;
+  targetLevels: string[];
+  tags: string[];
+  clientName: string | null;
+}
+
+interface CaseStudySummary {
+  id: string;
+  title: string;
+  companyName: string;
+  type: string;
+  status: string;
+}
+
+interface ModuleBlueprint {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  instructions: string;
+  duration: number;
+  targetLevel: string;
+  scenarioContext: string;
+  adaptationNotes: string;
+  sourceType: "manual" | "library" | "ai" | "requirement";
+  sourceId?: string;
+  aiGenerated: boolean;
+  status: "draft" | "ready" | "active";
+}
+
+type ViewMode = "hub" | "manual" | "library" | "ai" | "detail";
+
+const exerciseTypes = [
+  { value: "interview", label: "Interview-Leitfaden" },
+  { value: "case_study", label: "Fallstudie" },
+  { value: "fact_finding", label: "Fact-Finding-Simulation" },
+  { value: "presentation", label: "Präsentation" },
+  { value: "role_play", label: "Verhaltenssimulation / Rollenspiel" },
+  { value: "group_discussion", label: "Gruppendiskussion" },
+  { value: "inbox", label: "Postkorb-Übung" },
+  { value: "psychometric", label: "Psychometrischer Test" },
+  { value: "other", label: "Sonstiges" },
+];
+
+const targetLevels = [
+  "SE-Level / Vorstand",
+  "Director / Bereichsleitung",
+  "Manager",
+  "Expert",
+];
+
+const typeLabel = (t: string) => exerciseTypes.find((e) => e.value === t)?.label || t;
+
+const typeIcon = (t: string) => {
+  const map: Record<string, string> = {
+    interview: "🎙️",
+    case_study: "📋",
+    fact_finding: "🔍",
+    presentation: "📊",
+    role_play: "🎭",
+    group_discussion: "💬",
+    inbox: "📬",
+    psychometric: "📝",
+    other: "⚙️",
+  };
+  return map[t] || "📄";
+};
+
+export default function ModulesHubPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const workspaceSlug = params.workspaceSlug as string;
+  const base = `/w/${workspaceSlug}/admin`;
+
+  const [view, setView] = useState<ViewMode>("hub");
+  const [blueprints, setBlueprints] = useState<ModuleBlueprint[]>([]);
+  const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
+  const [caseStudies, setCaseStudies] = useState<CaseStudySummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const [selectedAnalysis, setSelectedAnalysis] = useState<SavedAnalysis | null>(null);
+  const [requirementModules, setRequirementModules] = useState<AssessmentModuleData[]>([]);
+
+  const [editBlueprint, setEditBlueprint] = useState<ModuleBlueprint | null>(null);
+
+  const [manualForm, setManualForm] = useState({
+    name: "",
+    type: "interview",
+    description: "",
+    instructions: "",
+    duration: 45,
+    targetLevel: "Manager",
+    scenarioContext: "",
+  });
+
+  const [aiForm, setAiForm] = useState({
+    type: "interview",
+    targetLevel: "Manager",
+    context: "",
+    duration: 45,
+    embedInScenario: false,
+    scenarioCaseStudyId: "",
+    requirementModuleIndex: -1,
+  });
+
+  const [selectedLibraryItem, setSelectedLibraryItem] = useState<LibraryItem | null>(null);
+  const [libraryAdaptForm, setLibraryAdaptForm] = useState({
+    name: "",
+    description: "",
+    instructions: "",
+    duration: 45,
+    targetLevel: "Manager",
+    scenarioContext: "",
+  });
+
+  const savedBlueprints = useCallback(() => {
+    try {
+      const key = `baustein_blueprints_${workspaceSlug}`;
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  }, [workspaceSlug]);
+
+  const persistBlueprints = useCallback(
+    (bps: ModuleBlueprint[]) => {
+      const key = `baustein_blueprints_${workspaceSlug}`;
+      localStorage.setItem(key, JSON.stringify(bps));
+      setBlueprints(bps);
+    },
+    [workspaceSlug]
+  );
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
+    setLoading(true);
+    try {
+      const [analysisRes, libraryRes, caseStudyRes] = await Promise.all([
+        fetch(`/api/w/${workspaceSlug}/requirements-analysis`),
+        fetch(`/api/w/${workspaceSlug}/exercise-library`),
+        fetch(`/api/w/${workspaceSlug}/case-studies`),
+      ]);
+
+      if (analysisRes.ok) {
+        const data = await analysisRes.json();
+        setAnalyses(Array.isArray(data) ? data.filter((a: any) => a.status === "completed" && a.proposal) : []);
+      }
+      if (libraryRes.ok) {
+        setLibraryItems(await libraryRes.json());
+      }
+      if (caseStudyRes.ok) {
+        const cs = await caseStudyRes.json();
+        setCaseStudies(Array.isArray(cs) ? cs : []);
+      }
+
+      setBlueprints(savedBlueprints());
+    } catch {
+      setError("Fehler beim Laden der Daten.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function loadRequirementModules(analysis: SavedAnalysis) {
+    setSelectedAnalysis(analysis);
+    try {
+      const proposal = analysis.proposal;
+      const modules: AssessmentModuleData[] = proposal?.assessmentModules || [];
+      setRequirementModules(modules);
+    } catch {
+      setRequirementModules([]);
+    }
+  }
+
+  function adoptRequirementModule(mod: AssessmentModuleData) {
+    const typeMap: Record<string, string> = {
+      "Interview-Leitfaden": "interview",
+      "Fallstudie": "case_study",
+      "Fact-Finding-Simulation": "fact_finding",
+      "Präsentation": "presentation",
+      "Verhaltenssimulation": "role_play",
+      "Rollenspiel": "role_play",
+      "Gruppendiskussion": "group_discussion",
+      "Postkorb-Übung": "inbox",
+      "Psychometrischer Test": "psychometric",
+    };
+    const bp: ModuleBlueprint = {
+      id: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: mod.name,
+      type: typeMap[mod.type] || "other",
+      description: mod.description,
+      instructions: "",
+      duration: 45,
+      targetLevel: "Manager",
+      scenarioContext: "",
+      adaptationNotes: mod.adaptationNotes || "",
+      sourceType: "requirement",
+      sourceId: selectedAnalysis?.id,
+      aiGenerated: false,
+      status: "draft",
+    };
+    const updated = [...blueprints, bp];
+    persistBlueprints(updated);
+    setSuccess(`"${mod.name}" als Baustein übernommen.`);
+    setTimeout(() => setSuccess(""), 3000);
+  }
+
+  function saveManualBlueprint() {
+    if (!manualForm.name.trim()) {
+      setError("Bitte geben Sie einen Namen ein.");
+      return;
+    }
+    const bp: ModuleBlueprint = {
+      id: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: manualForm.name,
+      type: manualForm.type,
+      description: manualForm.description,
+      instructions: manualForm.instructions,
+      duration: manualForm.duration,
+      targetLevel: manualForm.targetLevel,
+      scenarioContext: manualForm.scenarioContext,
+      adaptationNotes: "",
+      sourceType: "manual",
+      aiGenerated: false,
+      status: "draft",
+    };
+    persistBlueprints([...blueprints, bp]);
+    setManualForm({ name: "", type: "interview", description: "", instructions: "", duration: 45, targetLevel: "Manager", scenarioContext: "" });
+    setSuccess("Baustein manuell erstellt.");
+    setView("hub");
+    setTimeout(() => setSuccess(""), 3000);
+  }
+
+  function adoptLibraryItem() {
+    if (!selectedLibraryItem) return;
+    const bp: ModuleBlueprint = {
+      id: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: libraryAdaptForm.name || selectedLibraryItem.title,
+      type: selectedLibraryItem.exerciseType || "other",
+      description: libraryAdaptForm.description || selectedLibraryItem.description || "",
+      instructions: libraryAdaptForm.instructions,
+      duration: libraryAdaptForm.duration,
+      targetLevel: libraryAdaptForm.targetLevel,
+      scenarioContext: libraryAdaptForm.scenarioContext,
+      adaptationNotes: "",
+      sourceType: "library",
+      sourceId: selectedLibraryItem.id,
+      aiGenerated: false,
+      status: "draft",
+    };
+    persistBlueprints([...blueprints, bp]);
+    setSelectedLibraryItem(null);
+    setSuccess(`"${bp.name}" aus Bibliothek übernommen.`);
+    setView("hub");
+    setTimeout(() => setSuccess(""), 3000);
+  }
+
+  async function generateWithAI() {
+    setGenerating(true);
+    setError("");
+    try {
+      let scenarioInfo = "";
+      if (aiForm.embedInScenario && aiForm.scenarioCaseStudyId) {
+        const cs = caseStudies.find((c) => c.id === aiForm.scenarioCaseStudyId);
+        if (cs) scenarioInfo = `Eingebettet in das Overarching-Szenario der Fallstudie "${cs.title}" (Firma: ${cs.companyName}). Alle Rollen, Kontexte und Dokumente sollen in diesem Szenario spielen.`;
+      }
+
+      let reqContext = "";
+      if (aiForm.requirementModuleIndex >= 0 && requirementModules[aiForm.requirementModuleIndex]) {
+        const rm = requirementModules[aiForm.requirementModuleIndex];
+        reqContext = `Basierend auf der Anforderungsanalyse-Empfehlung: "${rm.name}" (${rm.type}). Beschreibung: ${rm.description}. Anpassungshinweise: ${rm.adaptationNotes}. Generierungsprompt: ${rm.generationPrompt}.`;
+      }
+
+      const prompt = `Erstelle einen vollständigen Assessment-Baustein mit folgendem Profil:
+Typ: ${typeLabel(aiForm.type)}
+Ziel-Level: ${aiForm.targetLevel}
+Dauer: ${aiForm.duration} Minuten
+Kontext: ${aiForm.context || "Allgemein"}
+${reqContext ? `\nAnforderungsanalyse-Kontext:\n${reqContext}` : ""}
+${scenarioInfo ? `\nOverarching-Szenario:\n${scenarioInfo}` : ""}
+
+Antworte in folgendem JSON-Format:
+{
+  "name": "Titel des Bausteins",
+  "description": "Kurzbeschreibung (2-3 Sätze)",
+  "instructions": "Detaillierte Durchführungsanweisungen für den Moderator/Beobachter",
+  "duration": ${aiForm.duration},
+  "scenarioContext": "Wie der Baustein ins Gesamtszenario passt (falls zutreffend)"
+}`;
+
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "generate_module",
+          workspaceSlug,
+          prompt,
+          systemPrompt:
+            "Du bist ein Experte für Executive Assessment Center Design. Erstelle professionelle, praxistaugliche Assessment-Bausteine auf Deutsch. Antworte ausschließlich in gültigem JSON.",
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "KI-Generierung fehlgeschlagen");
+      }
+      const data = await res.json();
+      const parsed = data.result || {};
+
+      const bp: ModuleBlueprint = {
+        id: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        name: parsed.name || `KI-Baustein ${aiForm.type}`,
+        type: aiForm.type,
+        description: parsed.description || "",
+        instructions: parsed.instructions || "",
+        duration: parsed.duration || aiForm.duration,
+        targetLevel: aiForm.targetLevel,
+        scenarioContext: parsed.scenarioContext || scenarioInfo || "",
+        adaptationNotes: reqContext || "",
+        sourceType: "ai",
+        sourceId: aiForm.requirementModuleIndex >= 0 ? selectedAnalysis?.id : undefined,
+        aiGenerated: true,
+        status: "draft",
+      };
+
+      persistBlueprints([...blueprints, bp]);
+      setSuccess(`KI-Baustein "${bp.name}" erstellt.`);
+      setView("hub");
+    } catch (err: any) {
+      setError(err.message || "KI-Generierung fehlgeschlagen.");
+    } finally {
+      setGenerating(false);
+      setTimeout(() => setSuccess(""), 4000);
+    }
+  }
+
+  function deleteBlueprint(id: string) {
+    persistBlueprints(blueprints.filter((b) => b.id !== id));
+  }
+
+  function updateBlueprintStatus(id: string, status: "draft" | "ready" | "active") {
+    persistBlueprints(blueprints.map((b) => (b.id === id ? { ...b, status } : b)));
+  }
+
+  function saveEditedBlueprint() {
+    if (!editBlueprint) return;
+    persistBlueprints(blueprints.map((b) => (b.id === editBlueprint.id ? editBlueprint : b)));
+    setEditBlueprint(null);
+    setSuccess("Baustein aktualisiert.");
+    setTimeout(() => setSuccess(""), 3000);
+  }
+
+  const statusBadge = (s: string) => {
+    const map: Record<string, { bg: string; text: string; label: string }> = {
+      draft: { bg: "bg-slate-100", text: "text-slate-600", label: "Entwurf" },
+      ready: { bg: "bg-green-100", text: "text-green-700", label: "Bereit" },
+      active: { bg: "bg-blue-100", text: "text-blue-700", label: "Aktiv" },
+    };
+    const d = map[s] || map.draft;
+    return <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${d.bg} ${d.text}`}>{d.label}</span>;
+  };
+
+  const sourceBadge = (s: string) => {
+    const map: Record<string, { bg: string; text: string; label: string }> = {
+      manual: { bg: "bg-slate-100", text: "text-slate-600", label: "Manuell" },
+      library: { bg: "bg-purple-100", text: "text-purple-700", label: "Bibliothek" },
+      ai: { bg: "bg-amber-100", text: "text-amber-700", label: "KI-generiert" },
+      requirement: { bg: "bg-teal-100", text: "text-teal-700", label: "Anforderung" },
+    };
+    const d = map[s] || map.manual;
+    return <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${d.bg} ${d.text}`}>{d.label}</span>;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <header className="bg-[#0f172a] border-b border-slate-700 px-4 sm:px-6 py-3">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <Link href={base} className="hover:text-white transition" data-testid="link-dashboard">Dashboard</Link>
+            <span>/</span>
+            <span className="text-white font-medium">Baustein-Builder</span>
+          </div>
+        </header>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex justify-center">
+          <p className="text-sm text-slate-400">Laden...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-[#0f172a] border-b border-slate-700 px-4 sm:px-6 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <Link href={base} className="hover:text-white transition" data-testid="link-dashboard">Dashboard</Link>
+            <span>/</span>
+            {view === "hub" ? (
+              <span className="text-white font-medium">Baustein-Builder</span>
+            ) : (
+              <>
+                <button onClick={() => { setView("hub"); setEditBlueprint(null); }} className="hover:text-white transition" data-testid="link-builder-hub">Baustein-Builder</button>
+                <span>/</span>
+                <span className="text-white font-medium">
+                  {view === "manual" && "Manuell erstellen"}
+                  {view === "library" && "Aus Bibliothek"}
+                  {view === "ai" && "KI-Generierung"}
+                  {view === "detail" && "Baustein bearbeiten"}
+                </span>
+              </>
+            )}
+          </div>
+          {view !== "hub" && (
+            <button
+              onClick={() => { setView("hub"); setEditBlueprint(null); }}
+              className="text-xs text-slate-400 hover:text-white transition"
+              data-testid="button-back-hub"
+            >
+              ← Zurück
+            </button>
+          )}
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded-lg" data-testid="text-error">
+            {error}
+            <button onClick={() => setError("")} className="ml-2 text-red-400 hover:text-red-600">✕</button>
+          </div>
+        )}
+        {success && (
+          <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-2 rounded-lg" data-testid="text-success">
+            {success}
+          </div>
+        )}
+
+        {view === "hub" && (
+          <>
+            <div>
+              <h1 className="text-xl font-bold text-slate-800" data-testid="text-page-title">Baustein-Builder</h1>
+              <p className="text-sm text-slate-500 mt-1">Assessment-Bausteine erstellen, aus der Bibliothek übernehmen oder per KI generieren</p>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4">
+              <button
+                onClick={() => setView("manual")}
+                className="bg-white border border-slate-200 rounded-xl p-5 text-left hover:border-blue-300 hover:shadow-md transition group"
+                data-testid="button-create-manual"
+              >
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-lg mb-3 group-hover:bg-blue-100 transition">✏️</div>
+                <h3 className="text-sm font-bold text-slate-800">Manuell erstellen</h3>
+                <p className="text-xs text-slate-500 mt-1">Baustein von Grund auf erstellen mit Typ, Beschreibung und Anweisungen</p>
+              </button>
+
+              <button
+                onClick={() => setView("library")}
+                className="bg-white border border-slate-200 rounded-xl p-5 text-left hover:border-purple-300 hover:shadow-md transition group"
+                data-testid="button-create-library"
+              >
+                <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-lg mb-3 group-hover:bg-purple-100 transition">📚</div>
+                <h3 className="text-sm font-bold text-slate-800">Aus Bibliothek</h3>
+                <p className="text-xs text-slate-500 mt-1">Bestehende Übung übernehmen, anpassen und als Baustein verwenden</p>
+                {libraryItems.length > 0 && (
+                  <span className="inline-block mt-2 text-[10px] font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                    {libraryItems.length} verfügbar
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setView("ai")}
+                className="bg-white border border-slate-200 rounded-xl p-5 text-left hover:border-amber-300 hover:shadow-md transition group"
+                data-testid="button-create-ai"
+              >
+                <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-lg mb-3 group-hover:bg-amber-100 transition">🤖</div>
+                <h3 className="text-sm font-bold text-slate-800">KI-gestützt generieren</h3>
+                <p className="text-xs text-slate-500 mt-1">KI erstellt den Baustein — optional basierend auf Anforderungsanalyse und Szenario</p>
+                {analyses.length > 0 && (
+                  <span className="inline-block mt-2 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                    {analyses.length} Analyse{analyses.length !== 1 ? "n" : ""} verfügbar
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {analyses.length > 0 && (
+              <div className="bg-teal-50 border border-teal-200 rounded-xl p-5" data-testid="section-requirement-suggestions">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h2 className="text-sm font-bold text-teal-800">Vorschläge aus der Anforderungsanalyse</h2>
+                    <p className="text-xs text-teal-600 mt-0.5">Empfohlene Bausteine direkt übernehmen oder per KI ausarbeiten</p>
+                  </div>
+                  {analyses.length > 1 && !selectedAnalysis && (
+                    <span className="text-[10px] text-teal-500">{analyses.length} Analysen</span>
+                  )}
+                </div>
+
+                {!selectedAnalysis ? (
+                  <div className="space-y-2">
+                    {analyses.map((a) => (
+                      <button
+                        key={a.id}
+                        onClick={() => loadRequirementModules(a)}
+                        className="w-full text-left bg-white border border-teal-100 rounded-lg p-3 hover:border-teal-300 transition"
+                        data-testid={`button-analysis-${a.id}`}
+                      >
+                        <p className="text-sm font-medium text-slate-800">{a.title}</p>
+                        <p className="text-xs text-slate-500">
+                          {a.clientName || ""}
+                          {a.projectName ? ` · ${a.projectName}` : ""}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-medium text-teal-700">{selectedAnalysis.title}</span>
+                      <button onClick={() => { setSelectedAnalysis(null); setRequirementModules([]); }} className="text-[10px] text-teal-500 hover:text-teal-700 underline">andere wählen</button>
+                    </div>
+                    {requirementModules.length === 0 ? (
+                      <p className="text-xs text-teal-500">Keine Baustein-Empfehlungen in dieser Analyse.</p>
+                    ) : (
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        {requirementModules.map((mod, idx) => {
+                          const alreadyAdopted = blueprints.some((b) => b.name.toLowerCase() === mod.name.toLowerCase());
+                          return (
+                            <div key={idx} className={`bg-white border rounded-lg p-3 ${alreadyAdopted ? "border-green-200 opacity-60" : "border-teal-100"}`} data-testid={`card-req-module-${idx}`}>
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-slate-800">{mod.name}</p>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-600">{mod.type}</span>
+                                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{mod.description}</p>
+                                </div>
+                                {alreadyAdopted ? (
+                                  <span className="text-[10px] text-green-600 font-medium shrink-0">✓ Übernommen</span>
+                                ) : (
+                                  <div className="flex flex-col gap-1 shrink-0">
+                                    <button
+                                      onClick={() => adoptRequirementModule(mod)}
+                                      className="text-[10px] font-medium text-teal-600 bg-teal-100 hover:bg-teal-200 border border-teal-200 rounded px-2 py-1 transition"
+                                      data-testid={`button-adopt-req-${idx}`}
+                                    >
+                                      Übernehmen
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setAiForm((f) => ({
+                                          ...f,
+                                          type: Object.entries({ "Interview-Leitfaden": "interview", "Fallstudie": "case_study", "Fact-Finding-Simulation": "fact_finding", "Präsentation": "presentation", "Verhaltenssimulation": "role_play", "Rollenspiel": "role_play" }).find(([k]) => k === mod.type)?.[1] || "other",
+                                          context: mod.description,
+                                          requirementModuleIndex: idx,
+                                        }));
+                                        setView("ai");
+                                      }}
+                                      className="text-[10px] font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded px-2 py-1 transition"
+                                      data-testid={`button-ai-req-${idx}`}
+                                    >
+                                      KI ausarbeiten
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-bold text-slate-700" data-testid="text-blueprints-title">
+                  Erstellte Bausteine ({blueprints.length})
+                </h2>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`${base}/modules/case-study-builder`}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-800 transition"
+                    data-testid="link-case-study-builder"
+                  >
+                    Fallstudien-Builder →
+                  </Link>
+                </div>
+              </div>
+
+              {blueprints.length === 0 ? (
+                <div className="bg-white border border-dashed border-slate-300 rounded-xl p-8 text-center" data-testid="empty-blueprints">
+                  <p className="text-sm text-slate-400">Noch keine Bausteine erstellt.</p>
+                  <p className="text-xs text-slate-400 mt-1">Nutzen Sie die Optionen oben, um Ihren ersten Baustein zu erstellen.</p>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {blueprints.map((bp) => (
+                    <div key={bp.id} className="bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition" data-testid={`card-blueprint-${bp.id}`}>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{typeIcon(bp.type)}</span>
+                          <div className="min-w-0">
+                            <h3 className="text-sm font-bold text-slate-800 truncate">{bp.name}</h3>
+                            <p className="text-[10px] text-slate-400">{typeLabel(bp.type)} · {bp.duration} Min.</p>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-500 line-clamp-2 mb-3">{bp.description || "Keine Beschreibung"}</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-1">
+                          {statusBadge(bp.status)}
+                          {sourceBadge(bp.sourceType)}
+                          {bp.aiGenerated && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">KI</span>}
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => { setEditBlueprint({ ...bp }); setView("detail"); }}
+                            className="text-[10px] text-blue-600 hover:text-blue-800 font-medium"
+                            data-testid={`button-edit-${bp.id}`}
+                          >
+                            Bearbeiten
+                          </button>
+                          <button
+                            onClick={() => deleteBlueprint(bp.id)}
+                            className="text-[10px] text-red-400 hover:text-red-600 font-medium"
+                            data-testid={`button-delete-${bp.id}`}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                      {bp.scenarioContext && (
+                        <div className="mt-2 pt-2 border-t border-slate-100">
+                          <p className="text-[10px] text-slate-400">
+                            <span className="font-semibold">Szenario:</span> {bp.scenarioContext.slice(0, 80)}{bp.scenarioContext.length > 80 ? "…" : ""}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {view === "manual" && (
+          <div className="max-w-2xl">
+            <h2 className="text-lg font-bold text-slate-800 mb-1" data-testid="text-manual-title">Baustein manuell erstellen</h2>
+            <p className="text-sm text-slate-500 mb-6">Definieren Sie alle Details für einen neuen Assessment-Baustein.</p>
+
+            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Name *</label>
+                <input
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={manualForm.name}
+                  onChange={(e) => setManualForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="z.B. Strategische Präsentation"
+                  data-testid="input-manual-name"
+                />
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Typ</label>
+                  <select
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={manualForm.type}
+                    onChange={(e) => {
+                      setManualForm((f) => ({ ...f, type: e.target.value }));
+                    }}
+                    data-testid="select-manual-type"
+                  >
+                    {exerciseTypes.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Ziel-Level</label>
+                  <select
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={manualForm.targetLevel}
+                    onChange={(e) => setManualForm((f) => ({ ...f, targetLevel: e.target.value }))}
+                    data-testid="select-manual-level"
+                  >
+                    {targetLevels.map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Dauer (Minuten)</label>
+                <input
+                  type="number"
+                  className="w-32 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={manualForm.duration}
+                  onChange={(e) => setManualForm((f) => ({ ...f, duration: parseInt(e.target.value) || 0 }))}
+                  data-testid="input-manual-duration"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Beschreibung</label>
+                <textarea
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  rows={3}
+                  value={manualForm.description}
+                  onChange={(e) => setManualForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="Was wird in diesem Baustein gemacht?"
+                  data-testid="input-manual-description"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Durchführungsanweisungen</label>
+                <textarea
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  rows={5}
+                  value={manualForm.instructions}
+                  onChange={(e) => setManualForm((f) => ({ ...f, instructions: e.target.value }))}
+                  placeholder="Detaillierte Anweisungen für Moderator/Beobachter..."
+                  data-testid="input-manual-instructions"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Szenario-Kontext (optional)</label>
+                <textarea
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  rows={2}
+                  value={manualForm.scenarioContext}
+                  onChange={(e) => setManualForm((f) => ({ ...f, scenarioContext: e.target.value }))}
+                  placeholder="In welches übergeordnete Szenario ist der Baustein eingebettet?"
+                  data-testid="input-manual-scenario"
+                />
+              </div>
+
+              {manualForm.type === "case_study" && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-700 mb-2">Für umfangreiche Fallstudien mit Datenraum nutzen Sie den spezialisierten Fallstudien-Builder:</p>
+                  <Link
+                    href={`${base}/modules/case-study-builder`}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                    data-testid="link-case-study-builder-redirect"
+                  >
+                    Zum Fallstudien-Builder →
+                  </Link>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={saveManualBlueprint}
+                  className="bg-[#0f172a] text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-slate-800 transition"
+                  data-testid="button-save-manual"
+                >
+                  Baustein erstellen
+                </button>
+                <button
+                  onClick={() => setView("hub")}
+                  className="text-sm text-slate-500 hover:text-slate-700 transition"
+                  data-testid="button-cancel-manual"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {view === "library" && (
+          <div className="max-w-3xl">
+            <h2 className="text-lg font-bold text-slate-800 mb-1" data-testid="text-library-title">Aus Bibliothek übernehmen</h2>
+            <p className="text-sm text-slate-500 mb-6">Wählen Sie eine bestehende Übung und passen Sie sie als Assessment-Baustein an.</p>
+
+            {!selectedLibraryItem ? (
+              <div>
+                {libraryItems.length === 0 ? (
+                  <div className="bg-white border border-dashed border-slate-300 rounded-xl p-8 text-center">
+                    <p className="text-sm text-slate-400">Keine Einträge in der Bibliothek vorhanden.</p>
+                    <Link href={`${base}/exercise-library`} className="text-xs text-blue-600 hover:underline mt-2 inline-block">Zur Baustein-Bibliothek →</Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {libraryItems.map((item) => {
+                      const alreadyAdopted = blueprints.some((b) => b.sourceId === item.id && b.sourceType === "library");
+                      return (
+                        <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-purple-300 transition" data-testid={`card-lib-item-${item.id}`}>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{typeIcon(item.exerciseType)}</span>
+                              <div>
+                                <h3 className="text-sm font-bold text-slate-800">{item.title}</h3>
+                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600">{typeLabel(item.exerciseType)}</span>
+                                  {item.targetLevels?.slice(0, 2).map((l) => (
+                                    <span key={l} className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">{l}</span>
+                                  ))}
+                                  {item.clientName && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">{item.clientName}</span>}
+                                </div>
+                              </div>
+                            </div>
+                            {item.description && <p className="text-xs text-slate-500 mt-1 line-clamp-1 pl-8">{item.description}</p>}
+                          </div>
+                          {alreadyAdopted ? (
+                            <span className="text-[10px] text-green-600 font-medium shrink-0 ml-2">✓ Bereits übernommen</span>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setSelectedLibraryItem(item);
+                                setLibraryAdaptForm({
+                                  name: item.title,
+                                  description: item.description || "",
+                                  instructions: "",
+                                  duration: 45,
+                                  targetLevel: item.targetLevels?.[0] || "Manager",
+                                  scenarioContext: "",
+                                });
+                              }}
+                              className="shrink-0 ml-2 text-xs font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg px-3 py-1.5 transition"
+                              data-testid={`button-select-lib-${item.id}`}
+                            >
+                              Auswählen
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                  <span className="text-lg">{typeIcon(selectedLibraryItem.exerciseType)}</span>
+                  <div>
+                    <p className="text-xs text-slate-400">Basierend auf</p>
+                    <p className="text-sm font-bold text-slate-800">{selectedLibraryItem.title}</p>
+                  </div>
+                  <button onClick={() => setSelectedLibraryItem(null)} className="ml-auto text-xs text-slate-400 hover:text-slate-600">Andere wählen</button>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Baustein-Name</label>
+                  <input
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    value={libraryAdaptForm.name}
+                    onChange={(e) => setLibraryAdaptForm((f) => ({ ...f, name: e.target.value }))}
+                    data-testid="input-lib-name"
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Ziel-Level</label>
+                    <select
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      value={libraryAdaptForm.targetLevel}
+                      onChange={(e) => setLibraryAdaptForm((f) => ({ ...f, targetLevel: e.target.value }))}
+                      data-testid="select-lib-level"
+                    >
+                      {targetLevels.map((l) => (
+                        <option key={l} value={l}>{l}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Dauer (Minuten)</label>
+                    <input
+                      type="number"
+                      className="w-32 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      value={libraryAdaptForm.duration}
+                      onChange={(e) => setLibraryAdaptForm((f) => ({ ...f, duration: parseInt(e.target.value) || 0 }))}
+                      data-testid="input-lib-duration"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Beschreibung</label>
+                  <textarea
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    rows={3}
+                    value={libraryAdaptForm.description}
+                    onChange={(e) => setLibraryAdaptForm((f) => ({ ...f, description: e.target.value }))}
+                    data-testid="input-lib-description"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Durchführungsanweisungen</label>
+                  <textarea
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    rows={4}
+                    value={libraryAdaptForm.instructions}
+                    onChange={(e) => setLibraryAdaptForm((f) => ({ ...f, instructions: e.target.value }))}
+                    placeholder="Anweisungen für diesen spezifischen Baustein..."
+                    data-testid="input-lib-instructions"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Szenario-Kontext (optional)</label>
+                  <textarea
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    rows={2}
+                    value={libraryAdaptForm.scenarioContext}
+                    onChange={(e) => setLibraryAdaptForm((f) => ({ ...f, scenarioContext: e.target.value }))}
+                    placeholder="In welches übergeordnete Szenario ist der Baustein eingebettet?"
+                    data-testid="input-lib-scenario"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={adoptLibraryItem}
+                    className="bg-purple-600 text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-purple-700 transition"
+                    data-testid="button-save-library"
+                  >
+                    Als Baustein übernehmen
+                  </button>
+                  <button
+                    onClick={() => setSelectedLibraryItem(null)}
+                    className="text-sm text-slate-500 hover:text-slate-700 transition"
+                    data-testid="button-cancel-library"
+                  >
+                    Abbrechen
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {view === "ai" && (
+          <div className="max-w-2xl">
+            <h2 className="text-lg font-bold text-slate-800 mb-1" data-testid="text-ai-title">KI-gestützte Generierung</h2>
+            <p className="text-sm text-slate-500 mb-6">Die KI erstellt einen vollständigen Baustein basierend auf Ihren Vorgaben.</p>
+
+            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+              {requirementModules.length > 0 && (
+                <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
+                  <label className="block text-xs font-semibold text-teal-700 mb-1">Anforderungsanalyse-Empfehlung als Grundlage</label>
+                  <select
+                    className="w-full border border-teal-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    value={aiForm.requirementModuleIndex}
+                    onChange={(e) => {
+                      const idx = parseInt(e.target.value);
+                      setAiForm((f) => ({ ...f, requirementModuleIndex: idx }));
+                      if (idx >= 0 && requirementModules[idx]) {
+                        const rm = requirementModules[idx];
+                        const typeMap: Record<string, string> = { "Interview-Leitfaden": "interview", "Fallstudie": "case_study", "Fact-Finding-Simulation": "fact_finding", "Präsentation": "presentation", "Verhaltenssimulation": "role_play", "Rollenspiel": "role_play" };
+                        setAiForm((f) => ({
+                          ...f,
+                          type: typeMap[rm.type] || "other",
+                          context: rm.description,
+                          requirementModuleIndex: idx,
+                        }));
+                      }
+                    }}
+                    data-testid="select-ai-requirement"
+                  >
+                    <option value={-1}>— Keine Empfehlung verwenden —</option>
+                    {requirementModules.map((rm, i) => (
+                      <option key={i} value={i}>{rm.name} ({rm.type})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Baustein-Typ</label>
+                  <select
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    value={aiForm.type}
+                    onChange={(e) => setAiForm((f) => ({ ...f, type: e.target.value }))}
+                    data-testid="select-ai-type"
+                  >
+                    {exerciseTypes.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Ziel-Level</label>
+                  <select
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    value={aiForm.targetLevel}
+                    onChange={(e) => setAiForm((f) => ({ ...f, targetLevel: e.target.value }))}
+                    data-testid="select-ai-level"
+                  >
+                    {targetLevels.map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Dauer (Minuten)</label>
+                <input
+                  type="number"
+                  className="w-32 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  value={aiForm.duration}
+                  onChange={(e) => setAiForm((f) => ({ ...f, duration: parseInt(e.target.value) || 0 }))}
+                  data-testid="input-ai-duration"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Kontext / Anforderungen</label>
+                <textarea
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  rows={3}
+                  value={aiForm.context}
+                  onChange={(e) => setAiForm((f) => ({ ...f, context: e.target.value }))}
+                  placeholder="Was soll der Baustein testen? Welche Kompetenzen stehen im Fokus?"
+                  data-testid="input-ai-context"
+                />
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
+                <h3 className="text-xs font-bold text-slate-700">Overarching-Szenario</h3>
+                <p className="text-xs text-slate-500">Optional: Baustein in ein übergeordnetes Fallstudien-Szenario einbetten, sodass alle Übungen in der gleichen Firma / Situation spielen.</p>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={aiForm.embedInScenario}
+                    onChange={(e) => setAiForm((f) => ({ ...f, embedInScenario: e.target.checked }))}
+                    className="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-400"
+                    data-testid="checkbox-embed-scenario"
+                  />
+                  <span className="text-sm text-slate-700">In bestehendes Szenario einbetten</span>
+                </label>
+
+                {aiForm.embedInScenario && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Fallstudie als Szenario-Rahmen</label>
+                    {caseStudies.length === 0 ? (
+                      <div className="text-xs text-slate-400">
+                        Keine Fallstudien vorhanden.{" "}
+                        <Link href={`${base}/modules/case-study-builder`} className="text-blue-600 hover:underline">
+                          Fallstudie erstellen →
+                        </Link>
+                      </div>
+                    ) : (
+                      <select
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        value={aiForm.scenarioCaseStudyId}
+                        onChange={(e) => setAiForm((f) => ({ ...f, scenarioCaseStudyId: e.target.value }))}
+                        data-testid="select-ai-scenario"
+                      >
+                        <option value="">— Fallstudie wählen —</option>
+                        {caseStudies.map((cs) => (
+                          <option key={cs.id} value={cs.id}>{cs.title} ({cs.companyName})</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={generateWithAI}
+                  disabled={generating}
+                  className="bg-amber-600 text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-amber-700 transition disabled:opacity-50"
+                  data-testid="button-generate-ai"
+                >
+                  {generating ? "Generiere..." : "Baustein generieren"}
+                </button>
+                <button
+                  onClick={() => setView("hub")}
+                  className="text-sm text-slate-500 hover:text-slate-700 transition"
+                  data-testid="button-cancel-ai"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {view === "detail" && editBlueprint && (
+          <div className="max-w-2xl">
+            <h2 className="text-lg font-bold text-slate-800 mb-1" data-testid="text-detail-title">Baustein bearbeiten</h2>
+            <div className="flex gap-2 mb-6">
+              {statusBadge(editBlueprint.status)}
+              {sourceBadge(editBlueprint.sourceType)}
+              {editBlueprint.aiGenerated && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">KI-generiert</span>}
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
+                <input
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={editBlueprint.name}
+                  onChange={(e) => setEditBlueprint({ ...editBlueprint, name: e.target.value })}
+                  data-testid="input-edit-name"
+                />
+              </div>
+
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Typ</label>
+                  <select
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={editBlueprint.type}
+                    onChange={(e) => setEditBlueprint({ ...editBlueprint, type: e.target.value })}
+                    data-testid="select-edit-type"
+                  >
+                    {exerciseTypes.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Ziel-Level</label>
+                  <select
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={editBlueprint.targetLevel}
+                    onChange={(e) => setEditBlueprint({ ...editBlueprint, targetLevel: e.target.value })}
+                    data-testid="select-edit-level"
+                  >
+                    {targetLevels.map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                  <select
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={editBlueprint.status}
+                    onChange={(e) => setEditBlueprint({ ...editBlueprint, status: e.target.value as any })}
+                    data-testid="select-edit-status"
+                  >
+                    <option value="draft">Entwurf</option>
+                    <option value="ready">Bereit</option>
+                    <option value="active">Aktiv</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Dauer (Minuten)</label>
+                <input
+                  type="number"
+                  className="w-32 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={editBlueprint.duration}
+                  onChange={(e) => setEditBlueprint({ ...editBlueprint, duration: parseInt(e.target.value) || 0 })}
+                  data-testid="input-edit-duration"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Beschreibung</label>
+                <textarea
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  rows={3}
+                  value={editBlueprint.description}
+                  onChange={(e) => setEditBlueprint({ ...editBlueprint, description: e.target.value })}
+                  data-testid="input-edit-description"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Durchführungsanweisungen</label>
+                <textarea
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  rows={6}
+                  value={editBlueprint.instructions}
+                  onChange={(e) => setEditBlueprint({ ...editBlueprint, instructions: e.target.value })}
+                  data-testid="input-edit-instructions"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Szenario-Kontext</label>
+                <textarea
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  rows={2}
+                  value={editBlueprint.scenarioContext}
+                  onChange={(e) => setEditBlueprint({ ...editBlueprint, scenarioContext: e.target.value })}
+                  data-testid="input-edit-scenario"
+                />
+              </div>
+
+              {editBlueprint.adaptationNotes && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Anpassungshinweise</label>
+                  <textarea
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    rows={2}
+                    value={editBlueprint.adaptationNotes}
+                    onChange={(e) => setEditBlueprint({ ...editBlueprint, adaptationNotes: e.target.value })}
+                    data-testid="input-edit-notes"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={saveEditedBlueprint}
+                  className="bg-[#0f172a] text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-slate-800 transition"
+                  data-testid="button-save-edit"
+                >
+                  Speichern
+                </button>
+                <button
+                  onClick={() => { setEditBlueprint(null); setView("hub"); }}
+                  className="text-sm text-slate-500 hover:text-slate-700 transition"
+                  data-testid="button-cancel-edit"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <footer className="border-t border-slate-200 mt-12 py-4 text-center">
+        <p className="text-[10px] text-slate-400">© Christoph Aldering · Private initiative / concept</p>
+      </footer>
+    </div>
+  );
 }

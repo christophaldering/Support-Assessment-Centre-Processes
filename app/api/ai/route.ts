@@ -406,6 +406,67 @@ Alle Texte auf Deutsch.`,
       });
     }
 
+    if (action === "generate_module") {
+      const { prompt, systemPrompt } = body;
+      if (!prompt) {
+        return NextResponse.json({ error: "Prompt ist erforderlich" }, { status: 400 });
+      }
+
+      if (workspace && session?.userId) {
+        const consentOk = await checkConsent(workspace.id, session.userId, "ai_processing");
+        if (!consentOk) {
+          return NextResponse.json({ error: "KI-Verarbeitung erfordert Einwilligung." }, { status: 403 });
+        }
+      }
+
+      await logAudit({
+        workspaceId,
+        userId,
+        action: "ai.generate_module",
+        entityType: "ai",
+        details: { promptLength: prompt.length, model: MODEL },
+      });
+
+      const response = await openai.chat.completions.create({
+        model: MODEL,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt || "Du bist ein Experte für Executive Assessment Center Design. Erstelle professionelle, praxistaugliche Assessment-Bausteine auf Deutsch. Antworte ausschließlich in gültigem JSON.",
+          },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+        max_completion_tokens: 4096,
+      });
+
+      const rawContent = response.choices[0]?.message?.content || "{}";
+      let parsed: any;
+      try {
+        parsed = JSON.parse(rawContent);
+      } catch {
+        parsed = { name: "KI-Baustein", description: rawContent, instructions: "", duration: 45, scenarioContext: "" };
+      }
+
+      await logUsageEvent({
+        workspaceId,
+        userId: session?.userId,
+        eventType: "ai.request",
+        entityType: "ai",
+        metadata: { action: "generate_module" },
+        credits: 1,
+      });
+
+      return NextResponse.json({
+        success: true,
+        action,
+        result: parsed,
+        aiGenerated: true,
+        model: MODEL,
+        timestamp,
+      });
+    }
+
     return NextResponse.json({ error: "Unbekannte Aktion" }, { status: 400 });
   } catch (err) {
     console.error("AI route error:", err);

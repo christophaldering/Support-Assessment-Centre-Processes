@@ -162,8 +162,8 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
     },
     {
       title: "Baustein-Builder",
-      description: "Übungen, Fallstudien und Instrumente per KI generieren oder hochladen",
-      href: `${base}/modules/case-study-builder`,
+      description: "Assessment-Bausteine erstellen, aus der Bibliothek übernehmen oder per KI generieren",
+      href: `${base}/modules`,
       icon: "builder",
     },
     {
