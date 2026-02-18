@@ -183,6 +183,14 @@ export default function RequirementsAnalysisPage() {
 
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
 
+  const [showModelPicker, setShowModelPicker] = useState(false);
+  const [competencyModels, setCompetencyModels] = useState<any[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+
+  const [showLibraryPicker, setShowLibraryPicker] = useState(false);
+  const [libraryItems, setLibraryItems] = useState<any[]>([]);
+  const [loadingLibrary, setLoadingLibrary] = useState(false);
+
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchSaved = useCallback(async () => {
@@ -382,6 +390,70 @@ export default function RequirementsAnalysisPage() {
     setNewModType("other");
     setNewModPrompt("");
     setAddingModule(false);
+  };
+
+  const fetchCompetencyModels = async () => {
+    setLoadingModels(true);
+    try {
+      const res = await fetch(`/api/w/${slug}/competency-models`);
+      if (res.ok) setCompetencyModels(await res.json());
+    } catch {} finally { setLoadingModels(false); }
+  };
+
+  const importFromModel = (model: any) => {
+    if (!extraction) return;
+    const nodes = Array.isArray(model.nodes) ? model.nodes : [];
+    const newComps: CompetencyItem[] = nodes
+      .filter((n: any) => n.name)
+      .map((n: any) => ({
+        name: n.name,
+        description: n.description || "",
+        selected: true,
+      }));
+    const existingNames = extraction.competencies.map(c => c.name.toLowerCase());
+    const toAdd = newComps.filter(c => !existingNames.includes(c.name.toLowerCase()));
+    if (toAdd.length === 0) return;
+    setExtractionAndSave({
+      ...extraction,
+      competencies: [...extraction.competencies, ...toAdd],
+    });
+    setShowModelPicker(false);
+  };
+
+  const fetchLibraryItems = async () => {
+    setLoadingLibrary(true);
+    try {
+      const res = await fetch(`/api/w/${slug}/exercise-library`);
+      if (res.ok) setLibraryItems(await res.json());
+    } catch {} finally { setLoadingLibrary(false); }
+  };
+
+  const importFromLibrary = (item: any) => {
+    if (!extraction) return;
+    const typeMap: Record<string, string> = {
+      "interview": "Interview-Leitfaden",
+      "case_study": "Fallstudie",
+      "fact_finding": "Fact-Finding-Simulation",
+      "presentation": "Präsentation",
+      "behavioral_simulation": "Verhaltenssimulation",
+      "psychometric_test": "Psychometrischer Test",
+      "group_exercise": "Gruppenübung",
+      "other": "Sonstiges",
+    };
+    const newMod: AssessmentModuleData = {
+      name: item.title,
+      type: typeMap[item.exerciseType] || item.exerciseType || "Sonstiges",
+      description: item.description || (item.metadataJson?.description) || "",
+      adaptationNotes: "",
+      generationPrompt: "",
+      selected: true,
+    };
+    const existingNames = extraction.assessmentModules.map(m => m.name.toLowerCase());
+    if (existingNames.includes(newMod.name.toLowerCase())) return;
+    setExtractionAndSave({
+      ...extraction,
+      assessmentModules: [...extraction.assessmentModules, newMod],
+    });
   };
 
   const removeQuestion = (idx: number) => {
@@ -917,9 +989,13 @@ export default function RequirementsAnalysisPage() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-slate-700">Anforderungsprofil / Kompetenzen</h3>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-400 bg-slate-100 rounded-full px-2 py-0.5 cursor-not-allowed" title="Verknüpfung mit bestehendem Kompetenzmodell — kommt bald">
-                        Modell verknüpfen (bald)
-                      </span>
+                      <button
+                        onClick={() => { setShowModelPicker(!showModelPicker); if (!showModelPicker && competencyModels.length === 0) fetchCompetencyModels(); }}
+                        className="text-[10px] font-medium text-brand-blue bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5 hover:bg-blue-100 transition"
+                        data-testid="button-link-competency-model"
+                      >
+                        Modell verknüpfen
+                      </button>
                       <button
                         onClick={() => setAddingCompetency(true)}
                         className="text-xs font-medium px-2 py-0.5 rounded border border-slate-300 hover:bg-slate-50 transition"
@@ -929,6 +1005,42 @@ export default function RequirementsAnalysisPage() {
                       </button>
                     </div>
                   </div>
+
+                  {showModelPicker && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3" data-testid="section-model-picker">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-semibold text-blue-800">Kompetenzmodell auswählen</h4>
+                        <button onClick={() => setShowModelPicker(false)} className="text-xs text-slate-400 hover:text-slate-600">Schließen</button>
+                      </div>
+                      {loadingModels ? (
+                        <p className="text-xs text-slate-400">Laden...</p>
+                      ) : competencyModels.length === 0 ? (
+                        <p className="text-xs text-slate-400">Keine Kompetenzmodelle vorhanden. Erstellen Sie eines unter Kompetenzen.</p>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {competencyModels.map((model) => (
+                            <div key={model.id} className="bg-white border border-blue-100 rounded-lg p-3 flex items-center justify-between" data-testid={`card-model-${model.id}`}>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-slate-800">{model.name}</p>
+                                <p className="text-xs text-slate-500">
+                                  {model.nodes?.length || 0} Kompetenzen
+                                  {model.companyName ? ` · ${model.companyName}` : ""}
+                                  {model.sourceType ? ` · ${model.sourceType}` : ""}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => importFromModel(model)}
+                                className="shrink-0 ml-2 text-xs font-medium text-blue-600 bg-blue-100 hover:bg-blue-200 border border-blue-200 rounded px-2 py-1 transition"
+                                data-testid={`button-import-model-${model.id}`}
+                              >
+                                Übernehmen
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {addingCompetency && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 space-y-2">
@@ -982,9 +1094,13 @@ export default function RequirementsAnalysisPage() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-slate-700">Assessment-Bausteine</h3>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-400 bg-slate-100 rounded-full px-2 py-0.5 cursor-not-allowed" title="Rückgriff auf Baustein-Bibliothek — kommt bald">
-                        Bibliothek nutzen (bald)
-                      </span>
+                      <button
+                        onClick={() => { setShowLibraryPicker(!showLibraryPicker); if (!showLibraryPicker && libraryItems.length === 0) fetchLibraryItems(); }}
+                        className="text-[10px] font-medium text-brand-blue bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5 hover:bg-blue-100 transition"
+                        data-testid="button-link-exercise-library"
+                      >
+                        Bibliothek nutzen
+                      </button>
                       <button
                         onClick={() => setAddingModule(true)}
                         className="text-xs font-medium px-2 py-0.5 rounded border border-slate-300 hover:bg-slate-50 transition"
@@ -994,6 +1110,50 @@ export default function RequirementsAnalysisPage() {
                       </button>
                     </div>
                   </div>
+
+                  {showLibraryPicker && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3" data-testid="section-library-picker">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-semibold text-blue-800">Übung aus Bibliothek auswählen</h4>
+                        <button onClick={() => setShowLibraryPicker(false)} className="text-xs text-slate-400 hover:text-slate-600">Schließen</button>
+                      </div>
+                      {loadingLibrary ? (
+                        <p className="text-xs text-slate-400">Laden...</p>
+                      ) : libraryItems.length === 0 ? (
+                        <p className="text-xs text-slate-400">Keine Einträge in der Bibliothek vorhanden.</p>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {libraryItems.map((item: any) => {
+                            const alreadyAdded = extraction?.assessmentModules.some(m => m.name.toLowerCase() === item.title.toLowerCase());
+                            return (
+                              <div key={item.id} className="bg-white border border-blue-100 rounded-lg p-3 flex items-center justify-between" data-testid={`card-library-${item.id}`}>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-slate-800">{item.title}</p>
+                                  <div className="flex flex-wrap gap-1 mt-0.5">
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600">{item.exerciseType}</span>
+                                    {item.targetLevels?.slice(0, 2).map((l: string) => (
+                                      <span key={l} className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">{l}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                                {alreadyAdded ? (
+                                  <span className="shrink-0 ml-2 text-[10px] text-green-600 font-medium">Bereits hinzugefügt</span>
+                                ) : (
+                                  <button
+                                    onClick={() => importFromLibrary(item)}
+                                    className="shrink-0 ml-2 text-xs font-medium text-blue-600 bg-blue-100 hover:bg-blue-200 border border-blue-200 rounded px-2 py-1 transition"
+                                    data-testid={`button-import-library-${item.id}`}
+                                  >
+                                    Übernehmen
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {addingModule && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 space-y-2">
