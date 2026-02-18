@@ -65,7 +65,19 @@ Das JSON muss EXAKT diese Struktur haben:
     },
     "balanceSheet": [
       { "name": "<Kategorie>", "value": <Wert in Mrd>, "type": "<asset|liability>" }
+    ],
+    "organigramm": [
+      { "name": "<Name>", "role": "<Funktion/Position>", "department": "<Abteilung/Bereich>", "reportsTo": "<Name des Vorgesetzten oder null>" }
     ]
+  },
+  "briefing": {
+    "role": "<Rollenbeschreibung des Kandidaten im konkreten Unternehmenskontext>",
+    "situation": "<Situationsbeschreibung spezifisch für dieses Unternehmen>",
+    "tasks": ["<Aufgabe 1>", "<Aufgabe 2>", "<Aufgabe 3>", "<Aufgabe 4>"],
+    "analysisQuestions": ["<Frage 1>", "<Frage 2>", "<Frage 3>", "<Frage 4>"],
+    "conclusionQuestions": ["<Frage 1>", "<Frage 2>", "<Frage 3>", "<Frage 4>"],
+    "timeMinutes": <Bearbeitungszeit>,
+    "presentationMinutes": 15
   },
   "questions": {
     "analysis": ["<Analysefrage 1>", "<Analysefrage 2>", "<Analysefrage 3>", "<Analysefrage 4>"],
@@ -80,6 +92,8 @@ Wichtige Regeln:
 - Spannungsfelder und Dilemmata zwischen den Geschäftseinheiten
 - Realistische Finanzkennzahlen die zueinander passen
 - 4 Analysefragen und 4 Schlussfolgerungsfragen
+- Ein Organigramm mit ALLEN in der Fallstudie vorkommenden Personen (mindestens 8-10), inklusive Name, Funktion, Abteilung und Berichtslinie
+- Eine individuelle Briefing-Sektion mit Rollenbeschreibung, Situationsbeschreibung und Aufgabenstellung, die exakt auf das generierte Unternehmen zugeschnitten ist (NICHT generisch)
 - Alle Texte auf Englisch (wie Varexia SE Referenz)
 - Antworte AUSSCHLIESSLICH mit validem JSON, kein zusätzlicher Text
 
@@ -96,6 +110,8 @@ Wichtige Regeln:
 - Ergänze fehlende Felder intelligent (z.B. Bilanzdaten wenn nur Umsatz gegeben)
 - Erstelle realistische E-Mails basierend auf den im Dokument beschriebenen Szenarien
 - Passe Finanzdaten an, wenn sie unvollständig sind
+- Ein Organigramm mit ALLEN in der Fallstudie vorkommenden Personen (mindestens 8-10), inklusive Name, Funktion, Abteilung und Berichtslinie
+- Eine individuelle Briefing-Sektion mit Rollenbeschreibung, Situationsbeschreibung und Aufgabenstellung, die exakt auf das generierte Unternehmen zugeschnitten ist (NICHT generisch)
 - Antworte AUSSCHLIESSLICH mit validem JSON`;
 
 export async function POST(req: NextRequest, { params }: RouteContext) {
@@ -134,6 +150,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         language,
         referenceDate,
         documentPlan,
+        candidateTime,
+        documentCount,
       } = genParams || {};
 
       if (!industry || !strategicSituation) {
@@ -167,7 +185,9 @@ Finanzielles Szenario: ${financialScenario || "Herausfordernd"}
 Kernspannungen: ${keyTensions || "Nicht spezifiziert"}
 Zielgruppe/Level: ${targetLevel || "SE-Level/Vorstand"}
 Schwierigkeitsgrad: ${difficulty || "Hoch"}
-Sprache der Inhalte: ${language || "Englisch"}${referenceDate ? `\nReferenzdatum (Stichtag): ${referenceDate}` : ""}${documentPlanInstructions}`;
+Sprache der Inhalte: ${language || "Englisch"}
+Bearbeitungszeit für den Kandidaten: ${candidateTime || 60} Minuten
+Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokolle, Nachrichtenartikel, etc. zusammen)${referenceDate ? `\nReferenzdatum (Stichtag): ${referenceDate}` : ""}${documentPlanInstructions}`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -176,7 +196,7 @@ Sprache der Inhalte: ${language || "Englisch"}${referenceDate ? `\nReferenzdatum
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        max_tokens: 8192,
+        max_tokens: 16384,
       });
 
       const content = response.choices[0]?.message?.content || "{}";
@@ -227,7 +247,7 @@ Sprache der Inhalte: ${language || "Englisch"}${referenceDate ? `\nReferenzdatum
           { role: "user", content: `Dokument: ${fileName || "Fallstudie"}\n\nInhalt:\n${textContent}` },
         ],
         response_format: { type: "json_object" },
-        max_tokens: 8192,
+        max_tokens: 16384,
       });
 
       const content = response.choices[0]?.message?.content || "{}";
