@@ -392,6 +392,17 @@ export default function RequirementsAnalysisPage() {
     setAddingModule(false);
   };
 
+  const updateModule = (idx: number, field: string, value: string) => {
+    if (!extraction) return;
+    const updated = {
+      ...extraction,
+      assessmentModules: extraction.assessmentModules.map((m, i) =>
+        i === idx ? { ...m, [field]: value } : m
+      ),
+    };
+    setExtractionAndSave(updated);
+  };
+
   const fetchCompetencyModels = async () => {
     setLoadingModels(true);
     try {
@@ -1207,12 +1218,42 @@ export default function RequirementsAnalysisPage() {
                             className="mt-1 w-4 h-4 rounded"
                             data-testid={`checkbox-module-${i}`}
                           />
-                          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedModule(expandedModule === i ? null : i)}>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-slate-800">{mod.name}</p>
-                              <span className="text-[10px] bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{MODULE_TYPE_LABELS[mod.type] || mod.type}</span>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-1">{mod.description}</p>
+                          <div className="flex-1 min-w-0">
+                            {expandedModule === i ? (
+                              <div className="space-y-2">
+                                <input
+                                  className="w-full text-sm font-semibold border border-slate-300 rounded px-2 py-1"
+                                  value={mod.name}
+                                  onChange={(e) => updateModule(i, "name", e.target.value)}
+                                  data-testid={`input-module-name-${i}`}
+                                />
+                                <select
+                                  className="w-full text-sm border border-slate-300 rounded px-2 py-1"
+                                  value={mod.type}
+                                  onChange={(e) => updateModule(i, "type", e.target.value)}
+                                  data-testid={`select-module-type-${i}`}
+                                >
+                                  {Object.entries(MODULE_TYPE_LABELS).map(([key, label]) => (
+                                    <option key={key} value={key}>{label}</option>
+                                  ))}
+                                </select>
+                                <textarea
+                                  className="w-full text-sm border border-slate-300 rounded px-2 py-1 h-16 resize-y"
+                                  value={mod.description}
+                                  onChange={(e) => updateModule(i, "description", e.target.value)}
+                                  placeholder="Beschreibung..."
+                                  data-testid={`textarea-module-desc-${i}`}
+                                />
+                              </div>
+                            ) : (
+                              <div className="cursor-pointer" onClick={() => setExpandedModule(i)}>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold text-slate-800">{mod.name}</p>
+                                  <span className="text-[10px] bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{MODULE_TYPE_LABELS[mod.type] || mod.type}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">{mod.description}</p>
+                              </div>
+                            )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             <button
@@ -1230,17 +1271,25 @@ export default function RequirementsAnalysisPage() {
 
                         {expandedModule === i && (
                           <div className="border-t border-blue-200 p-3 space-y-3">
-                            {mod.adaptationNotes && (
-                              <div>
-                                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Anpassungshinweise</p>
-                                <p className="text-xs text-slate-600">{mod.adaptationNotes}</p>
-                              </div>
-                            )}
+                            <div>
+                              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Anpassungshinweise</p>
+                              <textarea
+                                className="w-full text-sm border border-slate-300 rounded px-2 py-1 h-16 resize-y"
+                                value={mod.adaptationNotes}
+                                onChange={(e) => updateModule(i, "adaptationNotes", e.target.value)}
+                                placeholder="Anpassungshinweise eingeben..."
+                                data-testid={`textarea-module-adaptation-${i}`}
+                              />
+                            </div>
                             <div>
                               <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Prompt / Anweisung zur Erstellung</p>
-                              <div className="bg-white border border-slate-200 rounded p-2">
-                                <pre className="text-xs text-slate-600 whitespace-pre-wrap font-mono leading-relaxed">{mod.generationPrompt || "Kein Prompt vorhanden"}</pre>
-                              </div>
+                              <textarea
+                                className="w-full text-sm border border-slate-300 rounded px-2 py-1 h-24 resize-y font-mono text-xs"
+                                value={mod.generationPrompt}
+                                onChange={(e) => updateModule(i, "generationPrompt", e.target.value)}
+                                placeholder="Prompt / Anweisung eingeben..."
+                                data-testid={`textarea-module-prompt-${i}`}
+                              />
                             </div>
                           </div>
                         )}

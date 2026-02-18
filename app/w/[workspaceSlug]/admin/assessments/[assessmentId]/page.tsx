@@ -99,6 +99,16 @@ const EXERCISE_TYPE_LABELS: Record<string, string> = {
 
 const EXERCISE_TYPES = Object.keys(EXERCISE_TYPE_LABELS);
 
+const TYPE_MAP_DE_TO_KEY: Record<string, string> = {
+  "Fallstudie": "case_study", "Präsentation": "presentation", "Interview": "interview_guide",
+  "Interview-Leitfaden": "interview_guide", "Fact-Finding": "fact_finding", "Fact-Finding-Simulation": "fact_finding",
+  "Verhaltenssimulation": "behavior_simulation", "Rollenspiel": "behavior_simulation",
+  "Psychometrischer Test": "psychometric_test", "Gruppenübung": "other", "Gruppendiskussion": "other",
+  "interview": "interview_guide", "case_study": "case_study", "presentation": "presentation",
+  "fact_finding": "fact_finding", "behavior_simulation": "behavior_simulation",
+  "role_play": "behavior_simulation", "psychometric_test": "psychometric_test",
+};
+
 const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
   draft: { bg: "bg-slate-50", text: "text-slate-600", label: "Entwurf" },
   active: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Aktiv" },
@@ -201,6 +211,9 @@ export default function AssessmentDetailPage() {
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
 
+  const [specForLibrarySearch, setSpecForLibrarySearch] = useState<{name: string; type: string; description: string; adaptationNotes: string; generationPrompt: string} | null>(null);
+  const [activeModuleSpec, setActiveModuleSpec] = useState<{name: string; type: string; description: string; adaptationNotes: string; generationPrompt: string} | null>(null);
+
   const [basisExercise, setBasisExercise] = useState<LibraryItem | null>(null);
   const [showBasisPicker, setShowBasisPicker] = useState(false);
   const [basisChanges, setBasisChanges] = useState("");
@@ -250,6 +263,11 @@ export default function AssessmentDetailPage() {
   }
   const [mtmmMappings, setMtmmMappings] = useState<MtmmMapping[]>([]);
   const [mtmmLoading, setMtmmLoading] = useState(false);
+  const [mtmmCompetencyModel, setMtmmCompetencyModel] = useState<{id: string; name: string; nodes: {id: string; name: string; description: string | null; sortOrder: number; nodeType: string}[]} | null>(null);
+  const [mtmmInlineGrid, setMtmmInlineGrid] = useState<Record<string, Record<string, {mapped: boolean; weight: number}>>>({});
+  const [mtmmSaving, setMtmmSaving] = useState(false);
+  const [mtmmSaveMsg, setMtmmSaveMsg] = useState("");
+  const [showInlineMtmm, setShowInlineMtmm] = useState(false);
 
   const apiBase = `/api/w/${workspaceSlug}/assessments/${assessmentId}`;
 
@@ -353,6 +371,67 @@ export default function AssessmentDetailPage() {
     finally { setLibraryLoading(false); }
   }, [workspaceSlug]);
 
+  const fetchMtmmModel = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/competency-models`);
+      if (res.ok) {
+        const models = await res.json();
+        if (models.length > 0) {
+          const analysisDerived = models.find((m: any) => m.sourceType === "analysis_derived");
+          setMtmmCompetencyModel(analysisDerived || models[0]);
+        }
+      }
+    } catch {}
+  }, [workspaceSlug]);
+
+  const initInlineMtmmGrid = useCallback(() => {
+    if (!mtmmCompetencyModel || exercises.length === 0) return;
+    const competencyNodes = mtmmCompetencyModel.nodes.filter(n => n.nodeType === "competency" || n.nodeType === "domain");
+    const grid: Record<string, Record<string, {mapped: boolean; weight: number}>> = {};
+    for (const ex of exercises) {
+      grid[ex.id] = {};
+      for (const node of competencyNodes) {
+        const existing = mtmmMappings.find(m => m.exerciseId === ex.id && m.competencyNodeId === node.id);
+        grid[ex.id][node.id] = { mapped: !!existing, weight: existing?.weight ?? 1.0 };
+      }
+    }
+    setMtmmInlineGrid(grid);
+  }, [mtmmCompetencyModel, exercises, mtmmMappings]);
+
+  useEffect(() => {
+    if (showInlineMtmm) initInlineMtmmGrid();
+  }, [showInlineMtmm, initInlineMtmmGrid]);
+
+  const handleSaveInlineMtmm = async () => {
+    if (!mtmmCompetencyModel) return;
+    setMtmmSaving(true);
+    setMtmmSaveMsg("");
+    try {
+      const mappingsToSave: {exerciseId: string; competencyNodeId: string; weight: number}[] = [];
+      for (const [exId, nodes] of Object.entries(mtmmInlineGrid)) {
+        for (const [nodeId, val] of Object.entries(nodes)) {
+          if (val.mapped) {
+            mappingsToSave.push({ exerciseId: exId, competencyNodeId: nodeId, weight: val.weight });
+          }
+        }
+      }
+      const res = await fetch(`${apiBase}/exercise-competency-mappings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mappings: mappingsToSave }),
+      });
+      if (res.ok) {
+        setMtmmSaveMsg("Zuordnungen gespeichert!");
+        fetchMtmmMappings();
+        setTimeout(() => setMtmmSaveMsg(""), 3000);
+      } else {
+        const d = await res.json();
+        setMtmmSaveMsg(d.error || "Fehler beim Speichern");
+      }
+    } catch { setMtmmSaveMsg("Fehler beim Speichern"); }
+    finally { setMtmmSaving(false); }
+  };
+
   const fetchLinkedAnalysis = useCallback(async () => {
     setLinkedAnalysisLoading(true);
     try {
@@ -430,7 +509,14 @@ export default function AssessmentDetailPage() {
       const res = await fetch(`/api/w/${workspaceSlug}/automation/generate-exercise`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spec, language: "DE" }),
+        body: JSON.stringify({
+          spec,
+          language: "DE",
+          ...(activeModuleSpec ? {
+            moduleContext: activeModuleSpec.generationPrompt,
+            adaptationNotes: activeModuleSpec.adaptationNotes,
+          } : {}),
+        }),
       });
 
       clearInterval(progressInterval);
@@ -473,6 +559,7 @@ export default function AssessmentDetailPage() {
         setExSortOrder("");
         setBasisExercise(null);
         setBasisChanges("");
+        setActiveModuleSpec(null);
         setAiProgress(0);
         setAiProgressLabel("");
         setAiGenerating(false);
@@ -496,7 +583,8 @@ export default function AssessmentDetailPage() {
     fetchObservationSheets();
     fetchMtmmMappings();
     fetchLinkedAnalysis();
-  }, [fetchAssessment, fetchExercises, fetchDocuments, fetchCandidates, fetchAvailableUsers, fetchObservationSheets, fetchMtmmMappings, fetchLinkedAnalysis]);
+    fetchMtmmModel();
+  }, [fetchAssessment, fetchExercises, fetchDocuments, fetchCandidates, fetchAvailableUsers, fetchObservationSheets, fetchMtmmMappings, fetchLinkedAnalysis, fetchMtmmModel]);
 
   const handleSaveAssessment = async () => {
     setSaving(true);
@@ -855,10 +943,15 @@ export default function AssessmentDetailPage() {
     setAiProgressLabel("Variante wird generiert…");
     const progressInterval = simulateProgress(setAiProgress, setAiProgressLabel);
     try {
+      const variantBody: any = { language: "DE" };
+      if (specForLibrarySearch) {
+        variantBody.adaptationNotes = specForLibrarySearch.adaptationNotes;
+        variantBody.moduleContext = specForLibrarySearch.generationPrompt;
+      }
       const res = await fetch(`/api/w/${workspaceSlug}/exercise-library/${item.id}/generate-variant`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language: "DE" }),
+        body: JSON.stringify(variantBody),
       });
       clearInterval(progressInterval);
       if (res.ok) {
@@ -1745,6 +1838,8 @@ export default function AssessmentDetailPage() {
                     type: mod.type || "",
                     duration: null,
                     description: mod.description || "",
+                    adaptationNotes: mod.adaptationNotes || "",
+                    generationPrompt: mod.generationPrompt || "",
                     source: "module" as const,
                   })),
                 ].filter(r => r.name);
@@ -1762,13 +1857,7 @@ export default function AssessmentDetailPage() {
                       <button
                         onClick={async () => {
                           for (const rec of unadopted) {
-                            const typeMap: Record<string, string> = {
-                              "Fallstudie": "case_study", "Präsentation": "presentation", "Interview": "interview",
-                              "Interview-Leitfaden": "interview", "Fact-Finding": "fact_finding", "Fact-Finding-Simulation": "fact_finding",
-                              "Verhaltenssimulation": "behavioral_simulation", "Rollenspiel": "behavioral_simulation",
-                              "Psychometrischer Test": "psychometric_test", "Gruppenübung": "group_exercise", "Gruppendiskussion": "group_exercise",
-                            };
-                            const mappedType = typeMap[rec.type] || rec.type?.toLowerCase().replace(/[\s-]+/g, "_") || "presentation";
+                            const mappedType = TYPE_MAP_DE_TO_KEY[rec.type] || rec.type?.toLowerCase().replace(/[\s-]+/g, "_") || "presentation";
                             await fetch(`${apiBase}/exercises`, {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
@@ -1801,42 +1890,71 @@ export default function AssessmentDetailPage() {
                             </div>
                             {rec.description && <p className="text-xs text-slate-500 line-clamp-2 mb-2">{rec.description}</p>}
                           </div>
-                          <button
-                            onClick={async () => {
-                              try {
-                                const typeMap: Record<string, string> = {
-                                  "Fallstudie": "case_study",
-                                  "Präsentation": "presentation",
-                                  "Interview": "interview",
-                                  "Interview-Leitfaden": "interview",
-                                  "Fact-Finding": "fact_finding",
-                                  "Fact-Finding-Simulation": "fact_finding",
-                                  "Verhaltenssimulation": "behavioral_simulation",
-                                  "Rollenspiel": "behavioral_simulation",
-                                  "Psychometrischer Test": "psychometric_test",
-                                  "Gruppenübung": "group_exercise",
-                                  "Gruppendiskussion": "group_exercise",
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const mappedType = TYPE_MAP_DE_TO_KEY[rec.type] || rec.type?.toLowerCase().replace(/[\s-]+/g, "_") || "presentation";
+                                  await fetch(`${apiBase}/exercises`, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      name: rec.name,
+                                      type: mappedType,
+                                      instructions: rec.description || null,
+                                      duration: rec.duration ? parseInt(String(rec.duration)) : null,
+                                      sortOrder: exercises.length + i,
+                                    }),
+                                  });
+                                  fetchExercises();
+                                } catch {}
+                              }}
+                              className="flex-1 min-w-0 text-[11px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg px-2 py-1.5 transition-colors"
+                              data-testid={`button-adopt-recommendation-${i}`}
+                            >
+                              Direkt übernehmen
+                            </button>
+                            <button
+                              onClick={() => {
+                                const spec = {
+                                  name: rec.name,
+                                  type: rec.type,
+                                  description: rec.description || "",
+                                  adaptationNotes: (rec as any).adaptationNotes || "",
+                                  generationPrompt: (rec as any).generationPrompt || "",
                                 };
-                                const mappedType = typeMap[rec.type] || rec.type?.toLowerCase().replace(/[\s-]+/g, "_") || "presentation";
-                                await fetch(`${apiBase}/exercises`, {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({
-                                    name: rec.name,
-                                    type: mappedType,
-                                    instructions: rec.description || null,
-                                    duration: rec.duration ? parseInt(String(rec.duration)) : null,
-                                    sortOrder: exercises.length + i,
-                                  }),
+                                setSpecForLibrarySearch(spec);
+                                if (!showLibrary) {
+                                  fetchLibraryItems();
+                                  setShowLibrary(true);
+                                }
+                              }}
+                              className="flex-1 min-w-0 text-[11px] font-semibold text-brand-blue bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-1.5 transition-colors"
+                              data-testid={`button-library-search-recommendation-${i}`}
+                            >
+                              Bibliothek durchsuchen
+                            </button>
+                            <button
+                              onClick={() => {
+                                const mappedType = TYPE_MAP_DE_TO_KEY[rec.type] || rec.type?.toLowerCase().replace(/[\s-]+/g, "_") || "presentation";
+                                setExName(rec.name);
+                                setExType(mappedType);
+                                setExInstructions(rec.description || "");
+                                setActiveModuleSpec({
+                                  name: rec.name,
+                                  type: rec.type,
+                                  description: rec.description || "",
+                                  adaptationNotes: (rec as any).adaptationNotes || "",
+                                  generationPrompt: (rec as any).generationPrompt || "",
                                 });
-                                fetchExercises();
-                              } catch {}
-                            }}
-                            className="mt-2 w-full text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg px-3 py-2 transition-colors"
-                            data-testid={`button-adopt-recommendation-${i}`}
-                          >
-                            Übernehmen
-                          </button>
+                                setShowCreateExercise(true);
+                              }}
+                              className="flex-1 min-w-0 text-[11px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg px-2 py-1.5 transition-colors"
+                              data-testid={`button-create-from-recommendation-${i}`}
+                            >
+                              Neu erstellen / KI
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1880,6 +1998,18 @@ export default function AssessmentDetailPage() {
 
                 {showLibrary && (
                   <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
+                    {specForLibrarySearch && (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3" data-testid="banner-spec-library-search">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold text-purple-700">Suche für Modulspezifikation: {specForLibrarySearch.name}</span>
+                          <button type="button" onClick={() => setSpecForLibrarySearch(null)} className="text-xs text-slate-400 hover:text-slate-600" data-testid="button-clear-spec-search">×</button>
+                        </div>
+                        {specForLibrarySearch.description && <p className="text-xs text-purple-600 mb-1">{specForLibrarySearch.description}</p>}
+                        {specForLibrarySearch.adaptationNotes && (
+                          <p className="text-[10px] text-purple-500"><span className="font-semibold uppercase">Anpassungshinweise:</span> {specForLibrarySearch.adaptationNotes}</p>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-sm font-semibold text-brand-navy">Übungsbibliothek</h3>
                       <button
@@ -1971,6 +2101,26 @@ export default function AssessmentDetailPage() {
                 {showCreateExercise && (
                   <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
                     <form onSubmit={handleCreateExercise} className="space-y-3" data-testid="form-create-exercise">
+                      {activeModuleSpec && (
+                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-2" data-testid="banner-active-module-spec">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-semibold text-purple-700">Kontext aus Anforderungsanalyse</span>
+                            <button type="button" onClick={() => setActiveModuleSpec(null)} className="text-xs text-slate-400 hover:text-slate-600" data-testid="button-clear-module-spec">×</button>
+                          </div>
+                          {activeModuleSpec.adaptationNotes && (
+                            <div className="mb-2">
+                              <p className="text-[10px] font-semibold text-purple-500 uppercase">Anpassungshinweise</p>
+                              <p className="text-xs text-purple-700">{activeModuleSpec.adaptationNotes}</p>
+                            </div>
+                          )}
+                          {activeModuleSpec.generationPrompt && (
+                            <div>
+                              <p className="text-[10px] font-semibold text-purple-500 uppercase">Prompt / Erstellungsanweisung</p>
+                              <pre className="text-xs text-purple-700 whitespace-pre-wrap font-mono">{activeModuleSpec.generationPrompt}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {basisExercise && (
                         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-2">
                           <div className="flex items-center justify-between mb-1">
@@ -2515,6 +2665,18 @@ export default function AssessmentDetailPage() {
                       {mtmmMappings.length} Zuordnung{mtmmMappings.length !== 1 ? "en" : ""}
                     </span>
                   )}
+                  {mtmmCompetencyModel && exercises.length > 0 && (
+                    <button
+                      onClick={() => {
+                        if (!showInlineMtmm) initInlineMtmmGrid();
+                        setShowInlineMtmm(!showInlineMtmm);
+                      }}
+                      data-testid="button-toggle-inline-mtmm"
+                      className="rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue/5 transition-colors"
+                    >
+                      {showInlineMtmm ? "Schnellzuordnung schließen" : "Schnellzuordnung"}
+                    </button>
+                  )}
                   <Link
                     href={`/w/${workspaceSlug}/admin/competencies`}
                     data-testid="link-edit-mtmm"
@@ -2524,6 +2686,109 @@ export default function AssessmentDetailPage() {
                   </Link>
                 </div>
               </div>
+
+              {showInlineMtmm && mtmmCompetencyModel && exercises.length > 0 && (
+                <div className="bg-white border border-slate-200 rounded-xl p-6 mt-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-brand-navy">Schnellzuordnung</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Kompetenzmodell: <span className="font-medium text-slate-600">{mtmmCompetencyModel.name}</span>
+                        {" · "}{mtmmCompetencyModel.nodes.filter(n => n.nodeType === "competency" || n.nodeType === "domain").length} Kompetenzen × {exercises.length} Übungen
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {mtmmSaveMsg && <span className="text-xs text-emerald-600 font-medium">{mtmmSaveMsg}</span>}
+                      <button
+                        onClick={handleSaveInlineMtmm}
+                        disabled={mtmmSaving}
+                        data-testid="button-save-inline-mtmm"
+                        className="rounded-lg bg-brand-blue text-white text-xs font-medium px-4 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
+                      >
+                        {mtmmSaving ? "Speichert…" : "Zuordnungen speichern"}
+                      </button>
+                      <button
+                        onClick={() => setShowInlineMtmm(false)}
+                        className="rounded-lg border border-slate-200 text-slate-600 text-xs font-medium px-3 py-2 hover:bg-slate-50 transition-colors"
+                      >
+                        Schließen
+                      </button>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto" data-testid="mtmm-inline-grid">
+                    <table className="text-xs border-collapse w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200">
+                          <th className="text-left py-2 px-3 font-medium text-slate-600 bg-slate-50 sticky left-0 z-10 min-w-[150px]">Übung</th>
+                          {mtmmCompetencyModel.nodes
+                            .filter(n => n.nodeType === "competency" || n.nodeType === "domain")
+                            .sort((a, b) => a.sortOrder - b.sortOrder)
+                            .map(node => (
+                              <th key={node.id} className="text-center py-2 px-1 font-medium text-slate-600 bg-slate-50 min-w-[80px]" title={node.description || node.name}>
+                                <span className="text-[10px] leading-tight block whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px]">{node.name}</span>
+                              </th>
+                            ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {exercises.map(ex => (
+                          <tr key={ex.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                            <td className="py-2 px-3 font-medium text-slate-800 sticky left-0 bg-white z-10 text-xs">{ex.name}</td>
+                            {mtmmCompetencyModel.nodes
+                              .filter(n => n.nodeType === "competency" || n.nodeType === "domain")
+                              .sort((a, b) => a.sortOrder - b.sortOrder)
+                              .map(node => {
+                                const cell = mtmmInlineGrid[ex.id]?.[node.id];
+                                return (
+                                  <td key={node.id} className="text-center py-1 px-1">
+                                    <div className="flex flex-col items-center gap-0.5">
+                                      <input
+                                        type="checkbox"
+                                        checked={cell?.mapped || false}
+                                        onChange={() => {
+                                          setMtmmInlineGrid(prev => ({
+                                            ...prev,
+                                            [ex.id]: {
+                                              ...prev[ex.id],
+                                              [node.id]: { ...prev[ex.id]?.[node.id], mapped: !cell?.mapped, weight: cell?.weight ?? 1.0 },
+                                            },
+                                          }));
+                                        }}
+                                        className="w-4 h-4 rounded border-slate-300 text-brand-blue focus:ring-brand-blue/30"
+                                        data-testid={`mtmm-check-${ex.id}-${node.id}`}
+                                      />
+                                      {cell?.mapped && (
+                                        <input
+                                          type="number"
+                                          min="0.1"
+                                          max="3.0"
+                                          step="0.1"
+                                          value={cell.weight}
+                                          onChange={(e) => {
+                                            const w = parseFloat(e.target.value) || 1.0;
+                                            setMtmmInlineGrid(prev => ({
+                                              ...prev,
+                                              [ex.id]: {
+                                                ...prev[ex.id],
+                                                [node.id]: { ...prev[ex.id]?.[node.id], weight: w },
+                                              },
+                                            }));
+                                          }}
+                                          className="w-12 text-center text-[10px] rounded border border-slate-200 px-0.5 py-0.5"
+                                          data-testid={`mtmm-weight-${ex.id}-${node.id}`}
+                                        />
+                                      )}
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               {mtmmLoading ? (
                 <p className="text-sm text-slate-400 text-center py-4">Laden...</p>
