@@ -30,6 +30,8 @@ interface GenerateParams {
   targetLevel: string;
   difficulty: string;
   referenceDate: string;
+  candidateTime: string;
+  documentCount: string;
 }
 
 interface PlannedDocument {
@@ -73,6 +75,8 @@ export default function CaseStudyBuilderPage() {
     targetLevel: "SE-Level / Vorstand",
     difficulty: "Hoch",
     referenceDate: "",
+    candidateTime: "60",
+    documentCount: "15",
   });
 
   const [previewData, setPreviewData] = useState<any>(null);
@@ -780,6 +784,43 @@ export default function CaseStudyBuilderPage() {
                   Alle Daten, Geschäftsjahre und E-Mails werden konsistent zu diesem Stichtag generiert
                 </p>
               </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6 bg-blue-50/50 rounded-xl p-5 border border-blue-100">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Bearbeitungszeit (Minuten)
+                  </label>
+                  <input
+                    type="number"
+                    min="15"
+                    max="180"
+                    value={genParams.candidateTime}
+                    onChange={(e) => setGenParams({ ...genParams, candidateTime: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    data-testid="input-candidate-time"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">
+                    Wie viel Zeit hat der Kandidat für die Bearbeitung?
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Anzahl Vorgänge / Dokumente
+                  </label>
+                  <input
+                    type="number"
+                    min="5"
+                    max="40"
+                    value={genParams.documentCount}
+                    onChange={(e) => setGenParams({ ...genParams, documentCount: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    data-testid="input-document-count"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">
+                    Gesamtzahl der E-Mails, Protokolle, News etc.
+                  </p>
+                </div>
               </div>
 
               <div className="pt-4 flex justify-between items-center">
