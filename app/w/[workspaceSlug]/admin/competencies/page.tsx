@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -198,6 +198,11 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
   const [createError, setCreateError] = useState("");
   const [expandedModelId, setExpandedModelId] = useState<string | null>(null);
   const [aiMessage, setAiMessage] = useState("");
+  const [uploadMode, setUploadMode] = useState<"none" | "uploading" | "analyzing" | "preview">("none");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadResult, setUploadResult] = useState<any>(null);
+  const [uploadError, setUploadError] = useState("");
+  const [accepting, setAccepting] = useState(false);
 
   const fetchModels = useCallback(async () => {
     try {
@@ -252,11 +257,80 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
     } catch { setAiMessage("Fehler bei der KI-Anfrage."); }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async () => {
+    if (!uploadFile) return;
+    setUploadError("");
+    setUploadMode("analyzing");
+    try {
+      const formData = new FormData();
+      formData.append("file", uploadFile);
+      const res = await fetch(`/api/w/${workspaceSlug}/competency-models/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setUploadError(d.error || "Upload fehlgeschlagen");
+        setUploadMode("uploading");
+        return;
+      }
+      const data = await res.json();
+      setUploadResult(data);
+      setUploadMode("preview");
+    } catch (err: any) {
+      setUploadError(err?.message === "Failed to fetch" 
+        ? "Verbindungsfehler – bitte versuchen Sie es erneut." 
+        : "Fehler beim Hochladen");
+      setUploadMode("uploading");
+    }
+  };
+
+  const handleAcceptModel = async () => {
+    if (!uploadResult) return;
+    setAccepting(true);
+    setUploadError("");
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/competency-models/upload/accept`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          modelName: uploadResult.modelName,
+          modelDescription: uploadResult.modelDescription,
+          hierarchy: uploadResult.hierarchy,
+          assessment: uploadResult.assessment,
+          fileName: uploadResult.fileName,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setUploadError(d.error || "Fehler beim Speichern");
+        return;
+      }
+      setUploadMode("none");
+      setUploadFile(null);
+      setUploadResult(null);
+      fetchModels();
+    } catch {
+      setUploadError("Fehler beim Speichern des Modells");
+    } finally {
+      setAccepting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500" data-testid="text-model-count">{models.length} Modelle</p>
         <div className="flex gap-2">
+          <button 
+            onClick={() => { setUploadMode("uploading"); setUploadFile(null); setUploadResult(null); setUploadError(""); }}
+            data-testid="button-upload-model" 
+            className="rounded-lg bg-emerald-600 text-white text-sm font-medium px-4 py-2 hover:bg-emerald-700 transition-colors"
+          >
+            Modell hochladen
+          </button>
           <button onClick={handleAiGenerate} data-testid="button-ai-generate-model" className="rounded-lg bg-purple-600 text-white text-sm font-medium px-4 py-2 hover:bg-purple-700 transition-colors">
             KI-Assistent: Modell generieren
           </button>
@@ -269,6 +343,218 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
       {aiMessage && (
         <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-sm text-purple-800" data-testid="text-ai-message">
           {aiMessage}
+        </div>
+      )}
+
+      {uploadMode !== "none" && (
+        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-6">
+          {uploadMode === "uploading" && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-brand-navy">Kompetenzmodell hochladen</h2>
+                <button onClick={() => { setUploadMode("none"); setUploadFile(null); setUploadError(""); }} className="text-xs text-slate-400 hover:text-slate-600">Abbrechen</button>
+              </div>
+              <div
+                className="border-2 border-dashed border-slate-300 rounded-xl p-10 text-center hover:border-brand-blue transition-colors cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setUploadFile(f); }}
+                data-testid="dropzone-competency-upload"
+              >
+                <div className="text-4xl mb-3">📄</div>
+                <p className="text-sm text-slate-600 font-medium mb-1">Klicken oder Datei hierher ziehen</p>
+                <p className="text-xs text-slate-400">Unterstützt: DOCX, PDF, TXT (max. 20 MB)</p>
+                {uploadFile && (
+                  <div className="mt-4 bg-slate-50 rounded-lg p-3 inline-block">
+                    <span className="text-sm font-medium text-slate-700">{uploadFile.name}</span>
+                    <span className="text-xs text-slate-400 ml-2">({(uploadFile.size / 1024).toFixed(1)} KB)</span>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".docx,.pdf,.txt,.doc"
+                  className="hidden"
+                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                  data-testid="input-competency-file"
+                />
+              </div>
+              {uploadError && <p className="text-sm text-red-500 mt-3" data-testid="text-upload-error">{uploadError}</p>}
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={handleUpload}
+                  disabled={!uploadFile}
+                  data-testid="button-analyze-competency"
+                  className="rounded-lg bg-emerald-600 text-white text-sm font-medium px-6 py-2.5 hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  KI-Analyse starten
+                </button>
+              </div>
+            </div>
+          )}
+
+          {uploadMode === "analyzing" && (
+            <div className="text-center py-12">
+              <div className="animate-spin text-4xl mb-4">⚙️</div>
+              <p className="text-sm font-medium text-slate-700 mb-1">Dokument wird analysiert...</p>
+              <p className="text-xs text-slate-400">Die KI extrahiert Kompetenzen, Cluster und Verhaltensanker</p>
+            </div>
+          )}
+
+          {uploadMode === "preview" && uploadResult && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-brand-navy">Analyse-Ergebnis</h2>
+                <button onClick={() => { setUploadMode("none"); setUploadFile(null); setUploadResult(null); }} className="text-xs text-slate-400 hover:text-slate-600">Schließen</button>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Modellname</span>
+                  <p className="text-sm font-semibold text-brand-navy mt-1" data-testid="text-parsed-model-name">{uploadResult.modelName}</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Qualität</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                      (uploadResult.assessment?.qualityScore || 0) >= 7 ? "bg-emerald-500" :
+                      (uploadResult.assessment?.qualityScore || 0) >= 4 ? "bg-amber-500" : "bg-red-500"
+                    }`}>
+                      {uploadResult.assessment?.qualityScore || "?"}
+                    </div>
+                    <span className="text-sm text-slate-600">{uploadResult.assessment?.overallQuality || "k.A."}</span>
+                  </div>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Struktur</span>
+                  <div className="flex gap-3 mt-1">
+                    {uploadResult.assessment?.completeness && Object.entries(uploadResult.assessment.completeness).map(([key, val]) => (
+                      <span key={key} className={`text-xs px-2 py-0.5 rounded ${val ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-400"}`}>
+                        {key === "hasClusters" ? "Cluster" : key === "hasCompetencies" ? "Kompetenzen" : key === "hasDefinitions" ? "Definitionen" : key === "hasAnchors" ? "Anker" : key === "hasLevels" ? "Stufen" : key}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {uploadResult.assessment?.usability && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                  <h3 className="text-sm font-semibold text-blue-900 mb-1">Empfohlene Verwendung</h3>
+                  <p className="text-sm text-blue-800">{uploadResult.assessment.usability}</p>
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                {uploadResult.assessment?.strengths && uploadResult.assessment.strengths.length > 0 && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                    <h3 className="text-sm font-semibold text-emerald-900 mb-2">Stärken</h3>
+                    <ul className="space-y-1">
+                      {uploadResult.assessment.strengths.map((s: string, i: number) => (
+                        <li key={i} className="text-xs text-emerald-800 flex items-start gap-1.5">
+                          <span className="text-emerald-500 mt-0.5">+</span> {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {uploadResult.assessment?.weaknesses && uploadResult.assessment.weaknesses.length > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                    <h3 className="text-sm font-semibold text-amber-900 mb-2">Schwächen / Verbesserungspotenzial</h3>
+                    <ul className="space-y-1">
+                      {uploadResult.assessment.weaknesses.map((w: string, i: number) => (
+                        <li key={i} className="text-xs text-amber-800 flex items-start gap-1.5">
+                          <span className="text-amber-500 mt-0.5">!</span> {w}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {uploadResult.assessment?.recommendations && uploadResult.assessment.recommendations.length > 0 && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-2">Empfehlungen</h3>
+                  <ul className="space-y-1">
+                    {uploadResult.assessment.recommendations.map((r: string, i: number) => (
+                      <li key={i} className="text-xs text-slate-600 flex items-start gap-1.5">
+                        <span className="text-brand-blue mt-0.5">→</span> {r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {uploadResult.assessment?.tags && uploadResult.assessment.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {uploadResult.assessment.tags.map((tag: string, i: number) => (
+                    <span key={i} className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full">{tag}</span>
+                  ))}
+                </div>
+              )}
+
+              {uploadResult.assessment?.targetGroups && uploadResult.assessment.targetGroups.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  <span className="text-xs text-slate-400 mr-1 self-center">Zielgruppen:</span>
+                  {uploadResult.assessment.targetGroups.map((tg: string, i: number) => (
+                    <span key={i} className="bg-purple-50 text-purple-700 text-xs px-2.5 py-1 rounded-full border border-purple-200">{tg}</span>
+                  ))}
+                </div>
+              )}
+
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-brand-navy mb-3">Extrahierte Struktur</h3>
+                <div className="bg-slate-50 rounded-xl p-4 max-h-96 overflow-y-auto">
+                  {uploadResult.hierarchy?.map((cluster: any, ci: number) => (
+                    <div key={ci} className="mb-4 last:mb-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-brand-navy text-white text-[10px] font-bold px-2 py-0.5 rounded">Cluster</span>
+                        <span className="text-sm font-semibold text-brand-navy">{cluster.name}</span>
+                      </div>
+                      {cluster.description && <p className="text-xs text-slate-500 ml-16 mb-2">{cluster.description}</p>}
+                      {cluster.children?.map((comp: any, coi: number) => (
+                        <div key={coi} className="ml-6 mb-2">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">Kompetenz</span>
+                            <span className="text-sm font-medium text-slate-800">{comp.name}</span>
+                          </div>
+                          {comp.description && <p className="text-xs text-slate-500 ml-20 mb-1">{comp.description}</p>}
+                          {comp.children?.map((anchor: any, ai2: number) => (
+                            <div key={ai2} className="ml-12 flex items-start gap-2 mb-0.5">
+                              <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5">Anker</span>
+                              <div>
+                                <span className="text-xs text-slate-700">{anchor.name}</span>
+                                {anchor.description && <p className="text-[11px] text-slate-400">{anchor.description}</p>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {uploadError && <p className="text-sm text-red-500 mb-3">{uploadError}</p>}
+
+              <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                <button
+                  onClick={() => { setUploadMode("uploading"); setUploadResult(null); }}
+                  className="text-sm text-slate-500 hover:text-slate-700"
+                  data-testid="button-back-to-upload"
+                >
+                  ← Andere Datei
+                </button>
+                <button
+                  onClick={handleAcceptModel}
+                  disabled={accepting}
+                  data-testid="button-accept-model"
+                  className="rounded-lg bg-emerald-600 text-white text-sm font-medium px-8 py-2.5 hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  {accepting ? "Wird gespeichert..." : "Modell übernehmen"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -307,6 +593,9 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
                   <div className="flex items-center gap-3 mb-1">
                     <h3 className="font-semibold text-brand-navy">{model.name}</h3>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge.bg} ${badge.text}`} data-testid={`badge-status-${model.id}`}>{badge.label}</span>
+                    {(model as any).sourceType === "uploaded" && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">Hochgeladen</span>
+                    )}
                   </div>
                   {model.description && <p className="text-sm text-slate-500">{model.description}</p>}
                   <div className="flex gap-4 mt-2 text-xs text-slate-400">
