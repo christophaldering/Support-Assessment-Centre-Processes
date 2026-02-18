@@ -37,6 +37,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
           where: { roles: { has: "CANDIDATE" } },
           select: { id: true, name: true, email: true },
         },
+        client: { select: { id: true, name: true } },
         _count: { select: { candidates: true } },
       },
     });
@@ -80,7 +81,32 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Assessment nicht gefunden" }, { status: 404 });
     }
 
-    const { name, description, location, startDate, endDate, status } = await req.json();
+    const { name, description, location, startDate, endDate, status, clientId, clientName } = await req.json();
+
+    let resolvedClientId: string | null | undefined = undefined;
+    let resolvedClientName: string | null | undefined = undefined;
+
+    if (clientId !== undefined || clientName !== undefined) {
+      resolvedClientId = clientId || null;
+      resolvedClientName = clientName?.trim() || null;
+
+      if (!resolvedClientId && resolvedClientName) {
+        const existingClient = await prisma.client.findFirst({
+          where: { workspaceId: workspace.id, name: resolvedClientName },
+        });
+        if (existingClient) {
+          resolvedClientId = existingClient.id;
+        } else {
+          const newClient = await prisma.client.create({
+            data: { workspaceId: workspace.id, name: resolvedClientName },
+          });
+          resolvedClientId = newClient.id;
+        }
+      } else if (resolvedClientId && !resolvedClientName) {
+        const c = await prisma.client.findUnique({ where: { id: resolvedClientId } });
+        resolvedClientName = c?.name || null;
+      }
+    }
 
     const assessment = await prisma.assessment.update({
       where: { id: params.assessmentId },
@@ -91,6 +117,8 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),
         ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
         ...(status !== undefined && { status }),
+        ...(resolvedClientId !== undefined && { clientId: resolvedClientId }),
+        ...(resolvedClientName !== undefined && { clientName: resolvedClientName }),
       },
     });
 

@@ -66,6 +66,8 @@ interface LibraryItem {
   languagesAvailable: string[];
   qualityStatus: string;
   metadataJson: any;
+  clientName?: string | null;
+  projectName?: string | null;
   _count?: { variants: number };
 }
 
@@ -132,6 +134,7 @@ export default function AssessmentDetailPage() {
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
   const [editStatus, setEditStatus] = useState("draft");
+  const [editClientName, setEditClientName] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
 
@@ -224,6 +227,7 @@ export default function AssessmentDetailPage() {
       setEditStartDate(toDateInputValue(data.startDate));
       setEditEndDate(toDateInputValue(data.endDate));
       setEditStatus(data.status);
+      setEditClientName(data.clientName ?? "");
     } catch {
       setError("Fehler beim Laden des Assessments.");
     } finally {
@@ -438,6 +442,7 @@ export default function AssessmentDetailPage() {
           startDate: editStartDate || null,
           endDate: editEndDate || null,
           status: editStatus,
+          clientName: editClientName || null,
         }),
       });
       if (res.ok) {
@@ -878,6 +883,19 @@ export default function AssessmentDetailPage() {
                 />
               </div>
             </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Kunde</label>
+                <input
+                  type="text"
+                  value={editClientName}
+                  onChange={(e) => setEditClientName(e.target.value)}
+                  placeholder="z.B. REWE Group (optional)"
+                  data-testid="input-edit-client-name"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                />
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
               <textarea
@@ -1009,6 +1027,13 @@ export default function AssessmentDetailPage() {
                           </span>
                         )}
                       </div>
+                      {(item.clientName || item.projectName) && (
+                        <p className="text-xs text-slate-400 mb-1">
+                          {item.clientName && <><span className="font-medium">Kunde:</span> {item.clientName}</>}
+                          {item.clientName && item.projectName && " · "}
+                          {item.projectName && <><span className="font-medium">Projekt:</span> {item.projectName}</>}
+                        </p>
+                      )}
                       {item.metadataJson?.description && (
                         <p className="text-xs text-slate-500 mb-2 line-clamp-2">{typeof item.metadataJson.description === "string" ? item.metadataJson.description : ""}</p>
                       )}
@@ -1118,7 +1143,10 @@ export default function AssessmentDetailPage() {
                             data-testid={`button-pick-basis-${item.id}`}
                           >
                             <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                            <p className="text-xs text-slate-500">{EXERCISE_TYPE_LABELS[item.exerciseType] || item.exerciseType}</p>
+                            <p className="text-xs text-slate-500">
+                              {EXERCISE_TYPE_LABELS[item.exerciseType] || item.exerciseType}
+                              {item.clientName && <span className="text-slate-400"> · {item.clientName}</span>}
+                            </p>
                           </button>
                         ))}
                       </div>
