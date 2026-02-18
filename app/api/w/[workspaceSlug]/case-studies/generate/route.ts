@@ -260,39 +260,80 @@ Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokoll
       let content = response.choices[0]?.message?.content || "{}";
 
       if (response.choices[0]?.finish_reason === "length") {
-        console.log("First response truncated, requesting continuation...");
-        const continuationResponse = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            { role: "system", content: CASE_STUDY_SYSTEM_PROMPT },
-            { role: "user", content: userPrompt },
-            { role: "assistant", content: content },
-            { role: "user", content: "Die JSON-Ausgabe wurde abgeschnitten. Bitte setze EXAKT dort fort, wo du aufgehört hast. Gib NUR den fehlenden Rest des JSON aus, ohne Wiederholungen. Beginne direkt mit dem nächsten Zeichen nach dem Abbruch." },
-          ],
-          response_format: { type: "json_object" },
-          max_tokens: 16384,
-        });
-        const continuation = continuationResponse.choices[0]?.message?.content || "";
-        if (continuation) {
-          const trimmedContent = content.trimEnd();
-          const trimmedContinuation = continuation.trimStart();
-          if (trimmedContinuation.startsWith("{")) {
-            try {
-              const contParsed = JSON.parse(trimmedContinuation);
-              const baseParsed = JSON.parse(trimmedContent.endsWith("}") ? trimmedContent : trimmedContent + "}}}}");
-              const baseData = baseParsed.data || baseParsed;
-              const contData = contParsed.data || contParsed;
-              if (contData.emails) baseData.emails = [...(baseData.emails || []), ...contData.emails];
-              if (contData.protocols) baseData.protocols = [...(baseData.protocols || []), ...contData.protocols];
-              if (contData.newsArticles) baseData.newsArticles = [...(baseData.newsArticles || []), ...contData.newsArticles];
-              if (contData.organigramm) baseData.organigramm = contData.organigramm;
-              if (contParsed.briefing) baseParsed.briefing = contParsed.briefing;
-              if (contParsed.questions) baseParsed.questions = contParsed.questions;
-              content = JSON.stringify(baseParsed);
-            } catch {
-              console.log("Could not merge continuation, using original content");
+        console.log("First response truncated, requesting continuation with complete missing sections...");
+        try {
+          let partialData: any = {};
+          let parseSucceeded = false;
+          try {
+            partialData = JSON.parse(content);
+            parseSucceeded = true;
+          } catch {
+            console.log("Truncated JSON could not be parsed, requesting full regeneration with fewer documents");
+          }
+
+          const pd = parseSucceeded ? (partialData.data || partialData) : {};
+          const existingEmailIds = (pd.emails || []).map((e: any) => e.id || e.subject).filter(Boolean);
+          const existingProtocolIds = (pd.protocols || []).map((p: any) => p.id || p.title).filter(Boolean);
+          const existingNewsIds = (pd.newsArticles || []).map((n: any) => n.id || n.headline).filter(Boolean);
+
+          const existingInfo = parseSucceeded
+            ? `Bereits vorhanden: ${pd.emails?.length || 0} E-Mails (IDs: ${existingEmailIds.join(", ")}), ${pd.protocols?.length || 0} Protokolle (IDs: ${existingProtocolIds.join(", ")}), ${pd.newsArticles?.length || 0} Nachrichtenartikel (IDs: ${existingNewsIds.join(", ")}), organigramm: ${pd.organigramm?.length ? "ja" : "nein"}, briefing: ${partialData.briefing || pd.briefing ? "ja" : "nein"}, questions: ${partialData.questions ? "ja" : "nein"}, detailedBalanceSheet: ${pd.detailedBalanceSheet ? "ja" : "nein"}`
+            : "Die vorherige Antwort konnte nicht verarbeitet werden.";
+
+          const targetDocCount = parseInt(documentCount) || 15;
+          const remainingEmails = Math.max(0, Math.round(targetDocCount * 0.7) - (pd.emails?.length || 0));
+          const remainingProtocols = Math.max(0, Math.round(targetDocCount * 0.15) - (pd.protocols?.length || 0));
+          const remainingNews = Math.max(0, Math.round(targetDocCount * 0.15) - (pd.newsArticles?.length || 0));
+
+          const contPrompt = parseSucceeded
+            ? `${existingInfo}\n\nErstelle ein JSON-Objekt mit den FEHLENDEN Abschnitten:\n- ${remainingEmails} weitere E-Mails (NICHT diese IDs wiederholen: ${existingEmailIds.join(", ")})\n- ${remainingProtocols} weitere Protokolle\n- ${remainingNews} weitere Nachrichtenartikel\n${!pd.organigramm?.length ? "- organigramm (mindestens 8 Personen)" : ""}\n${!partialData.briefing && !pd.briefing ? "- briefing" : ""}\n${!partialData.questions ? "- questions" : ""}\n${!pd.detailedBalanceSheet ? "- detailedBalanceSheet" : ""}\n\nAntworte NUR mit validem JSON.`
+            : `Erstelle die vollst\u00e4ndige Fallstudie erneut, aber mit WENIGER Dokumenten (maximal 10 E-Mails, 2 Protokolle, 2 Nachrichtenartikel), damit die Antwort nicht abgeschnitten wird. Behalte alle anderen Abschnitte bei (organigramm, briefing, questions, detailedBalanceSheet, balanceSheet, metrics, businessUnits).\n\nAntworte NUR mit validem JSON.`;
+
+          const continuationResponse = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              { role: "system", content: CASE_STUDY_SYSTEM_PROMPT },
+              { role: "user", content: userPrompt },
+              { role: "user", content: contPrompt },
+            ],
+            response_format: { type: "json_object" },
+            max_tokens: 16384,
+          });
+
+          const contContent = continuationResponse.choices[0]?.message?.content;
+          if (contContent) {
+            const contParsed = JSON.parse(contContent);
+            const contData = contParsed.data || contParsed;
+
+            if (!parseSucceeded) {
+              content = contContent;
+              console.log("Full regeneration used as fallback");
+            } else {
+              const dedup = (existing: any[], incoming: any[]) => {
+                const existIds = new Set(existing.map((e: any) => e.id));
+                const existSubjects = new Set(existing.map((e: any) => e.subject || e.title || e.headline));
+                return incoming.filter((item: any) => !existIds.has(item.id) && !existSubjects.has(item.subject || item.title || item.headline));
+              };
+
+              if (contData.emails?.length) pd.emails = [...(pd.emails || []), ...dedup(pd.emails || [], contData.emails)];
+              if (contData.protocols?.length) pd.protocols = [...(pd.protocols || []), ...dedup(pd.protocols || [], contData.protocols)];
+              if (contData.newsArticles?.length) pd.newsArticles = [...(pd.newsArticles || []), ...dedup(pd.newsArticles || [], contData.newsArticles)];
+              if (contData.organigramm?.length && !pd.organigramm?.length) pd.organigramm = contData.organigramm;
+              if (contData.detailedBalanceSheet && !pd.detailedBalanceSheet) pd.detailedBalanceSheet = contData.detailedBalanceSheet;
+              if (contData.balanceSheet?.length && !pd.balanceSheet?.length) pd.balanceSheet = contData.balanceSheet;
+              if (contData.businessUnits?.length && !pd.businessUnits?.length) pd.businessUnits = contData.businessUnits;
+              if (contData.metrics?.length && !pd.metrics?.length) pd.metrics = contData.metrics;
+              if ((contParsed.briefing || contData.briefing) && !partialData.briefing && !pd.briefing) {
+                partialData.briefing = contParsed.briefing || contData.briefing;
+              }
+              if (contParsed.questions && !partialData.questions) partialData.questions = contParsed.questions;
+
+              content = JSON.stringify(partialData);
+              console.log(`Merged continuation: total emails=${pd.emails?.length}, protocols=${pd.protocols?.length}, news=${pd.newsArticles?.length}`);
             }
           }
+        } catch (contErr) {
+          console.log("Continuation merge failed, using available content:", contErr);
         }
       }
 
