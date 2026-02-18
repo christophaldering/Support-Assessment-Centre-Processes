@@ -654,41 +654,27 @@ ${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div cla
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <header className="text-white sticky top-0 z-50" style={{ backgroundColor: ACCENT }}>
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <header className="bg-brand-navy text-white sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <a
-              href="/"
-              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-module-overview"
-            >
-              Modul-Übersicht
-            </a>
             <Link
               href={base}
-              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
+              className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity"
               data-testid="link-back-dashboard"
             >
-              ← Dashboard
+              {workspaceSlug}
             </Link>
-            <span className="text-lg font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Beobachtungsbögen-Builder
-            </span>
+            <span className="text-white/40">/</span>
+            <span className="text-sm text-white/70">Beobachtungsbögen-Builder</span>
           </div>
           {mode !== "list" && (
-            <button
-              onClick={resetToList}
-              className="text-xs text-white/80 hover:text-white transition-colors"
-              data-testid="button-back-to-list"
-            >
-              ← Zur Übersicht
-            </button>
+            <button onClick={resetToList} className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="button-back-to-list">← Zur Übersicht</button>
           )}
         </div>
       </header>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-4 mb-6" data-testid="text-error">
             {error}

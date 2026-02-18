@@ -278,17 +278,27 @@ function IntelligenceContent() {
   const latestBlueprint = blueprints[0];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <header className="text-white sticky top-0 z-50" style={{ backgroundColor: ACCENT }}>
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <header className="bg-brand-navy text-white">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/" className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="link-module-overview">Modul-Übersicht</Link>
-            <Link href={`/w/${workspaceSlug}/admin`} className="text-white/70 hover:text-white text-sm" data-testid="link-back-admin">
-              ← Zurück
+            <Link
+              href={`/w/${workspaceSlug}/admin`}
+              className="font-serif text-lg font-bold hover:opacity-80 transition-opacity"
+              data-testid="link-workspace"
+            >
+              {workspaceSlug}
             </Link>
-            <h1 className="text-lg font-semibold tracking-tight">Advanced Intelligence</h1>
+            <span className="text-white/40">/</span>
+            <span className="text-sm text-white/70">Advanced Intelligence</span>
           </div>
-          <span className="text-xs bg-white/20 px-3 py-1 rounded-full">KI-gestützte Analyse</span>
+          <Link
+            href={`/w/${workspaceSlug}/admin`}
+            className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
+            data-testid="link-back"
+          >
+            Zurück
+          </Link>
         </div>
       </header>
 

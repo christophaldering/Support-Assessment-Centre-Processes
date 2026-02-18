@@ -397,24 +397,30 @@ export default function DashboardClient({
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#fafaf9", color: textColor }}>
+    <div className="min-h-screen flex flex-col bg-slate-50" style={{ color: textColor }}>
       {renderCreateModal()}
       {renderDeleteConfirmation()}
 
-      <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur-sm" style={{ borderColor: `${primary}12` }}>
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="font-bold" style={{ color: primary, fontFamily: `'${headingFont}', serif` }}>{workspaceName}</span>
+      <header className="bg-brand-navy text-white">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link
+              href={`/w/${workspaceSlug}/admin`}
+              className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity"
+            >
+              {workspaceName}
+            </Link>
+            <span className="text-white/40">/</span>
+            <span className="text-sm text-white/70">Enterprise Cockpit</span>
           </div>
           <div className="flex items-center gap-3">
             {userRoles.length > 0 && (
-              <span className="text-[11px] opacity-50">{userRoles.join(", ")}</span>
+              <span className="text-[11px] text-white/50">{userRoles.join(", ")}</span>
             )}
             {isMaster && (
               <Link
                 href="/admin/workspaces"
-                className="text-[11px] font-medium opacity-60 hover:opacity-100 border rounded-full px-2.5 py-0.5 transition-colors"
-                style={{ borderColor: `${primary}25`, color: primary }}
+                className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
                 data-testid="link-switch-workspace"
               >
                 Workspace wechseln
@@ -428,8 +434,8 @@ export default function DashboardClient({
 
         <div className="mb-8">
           <h1
-            className="text-2xl font-bold tracking-tight"
-            style={{ fontFamily: `'${headingFont}', serif`, color: textColor }}
+            className="text-2xl font-bold tracking-tight text-brand-navy"
+            style={{ fontFamily: `'${headingFont}', serif` }}
             data-testid="text-dashboard-title"
           >
             Enterprise Cockpit

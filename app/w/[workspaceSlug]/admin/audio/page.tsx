@@ -188,20 +188,18 @@ export default function AudioRecordingsPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <header className="text-white" style={{ backgroundColor: accentColor }}>
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <header className="bg-brand-navy text-white">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/" className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="link-module-overview">Modul-Übersicht</Link>
             <Link
               href={`/w/${workspaceSlug}/admin`}
-              className="text-lg font-bold tracking-tight hover:opacity-80 transition-opacity"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              className="font-serif text-lg font-bold hover:opacity-80 transition-opacity"
             >
               {workspaceSlug}
             </Link>
             <span className="text-white/40">/</span>
-            <span className="text-sm text-white/70" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <span className="text-sm text-white/70">
               Audioaufnahmen
             </span>
           </div>
@@ -209,14 +207,13 @@ export default function AudioRecordingsPage() {
             href={`/w/${workspaceSlug}/admin`}
             className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
             data-testid="link-back-dashboard"
-            style={{ fontFamily: "'Inter', sans-serif" }}
           >
-            Zurück zum Dashboard
+            Zurück
           </Link>
         </div>
       </header>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
         <div className="mb-6">
           <h1
             className="text-2xl font-bold"

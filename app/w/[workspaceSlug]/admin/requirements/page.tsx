@@ -529,15 +529,15 @@ export default function RequirementsAnalysisPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="sticky top-0 z-50 text-white" style={{ backgroundColor: ACCENT }}>
-        <div className="max-w-[1600px] mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <a href="/" className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="link-module-overview">Modul-Übersicht</a>
-            <Link href={`/w/${slug}/admin`} className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="link-back-dashboard">Dashboard</Link>
-            <h1 className="text-lg font-bold tracking-tight" style={{ fontFamily: "Playfair Display, serif" }} data-testid="text-page-title">
-              Anforderungsanalyse
-            </h1>
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <header className="bg-brand-navy text-white sticky top-0 z-50">
+        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href={`/w/${slug}/admin`} className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity" data-testid="link-back-dashboard">
+              {slug}
+            </Link>
+            <span className="text-white/40">/</span>
+            <span className="text-sm text-white/70" data-testid="text-page-title">Anforderungsanalyse</span>
           </div>
           <div className="flex items-center gap-3">
             {saving && <span className="text-xs text-white/60 animate-pulse">Speichern...</span>}
@@ -547,7 +547,7 @@ export default function RequirementsAnalysisPage() {
       </header>
 
       {assessmentId && (
-        <div className="border-b" style={{ backgroundColor: `${ACCENT}08`, borderColor: `${ACCENT}15` }}>
+        <div className="border-b bg-brand-navy/5 border-brand-navy/10">
           <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ color: ACCENT }}><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.193-9.193a4.5 4.5 0 00-6.364 0l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
@@ -567,7 +567,7 @@ export default function RequirementsAnalysisPage() {
       )}
 
       <div className="flex flex-1">
-        <aside className="w-[280px] shrink-0 border-r border-slate-200 bg-slate-50/50 p-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 56px)", position: "sticky", top: "56px" }}>
+        <aside className="w-[280px] shrink-0 border-r border-slate-200 bg-white p-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 56px)", position: "sticky", top: "56px" }}>
           <button
             onClick={startNew}
             className="w-full mb-4 px-4 py-2.5 text-white rounded-lg font-medium text-sm shadow-sm hover:opacity-90 transition flex items-center justify-center gap-2"

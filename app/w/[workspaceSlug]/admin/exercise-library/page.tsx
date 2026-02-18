@@ -1074,39 +1074,31 @@ export default function ExerciseLibraryPage() {
   const counts = categoryCounts();
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <header
-        className="sticky top-0 z-40 text-white"
-        style={{ backgroundColor: ACCENT }}
-      >
-        <div className="max-w-[1400px] mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-module-overview"
-            >
-              Modul-Übersicht
-            </Link>
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <header className="bg-brand-navy text-white sticky top-0 z-40">
+        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <Link
               href={`/w/${slug}/admin`}
-              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
+              className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity"
               data-testid="link-back-dashboard"
             >
-              Dashboard
+              {slug}
             </Link>
-            <h1
-              className="text-lg font-bold tracking-tight"
-              style={{ fontFamily: "Playfair Display, serif" }}
-              data-testid="text-page-title"
-            >
-              Baustein-Bibliothek
-            </h1>
+            <span className="text-white/40">/</span>
+            <span className="text-sm text-white/70" data-testid="text-page-title">Baustein-Bibliothek</span>
           </div>
+          <Link
+            href={`/w/${slug}/admin`}
+            className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
+            data-testid="link-back"
+          >
+            Zurück
+          </Link>
         </div>
       </header>
 
-      <main className="flex-1 max-w-[1400px] mx-auto w-full px-6 py-6">
+      <main className="flex-1 max-w-[1400px] mx-auto w-full px-6 py-8">
         {error && (
           <div
             className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between"
