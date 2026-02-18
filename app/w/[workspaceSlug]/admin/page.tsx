@@ -41,7 +41,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   const [
     assessmentCount, reportCount, consentCount, userCount,
     assessments, competencyNodes,
-    exerciseLibCount, observationTemplateCount, caseStudyCount,
+    exerciseLibCount, observationTemplateCount,
   ] = await Promise.all([
     prisma.assessment.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
     prisma.report.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
@@ -73,7 +73,6 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
     }).catch(() => 0),
     prisma.exerciseLibraryItem.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
     prisma.observationSheetTemplate.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
-    prisma.caseStudy.count({ where: { workspaceId: workspace.id } }).catch(() => 0),
   ]);
 
   const serializedAssessments = assessments.map((a) => {
@@ -196,16 +195,6 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
           status: "active",
           count: observationTemplateCount,
           countLabel: "Vorlagen",
-        },
-        {
-          title: "Fallstudien-Builder",
-          subtitle: "Fallstudien erstellen & in Datenräume überführen",
-          description: "Fallstudien hochladen und per KI in Datenräume überführen oder neue KI-generieren lassen.",
-          href: `${base}/modules/case-study-builder`,
-          tags: ["Upload", "KI-Generierung", "Datenraum"],
-          status: "active",
-          count: caseStudyCount,
-          countLabel: "Fallstudien",
         },
       ],
     },

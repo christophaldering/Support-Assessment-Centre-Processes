@@ -49,7 +49,7 @@ interface AnalysisResult {
   qualityNotes: string;
 }
 
-type Mode = "list" | "choose" | "upload" | "generate" | "preview" | "detail";
+type Mode = "list" | "choose" | "upload" | "generate" | "preview" | "detail" | "view";
 type UploadStep = "select" | "analyzing" | "review";
 
 const TEMPLATE_TYPES = [
@@ -383,25 +383,130 @@ export default function ObservationSheetsPage() {
     } catch {}
   };
 
-  const openDetail = async (id: string) => {
+  const loadTemplate = async (id: string): Promise<ObservationSheetTemplate | null> => {
     setError("");
     try {
       const res = await fetch(`/api/w/${workspaceSlug}/observation-sheet-templates/${id}`, { credentials: "include" });
-      if (!res.ok) { setError("Vorlage konnte nicht geladen werden."); return; }
-      const tmpl: ObservationSheetTemplate = await res.json();
-      setDetailTemplate(tmpl);
-      setDetailName(tmpl.name);
-      setDetailDescription(tmpl.description || "");
-      setDetailType(tmpl.type);
-      setDetailScale(tmpl.ratingScale || "1-5");
-      setDetailTags(tmpl.tags.join(", "));
-      setDetailLevels(tmpl.targetLevels);
-      setDetailExerciseIds(tmpl.exerciseIds || []);
-      setDetailCompModelId(tmpl.competencyModelId || "");
-      setMode("detail");
+      if (!res.ok) { setError("Vorlage konnte nicht geladen werden."); return null; }
+      return await res.json();
     } catch {
       setError("Fehler beim Laden der Vorlage.");
+      return null;
     }
+  };
+
+  const openView = async (id: string) => {
+    const tmpl = await loadTemplate(id);
+    if (!tmpl) return;
+    setDetailTemplate(tmpl);
+    setMode("view");
+  };
+
+  const openDetail = async (id: string) => {
+    const tmpl = await loadTemplate(id);
+    if (!tmpl) return;
+    setDetailTemplate(tmpl);
+    setDetailName(tmpl.name);
+    setDetailDescription(tmpl.description || "");
+    setDetailType(tmpl.type);
+    setDetailScale(tmpl.ratingScale || "1-5");
+    setDetailTags(tmpl.tags.join(", "));
+    setDetailLevels(tmpl.targetLevels);
+    setDetailExerciseIds(tmpl.exerciseIds || []);
+    setDetailCompModelId(tmpl.competencyModelId || "");
+    setMode("detail");
+  };
+
+  const getSections = (tmpl: ObservationSheetTemplate): any[] => {
+    if (tmpl.structuredData && Array.isArray(tmpl.structuredData) && tmpl.structuredData.length > 0) {
+      return tmpl.structuredData;
+    }
+    if (tmpl.content && typeof tmpl.content === "object" && tmpl.content.sections && Array.isArray(tmpl.content.sections)) {
+      return tmpl.content.sections;
+    }
+    return [];
+  };
+
+  const downloadAsHTML = (tmpl: ObservationSheetTemplate) => {
+    const typeLabel = TEMPLATE_TYPE_LABELS[tmpl.type] || tmpl.type;
+    const sections = getSections(tmpl);
+    const scaleLabel = tmpl.ratingScale || "1-5";
+    const headerFields = tmpl.content?.headerFields || ["Kandidat/in", "Übung", "Beobachter/in", "Datum"];
+
+    let html = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>${tmpl.name}</title>
+<style>
+body{font-family:'Segoe UI',system-ui,sans-serif;max-width:800px;margin:0 auto;padding:40px 24px;color:#1a1a1a;font-size:14px}
+h1{font-size:22px;margin-bottom:4px}
+h2{font-size:16px;margin:24px 0 8px;border-bottom:2px solid #e2e8f0;padding-bottom:4px}
+.meta{color:#64748b;font-size:12px;margin-bottom:24px}
+.meta span{margin-right:16px}
+.header-fields{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.header-field{border:1px solid #cbd5e1;border-radius:6px;padding:8px 16px;min-width:160px;font-size:13px}
+.header-field label{display:block;font-size:11px;color:#64748b;margin-bottom:2px}
+.header-field .line{border-bottom:1px solid #e2e8f0;height:20px}
+.section{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:16px}
+.section h3{font-size:14px;margin:0 0 4px}
+.comp-badge{display:inline-block;background:#eff6ff;color:#2563eb;font-size:11px;padding:2px 8px;border-radius:12px;margin-bottom:8px}
+.item{background:white;border:1px solid #e2e8f0;border-radius:6px;padding:12px;margin-top:8px}
+.item-label{font-weight:600;font-size:13px}
+.item-help{color:#94a3b8;font-size:12px;margin-top:2px}
+.anchors{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.anchor{background:#f1f5f9;border:1px solid #e2e8f0;font-size:11px;padding:2px 8px;border-radius:4px}
+.rating-row{display:flex;gap:8px;margin-top:8px;align-items:center}
+.rating-box{width:28px;height:28px;border:1px solid #cbd5e1;border-radius:4px;text-align:center;line-height:28px;font-size:11px;color:#94a3b8}
+.footer{margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;color:#64748b;font-size:12px}
+.tags{margin-top:16px}
+.tag{display:inline-block;background:#f1f5f9;color:#475569;font-size:11px;padding:2px 8px;border-radius:12px;margin-right:4px}
+@media print{body{padding:20px}@page{margin:1.5cm}}
+</style></head><body>
+<h1>${tmpl.name}</h1>
+<div class="meta">
+<span>${typeLabel}</span>
+<span>Skala: ${scaleLabel}</span>
+${tmpl.aiGenerated ? '<span>KI-generiert</span>' : ''}
+<span>${new Date(tmpl.createdAt).toLocaleDateString("de-DE")}</span>
+</div>
+${tmpl.description ? `<p style="color:#475569;margin-bottom:20px">${tmpl.description}</p>` : ''}
+<div class="header-fields">
+${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div class="header-field"><label>${f}</label><div class="line"></div></div>`).join("")}
+</div>`;
+
+    const scaleValues = scaleLabel === "a-e" ? ["A","B","C","D","E"] : Array.from({length: parseInt(scaleLabel.split("-")[1]) || 5}, (_, i) => String(i + 1));
+
+    sections.forEach((section: any, si: number) => {
+      html += `<div class="section"><h3>${section.title || `Abschnitt ${si + 1}`}</h3>`;
+      if (section.competency) html += `<span class="comp-badge">${section.competency}</span>`;
+      if (section.items && Array.isArray(section.items)) {
+        section.items.forEach((item: any) => {
+          html += `<div class="item"><div class="item-label">${item.label || ""}</div>`;
+          if (item.helpText) html += `<div class="item-help">${item.helpText}</div>`;
+          if (item.anchors && Array.isArray(item.anchors) && item.anchors.length > 0) {
+            html += `<div class="anchors">${item.anchors.map((a: string) => `<span class="anchor">${a}</span>`).join("")}</div>`;
+          }
+          html += `<div class="rating-row">${scaleValues.map((v: string) => `<div class="rating-box">${v}</div>`).join("")}</div>`;
+          html += `</div>`;
+        });
+      }
+      html += `</div>`;
+    });
+
+    if (tmpl.content?.footerNote) {
+      html += `<div class="footer">${tmpl.content.footerNote}</div>`;
+    }
+    if (tmpl.tags && tmpl.tags.length > 0) {
+      html += `<div class="tags">${tmpl.tags.map((t: string) => `<span class="tag">${t}</span>`).join("")}</div>`;
+    }
+    html += `</body></html>`;
+
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${tmpl.name.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, "_")}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleDetailSave = async () => {
