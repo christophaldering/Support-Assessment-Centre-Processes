@@ -73,6 +73,43 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     },
   });
 
+  const existingCaseStudyIds = new Set(
+    items.filter((i) => i.exerciseType === "case_study" && i.metadataJson && (i.metadataJson as any).caseStudyId)
+      .map((i) => (i.metadataJson as any).caseStudyId)
+  );
+
+  if (!type || type === "case_study") {
+    const activeCaseStudies = await prisma.caseStudy.findMany({
+      where: { workspaceId: workspace.id, status: "active" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    for (const cs of activeCaseStudies) {
+      if (existingCaseStudyIds.has(cs.id)) continue;
+      items.push({
+        id: `cs-${cs.id}`,
+        title: cs.title || `Fallstudie: ${cs.companyName}`,
+        description: cs.description,
+        exerciseType: "case_study",
+        workspaceId: workspace.id,
+        tags: ["Fallstudie", cs.type || "strategy", cs.aiGenerated ? "KI-generiert" : "manuell"],
+        targetLevels: [cs.difficulty === "high" ? "SE-Level" : cs.difficulty === "medium" ? "Director" : "Manager"],
+        languagesAvailable: [],
+        qualityStatus: "approved",
+        metadataJson: { caseStudyId: cs.id, companyName: cs.companyName, logoUrl: cs.logoUrl },
+        sourceProjectId: null,
+        sourceContext: cs.sourceType === "ai_generated" ? "KI-generiert" : cs.sourceType === "upload" ? "Upload" : "Manuell",
+        basedOnId: null,
+        sourceFileName: null,
+        objectStoragePath: null,
+        createdAt: cs.createdAt,
+        updatedAt: cs.updatedAt,
+        createdById: cs.createdById,
+        _count: { variants: 0 },
+      } as any);
+    }
+  }
+
   return NextResponse.json(items);
 }
 

@@ -169,7 +169,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
     setSavingBriefing(false);
   };
 
-  const internalEmails = localData.emails.filter((e) => e.category === "internal");
+  const internalEmails = localData.emails.filter((e) => e.category === "internal" || !e.category);
   const externalEmails = localData.emails.filter((e) => e.category === "external");
 
   const visibleTabs = tabList.filter((tab) => {

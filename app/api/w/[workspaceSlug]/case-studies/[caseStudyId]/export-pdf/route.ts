@@ -57,9 +57,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
   try {
     const doc = new PDFDocument({
-      layout: "landscape",
+      layout: "portrait",
       size: "A4",
-      margins: { top: 50, bottom: 50, left: 60, right: 60 },
+      margins: { top: 50, bottom: 60, left: 55, right: 55 },
     });
 
     const chunks: Buffer[] = [];
@@ -69,51 +69,67 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       doc.on("end", () => resolve(Buffer.concat(chunks)));
     });
 
-    const pageW = 841.89 - 120;
+    const pageW = 595.28 - 110;
+    const pageH = 841.89;
     const copper = [163, 82, 55] as [number, number, number];
     const navy = [15, 23, 42] as [number, number, number];
+    const copperStr = `rgb(${copper.join(",")})`;
+    const navyStr = `rgb(${navy.join(",")})`;
 
     function addHeader(title: string, subtitle?: string) {
-      doc.rect(0, 0, 841.89, 80).fill(`rgb(${navy.join(",")})`);
-      doc.fillColor("white").fontSize(22).font("Helvetica-Bold").text(title, 60, 25, { width: pageW });
+      doc.rect(0, 0, 595.28, 70).fill(copperStr);
+      doc.fillColor("white").fontSize(18).font("Helvetica-Bold").text(title, 55, 20, { width: pageW });
       if (subtitle) {
-        doc.fontSize(10).font("Helvetica").text(subtitle, 60, 52, { width: pageW });
+        doc.fontSize(9).font("Helvetica").text(subtitle, 55, 44, { width: pageW });
       }
-      doc.fillColor("black").moveDown(2);
-      doc.y = 100;
+      doc.fillColor("black");
+      doc.y = 90;
+    }
+
+    function addFooter() {
+      doc.fontSize(7).font("Helvetica").fillColor("#9ca3af")
+        .text("© Christoph Aldering · Private initiative / concept", 55, pageH - 35, { width: pageW, align: "center" });
     }
 
     function sectionTitle(text: string) {
-      doc.fontSize(14).font("Helvetica-Bold").fillColor(`rgb(${copper.join(",")})`).text(text);
+      doc.fontSize(13).font("Helvetica-Bold").fillColor(copperStr).text(text);
       doc.moveDown(0.3);
       doc.fillColor("black");
     }
 
     function bodyText(text: string) {
       doc.fontSize(9).font("Helvetica").fillColor("#374151").text(text, { width: pageW, lineGap: 2 });
-      doc.moveDown(0.5);
+      doc.moveDown(0.4);
     }
 
-    function checkPage(needed: number = 120) {
-      if (doc.y > 595.28 - 50 - needed) {
+    function checkPage(needed: number = 100) {
+      if (doc.y > pageH - 60 - needed) {
+        addFooter();
         doc.addPage();
       }
     }
 
-    // --- COVER PAGE ---
-    doc.rect(0, 0, 841.89, 595.28).fill(`rgb(${navy.join(",")})`);
-    doc.fillColor("white").fontSize(36).font("Helvetica-Bold")
-      .text(data.name || caseStudy.companyName || "Case Study", 60, 180, { width: pageW, align: "center" });
-    doc.fontSize(16).font("Helvetica")
-      .text(data.description || "", 60, 240, { width: pageW, align: "center" });
+    // --- COVER PAGE (eco-friendly: white background) ---
+    doc.rect(0, 0, 595.28, 4).fill(copperStr);
+    doc.rect(0, pageH - 4, 595.28, 4).fill(copperStr);
+    doc.rect(0, 0, 4, pageH).fill(copperStr);
+    doc.rect(595.28 - 4, 0, 4, pageH).fill(copperStr);
+
+    doc.fillColor(navyStr).fontSize(32).font("Helvetica-Bold")
+      .text(data.name || caseStudy.companyName || "Case Study", 55, 220, { width: pageW, align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(13).font("Helvetica").fillColor("#64748b")
+      .text(data.description || "", 55, undefined, { width: pageW, align: "center" });
     doc.moveDown(2);
-    doc.fontSize(12).fillColor(`rgb(${copper.join(",")})`)
-      .text("Executive Assessment – Case Study", 60, 320, { width: pageW, align: "center" });
-    doc.fontSize(10).fillColor("white")
-      .text(`Generated: ${new Date().toLocaleDateString("de-DE")}`, 60, 360, { width: pageW, align: "center" });
+    doc.fontSize(11).fillColor(copperStr).font("Helvetica-Bold")
+      .text("Executive Assessment – Case Study", 55, undefined, { width: pageW, align: "center" });
+    doc.moveDown(1.5);
+    doc.fontSize(9).font("Helvetica").fillColor("#94a3b8")
+      .text(`Erstellt: ${new Date().toLocaleDateString("de-DE")}`, 55, undefined, { width: pageW, align: "center" });
     if (caseStudy.referenceDate) {
-      doc.text(`Referenzdatum: ${caseStudy.referenceDate}`, 60, 380, { width: pageW, align: "center" });
+      doc.text(`Referenzdatum: ${caseStudy.referenceDate}`, 55, undefined, { width: pageW, align: "center" });
     }
+    addFooter();
 
     // --- BRIEFING ---
     if (data.briefing) {
@@ -152,6 +168,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       sectionTitle("Framework");
       bodyText(`Individual Analysis: ${data.briefing.timeMinutes || 60} minutes`);
       bodyText(`Presentation: ${data.briefing.presentationMinutes || 15} minutes`);
+      addFooter();
     }
 
     // --- OVERVIEW ---
@@ -161,17 +178,19 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     if (data.metrics && data.metrics.length > 0) {
       sectionTitle("Key Performance Indicators");
       const colW = pageW / Math.min(data.metrics.length, 4);
-      const startX = 60;
+      const startX = 55;
       const startY = doc.y;
       data.metrics.forEach((m: any, i: number) => {
         const x = startX + (i % 4) * colW;
-        doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text(s(m.label), x, startY, { width: colW - 10 });
-        doc.fontSize(14).font("Helvetica-Bold").fillColor("#1e293b").text(s(m.value), x, startY + 12, { width: colW - 10 });
+        const row = Math.floor(i / 4);
+        const y = startY + row * 50;
+        doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text(s(m.label), x, y, { width: colW - 10 });
+        doc.fontSize(13).font("Helvetica-Bold").fillColor(navyStr).text(s(m.value), x, y + 12, { width: colW - 10 });
         const trendColor = s(m.trend).includes("down") ? "#ef4444" : m.trend === "up" ? "#22c55e" : "#6b7280";
-        doc.fontSize(8).font("Helvetica").fillColor(trendColor).text(s(m.trend), x, startY + 30, { width: colW - 10 });
+        doc.fontSize(8).font("Helvetica").fillColor(trendColor).text(s(m.trend), x, y + 28, { width: colW - 10 });
       });
-      doc.y = startY + 50;
-      doc.moveDown(1);
+      doc.y = startY + (Math.ceil(data.metrics.length / 4)) * 50 + 10;
+      doc.moveDown(0.5);
     }
 
     // --- BUSINESS UNITS ---
@@ -180,81 +199,141 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       sectionTitle(`Geschäftseinheiten (${data.businessUnits.length})`);
       data.businessUnits.forEach((bu: any) => {
         if (!bu) return;
-        checkPage(80);
-        doc.fontSize(11).font("Helvetica-Bold").fillColor("#1e293b").text(s(bu.name));
+        checkPage(70);
+        doc.fontSize(11).font("Helvetica-Bold").fillColor(navyStr).text(s(bu.name));
         doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
           .text(`Umsatz: €${n(bu.revenue).toFixed(2)} Mrd  |  EBITDA: €${n(bu.ebitda).toFixed(2)} Mrd  |  Marge: ${n(bu.margin)}%  |  MA: ${n(bu.employees).toLocaleString()}`);
         if (bu.tension) {
-          doc.fontSize(8).font("Helvetica-Oblique").fillColor("#92400e").text(s(bu.tension));
+          doc.fontSize(8).font("Helvetica-Oblique").fillColor(copperStr).text(s(bu.tension));
         }
         doc.moveDown(0.5);
       });
     }
+    addFooter();
 
-    // --- EMAILS ---
+    // --- EMAILS: each email gets its own page ---
     if (data.emails && data.emails.length > 0) {
-      doc.addPage();
-      addHeader("Kommunikation", `${data.emails.length} E-Mails`);
-
-      data.emails.forEach((email: any) => {
+      data.emails.forEach((email: any, idx: number) => {
         if (!email) return;
-        checkPage(100);
-        doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b").text(s(email.subject) || "No Subject");
-        doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
-          .text(`Von: ${s(email.from)}  |  ${s(email.date)}${email.to ? `  |  An: ${s(email.to)}` : ""}`);
+        doc.addPage();
+        addHeader("E-Mail", `Vorgang ${idx + 1} von ${data.emails.length}`);
+
+        doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text("Betreff:", 55, doc.y, { continued: true });
+        doc.fontSize(11).font("Helvetica-Bold").fillColor(navyStr).text(`  ${s(email.subject) || "Kein Betreff"}`);
         doc.moveDown(0.3);
-        const content = s(email.content);
-        doc.fontSize(8).font("Helvetica").fillColor("#374151").text(content.substring(0, 800), { width: pageW, lineGap: 1 });
-        if (content.length > 800) {
-          doc.fontSize(7).fillColor("#9ca3af").text("[...]");
+
+        doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text("Von: ", { continued: true });
+        doc.fillColor("#374151").text(s(email.from));
+
+        if (email.to) {
+          doc.fontSize(8).fillColor("#9ca3af").text("An: ", { continued: true });
+          doc.fillColor("#374151").text(s(email.to));
         }
-        doc.moveDown(0.8);
-        doc.moveTo(60, doc.y).lineTo(60 + pageW, doc.y).strokeColor("#e2e8f0").lineWidth(0.5).stroke();
+
+        if (email.cc) {
+          doc.fontSize(8).fillColor("#9ca3af").text("CC: ", { continued: true });
+          doc.fillColor("#374151").text(s(email.cc));
+        }
+
+        doc.fontSize(8).fillColor("#9ca3af").text("Datum: ", { continued: true });
+        doc.fillColor("#374151").text(s(email.date));
+
+        if (email.important) {
+          doc.fontSize(8).fillColor("#dc2626").text("WICHTIG / PRIORITY");
+        }
+
         doc.moveDown(0.5);
+        doc.moveTo(55, doc.y).lineTo(55 + pageW, doc.y).strokeColor("#e2e8f0").lineWidth(0.5).stroke();
+        doc.moveDown(0.5);
+
+        const content = s(email.content);
+        const lines = content.split("\n");
+        lines.forEach((line: string) => {
+          checkPage(14);
+          if (line.trim() === "") {
+            doc.moveDown(0.3);
+          } else if (line.startsWith("  ") || line.startsWith("\t")) {
+            doc.fontSize(9).font("Helvetica").fillColor("#374151").text(line, 75, undefined, { width: pageW - 20, lineGap: 2 });
+          } else if (line.match(/^[-–—]/)) {
+            doc.fontSize(9).font("Helvetica").fillColor("#374151").text(line, 65, undefined, { width: pageW - 10, lineGap: 2 });
+          } else if (line.match(/^(Best regards|Mit freundlichen Grüßen|Kind regards|Viele Grüße|Herzliche Grüße)/i)) {
+            doc.moveDown(0.3);
+            doc.fontSize(9).font("Helvetica").fillColor("#374151").text(line, { width: pageW, lineGap: 2 });
+          } else if (line.match(/^(Tel|Phone|Fax|Mobile|E-Mail|Email|Web|www\.|http|\+49|\+1|\+44)/i) || line.match(/^[A-Z][a-zäöü]+ [A-Z][a-zäöü]+\s*$/)) {
+            doc.fontSize(8).font("Helvetica").fillColor("#6b7280").text(line, { width: pageW, lineGap: 1 });
+          } else if (line.match(/^(Diese E-Mail|This email|Confidential|DISCLAIMER|Vertraulich)/i)) {
+            doc.fontSize(7).font("Helvetica-Oblique").fillColor("#9ca3af").text(line, { width: pageW, lineGap: 1 });
+          } else {
+            doc.fontSize(9).font("Helvetica").fillColor("#374151").text(line, { width: pageW, lineGap: 2 });
+          }
+        });
+
+        addFooter();
       });
     }
 
-    // --- PROTOCOLS ---
+    // --- PROTOCOLS: each protocol gets its own page ---
     if (data.protocols && data.protocols.length > 0) {
-      doc.addPage();
-      addHeader("Protokolle", `${data.protocols.length} Dokumente`);
-
-      data.protocols.forEach((p: any) => {
+      data.protocols.forEach((p: any, idx: number) => {
         if (!p) return;
-        checkPage(100);
-        doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b").text(s(p.title));
-        doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
-          .text(`${s(p.date)}${p.location ? ` · ${s(p.location)}` : ""}${p.participants ? ` · ${s(p.participants)}` : ""}`);
+        doc.addPage();
+        addHeader("Protokoll", `Dokument ${idx + 1} von ${data.protocols.length}`);
+
+        doc.fontSize(12).font("Helvetica-Bold").fillColor(navyStr).text(s(p.title));
         doc.moveDown(0.3);
-        const content = s(p.content);
-        doc.fontSize(8).font("Helvetica").fillColor("#374151").text(content.substring(0, 600), { width: pageW, lineGap: 1 });
-        if (content.length > 600) {
-          doc.fontSize(7).fillColor("#9ca3af").text("[...]");
+        doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
+          .text(`Datum: ${s(p.date)}${p.location ? `  ·  Ort: ${s(p.location)}` : ""}`);
+        if (p.participants) {
+          doc.fontSize(8).fillColor("#6b7280").text(`Teilnehmer: ${s(p.participants)}`);
         }
-        doc.moveDown(0.8);
+        doc.moveDown(0.5);
+        doc.moveTo(55, doc.y).lineTo(55 + pageW, doc.y).strokeColor("#e2e8f0").lineWidth(0.5).stroke();
+        doc.moveDown(0.5);
+
+        const content = s(p.content);
+        const lines = content.split("\n");
+        lines.forEach((line: string) => {
+          checkPage(14);
+          if (line.trim() === "") {
+            doc.moveDown(0.3);
+          } else {
+            doc.fontSize(9).font("Helvetica").fillColor("#374151").text(line, { width: pageW, lineGap: 2 });
+          }
+        });
+
+        addFooter();
       });
     }
 
-    // --- NEWS ---
+    // --- NEWS: each article gets its own page ---
     if (data.newsArticles && data.newsArticles.length > 0) {
-      doc.addPage();
-      addHeader("News & Media", `${data.newsArticles.length} Artikel`);
-
-      data.newsArticles.forEach((article: any) => {
+      data.newsArticles.forEach((article: any, idx: number) => {
         if (!article) return;
-        checkPage(100);
-        doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b").text(s(article.headline) || s(article.title));
+        doc.addPage();
+        addHeader("Nachrichtenartikel", `Artikel ${idx + 1} von ${data.newsArticles.length}`);
+
+        doc.fontSize(14).font("Helvetica-Bold").fillColor(navyStr).text(s(article.headline) || s(article.title));
         if (article.subtitle) {
-          doc.fontSize(8).font("Helvetica-Oblique").fillColor("#6b7280").text(s(article.subtitle));
+          doc.fontSize(10).font("Helvetica-Oblique").fillColor("#64748b").text(s(article.subtitle));
         }
-        doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text(`${s(article.source)} · ${s(article.date)}`);
         doc.moveDown(0.3);
+        doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text(`${s(article.source)}  ·  ${s(article.date)}`);
+        doc.moveDown(0.5);
+        doc.moveTo(55, doc.y).lineTo(55 + pageW, doc.y).strokeColor("#e2e8f0").lineWidth(0.5).stroke();
+        doc.moveDown(0.5);
+
         const content = s(article.content);
-        doc.fontSize(8).font("Helvetica").fillColor("#374151").text(content.substring(0, 600), { width: pageW, lineGap: 1 });
-        if (content.length > 600) {
-          doc.fontSize(7).fillColor("#9ca3af").text("[...]");
-        }
-        doc.moveDown(0.8);
+        const lines = content.split("\n");
+        lines.forEach((line: string) => {
+          checkPage(14);
+          if (line.trim() === "") {
+            doc.moveDown(0.3);
+          } else {
+            doc.fontSize(9).font("Helvetica").fillColor("#374151").text(line, { width: pageW, lineGap: 2 });
+          }
+        });
+
+        addFooter();
       });
     }
 
@@ -275,31 +354,53 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       if (data.detailedBalanceSheet?.assets) {
         checkPage();
         sectionTitle("Detailed Balance Sheet - Assets");
-        const allAssets = [
-          ...(data.detailedBalanceSheet.assets.nonCurrent || []),
-          ...(data.detailedBalanceSheet.assets.current || []),
-        ];
-        allAssets.forEach((a: any) => {
-          doc.fontSize(8).font("Helvetica").fillColor("#374151")
-            .text(`${a.item}: €${n(a.value).toFixed(0)} Mio`, { width: pageW });
-        });
+        if (data.detailedBalanceSheet.assets.nonCurrent?.length > 0) {
+          doc.fontSize(9).font("Helvetica-Bold").fillColor(navyStr).text("Non-Current Assets");
+          data.detailedBalanceSheet.assets.nonCurrent.forEach((a: any) => {
+            doc.fontSize(8).font("Helvetica").fillColor("#374151")
+              .text(`  ${a.item}: €${n(a.value).toFixed(0)} Mio`, { width: pageW });
+          });
+          doc.moveDown(0.3);
+        }
+        if (data.detailedBalanceSheet.assets.current?.length > 0) {
+          doc.fontSize(9).font("Helvetica-Bold").fillColor(navyStr).text("Current Assets");
+          data.detailedBalanceSheet.assets.current.forEach((a: any) => {
+            doc.fontSize(8).font("Helvetica").fillColor("#374151")
+              .text(`  ${a.item}: €${n(a.value).toFixed(0)} Mio`, { width: pageW });
+          });
+        }
         doc.moveDown(0.5);
       }
 
       if (data.detailedBalanceSheet?.equityLiabilities) {
         checkPage();
         sectionTitle("Detailed Balance Sheet - Equity & Liabilities");
-        const allLiab = [
-          ...(data.detailedBalanceSheet.equityLiabilities.equity || []),
-          ...(data.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities || []),
-          ...(data.detailedBalanceSheet.equityLiabilities.currentLiabilities || []),
-        ];
-        allLiab.forEach((l: any) => {
-          doc.fontSize(8).font("Helvetica").fillColor("#374151")
-            .text(`${l.item}: €${n(l.value).toFixed(0)} Mio`, { width: pageW });
-        });
+        if (data.detailedBalanceSheet.equityLiabilities.equity?.length > 0) {
+          doc.fontSize(9).font("Helvetica-Bold").fillColor(navyStr).text("Equity");
+          data.detailedBalanceSheet.equityLiabilities.equity.forEach((l: any) => {
+            doc.fontSize(8).font("Helvetica").fillColor("#374151")
+              .text(`  ${l.item}: €${n(l.value).toFixed(0)} Mio`, { width: pageW });
+          });
+          doc.moveDown(0.3);
+        }
+        if (data.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities?.length > 0) {
+          doc.fontSize(9).font("Helvetica-Bold").fillColor(navyStr).text("Non-Current Liabilities");
+          data.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities.forEach((l: any) => {
+            doc.fontSize(8).font("Helvetica").fillColor("#374151")
+              .text(`  ${l.item}: €${n(l.value).toFixed(0)} Mio`, { width: pageW });
+          });
+          doc.moveDown(0.3);
+        }
+        if (data.detailedBalanceSheet.equityLiabilities.currentLiabilities?.length > 0) {
+          doc.fontSize(9).font("Helvetica-Bold").fillColor(navyStr).text("Current Liabilities");
+          data.detailedBalanceSheet.equityLiabilities.currentLiabilities.forEach((l: any) => {
+            doc.fontSize(8).font("Helvetica").fillColor("#374151")
+              .text(`  ${l.item}: €${n(l.value).toFixed(0)} Mio`, { width: pageW });
+          });
+        }
         doc.moveDown(0.5);
       }
+      addFooter();
     }
 
     // --- HR SURVEY ---
@@ -313,7 +414,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
       data.hrSurvey.categories.forEach((cat: any) => {
         checkPage(80);
-        doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b").text(cat.name);
+        doc.fontSize(10).font("Helvetica-Bold").fillColor(navyStr).text(cat.name);
         cat.items.forEach((item: any) => {
           const color = item.score >= 3 ? "#22c55e" : item.score >= 2.5 ? "#f59e0b" : "#ef4444";
           doc.fontSize(8).font("Helvetica").fillColor(color)
@@ -322,6 +423,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
         });
         doc.moveDown(0.5);
       });
+      addFooter();
     }
 
     // --- ORGANIGRAMM ---
@@ -338,9 +440,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
       departments.forEach((members, dept) => {
         checkPage(60);
-        doc.fontSize(10).font("Helvetica-Bold").fillColor(`rgb(${copper.join(",")})`).text(dept);
+        doc.fontSize(10).font("Helvetica-Bold").fillColor(copperStr).text(dept);
         members.forEach((m: any) => {
-          doc.fontSize(9).font("Helvetica-Bold").fillColor("#1e293b").text(m.name, { continued: true });
+          doc.fontSize(9).font("Helvetica-Bold").fillColor(navyStr).text(m.name, { continued: true });
           doc.font("Helvetica").fillColor("#6b7280").text(`  –  ${m.role}`);
           if (m.reportsTo) {
             doc.fontSize(7).fillColor("#9ca3af").text(`    Reports to: ${m.reportsTo}`);
@@ -348,6 +450,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
         });
         doc.moveDown(0.5);
       });
+      addFooter();
     }
 
     // --- QUESTIONS ---
@@ -369,12 +472,8 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
           bodyText(`${i + 1}. ${q}`);
         });
       }
+      addFooter();
     }
-
-    // --- FOOTER ON LAST PAGE ---
-    doc.moveDown(2);
-    doc.fontSize(7).font("Helvetica").fillColor("#9ca3af")
-      .text("© Christoph Aldering · Private initiative / concept", 60, 595.28 - 30, { width: pageW, align: "center" });
 
     doc.end();
 

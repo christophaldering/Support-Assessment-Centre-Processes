@@ -30,6 +30,7 @@ interface GenerateParams {
   keyTensions: string;
   targetLevel: string;
   difficulty: string;
+  language: string;
   referenceDate: string;
   candidateTime: string;
   documentCount: string;
@@ -75,6 +76,7 @@ export default function CaseStudyBuilderPage() {
     keyTensions: "",
     targetLevel: "SE-Level / Vorstand",
     difficulty: "Hoch",
+    language: "Deutsch",
     referenceDate: "",
     candidateTime: "60",
     documentCount: "15",
@@ -783,7 +785,7 @@ export default function CaseStudyBuilderPage() {
                 />
               </div>
 
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-4 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Zielgruppe / Level</label>
                   <select
@@ -810,6 +812,21 @@ export default function CaseStudyBuilderPage() {
                     <option value="Mittel">Mittel</option>
                     <option value="Niedrig">Niedrig</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Sprache</label>
+                  <select
+                    value={genParams.language}
+                    onChange={(e) => setGenParams({ ...genParams, language: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    data-testid="select-language"
+                  >
+                    <option value="Deutsch">Deutsch</option>
+                    <option value="Englisch">Englisch</option>
+                  </select>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Sprache aller Fallstudieninhalte
+                  </p>
                 </div>
 
               <div>

@@ -165,7 +165,8 @@ ${CASE_STUDY_SYSTEM_PROMPT.split("Wichtige Regeln:")[0]}
 Wichtige Regeln:
 - Behalte alle vorhandenen Informationen aus dem Originaldokument bei
 - Ergänze fehlende Felder intelligent (z.B. Bilanzdaten wenn nur Umsatz gegeben)
-- Erstelle realistische E-Mails basierend auf den im Dokument beschriebenen Szenarien
+- Erstelle realistische E-Mails basierend auf den im Dokument beschriebenen Szenarien, jede E-Mail mit vollständiger Anrede, Hauptteil, Grußformel und Signaturblock (Name, Funktion, E-Mail, Telefon)
+- Jede E-Mail MUSS die Felder "category" ("internal" oder "external") und "to" enthalten
 - Passe Finanzdaten an, wenn sie unvollständig sind
 - Ein Organigramm mit ALLEN in der Fallstudie vorkommenden Personen (mindestens 8-10), inklusive Name, Funktion, Abteilung und Berichtslinie
 - Eine individuelle Briefing-Sektion mit Rollenbeschreibung, Situationsbeschreibung und Aufgabenstellung, die exakt auf das generierte Unternehmen zugeschnitten ist (NICHT generisch)
