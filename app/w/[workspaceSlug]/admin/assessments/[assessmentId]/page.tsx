@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Fragment } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import CollaborationPanel from "./CollaborationPanel";
@@ -2344,100 +2344,139 @@ export default function AssessmentDetailPage() {
                     </thead>
                     <tbody>
                       {exercises.map((ex) => (
-                        <tr key={ex.id} className="border-b border-slate-100 hover:bg-slate-50/50" data-testid={`row-exercise-${ex.id}`}>
-                          {editingExId === ex.id ? (
-                            <>
-                              <td className="px-4 py-3">
-                                <input
-                                  type="text"
-                                  value={editExName}
-                                  onChange={(e) => setEditExName(e.target.value)}
-                                  data-testid="input-edit-exercise-name"
-                                  className="w-full rounded border border-slate-200 px-2 py-1 text-sm"
-                                />
-                              </td>
-                              <td className="px-4 py-3">
-                                <select
-                                  value={editExType}
-                                  onChange={(e) => setEditExType(e.target.value)}
-                                  data-testid="select-edit-exercise-type"
-                                  className="w-full rounded border border-slate-200 px-2 py-1 text-sm"
-                                >
-                                  {EXERCISE_TYPES.map((t) => (
-                                    <option key={t} value={t}>{EXERCISE_TYPE_LABELS[t]}</option>
-                                  ))}
-                                </select>
-                              </td>
-                              <td className="px-4 py-3">
-                                <input
-                                  type="number"
-                                  value={editExDuration}
-                                  onChange={(e) => setEditExDuration(e.target.value)}
-                                  data-testid="input-edit-exercise-duration"
-                                  className="w-20 rounded border border-slate-200 px-2 py-1 text-sm"
-                                />
-                              </td>
-                              <td className="px-4 py-3">
-                                <input
-                                  type="number"
-                                  value={editExSortOrder}
-                                  onChange={(e) => setEditExSortOrder(e.target.value)}
-                                  data-testid="input-edit-exercise-sort-order"
-                                  className="w-20 rounded border border-slate-200 px-2 py-1 text-sm"
-                                />
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <div className="flex justify-end gap-2">
-                                  <button
-                                    onClick={() => handleUpdateExercise(ex.id)}
-                                    data-testid="button-save-exercise"
-                                    className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
-                                  >
-                                    Speichern
-                                  </button>
+                        <Fragment key={ex.id}>
+                          <tr className={`border-b border-slate-100 hover:bg-slate-50/50 ${editingExId === ex.id ? "bg-blue-50/40" : ""}`} data-testid={`row-exercise-${ex.id}`}>
+                            <td className="px-4 py-3 font-medium text-slate-900">{ex.name}</td>
+                            <td className="px-4 py-3 text-slate-500">{EXERCISE_TYPE_LABELS[ex.type] || ex.type}</td>
+                            <td className="px-4 py-3 text-slate-500">{ex.duration ? `${ex.duration} Min.` : "–"}</td>
+                            <td className="px-4 py-3 text-slate-500">{ex.sortOrder}</td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex justify-end gap-2">
+                                {editingExId === ex.id ? (
                                   <button
                                     onClick={() => setEditingExId(null)}
-                                    className="text-xs text-slate-400 hover:text-slate-600"
+                                    data-testid={`button-close-exercise-${ex.id}`}
+                                    className="text-xs text-slate-400 hover:text-slate-600 font-medium"
                                   >
-                                    Abbrechen
+                                    Schließen
                                   </button>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setEditingExId(ex.id);
+                                        setEditExName(ex.name);
+                                        setEditExType(ex.type);
+                                        setEditExInstructions(ex.instructions ?? "");
+                                        setEditExDuration(ex.duration?.toString() ?? "");
+                                        setEditExSortOrder(ex.sortOrder.toString());
+                                      }}
+                                      data-testid={`button-edit-exercise-${ex.id}`}
+                                      className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
+                                    >
+                                      Bearbeiten
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteExercise(ex.id)}
+                                      data-testid={`button-delete-exercise-${ex.id}`}
+                                      className="text-xs text-red-500 hover:text-red-700 font-medium"
+                                    >
+                                      Löschen
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          {editingExId === ex.id && (
+                            <tr>
+                              <td colSpan={5} className="px-0 py-0">
+                                <div className="bg-slate-50 border-t border-b border-blue-100 px-6 py-5">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Name *</label>
+                                      <input
+                                        type="text"
+                                        value={editExName}
+                                        onChange={(e) => setEditExName(e.target.value)}
+                                        data-testid="input-edit-exercise-name"
+                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Typ</label>
+                                      <select
+                                        value={editExType}
+                                        onChange={(e) => setEditExType(e.target.value)}
+                                        data-testid="select-edit-exercise-type"
+                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
+                                      >
+                                        {EXERCISE_TYPES.map((t) => (
+                                          <option key={t} value={t}>{EXERCISE_TYPE_LABELS[t]}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  </div>
+                                  <div className="mb-4">
+                                    <label className="block text-xs font-semibold text-slate-600 mb-1">Anweisungen / Inhalt</label>
+                                    <textarea
+                                      value={editExInstructions}
+                                      onChange={(e) => setEditExInstructions(e.target.value)}
+                                      data-testid="textarea-edit-exercise-instructions"
+                                      rows={6}
+                                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none resize-y"
+                                      placeholder="Detaillierte Beschreibung, Ablauf, Bewertungskriterien..."
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Dauer (Min.)</label>
+                                      <input
+                                        type="number"
+                                        value={editExDuration}
+                                        onChange={(e) => setEditExDuration(e.target.value)}
+                                        data-testid="input-edit-exercise-duration"
+                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
+                                        min={0}
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Reihenfolge</label>
+                                      <input
+                                        type="number"
+                                        value={editExSortOrder}
+                                        onChange={(e) => setEditExSortOrder(e.target.value)}
+                                        data-testid="input-edit-exercise-sort-order"
+                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
+                                        min={0}
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                                      <span className="inline-block text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 mt-1">{ex.status || "draft"}</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3 pt-3 border-t border-slate-200">
+                                    <button
+                                      onClick={() => handleUpdateExercise(ex.id)}
+                                      data-testid="button-save-exercise"
+                                      className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-brand-blue hover:bg-brand-blue-dark transition-colors"
+                                    >
+                                      Änderungen speichern
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingExId(null)}
+                                      data-testid="button-cancel-edit-exercise"
+                                      className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                                    >
+                                      Abbrechen
+                                    </button>
+                                  </div>
                                 </div>
                               </td>
-                            </>
-                          ) : (
-                            <>
-                              <td className="px-4 py-3 font-medium text-slate-900">{ex.name}</td>
-                              <td className="px-4 py-3 text-slate-500">{EXERCISE_TYPE_LABELS[ex.type] || ex.type}</td>
-                              <td className="px-4 py-3 text-slate-500">{ex.duration ? `${ex.duration} Min.` : "–"}</td>
-                              <td className="px-4 py-3 text-slate-500">{ex.sortOrder}</td>
-                              <td className="px-4 py-3 text-right">
-                                <div className="flex justify-end gap-2">
-                                  <button
-                                    onClick={() => {
-                                      setEditingExId(ex.id);
-                                      setEditExName(ex.name);
-                                      setEditExType(ex.type);
-                                      setEditExInstructions(ex.instructions ?? "");
-                                      setEditExDuration(ex.duration?.toString() ?? "");
-                                      setEditExSortOrder(ex.sortOrder.toString());
-                                    }}
-                                    data-testid={`button-edit-exercise-${ex.id}`}
-                                    className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
-                                  >
-                                    Bearbeiten
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteExercise(ex.id)}
-                                    data-testid={`button-delete-exercise-${ex.id}`}
-                                    className="text-xs text-red-500 hover:text-red-700 font-medium"
-                                  >
-                                    Löschen
-                                  </button>
-                                </div>
-                              </td>
-                            </>
+                            </tr>
                           )}
-                        </tr>
+                        </Fragment>
                       ))}
                       {exercises.length === 0 && (
                         <tr>
