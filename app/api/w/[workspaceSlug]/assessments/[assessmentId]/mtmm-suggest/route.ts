@@ -57,9 +57,9 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Maximal 50 Übungen und 200 Kompetenzknoten erlaubt" }, { status: 400 });
     }
 
-    const validLevels = ["cluster", "dimension", "competency", "anchor"];
+    const validLevels = ["domain", "cluster", "competency", "sub", "dimension", "anchor"];
     if (!validLevels.includes(level)) {
-      return NextResponse.json({ error: "Ungültige Ebene. Erlaubt: cluster, dimension, competency, anchor" }, { status: 400 });
+      return NextResponse.json({ error: "Ungültige Ebene. Erlaubt: domain, competency, sub, anchor" }, { status: 400 });
     }
 
     for (const e of exercises) {
@@ -74,9 +74,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     }
 
     const levelLabels: Record<string, string> = {
+      domain: "Cluster/Domänen",
       cluster: "Cluster/Domänen",
-      dimension: "Kompetenzdimensionen",
       competency: "Einzelkompetenzen",
+      sub: "Subkompetenzen/Dimensionen",
+      dimension: "Kompetenzdimensionen",
       anchor: "Verhaltensanker",
     };
 
