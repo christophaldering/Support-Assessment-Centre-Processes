@@ -1727,6 +1727,123 @@ export default function AssessmentDetailPage() {
 
           {activeSection === "exercises" && (
             <>
+              {linkedAnalysis?.proposal && (() => {
+                const recExercises = Array.isArray(linkedAnalysis.proposal.exercises) ? linkedAnalysis.proposal.exercises : [];
+                const recModules = Array.isArray(linkedAnalysis.proposal.assessmentModules)
+                  ? linkedAnalysis.proposal.assessmentModules.filter((m: any) => m && m.selected !== false)
+                  : [];
+                const allRecs = [
+                  ...recExercises.map((ex: any) => ({
+                    name: ex.name || ex.title || (typeof ex === "string" ? ex : ""),
+                    type: ex.type || "",
+                    duration: ex.duration || null,
+                    description: ex.description || "",
+                    source: "exercise" as const,
+                  })),
+                  ...recModules.map((mod: any) => ({
+                    name: mod.name || "",
+                    type: mod.type || "",
+                    duration: null,
+                    description: mod.description || "",
+                    source: "module" as const,
+                  })),
+                ].filter(r => r.name);
+                const adoptedNames = exercises.map(e => e.name.toLowerCase());
+                const unadopted = allRecs.filter(r => !adoptedNames.includes(r.name.toLowerCase()));
+                if (unadopted.length === 0) return null;
+                return (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-4" data-testid="section-exercise-recommendations">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+                      <h3 className="text-sm font-semibold text-amber-800">Empfehlungen aus der Anforderungsanalyse ({unadopted.length})</h3>
+                    </div>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs text-amber-700">Die KI hat folgende Übungen vorgeschlagen. Klicken Sie auf &quot;Übernehmen&quot;, um eine Übung in dieses Assessment aufzunehmen.</p>
+                      <button
+                        onClick={async () => {
+                          for (const rec of unadopted) {
+                            const typeMap: Record<string, string> = {
+                              "Fallstudie": "case_study", "Präsentation": "presentation", "Interview": "interview",
+                              "Interview-Leitfaden": "interview", "Fact-Finding": "fact_finding", "Fact-Finding-Simulation": "fact_finding",
+                              "Verhaltenssimulation": "behavioral_simulation", "Rollenspiel": "behavioral_simulation",
+                              "Psychometrischer Test": "psychometric_test", "Gruppenübung": "group_exercise", "Gruppendiskussion": "group_exercise",
+                            };
+                            const mappedType = typeMap[rec.type] || rec.type?.toLowerCase().replace(/[\s-]+/g, "_") || "presentation";
+                            await fetch(`${apiBase}/exercises`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ name: rec.name, type: mappedType, instructions: rec.description || null, duration: rec.duration ? parseInt(String(rec.duration)) : null, sortOrder: exercises.length }),
+                            });
+                          }
+                          fetchExercises();
+                        }}
+                        className="shrink-0 ml-3 text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg px-3 py-1.5 transition-colors"
+                        data-testid="button-adopt-all-recommendations"
+                      >
+                        Alle übernehmen
+                      </button>
+                    </div>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {unadopted.map((rec, i) => (
+                        <div key={i} className="bg-white border border-amber-200 rounded-lg p-4 flex flex-col" data-testid={`card-recommendation-${i}`}>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-brand-navy mb-1">{rec.name}</p>
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {rec.type && (
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue">{rec.type}</span>
+                              )}
+                              {rec.duration && (
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{rec.duration} Min.</span>
+                              )}
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">
+                                {rec.source === "module" ? "Modul" : "Übung"}
+                              </span>
+                            </div>
+                            {rec.description && <p className="text-xs text-slate-500 line-clamp-2 mb-2">{rec.description}</p>}
+                          </div>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const typeMap: Record<string, string> = {
+                                  "Fallstudie": "case_study",
+                                  "Präsentation": "presentation",
+                                  "Interview": "interview",
+                                  "Interview-Leitfaden": "interview",
+                                  "Fact-Finding": "fact_finding",
+                                  "Fact-Finding-Simulation": "fact_finding",
+                                  "Verhaltenssimulation": "behavioral_simulation",
+                                  "Rollenspiel": "behavioral_simulation",
+                                  "Psychometrischer Test": "psychometric_test",
+                                  "Gruppenübung": "group_exercise",
+                                  "Gruppendiskussion": "group_exercise",
+                                };
+                                const mappedType = typeMap[rec.type] || rec.type?.toLowerCase().replace(/[\s-]+/g, "_") || "presentation";
+                                await fetch(`${apiBase}/exercises`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    name: rec.name,
+                                    type: mappedType,
+                                    instructions: rec.description || null,
+                                    duration: rec.duration ? parseInt(String(rec.duration)) : null,
+                                    sortOrder: exercises.length + i,
+                                  }),
+                                });
+                                fetchExercises();
+                              } catch {}
+                            }}
+                            className="mt-2 w-full text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg px-3 py-2 transition-colors"
+                            data-testid={`button-adopt-recommendation-${i}`}
+                          >
+                            Übernehmen
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="flex flex-wrap gap-3 mb-2">
                 <Link
                   href={`/w/${workspaceSlug}/admin/exercise-library`}
