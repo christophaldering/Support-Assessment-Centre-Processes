@@ -64,6 +64,12 @@ interface SelfAssessmentResponse {
   submittedAt: string | null;
 }
 
+interface CaseStudyData {
+  id: string;
+  dataJson: any;
+  questionsJson: any;
+}
+
 interface AssessmentData {
   id: string;
   name: string;
@@ -78,6 +84,7 @@ interface AssessmentData {
   selfAssessments: SelfAssessmentItem[];
   selfAssessmentResponses: SelfAssessmentResponse[];
   unlockedPhases: string[];
+  caseStudyData: CaseStudyData | null;
 }
 
 const exerciseTypeLabels: Record<string, string> = {
@@ -149,6 +156,8 @@ export default function CandidatePortal() {
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [caseStudyModalExercise, setCaseStudyModalExercise] = useState<string | null>(null);
+  const [caseStudyTab, setCaseStudyTab] = useState<"background" | "data" | "questions">("background");
 
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, any>>({});
   const [submittingQuestionnaire, setSubmittingQuestionnaire] = useState(false);
@@ -348,6 +357,8 @@ export default function CandidatePortal() {
     );
   }
 
+  const isPreview = user.roles.includes("ADMIN") || user.roles.includes("MODERATOR");
+
   const portalDocs = assessment.portalDocuments || [];
   const legacyDocs = assessment.documents || [];
   const selfAssessments = assessment.selfAssessments || [];
@@ -510,7 +521,6 @@ export default function CandidatePortal() {
   }).length;
 
   const totalPortalDocsReleased = portalDocs.filter(d => d.releaseStatus === "released").length;
-  const isPreview = user.roles.includes("ADMIN") || user.roles.includes("MODERATOR");
 
   if (view === "consent" && consentData && consentData.templates.length > 0) {
     const unconsented = consentData.templates.filter(
@@ -1062,93 +1072,179 @@ export default function CandidatePortal() {
         </div>
       </header>
 
+      <div className="bg-white border-b border-slate-200 px-6 py-3 shrink-0" data-testid="assessment-info-banner">
+        <div className="flex items-center gap-5 text-sm flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-brand-navy/10 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5 text-brand-navy" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
+              </svg>
+            </div>
+            <span className="font-semibold text-brand-navy" data-testid="text-banner-name">{assessment.name}</span>
+          </div>
+          <div className="h-4 w-px bg-slate-200" />
+          {assessment.startDate && (
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+              </svg>
+              <span data-testid="text-banner-date">
+                {new Date(assessment.startDate).toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" })}
+                {assessment.endDate && assessment.endDate !== assessment.startDate && (
+                  <> &ndash; {new Date(assessment.endDate).toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" })}</>
+                )}
+              </span>
+            </div>
+          )}
+          {assessment.location && (
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z" />
+              </svg>
+              <span data-testid="text-banner-location">{assessment.location}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+            </svg>
+            <span data-testid="text-banner-exercises">{assessment.exercises.length} Bausteine</span>
+          </div>
+          {totalDuration > 0 && (
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span data-testid="text-banner-duration">ca. {totalDuration} Min. gesamt</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 bg-white border-r border-slate-200 overflow-y-auto shrink-0 hidden md:block" data-testid="sidebar-navigation">
-          <div className="py-4">
-            {sidebarCategories.filter(c => c.type === "docs").length > 0 && (
-              <div className="px-4 mb-1">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Dokumente</p>
+        <aside className="w-72 bg-white border-r border-slate-200 overflow-y-auto shrink-0 hidden md:flex flex-col" data-testid="sidebar-navigation">
+          <div className="px-3 py-3 border-b border-slate-100">
+            <button
+              onClick={() => setView("welcome")}
+              data-testid="sidebar-welcome"
+              className="w-full text-left px-3 py-2.5 flex items-center gap-2.5 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+            >
+              <div className="w-7 h-7 rounded-lg bg-brand-navy/5 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-brand-navy" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
               </div>
+              <span className="font-medium">Startseite</span>
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto py-2">
+            {sidebarCategories.filter(c => c.type === "docs").length > 0 && (
+              <>
+                <div className="px-5 pt-3 pb-1.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dokumente & Vorbereitung</p>
+                </div>
+                {sidebarCategories.filter(c => c.type === "docs").map(cat => {
+                  const isActive = activeCategory === cat.id;
+                  const iconMap: Record<string, JSX.Element> = {
+                    folder: <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />,
+                    book: <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />,
+                    info: <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />,
+                  };
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      data-testid={`sidebar-item-${cat.id}`}
+                      className={`w-full text-left px-3 mx-2 py-2 flex items-center justify-between text-sm transition-all rounded-lg ${
+                        isActive
+                          ? "bg-brand-blue/8 text-brand-blue font-medium"
+                          : "text-slate-600 hover:bg-slate-50"
+                      }`}
+                      style={{ width: "calc(100% - 16px)" }}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isActive ? "bg-brand-blue/10" : "bg-slate-100"}`}>
+                          <svg className={`w-4 h-4 ${isActive ? "text-brand-blue" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            {iconMap[cat.icon] || iconMap.folder}
+                          </svg>
+                        </div>
+                        <span className="truncate">{cat.label}</span>
+                      </div>
+                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isActive ? "bg-brand-blue/10 text-brand-blue" : "bg-slate-100 text-slate-400"}`}>
+                        {cat.releasedCount}/{cat.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </>
             )}
-            {sidebarCategories.filter(c => c.type === "docs").map(cat => {
-              const isActive = activeCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  data-testid={`sidebar-item-${cat.id}`}
-                  className={`w-full text-left px-4 py-2.5 flex items-center justify-between text-sm transition-colors ${
-                    isActive
-                      ? "bg-brand-blue/5 text-brand-blue font-medium border-r-2 border-brand-blue"
-                      : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {cat.icon === "folder" && (
-                      <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-                      </svg>
-                    )}
-                    {(cat.icon === "book" || cat.icon === "info") && (
-                      <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                      </svg>
-                    )}
-                    <span className="truncate">{cat.label}</span>
-                  </div>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? "bg-brand-blue/10 text-brand-blue" : "bg-slate-100 text-slate-400"}`}>
-                    {cat.releasedCount}/{cat.count}
-                  </span>
-                </button>
-              );
-            })}
 
             {sidebarCategories.filter(c => c.type === "exercise").length > 0 && (
-              <div className="px-4 mt-4 mb-1">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Bausteine</p>
-              </div>
-            )}
-            {sidebarCategories.filter(c => c.type === "exercise").map(cat => {
-              const isActive = activeCategory === cat.id;
-              const exercise = allExercises.find(e => e.id === cat.exerciseId);
-              const typeStyle = exercise ? (exerciseTypeIcons[exercise.type] || exerciseTypeIcons.other) : exerciseTypeIcons.other;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  data-testid={`sidebar-item-${cat.id}`}
-                  className={`w-full text-left px-4 py-2.5 flex items-center justify-between text-sm transition-colors ${
-                    isActive
-                      ? "bg-brand-blue/5 text-brand-blue font-medium border-r-2 border-brand-blue"
-                      : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${isActive ? "" : typeStyle.bg}`}>
-                      <svg className={`w-3.5 h-3.5 ${isActive ? "text-brand-blue" : typeStyle.color}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        {typeStyle.icon}
-                      </svg>
-                    </div>
-                    <div className="min-w-0">
-                      <span className="truncate block">{cat.label}</span>
-                      {exercise?.duration && (
-                        <span className="text-[10px] text-slate-400">{exercise.duration} Min.</span>
+              <>
+                <div className="px-5 pt-5 pb-1.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bausteine</p>
+                </div>
+                {sidebarCategories.filter(c => c.type === "exercise").map(cat => {
+                  const isActive = activeCategory === cat.id;
+                  const exercise = allExercises.find(e => e.id === cat.exerciseId);
+                  const typeStyle = exercise ? (exerciseTypeIcons[exercise.type] || exerciseTypeIcons.other) : exerciseTypeIcons.other;
+                  const isCaseStudy = exercise?.type === "case_study";
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        if (isCaseStudy && exercise) {
+                          setCaseStudyModalExercise(exercise.id);
+                        } else {
+                          setActiveCategory(cat.id);
+                        }
+                      }}
+                      data-testid={`sidebar-item-${cat.id}`}
+                      className={`w-full text-left px-3 mx-2 py-2 flex items-center justify-between text-sm transition-all rounded-lg ${
+                        isActive
+                          ? "bg-brand-blue/8 text-brand-blue font-medium"
+                          : "text-slate-600 hover:bg-slate-50"
+                      }`}
+                      style={{ width: "calc(100% - 16px)" }}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isActive ? "bg-brand-blue/10" : typeStyle.bg}`}>
+                          <svg className={`w-3.5 h-3.5 ${isActive ? "text-brand-blue" : typeStyle.color}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            {typeStyle.icon}
+                          </svg>
+                        </div>
+                        <div className="min-w-0">
+                          <span className="truncate block leading-tight">{cat.label}</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`text-[10px] ${isActive ? "text-brand-blue/60" : "text-slate-400"}`}>
+                              {exerciseTypeLabels[exercise?.type || "other"] || exercise?.type}
+                            </span>
+                            {exercise?.duration && (
+                              <>
+                                <span className="text-slate-300">&middot;</span>
+                                <span className={`text-[10px] ${isActive ? "text-brand-blue/60" : "text-slate-400"}`}>{exercise.duration} Min.</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {cat.count > 0 && (
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${isActive ? "bg-brand-blue/10 text-brand-blue" : "bg-slate-100 text-slate-400"}`}>
+                          {cat.count}
+                        </span>
                       )}
-                    </div>
-                  </div>
-                  {cat.count > 0 && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? "bg-brand-blue/10 text-brand-blue" : "bg-slate-100 text-slate-400"}`}>
-                      {cat.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+                    </button>
+                  );
+                })}
+              </>
+            )}
 
             {releasedQuestionnaires.length > 0 && (
               <>
-                <div className="px-4 mt-4 mb-1">
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Fragebögen & Tests</p>
+                <div className="px-5 pt-5 pb-1.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fragebögen & Tests</p>
                 </div>
                 {releasedQuestionnaires.map(sa => {
                   const resp = saResponses.find(r => r.selfAssessmentId === sa.id);
@@ -1161,22 +1257,29 @@ export default function CandidatePortal() {
                         setView("questionnaire");
                       }}
                       data-testid={`sidebar-questionnaire-${sa.id}`}
-                      className="w-full text-left px-4 py-2.5 flex items-center justify-between text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                      className="w-full text-left px-3 mx-2 py-2 flex items-center justify-between text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-all"
+                      style={{ width: "calc(100% - 16px)" }}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <svg className="w-4 h-4 shrink-0 text-purple-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-                        </svg>
+                        <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+                          <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                          </svg>
+                        </div>
                         <span className="truncate">{sa.title}</span>
                       </div>
                       {isSubmitted ? (
-                        <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                          <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+                        </div>
                       ) : (
-                        <svg className="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <div className="w-5 h-5 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+                          <svg className="w-3 h-3 text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
                       )}
                     </button>
                   );
@@ -1369,6 +1472,249 @@ export default function CandidatePortal() {
           </div>
         </main>
       </div>
+
+      {caseStudyModalExercise && (() => {
+        const csExercise = allExercises.find(e => e.id === caseStudyModalExercise);
+        const csData = assessment.caseStudyData;
+        if (!csExercise) return null;
+
+        const typeStyle = exerciseTypeIcons.case_study;
+        const background = csData?.dataJson?.background || csData?.dataJson?.scenario || null;
+        const dataEntries = csData?.dataJson?.financials || csData?.dataJson?.data || csData?.dataJson?.tables || null;
+        const questions = csData?.questionsJson || [];
+
+        const csPortalDocs = portalDocs.filter(d => d.exerciseId === csExercise.id);
+        const csLegacyDocs = legacyDocs.filter(d => d.exerciseId === csExercise.id);
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-stretch justify-center" data-testid="case-study-modal">
+            <div className="bg-white w-full max-w-5xl my-4 mx-4 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0 bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl ${typeStyle.bg} flex items-center justify-center`}>
+                    <svg className={`w-5 h-5 ${typeStyle.color}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      {typeStyle.icon}
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-brand-navy" data-testid="text-case-study-title">{csExercise.name}</h2>
+                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                      <span>{exerciseTypeLabels.case_study}</span>
+                      {csExercise.duration && (
+                        <>
+                          <span className="text-slate-300">&middot;</span>
+                          <span className="flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {csExercise.duration} Min.
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setCaseStudyModalExercise(null); setCaseStudyTab("background"); }}
+                  data-testid="button-close-case-study"
+                  className="w-9 h-9 rounded-lg hover:bg-slate-200 flex items-center justify-center transition-colors"
+                >
+                  <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="px-6 border-b border-slate-200 flex gap-0 shrink-0 bg-white">
+                {[
+                  { id: "background" as const, label: "Hintergrund", icon: <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /> },
+                  { id: "data" as const, label: "Daten & Material", icon: <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v1.5c0 .621-.504 1.125-1.125 1.125M12 18.375h-7.5" /> },
+                  { id: "questions" as const, label: "Aufgaben", icon: <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" /> },
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setCaseStudyTab(tab.id)}
+                    data-testid={`tab-case-study-${tab.id}`}
+                    className={`px-4 py-3 flex items-center gap-2 text-sm font-medium border-b-2 transition-colors ${
+                      caseStudyTab === tab.id
+                        ? "border-brand-blue text-brand-blue"
+                        : "border-transparent text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      {tab.icon}
+                    </svg>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 md:p-8">
+                {caseStudyTab === "background" && (
+                  <div className="max-w-3xl mx-auto" data-testid="case-study-tab-background">
+                    {csExercise.instructions && (
+                      <div className="mb-6">
+                        <h3 className="text-sm font-semibold text-brand-navy mb-2">Aufgabenbeschreibung</h3>
+                        <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{csExercise.instructions}</p>
+                      </div>
+                    )}
+                    {background ? (
+                      <div>
+                        <h3 className="text-sm font-semibold text-brand-navy mb-2">Hintergrund & Szenario</h3>
+                        {typeof background === "string" ? (
+                          <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{background}</p>
+                        ) : (
+                          <pre className="text-sm text-slate-600 bg-slate-50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap">
+                            {JSON.stringify(background, null, 2)}
+                          </pre>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <svg className="w-12 h-12 text-slate-200 mx-auto mb-3" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                        </svg>
+                        <p className="text-sm text-slate-400">Hintergrundinformationen werden noch vorbereitet.</p>
+                      </div>
+                    )}
+
+                    {(csPortalDocs.length > 0 || csLegacyDocs.length > 0) && (
+                      <div className="mt-8 pt-6 border-t border-slate-200">
+                        <h3 className="text-sm font-semibold text-brand-navy mb-3">Zugehörige Dokumente</h3>
+                        <div className="space-y-2">
+                          {csPortalDocs.filter(d => d.releaseStatus === "released").map(doc => (
+                            <button
+                              key={doc.id}
+                              onClick={() => handleDownloadPortalDoc(doc.id)}
+                              disabled={downloadingId === doc.id}
+                              data-testid={`button-cs-doc-${doc.id}`}
+                              className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+                            >
+                              <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                              </svg>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm font-medium text-slate-700 truncate block">{doc.title}</span>
+                                {doc.fileSize && <span className="text-[10px] text-slate-400">{formatFileSize(doc.fileSize)}</span>}
+                              </div>
+                              <svg className="w-4 h-4 text-brand-blue shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                              </svg>
+                            </button>
+                          ))}
+                          {csLegacyDocs.map(doc => (
+                            <button
+                              key={doc.id}
+                              onClick={() => handleDownloadLegacyDoc(doc.id)}
+                              disabled={downloadingId === doc.id}
+                              data-testid={`button-cs-doc-${doc.id}`}
+                              className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+                            >
+                              <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                              </svg>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm font-medium text-slate-700 truncate block">{doc.name}</span>
+                                <span className="text-[10px] text-slate-400">{formatFileSize(doc.fileSize)}</span>
+                              </div>
+                              <svg className="w-4 h-4 text-brand-blue shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                              </svg>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {caseStudyTab === "data" && (
+                  <div className="max-w-4xl mx-auto" data-testid="case-study-tab-data">
+                    {dataEntries ? (
+                      typeof dataEntries === "string" ? (
+                        <p className="text-sm text-slate-600 whitespace-pre-wrap">{dataEntries}</p>
+                      ) : Array.isArray(dataEntries) ? (
+                        <div className="space-y-6">
+                          {dataEntries.map((entry: any, idx: number) => (
+                            <div key={idx} className="bg-slate-50 rounded-xl p-5">
+                              {entry.title && <h4 className="text-sm font-semibold text-brand-navy mb-3">{entry.title}</h4>}
+                              {entry.headers && entry.rows ? (
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-sm">
+                                    <thead>
+                                      <tr>
+                                        {entry.headers.map((h: string, hi: number) => (
+                                          <th key={hi} className="text-left px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">{h}</th>
+                                        ))}
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {entry.rows.map((row: any[], ri: number) => (
+                                        <tr key={ri} className={ri % 2 === 0 ? "bg-white" : ""}>
+                                          {row.map((cell: any, ci: number) => (
+                                            <td key={ci} className="px-3 py-2 text-slate-700 border-b border-slate-100">{String(cell)}</td>
+                                          ))}
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              ) : (
+                                <pre className="text-sm text-slate-600 whitespace-pre-wrap">{JSON.stringify(entry, null, 2)}</pre>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <pre className="text-sm text-slate-600 bg-slate-50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap">
+                          {JSON.stringify(dataEntries, null, 2)}
+                        </pre>
+                      )
+                    ) : (
+                      <div className="text-center py-12">
+                        <svg className="w-12 h-12 text-slate-200 mx-auto mb-3" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v1.5c0 .621-.504 1.125-1.125 1.125M12 18.375h-7.5" />
+                        </svg>
+                        <p className="text-sm text-slate-400">Noch keine Daten für diese Fallstudie hinterlegt.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {caseStudyTab === "questions" && (
+                  <div className="max-w-3xl mx-auto" data-testid="case-study-tab-questions">
+                    {Array.isArray(questions) && questions.length > 0 ? (
+                      <div className="space-y-4">
+                        {questions.map((q: any, qi: number) => (
+                          <div key={qi} className="bg-white border border-slate-200 rounded-xl p-5">
+                            <div className="flex items-start gap-3">
+                              <div className="w-7 h-7 rounded-full bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
+                                <span className="text-xs font-bold text-amber-600">{qi + 1}</span>
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-brand-navy">{typeof q === "string" ? q : q.question || q.text || JSON.stringify(q)}</p>
+                                {q.hint && <p className="text-xs text-slate-400 mt-2 italic">{q.hint}</p>}
+                                {q.points && <span className="text-[10px] text-slate-400 mt-2 inline-block bg-slate-50 px-2 py-0.5 rounded">{q.points} Punkte</span>}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <svg className="w-12 h-12 text-slate-200 mx-auto mb-3" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                        </svg>
+                        <p className="text-sm text-slate-400">Noch keine Aufgabenstellungen hinterlegt.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
