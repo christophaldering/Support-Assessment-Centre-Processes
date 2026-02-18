@@ -59,11 +59,11 @@ interface Props {
   userRoles: string[];
 }
 
-const statusLabels: Record<string, { de: string; color: string }> = {
-  draft: { de: "Entwurf", color: "#94a3b8" },
-  active: { de: "Aktiv", color: "#22c55e" },
-  completed: { de: "Abgeschlossen", color: "#3b82f6" },
-  archived: { de: "Archiviert", color: "#9ca3af" },
+const statusLabels: Record<string, { de: string; color: string; bg: string }> = {
+  draft: { de: "Entwurf", color: "#64748b", bg: "#f1f5f9" },
+  active: { de: "Aktiv", color: "#16a34a", bg: "#f0fdf4" },
+  completed: { de: "Abgeschlossen", color: "#2563eb", bg: "#eff6ff" },
+  archived: { de: "Archiviert", color: "#9ca3af", bg: "#f9fafb" },
 };
 
 function formatDate(iso: string | null): string {
@@ -366,13 +366,42 @@ export default function DashboardClient({
   }
 
   const totalUsers = roleSummary.reduce((sum, r) => sum + r.count, 0);
+  const activeCount = localAssessments.filter((a) => a.status === "active").length;
+  const draftCount = localAssessments.filter((a) => a.status === "draft").length;
+  const completedCount = localAssessments.filter((a) => a.status === "completed").length;
+  const totalCandidates = localAssessments.reduce((sum, a) => sum + a.candidateCount, 0);
+  const totalExercises = localAssessments.reduce((sum, a) => sum + a.exerciseCount, 0);
+
+  const kpis = [
+    { label: "Assessments", value: localAssessments.length, sub: `${activeCount} aktiv`, icon: "briefcase" },
+    { label: "Teilnehmer", value: totalCandidates, sub: "gesamt", icon: "people" },
+    { label: "Übungen", value: totalExercises, sub: "zugewiesen", icon: "puzzle" },
+    { label: "Team", value: totalUsers, sub: `${roleSummary.length} Rollen`, icon: "shield" },
+  ];
+
+  function KpiIcon({ icon }: { icon: string }) {
+    const cls = "w-5 h-5";
+    const props = { className: cls, fill: "none", viewBox: "0 0 24 24", strokeWidth: 1.5, stroke: primary };
+    switch (icon) {
+      case "briefcase":
+        return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>;
+      case "people":
+        return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>;
+      case "puzzle":
+        return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.401.604-.401.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.959.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 01-.61-.58v0z" /></svg>;
+      case "shield":
+        return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>;
+      default:
+        return null;
+    }
+  }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: bgColor, color: textColor }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#fafaf9", color: textColor }}>
       {renderCreateModal()}
       {renderDeleteConfirmation()}
 
-      <header className="sticky top-0 z-40 border-b" style={{ backgroundColor: bgColor, borderColor: `${primary}15` }}>
+      <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur-sm" style={{ borderColor: `${primary}12` }}>
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
             <span className="font-bold" style={{ color: primary, fontFamily: `'${headingFont}', serif` }}>{workspaceName}</span>
@@ -410,84 +439,114 @@ export default function DashboardClient({
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6 mb-10">
-
-          <div className="lg:col-span-2">
-            <div className="rounded-xl border" style={{ borderColor: `${primary}12` }}>
-              <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: `${primary}08` }}>
-                <div>
-                  <h2 className="text-base font-bold" style={{ fontFamily: `'${headingFont}', serif`, color: textColor }} data-testid="text-assessments-title">
-                    Assessments
-                  </h2>
-                  <p className="text-[11px] opacity-50 mt-0.5">
-                    {localAssessments.length} Assessment{localAssessments.length !== 1 ? "s" : ""} vorhanden
-                  </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" data-testid="kpi-grid">
+          {kpis.map((kpi) => (
+            <div
+              key={kpi.label}
+              className="bg-white rounded-xl border p-5 transition-shadow hover:shadow-sm"
+              style={{ borderColor: `${primary}10` }}
+              data-testid={`kpi-${kpi.label.toLowerCase()}`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primary}08` }}>
+                  <KpiIcon icon={kpi.icon} />
                 </div>
-                <button
-                  onClick={() => setShowCreate(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white rounded-lg transition-colors hover:opacity-90"
-                  style={{ backgroundColor: primary }}
-                  data-testid="button-create-project"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                  Neues Assessment
-                </button>
               </div>
+              <div className="text-2xl font-bold tabular-nums" style={{ color: textColor, fontFamily: `'${headingFont}', serif` }}>{kpi.value}</div>
+              <div className="text-xs mt-0.5 opacity-50">{kpi.label} · {kpi.sub}</div>
+            </div>
+          ))}
+        </div>
 
-              {localAssessments.length === 0 ? (
-                <div className="px-5 py-12 text-center">
-                  <p className="text-sm opacity-50 mb-4">Noch keine Assessments vorhanden.</p>
-                  <button
-                    onClick={() => setShowCreate(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white rounded-lg hover:opacity-90"
-                    style={{ backgroundColor: primary }}
-                    data-testid="button-create-first-project"
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-lg font-bold" style={{ fontFamily: `'${headingFont}', serif`, color: textColor }} data-testid="text-assessments-title">
+                Assessments
+              </h2>
+              <p className="text-xs opacity-50 mt-0.5">
+                {activeCount > 0 && <span className="font-medium" style={{ color: "#16a34a" }}>{activeCount} aktiv</span>}
+                {activeCount > 0 && draftCount > 0 && " · "}
+                {draftCount > 0 && <span>{draftCount} Entwurf</span>}
+                {(activeCount > 0 || draftCount > 0) && completedCount > 0 && " · "}
+                {completedCount > 0 && <span>{completedCount} abgeschlossen</span>}
+                {activeCount === 0 && draftCount === 0 && completedCount === 0 && <span>Noch keine Assessments</span>}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium text-white rounded-xl transition-all hover:opacity-90 hover:shadow-md"
+              style={{ backgroundColor: primary }}
+              data-testid="button-create-project"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Neues Assessment
+            </button>
+          </div>
+
+          {localAssessments.length === 0 ? (
+            <div className="bg-white rounded-xl border p-12 text-center" style={{ borderColor: `${primary}10` }}>
+              <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: `${primary}08` }}>
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke={primary}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </div>
+              <p className="text-sm opacity-50 mb-4">Noch keine Assessments vorhanden.</p>
+              <button
+                onClick={() => setShowCreate(true)}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-white rounded-xl hover:opacity-90"
+                style={{ backgroundColor: primary }}
+                data-testid="button-create-first-project"
+              >
+                Erstes Assessment erstellen
+              </button>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="assessments-grid">
+              {localAssessments.map((a) => {
+                const st = statusLabels[a.status] ?? { de: a.status, color: "#94a3b8", bg: "#f9fafb" };
+                const dm = designModeLabels[a.designMode] ?? { de: a.designMode, icon: "✋" };
+                const progress = Math.round(a.ratingProgress);
+                return (
+                  <div
+                    key={a.id}
+                    className="bg-white rounded-xl border group cursor-pointer transition-all hover:shadow-md hover:border-opacity-40"
+                    style={{ borderColor: `${primary}12` }}
+                    onClick={() => router.push(`${base}/assessments/${a.id}`)}
+                    data-testid={`card-assessment-${a.id}`}
                   >
-                    Erstes Assessment erstellen
-                  </button>
-                </div>
-              ) : (
-                <div className="divide-y" style={{ borderColor: `${primary}06` }}>
-                  {localAssessments.map((a) => {
-                    const st = statusLabels[a.status] ?? { de: a.status, color: "#94a3b8" };
-                    return (
-                      <div
-                        key={a.id}
-                        className="flex items-center gap-4 px-5 py-3.5 cursor-pointer transition-colors hover:bg-slate-50/50 group"
-                        onClick={() => router.push(`${base}/assessments/${a.id}`)}
-                        data-testid={`row-assessment-${a.id}`}
-                      >
-                        <div
-                          className="w-1 h-10 rounded-full shrink-0"
-                          style={{ backgroundColor: st.color }}
-                        />
+                    <div className="p-5">
+                      <div className="flex items-start justify-between mb-3">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 mb-1">
                             <span
-                              className="text-sm font-semibold truncate group-hover:underline"
-                              style={{ fontFamily: `'${headingFont}', serif` }}
-                            >
-                              {a.name}
-                            </span>
-                            <span
-                              className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0"
-                              style={{ backgroundColor: `${st.color}12`, color: st.color }}
+                              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: st.bg, color: st.color }}
                             >
                               {st.de}
                             </span>
+                            {a.autoDeleteDays && (
+                              <span className="text-[10px] opacity-40 flex items-center gap-0.5" title={`Auto-Löschung nach ${a.autoDeleteDays} Tagen`}>
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                {a.autoDeleteDays}d
+                              </span>
+                            )}
                           </div>
-                          <div className="flex items-center gap-3 mt-0.5 text-[11px] opacity-50">
-                            {a.clientName && <span className="font-medium">{a.clientName}</span>}
-                            <span>{formatDate(a.startDate)} — {formatDate(a.endDate)}</span>
-                            <span>{a.candidateCount} Teiln.</span>
-                            <span>{a.exerciseCount} Üb.</span>
-                          </div>
+                          <h3
+                            className="text-sm font-bold truncate group-hover:underline"
+                            style={{ fontFamily: `'${headingFont}', serif`, color: textColor }}
+                          >
+                            {a.name}
+                          </h3>
+                          {a.clientName && (
+                            <p className="text-[11px] opacity-50 mt-0.5 truncate">{a.clientName}</p>
+                          )}
                         </div>
                         <button
                           onClick={(e) => { e.stopPropagation(); setConfirmDelete(a.id); }}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-red-50 shrink-0"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-red-50 shrink-0 ml-2"
                           style={{ color: "#ef4444" }}
                           data-testid={`button-delete-assessment-${a.id}`}
                           title="Löschen"
@@ -497,34 +556,76 @@ export default function DashboardClient({
                           </svg>
                         </button>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
 
-          <div>
-            <div className="rounded-xl border" style={{ borderColor: `${primary}12` }}>
-              <div className="px-5 py-4 border-b" style={{ borderColor: `${primary}08` }}>
-                <h2 className="text-base font-bold" style={{ fontFamily: `'${headingFont}', serif`, color: textColor }} data-testid="text-team-title">
+                      <div className="flex items-center gap-2 text-[11px] opacity-50 mb-3">
+                        <span>{formatDate(a.startDate)} — {formatDate(a.endDate)}</span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3 mb-3">
+                        <div className="text-center">
+                          <div className="text-base font-bold tabular-nums" style={{ color: textColor }}>{a.candidateCount}</div>
+                          <div className="text-[10px] opacity-40">Teilnehmer</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-base font-bold tabular-nums" style={{ color: textColor }}>{a.exerciseCount}</div>
+                          <div className="text-[10px] opacity-40">Übungen</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-base font-bold tabular-nums" style={{ color: textColor }}>{a.reportCount}</div>
+                          <div className="text-[10px] opacity-40">Berichte</div>
+                        </div>
+                      </div>
+
+                      {progress > 0 && (
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between text-[10px] mb-1">
+                            <span className="opacity-50">Bewertungsfortschritt</span>
+                            <span className="font-medium" style={{ color: primary }}>{progress}%</span>
+                          </div>
+                          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: `${primary}10` }}>
+                            <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: primary }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between px-5 py-3 border-t" style={{ borderColor: `${primary}06` }}>
+                      <span className="text-[10px] opacity-40 flex items-center gap-1">
+                        <span>{dm.icon}</span> {dm.de}
+                      </span>
+                      <span className="text-[11px] font-medium group-hover:underline" style={{ color: primary }}>
+                        Öffnen →
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="grid lg:grid-cols-4 gap-6 mb-10">
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl border" style={{ borderColor: `${primary}10` }}>
+              <div className="px-5 py-4 border-b" style={{ borderColor: `${primary}06` }}>
+                <h2 className="text-sm font-bold" style={{ fontFamily: `'${headingFont}', serif`, color: textColor }} data-testid="text-team-title">
                   Team
                 </h2>
                 <p className="text-[11px] opacity-50 mt-0.5">
-                  {totalUsers} Person{totalUsers !== 1 ? "en" : ""} zugeordnet
+                  {totalUsers} Person{totalUsers !== 1 ? "en" : ""}
                 </p>
               </div>
               <div className="divide-y" style={{ borderColor: `${primary}06` }}>
                 {roleSummary.map((r) => (
                   <div
                     key={r.role}
-                    className="flex items-center justify-between px-5 py-3"
+                    className="flex items-center justify-between px-5 py-2.5"
                   >
-                    <span className="text-sm" style={{ color: r.count > 0 ? textColor : `${textColor}50` }}>
+                    <span className="text-xs" style={{ color: r.count > 0 ? textColor : `${textColor}50` }}>
                       {r.label}
                     </span>
                     <span
-                      className="text-xs font-bold tabular-nums min-w-[28px] text-center rounded-full py-0.5"
+                      className="text-[11px] font-bold tabular-nums min-w-[24px] text-center rounded-full py-0.5"
                       style={{
                         backgroundColor: r.count > 0 ? `${primary}10` : "transparent",
                         color: r.count > 0 ? primary : `${textColor}30`,
@@ -535,10 +636,10 @@ export default function DashboardClient({
                   </div>
                 ))}
               </div>
-              <div className="px-5 py-3 border-t" style={{ borderColor: `${primary}08` }}>
+              <div className="px-5 py-3 border-t" style={{ borderColor: `${primary}06` }}>
                 <Link
                   href={`${base}/users`}
-                  className="text-xs font-medium hover:underline"
+                  className="text-[11px] font-medium hover:underline"
                   style={{ color: primary }}
                   data-testid="link-manage-users"
                 >
@@ -547,63 +648,67 @@ export default function DashboardClient({
               </div>
             </div>
           </div>
-        </div>
 
-        <div>
-          <div className="mb-5">
-            <h2 className="text-base font-bold" style={{ fontFamily: `'${headingFont}', serif`, color: textColor }} data-testid="text-modules-title">
-              Module & Werkzeuge
-            </h2>
-            <p className="text-[11px] opacity-50 mt-0.5">
-              Alle verfügbaren Werkzeuge und Module für Ihre Assessment-Center
-            </p>
-          </div>
+          <div className="lg:col-span-3">
+            <div className="mb-4">
+              <h2 className="text-sm font-bold" style={{ fontFamily: `'${headingFont}', serif`, color: textColor }} data-testid="text-modules-title">
+                Module & Werkzeuge
+              </h2>
+              <p className="text-[11px] opacity-50 mt-0.5">
+                Werkzeuge für Ihre Assessment-Center
+              </p>
+            </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="modules-grid">
-            {modules.map((mod) => (
-              <Link
-                key={mod.title}
-                href={mod.href}
-                className="group"
-                data-testid={`link-module-${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-              >
-                <div
-                  className="rounded-xl border p-5 h-full transition-all hover:shadow-md"
-                  style={{ borderColor: `${primary}12`, backgroundColor: bgColor }}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" data-testid="modules-grid">
+              {modules.map((mod) => (
+                <Link
+                  key={mod.title}
+                  href={mod.href}
+                  className="group"
+                  data-testid={`link-module-${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: `${primary}08` }}
-                    >
-                      <ModuleIcon icon={mod.icon} color={primary} />
-                    </div>
-                    {mod.count !== undefined && (
-                      <span
-                        className="text-xs font-bold tabular-nums px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: `${primary}08`, color: primary }}
-                      >
-                        {mod.count}
-                      </span>
-                    )}
-                  </div>
-                  <h3
-                    className="text-sm font-semibold mb-1 group-hover:underline"
-                    style={{ color: textColor, fontFamily: `'${headingFont}', serif` }}
+                  <div
+                    className="bg-white rounded-xl border p-4 h-full transition-all hover:shadow-md"
+                    style={{ borderColor: `${primary}10` }}
                   >
-                    {mod.title}
-                  </h3>
-                  <p className="text-[11px] leading-relaxed opacity-50 line-clamp-2">
-                    {mod.description}
-                  </p>
-                </div>
-              </Link>
-            ))}
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: `${primary}08` }}
+                      >
+                        <ModuleIcon icon={mod.icon} color={primary} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3
+                            className="text-xs font-semibold group-hover:underline truncate"
+                            style={{ color: textColor, fontFamily: `'${headingFont}', serif` }}
+                          >
+                            {mod.title}
+                          </h3>
+                          {mod.count !== undefined && (
+                            <span
+                              className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full shrink-0 ml-1"
+                              style={{ backgroundColor: `${primary}08`, color: primary }}
+                            >
+                              {mod.count}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] leading-relaxed opacity-50 line-clamp-2 mt-0.5">
+                          {mod.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </main>
 
-      <footer className="border-t py-5" style={{ borderColor: `${primary}08` }}>
+      <footer className="border-t py-5 bg-white" style={{ borderColor: `${primary}08` }}>
         <p className="text-center text-[11px] opacity-40">
           &copy; Christoph Aldering &middot; Private initiative / concept
         </p>

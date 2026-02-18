@@ -122,7 +122,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
               competencyModelId: model.id,
               name: normalizedName,
               description: typeof comp.description === "string" ? comp.description : "",
-              level: 0,
               sortOrder: maxSort,
             },
           });
