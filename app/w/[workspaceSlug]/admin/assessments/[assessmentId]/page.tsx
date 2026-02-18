@@ -3678,14 +3678,29 @@ export default function AssessmentDetailPage() {
               <div className="bg-white border border-slate-200 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-brand-navy mb-4">Portal-Links</h2>
                 <div className="space-y-3">
+                  <button
+                    onClick={() => { setActiveSection("portal"); }}
+                    className="w-full flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3 hover:border-brand-blue/40 hover:bg-blue-50/20 transition-colors text-left"
+                    data-testid="link-candidate-portal-manage"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Portal verwalten</p>
+                      <p className="text-xs text-slate-500">Dokumente und Fragebögen für Kandidaten konfigurieren</p>
+                    </div>
+                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93s.844.083 1.168-.142l.748-.56a1.125 1.125 0 011.588.135l.773.773a1.125 1.125 0 01.135 1.588l-.56.748c-.225.324-.258.77-.142 1.168s.506.71.93.78l.894.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.384-.93.78s-.084.844.141 1.168l.56.748a1.125 1.125 0 01-.134 1.588l-.773.773a1.125 1.125 0 01-1.588.135l-.748-.56c-.324-.225-.77-.258-1.168-.142s-.71.506-.78.93l-.15.894c-.09.542-.56.94-1.109.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93s-.844-.083-1.168.142l-.748.56a1.125 1.125 0 01-1.588-.135l-.773-.773a1.125 1.125 0 01-.135-1.588l.56-.748c.225-.324.258-.77.142-1.168s-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78s.083-.844-.142-1.168l-.56-.748a1.125 1.125 0 01.135-1.588l.773-.773a1.125 1.125 0 011.588-.135l.748.56c.324.225.77.258 1.168.142s.71-.506.78-.93l.15-.894z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
                   <Link
                     href={`/w/${workspaceSlug}/assessment`}
+                    target="_blank"
                     className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3 hover:border-brand-blue/40 hover:bg-blue-50/20 transition-colors"
                     data-testid="link-candidate-portal"
                   >
                     <div>
-                      <p className="text-sm font-medium text-slate-900">Kandidatenportal</p>
-                      <p className="text-xs text-slate-500">Zugang für Kandidaten zum Assessment</p>
+                      <p className="text-sm font-medium text-slate-900">Kandidatenportal-Vorschau</p>
+                      <p className="text-xs text-slate-500">Portal in neuem Tab öffnen (Kandidaten-Ansicht)</p>
                     </div>
                     <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
