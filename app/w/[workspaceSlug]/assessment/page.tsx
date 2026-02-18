@@ -77,6 +77,7 @@ interface AssessmentData {
   portalDocuments: PortalDoc[];
   selfAssessments: SelfAssessmentItem[];
   selfAssessmentResponses: SelfAssessmentResponse[];
+  unlockedPhases: string[];
 }
 
 const exerciseTypeLabels: Record<string, string> = {
@@ -351,6 +352,11 @@ export default function CandidatePortal() {
   const legacyDocs = assessment.documents || [];
   const selfAssessments = assessment.selfAssessments || [];
   const saResponses = assessment.selfAssessmentResponses || [];
+  const unlockedPhases = assessment.unlockedPhases || [];
+
+  const preparationUnlocked = isPreview || unlockedPhases.includes("preparation");
+  const executionUnlocked = isPreview || unlockedPhases.includes("execution");
+  const followupUnlocked = isPreview || unlockedPhases.includes("followup");
 
   const generalDocs = portalDocs.filter(d => d.category === "general" || (!d.exerciseId && d.category !== "preparation" && d.category !== "info"));
   const prepDocs = portalDocs.filter(d => d.category === "preparation");
@@ -362,7 +368,7 @@ export default function CandidatePortal() {
 
   const sidebarCategories: SidebarCategory[] = [];
 
-  if (generalDocs.length > 0) {
+  if (preparationUnlocked && generalDocs.length > 0) {
     sidebarCategories.push({
       id: "general", label: "Allgemeine Dokumente", icon: "folder", type: "docs",
       count: generalDocs.length,
@@ -370,7 +376,7 @@ export default function CandidatePortal() {
     });
   }
 
-  if (prepDocs.length > 0) {
+  if (preparationUnlocked && prepDocs.length > 0) {
     sidebarCategories.push({
       id: "preparation", label: "Vorbereitung", icon: "book", type: "docs",
       count: prepDocs.length,
@@ -378,7 +384,7 @@ export default function CandidatePortal() {
     });
   }
 
-  if (infoDocs.length > 0) {
+  if (preparationUnlocked && infoDocs.length > 0) {
     sidebarCategories.push({
       id: "info", label: "Informationsmaterial", icon: "info", type: "docs",
       count: infoDocs.length,
@@ -386,17 +392,19 @@ export default function CandidatePortal() {
     });
   }
 
-  for (const ex of allExercises) {
-    const exPortalDocs = portalDocs.filter(d => d.exerciseId === ex.id);
-    const exLegacyDocs = legacyDocs.filter(d => d.exerciseId === ex.id);
-    sidebarCategories.push({
-      id: `exercise-${ex.id}`, label: ex.name, icon: "exercise", type: "exercise", exerciseId: ex.id,
-      count: exPortalDocs.length + exLegacyDocs.length,
-      releasedCount: exPortalDocs.filter(d => d.releaseStatus === "released").length + exLegacyDocs.length,
-    });
+  if (executionUnlocked) {
+    for (const ex of allExercises) {
+      const exPortalDocs = portalDocs.filter(d => d.exerciseId === ex.id);
+      const exLegacyDocs = legacyDocs.filter(d => d.exerciseId === ex.id);
+      sidebarCategories.push({
+        id: `exercise-${ex.id}`, label: ex.name, icon: "exercise", type: "exercise", exerciseId: ex.id,
+        count: exPortalDocs.length + exLegacyDocs.length,
+        releasedCount: exPortalDocs.filter(d => d.releaseStatus === "released").length + exLegacyDocs.length,
+      });
+    }
   }
 
-  if (releasedQuestionnaires.length > 0) {
+  if (preparationUnlocked && releasedQuestionnaires.length > 0) {
     sidebarCategories.push({
       id: "questionnaires", label: "Fragebögen & Tests", icon: "questionnaire", type: "questionnaire",
       count: releasedQuestionnaires.length,
@@ -404,7 +412,7 @@ export default function CandidatePortal() {
     });
   }
 
-  if (legacyDocs.filter(d => !d.exerciseId).length > 0 && generalDocs.length === 0) {
+  if (preparationUnlocked && legacyDocs.filter(d => !d.exerciseId).length > 0 && generalDocs.length === 0) {
     sidebarCategories.unshift({
       id: "legacy-general", label: "Allgemeine Dokumente", icon: "folder", type: "docs",
       count: legacyDocs.filter(d => !d.exerciseId).length,
@@ -430,6 +438,67 @@ export default function CandidatePortal() {
   const getCategoryLabel = (catId: string): string => {
     const cat = sidebarCategories.find(c => c.id === catId);
     return cat?.label || "Dokumente";
+  };
+
+  const getExerciseForCategory = (catId: string): Exercise | null => {
+    if (!catId.startsWith("exercise-")) return null;
+    const exId = catId.replace("exercise-", "");
+    return allExercises.find(e => e.id === exId) || null;
+  };
+
+  const exerciseTypeIcons: Record<string, { icon: JSX.Element; color: string; bg: string }> = {
+    presentation: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />,
+      color: "text-blue-600", bg: "bg-blue-50",
+    },
+    interview: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />,
+      color: "text-indigo-600", bg: "bg-indigo-50",
+    },
+    interview_guide: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />,
+      color: "text-indigo-600", bg: "bg-indigo-50",
+    },
+    group_discussion: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />,
+      color: "text-teal-600", bg: "bg-teal-50",
+    },
+    case_study: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" />,
+      color: "text-amber-600", bg: "bg-amber-50",
+    },
+    role_play: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />,
+      color: "text-pink-600", bg: "bg-pink-50",
+    },
+    behavior_simulation: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />,
+      color: "text-pink-600", bg: "bg-pink-50",
+    },
+    fact_finding: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />,
+      color: "text-orange-600", bg: "bg-orange-50",
+    },
+    in_tray: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-17.5 0V6.75A2.25 2.25 0 014.5 4.5h15A2.25 2.25 0 0121.75 6.75v6.75m-17.5 0v6.75A2.25 2.25 0 006.75 22.5h10.5a2.25 2.25 0 002.25-2.25v-6.75" />,
+      color: "text-slate-600", bg: "bg-slate-100",
+    },
+    psychometric: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />,
+      color: "text-violet-600", bg: "bg-violet-50",
+    },
+    psychometric_test: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />,
+      color: "text-violet-600", bg: "bg-violet-50",
+    },
+    self_reflection: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />,
+      color: "text-cyan-600", bg: "bg-cyan-50",
+    },
+    other: {
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />,
+      color: "text-slate-600", bg: "bg-slate-100",
+    },
   };
 
   const totalDuration = assessment.exercises.reduce((sum, ex) => sum + (ex.duration || 0), 0);
@@ -690,12 +759,25 @@ export default function CandidatePortal() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-12">
-            <div className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-              <h3 className="text-lg font-bold text-brand-navy mb-3" data-testid="text-phase-before">Vor dem Assessment</h3>
+            <div className={`bg-white rounded-xl p-6 transition-shadow ${preparationUnlocked ? "border border-slate-200 hover:shadow-md" : "border-2 border-dashed border-slate-200 opacity-75"}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-lg font-bold text-brand-navy" data-testid="text-phase-before">Vorbereitung</h3>
+                {preparationUnlocked ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75" /></svg>
+                    Freigeschaltet
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                    Gesperrt
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-slate-500 leading-relaxed mb-5">
-                Vor dem Assessment erhalten Sie umfassende Einblicke in den Prozess, einschließlich der vorbereitenden Schritte, die Sie eigenständig durchführen können.
+                Erhalten Sie umfassende Einblicke in den Prozess, einschließlich der vorbereitenden Schritte, die Sie eigenständig durchführen können.
               </p>
-              {(totalPortalDocsReleased > 0 || releasedQuestionnaires.length > 0) ? (
+              {preparationUnlocked && (totalPortalDocsReleased > 0 || releasedQuestionnaires.length > 0) ? (
                 <button
                   onClick={() => { setView("documents"); setActiveCategory(sidebarCategories[0]?.id || "general"); }}
                   data-testid="button-phase-before"
@@ -706,17 +788,32 @@ export default function CandidatePortal() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
                 </button>
+              ) : !preparationUnlocked ? (
+                <span className="text-xs text-slate-400 bg-slate-50 rounded-lg px-4 py-2 inline-block">Noch nicht freigeschaltet</span>
               ) : (
                 <span className="text-xs text-slate-400 bg-slate-50 rounded-lg px-4 py-2 inline-block">Bald verfügbar</span>
               )}
             </div>
 
-            <div className="bg-white border-2 border-brand-blue/30 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-brand-navy mb-3" data-testid="text-phase-during">Assessment</h3>
+            <div className={`bg-white rounded-xl p-6 transition-shadow ${executionUnlocked ? "border-2 border-brand-blue/30 shadow-sm" : "border-2 border-dashed border-slate-200 opacity-75"}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-lg font-bold text-brand-navy" data-testid="text-phase-during">Durchführung</h3>
+                {executionUnlocked ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75" /></svg>
+                    Freigeschaltet
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                    Gesperrt
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-slate-500 leading-relaxed mb-5">
-                Im Hauptteil des Assessments durchlaufen Sie verschiedene Bewertungsmethoden. In dieser Phase werden Sie beobachtet und Ihr Verhalten gemäß dem festgelegten Kompetenzmodell bewertet.
+                Im Hauptteil des Assessments durchlaufen Sie verschiedene Bausteine. In dieser Phase werden Sie beobachtet und bewertet.
               </p>
-              {assessment.exercises.length > 0 ? (
+              {executionUnlocked && assessment.exercises.length > 0 ? (
                 <button
                   onClick={() => {
                     setView("documents");
@@ -726,22 +823,41 @@ export default function CandidatePortal() {
                   data-testid="button-phase-during"
                   className="inline-flex items-center gap-2 bg-brand-blue text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-brand-blue/90 transition-colors w-full justify-center"
                 >
-                  Teilnehmen
+                  Bausteine ansehen
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
                 </button>
+              ) : !executionUnlocked ? (
+                <span className="text-xs text-slate-400 bg-slate-50 rounded-lg px-4 py-2 inline-block">Noch nicht freigeschaltet</span>
               ) : (
                 <span className="text-xs text-slate-400 bg-slate-50 rounded-lg px-4 py-2 inline-block">Bald verfügbar</span>
               )}
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-              <h3 className="text-lg font-bold text-brand-navy mb-3" data-testid="text-phase-after">Nach dem Assessment</h3>
+            <div className={`bg-white rounded-xl p-6 transition-shadow ${followupUnlocked ? "border border-slate-200 hover:shadow-md" : "border-2 border-dashed border-slate-200 opacity-75"}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-lg font-bold text-brand-navy" data-testid="text-phase-after">Nachbereitung</h3>
+                {followupUnlocked ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75" /></svg>
+                    Freigeschaltet
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                    Gesperrt
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-slate-500 leading-relaxed mb-5">
-                Nach Abschluss des Assessments werden Sie ermutigt, über Ihre Stärken und Entwicklungsbereiche nachzudenken.
+                Nach Abschluss des Assessments reflektieren Sie über Ihre Stärken und Entwicklungsbereiche.
               </p>
-              <span className="text-xs text-slate-400 bg-slate-50 rounded-lg px-4 py-2 inline-block">Bald verfügbar</span>
+              {followupUnlocked ? (
+                <span className="text-xs text-slate-400 bg-slate-50 rounded-lg px-4 py-2 inline-block">Bald verfügbar</span>
+              ) : (
+                <span className="text-xs text-slate-400 bg-slate-50 rounded-lg px-4 py-2 inline-block">Noch nicht freigeschaltet</span>
+              )}
             </div>
           </div>
 
@@ -949,12 +1065,12 @@ export default function CandidatePortal() {
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-64 bg-white border-r border-slate-200 overflow-y-auto shrink-0 hidden md:block" data-testid="sidebar-navigation">
           <div className="py-4">
-            {sidebarCategories.filter(c => c.type !== "questionnaire").length > 0 && (
+            {sidebarCategories.filter(c => c.type === "docs").length > 0 && (
               <div className="px-4 mb-1">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Dokumente</p>
               </div>
             )}
-            {sidebarCategories.filter(c => c.type !== "questionnaire").map(cat => {
+            {sidebarCategories.filter(c => c.type === "docs").map(cat => {
               const isActive = activeCategory === cat.id;
               return (
                 <button
@@ -973,11 +1089,6 @@ export default function CandidatePortal() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
                       </svg>
                     )}
-                    {cat.icon === "exercise" && (
-                      <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21" />
-                      </svg>
-                    )}
                     {(cat.icon === "book" || cat.icon === "info") && (
                       <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -988,6 +1099,48 @@ export default function CandidatePortal() {
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? "bg-brand-blue/10 text-brand-blue" : "bg-slate-100 text-slate-400"}`}>
                     {cat.releasedCount}/{cat.count}
                   </span>
+                </button>
+              );
+            })}
+
+            {sidebarCategories.filter(c => c.type === "exercise").length > 0 && (
+              <div className="px-4 mt-4 mb-1">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Bausteine</p>
+              </div>
+            )}
+            {sidebarCategories.filter(c => c.type === "exercise").map(cat => {
+              const isActive = activeCategory === cat.id;
+              const exercise = allExercises.find(e => e.id === cat.exerciseId);
+              const typeStyle = exercise ? (exerciseTypeIcons[exercise.type] || exerciseTypeIcons.other) : exerciseTypeIcons.other;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  data-testid={`sidebar-item-${cat.id}`}
+                  className={`w-full text-left px-4 py-2.5 flex items-center justify-between text-sm transition-colors ${
+                    isActive
+                      ? "bg-brand-blue/5 text-brand-blue font-medium border-r-2 border-brand-blue"
+                      : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${isActive ? "" : typeStyle.bg}`}>
+                      <svg className={`w-3.5 h-3.5 ${isActive ? "text-brand-blue" : typeStyle.color}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        {typeStyle.icon}
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="truncate block">{cat.label}</span>
+                      {exercise?.duration && (
+                        <span className="text-[10px] text-slate-400">{exercise.duration} Min.</span>
+                      )}
+                    </div>
+                  </div>
+                  {cat.count > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? "bg-brand-blue/10 text-brand-blue" : "bg-slate-100 text-slate-400"}`}>
+                      {cat.count}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -1037,12 +1190,56 @@ export default function CandidatePortal() {
           <div className="max-w-5xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-brand-navy" data-testid="text-category-title">{getCategoryLabel(activeCategory)}</h2>
-              {currentCat && (
+              {currentCat && currentCat.type === "docs" && (
                 <span className="text-xs text-slate-400">
                   {currentCat.releasedCount} von {currentCat.count} freigegeben
                 </span>
               )}
+              {currentCat && currentCat.type === "exercise" && currentCat.count > 0 && (
+                <span className="text-xs text-slate-400">
+                  {currentCat.count} {currentCat.count === 1 ? "Dokument" : "Dokumente"}
+                </span>
+              )}
             </div>
+
+            {(() => {
+              const activeExercise = getExerciseForCategory(activeCategory);
+              if (activeExercise) {
+                const typeStyle = exerciseTypeIcons[activeExercise.type] || exerciseTypeIcons.other;
+                return (
+                  <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6" data-testid={`exercise-detail-${activeExercise.id}`}>
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-xl ${typeStyle.bg} flex items-center justify-center shrink-0`}>
+                        <svg className={`w-6 h-6 ${typeStyle.color}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          {typeStyle.icon}
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 flex-wrap mb-1">
+                          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${typeStyle.bg} ${typeStyle.color}`} data-testid={`exercise-type-${activeExercise.id}`}>
+                            {exerciseTypeLabels[activeExercise.type] || activeExercise.type}
+                          </span>
+                          {activeExercise.duration && (
+                            <span className="inline-flex items-center gap-1 text-xs text-slate-500" data-testid={`exercise-duration-${activeExercise.id}`}>
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {activeExercise.duration} Min.
+                            </span>
+                          )}
+                        </div>
+                        {activeExercise.instructions && (
+                          <p className="text-sm text-slate-600 leading-relaxed mt-3 whitespace-pre-wrap" data-testid={`exercise-instructions-${activeExercise.id}`}>
+                            {activeExercise.instructions}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             {activeCategory === "questionnaires" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1160,7 +1357,11 @@ export default function CandidatePortal() {
                     <svg className="w-12 h-12 text-slate-200 mx-auto mb-3" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
                     </svg>
-                    <p className="text-sm text-slate-400">In dieser Kategorie sind noch keine Dokumente vorhanden.</p>
+                    <p className="text-sm text-slate-400">
+                      {activeCategory.startsWith("exercise-")
+                        ? "Für diesen Baustein wurden noch keine Dokumente bereitgestellt."
+                        : "In dieser Kategorie sind noch keine Dokumente vorhanden."}
+                    </p>
                   </div>
                 )}
               </div>

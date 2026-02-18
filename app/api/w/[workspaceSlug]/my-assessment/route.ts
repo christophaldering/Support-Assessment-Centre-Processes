@@ -120,11 +120,31 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     },
   });
 
+  const wfConfig = (assessment.workflowConfig as any) || {};
+  const unlockedPhases: string[] = wfConfig.unlockedPhases || [];
+
+  const preparationUnlocked = isAdmin || unlockedPhases.includes("preparation");
+  const executionUnlocked = isAdmin || unlockedPhases.includes("execution");
+
+  const filteredExercises = executionUnlocked ? assessment.exercises : [];
+  const filteredDocuments = executionUnlocked
+    ? assessment.documents
+    : assessment.documents.filter(d => !d.exerciseId && preparationUnlocked);
+  const filteredPortalDocuments = portalDocuments.filter(d => {
+    if (d.exerciseId) return executionUnlocked;
+    return preparationUnlocked;
+  });
+  const filteredSelfAssessments = preparationUnlocked ? selfAssessments : [];
+  const filteredSaResponses = preparationUnlocked ? selfAssessmentResponses : [];
+
   return NextResponse.json({
     ...assessment,
-    caseStudyData,
-    portalDocuments,
-    selfAssessments,
-    selfAssessmentResponses,
+    exercises: filteredExercises,
+    documents: filteredDocuments,
+    unlockedPhases,
+    caseStudyData: executionUnlocked ? caseStudyData : null,
+    portalDocuments: filteredPortalDocuments,
+    selfAssessments: filteredSelfAssessments,
+    selfAssessmentResponses: filteredSaResponses,
   });
 }

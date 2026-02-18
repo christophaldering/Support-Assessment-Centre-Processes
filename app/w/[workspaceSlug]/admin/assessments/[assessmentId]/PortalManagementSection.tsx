@@ -47,6 +47,12 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+interface PhaseItem {
+  id: string;
+  label: string;
+  unlocked: boolean;
+}
+
 export default function PortalManagementSection({
   workspaceSlug,
   assessmentId,
@@ -59,6 +65,8 @@ export default function PortalManagementSection({
   const [portalDocs, setPortalDocs] = useState<PortalDoc[]>([]);
   const [selfAssessments, setSelfAssessments] = useState<SelfAssessmentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [phases, setPhases] = useState<PhaseItem[]>([]);
+  const [togglingPhase, setTogglingPhase] = useState<string | null>(null);
 
   const [showUpload, setShowUpload] = useState(false);
   const [uploadTitle, setUploadTitle] = useState("");
@@ -79,12 +87,17 @@ export default function PortalManagementSection({
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [docsRes, saRes] = await Promise.all([
+      const [docsRes, saRes, phasesRes] = await Promise.all([
         fetch(`${apiBase}/portal-documents`),
         fetch(`${apiBase}/self-assessments`),
+        fetch(`${apiBase}/phases`),
       ]);
       if (docsRes.ok) setPortalDocs(await docsRes.json());
       if (saRes.ok) setSelfAssessments(await saRes.json());
+      if (phasesRes.ok) {
+        const data = await phasesRes.json();
+        setPhases(data.phases || []);
+      }
     } catch {}
     setLoading(false);
   }, [apiBase]);
@@ -183,6 +196,34 @@ export default function PortalManagementSection({
     loadData();
   };
 
+  const handleTogglePhase = async (phaseId: string, unlocked: boolean) => {
+    setTogglingPhase(phaseId);
+    try {
+      const res = await fetch(`${apiBase}/phases`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phase: phaseId, unlocked }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPhases(data.phases || []);
+      }
+    } catch {}
+    setTogglingPhase(null);
+  };
+
+  const phaseDescriptions: Record<string, string> = {
+    preparation: "Dokumente, Informationsmaterial und Fragebögen werden für Kandidaten sichtbar",
+    execution: "Bausteine (Übungen) werden für Kandidaten sichtbar und zugänglich",
+    followup: "Nachbereitungsmaterial und Feedback-Dokumente werden freigeschaltet",
+  };
+
+  const phaseIcons: Record<string, string> = {
+    preparation: "book",
+    execution: "play",
+    followup: "check",
+  };
+
   const grouped = CATEGORIES.map(cat => ({
     ...cat,
     docs: portalDocs.filter(d => d.category === cat.value),
@@ -198,6 +239,48 @@ export default function PortalManagementSection({
 
   return (
     <div className="space-y-6">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="px-5 py-3 bg-gradient-to-r from-brand-navy/5 to-brand-blue/5 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-brand-navy" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+            <h3 className="text-sm font-semibold text-brand-navy">Phasen-Steuerung</h3>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">Schalten Sie die einzelnen Phasen frei, um Inhalte für Kandidaten schrittweise sichtbar zu machen.</p>
+        </div>
+        <div className="divide-y divide-slate-100">
+          {phases.map((phase, idx) => (
+            <div key={phase.id} className="px-5 py-4 flex items-center gap-4" data-testid={`phase-control-${phase.id}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${phase.unlocked ? "bg-emerald-50" : "bg-slate-100"}`}>
+                <span className={`text-sm font-bold ${phase.unlocked ? "text-emerald-600" : "text-slate-400"}`}>{idx + 1}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium ${phase.unlocked ? "text-brand-navy" : "text-slate-600"}`}>{phase.label}</p>
+                <p className="text-xs text-slate-400">{phaseDescriptions[phase.id] || ""}</p>
+              </div>
+              <button
+                onClick={() => handleTogglePhase(phase.id, !phase.unlocked)}
+                disabled={togglingPhase === phase.id}
+                data-testid={`toggle-phase-${phase.id}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-blue/30 ${
+                  phase.unlocked ? "bg-emerald-500" : "bg-slate-300"
+                } ${togglingPhase === phase.id ? "opacity-50" : ""}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${
+                    phase.unlocked ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+          ))}
+          {phases.length === 0 && (
+            <div className="px-5 py-6 text-center text-sm text-slate-400">Phasen werden geladen...</div>
+          )}
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-brand-navy">Kandidatenportal</h2>
