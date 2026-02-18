@@ -147,6 +147,7 @@ model Assessment {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
   autoDeleteDays Int?     @map("auto_delete_days")
+  processStep    Int      @default(0) @map("process_step")
 
   workspace          Workspace @relation(fields: [workspaceId], references: [id])
   client             Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)

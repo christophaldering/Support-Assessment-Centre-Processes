@@ -81,7 +81,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Assessment nicht gefunden" }, { status: 404 });
     }
 
-    const { name, description, location, startDate, endDate, status, clientId, clientName } = await req.json();
+    const { name, description, location, startDate, endDate, status, clientId, clientName, processStep } = await req.json();
 
     let resolvedClientId: string | null | undefined = undefined;
     let resolvedClientName: string | null | undefined = undefined;
@@ -119,6 +119,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         ...(status !== undefined && { status }),
         ...(resolvedClientId !== undefined && { clientId: resolvedClientId }),
         ...(resolvedClientName !== undefined && { clientName: resolvedClientName }),
+        ...(processStep !== undefined && { processStep: Number(processStep) }),
       },
     });
 
