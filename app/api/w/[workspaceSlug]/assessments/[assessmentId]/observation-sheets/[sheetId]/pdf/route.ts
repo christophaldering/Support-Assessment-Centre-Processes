@@ -65,8 +65,8 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
       doc.on("end", () => resolve(Buffer.concat(chunks)));
     });
 
-    const accentColor = "#a35237";
-    const headingColor = "#1e293b";
+    const accentColor = "#1e40af";
+    const headingColor = "#0f172a";
     const bodyColor = "#374151";
     const mutedColor = "#6b7280";
     const lightRule = "#e2e8f0";
@@ -98,9 +98,111 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     metaLines.push(`Typ: ${sheet.type === "ai" ? "KI-generiert" : sheet.type === "template" ? "Vorlage" : "Manuell"}`);
     metaLines.push(`Erstellt: ${new Date(sheet.createdAt).toLocaleDateString("de-DE")}`);
     doc.text(metaLines.join("  ·  "), ML, undefined, { width: CW });
-    doc.moveDown(0.8);
+    doc.moveDown(0.5);
 
-    if (mtmmMappings.length > 0) {
+    const content = sheet.content as any;
+
+    if (content && content.headerFields && Array.isArray(content.headerFields)) {
+      checkPage(100);
+      const fieldHeight = 22;
+      const fieldWidth = CW / 2 - 5;
+      const startY = doc.y;
+
+      for (let i = 0; i < content.headerFields.length; i++) {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const x = ML + col * (fieldWidth + 10);
+        const y = startY + row * (fieldHeight + 8);
+
+        doc.fontSize(8).font("Helvetica-Bold").fillColor(mutedColor)
+          .text(content.headerFields[i] + ":", x, y);
+        doc.moveTo(x, y + 14).lineTo(x + fieldWidth, y + 14).strokeColor(lightRule).lineWidth(0.5).stroke();
+      }
+
+      const totalRows = Math.ceil(content.headerFields.length / 2);
+      doc.y = startY + totalRows * (fieldHeight + 8) + 5;
+      doc.moveDown(0.5);
+    }
+
+    if (content?.description) {
+      doc.fontSize(9).fillColor(bodyColor).font("Helvetica-Oblique")
+        .text(content.description, ML, undefined, { width: CW, lineGap: 2 });
+      doc.moveDown(0.6);
+    }
+
+    if (content && Array.isArray(content.sections) && content.sections.length > 0) {
+      for (const section of content.sections) {
+        checkPage(100);
+
+        doc.save();
+        doc.rect(ML, doc.y, CW, 22).fill("#f1f5f9");
+        doc.restore();
+
+        doc.fontSize(11).font("Helvetica-Bold").fillColor(headingColor)
+          .text(section.title || section.competency || "Abschnitt", ML + 8, doc.y + 5, { width: CW - 16 });
+
+        if (section.weight) {
+          const weightLabel = section.weight >= 1.5 ? "Primär" : section.weight >= 1.0 ? "Standard" : "Sekundär";
+          doc.fontSize(7).font("Helvetica").fillColor(mutedColor)
+            .text(`Gewicht: ${section.weight} (${weightLabel})`, ML + CW - 120, doc.y - 10, { width: 110, align: "right" });
+        }
+
+        doc.y += 12;
+        doc.moveDown(0.4);
+
+        if (Array.isArray(section.items)) {
+          const ratingScale = content.ratingScale || "1-5";
+          const maxRating = ratingScale === "1-4" ? 4 : ratingScale === "1-7" ? 7 : 5;
+
+          for (const item of section.items) {
+            checkPage(60);
+
+            doc.fontSize(9).font("Helvetica-Bold").fillColor(bodyColor)
+              .text(`• ${item.label || item.name || ""}`, ML + 5, undefined, { width: CW - 10 });
+
+            if (item.helpText) {
+              doc.fontSize(7.5).font("Helvetica-Oblique").fillColor(mutedColor)
+                .text(item.helpText, ML + 15, undefined, { width: CW - 25, lineGap: 1 });
+            }
+
+            if (Array.isArray(item.anchors) && item.anchors.length > 0) {
+              doc.moveDown(0.15);
+              const anchorLabels = ["Unter Erwartung", "Erwartungsgemäß", "Über Erwartung"];
+              for (let ai = 0; ai < item.anchors.length; ai++) {
+                const label = ai < anchorLabels.length ? anchorLabels[ai] : `Stufe ${ai + 1}`;
+                doc.fontSize(7).font("Helvetica").fillColor(mutedColor)
+                  .text(`${label}: `, ML + 15, undefined, { continued: true, width: CW - 30 });
+                doc.fontSize(7).font("Helvetica").fillColor(bodyColor)
+                  .text(item.anchors[ai], { width: CW - 30 });
+              }
+            }
+
+            if (item.type === "rating") {
+              doc.moveDown(0.2);
+              const boxSize = 14;
+              const boxGap = 6;
+              const ratingStartX = ML + 15;
+              const ratingY = doc.y;
+
+              for (let r = 1; r <= maxRating; r++) {
+                const bx = ratingStartX + (r - 1) * (boxSize + boxGap);
+                doc.rect(bx, ratingY, boxSize, boxSize).strokeColor(lightRule).lineWidth(0.5).stroke();
+                doc.fontSize(7).font("Helvetica").fillColor(mutedColor)
+                  .text(String(r), bx, ratingY + 3, { width: boxSize, align: "center" });
+              }
+
+              doc.y = ratingY + boxSize + 4;
+            }
+
+            doc.moveDown(0.3);
+            doc.moveTo(ML + 5, doc.y).lineTo(ML + CW - 5, doc.y).strokeColor("#f1f5f9").lineWidth(0.3).stroke();
+            doc.moveDown(0.3);
+          }
+        }
+
+        doc.moveDown(0.6);
+      }
+    } else if (mtmmMappings.length > 0) {
       checkPage(60);
       doc.fontSize(11).fillColor(accentColor).font("Helvetica-Bold")
         .text("MTMM-Kompetenzen", ML);
@@ -117,7 +219,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
       doc.moveDown(0.5);
     }
 
-    if (sheet.description) {
+    if (!content?.sections && sheet.description) {
       checkPage(60);
       doc.fontSize(11).fillColor(accentColor).font("Helvetica-Bold")
         .text("Beschreibung", ML);
@@ -129,70 +231,13 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
       doc.moveDown(0.8);
     }
 
-    if (sheet.content) {
-      checkPage(60);
-      doc.fontSize(11).fillColor(accentColor).font("Helvetica-Bold")
-        .text("Inhalt", ML);
-      doc.moveDown(0.15);
-      doc.moveTo(ML, doc.y).lineTo(ML + CW, doc.y).strokeColor(accentColor).lineWidth(0.5).stroke();
+    if (content?.footerNote) {
+      checkPage(40);
+      doc.moveDown(0.5);
+      doc.moveTo(ML, doc.y).lineTo(ML + CW, doc.y).strokeColor(lightRule).lineWidth(0.5).stroke();
       doc.moveDown(0.4);
-
-      const content = sheet.content as any;
-      if (typeof content === "string") {
-        doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
-          .text(content, ML, undefined, { width: CW, lineGap: 3 });
-      } else if (Array.isArray(content)) {
-        for (const item of content) {
-          checkPage(30);
-          if (typeof item === "string") {
-            doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
-              .text(`• ${item}`, ML + 5, undefined, { width: CW - 10 });
-            doc.moveDown(0.2);
-          } else if (item && typeof item === "object") {
-            if (item.title || item.name || item.label) {
-              doc.fontSize(10).fillColor(headingColor).font("Helvetica-Bold")
-                .text(item.title || item.name || item.label, ML, undefined, { width: CW });
-              doc.moveDown(0.15);
-            }
-            if (item.description || item.text || item.value) {
-              doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
-                .text(String(item.description || item.text || item.value), ML + 5, undefined, { width: CW - 10, lineGap: 2 });
-              doc.moveDown(0.3);
-            }
-            if (item.items && Array.isArray(item.items)) {
-              for (const subItem of item.items) {
-                checkPage(20);
-                doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
-                  .text(`  – ${typeof subItem === "string" ? subItem : subItem.text || subItem.name || JSON.stringify(subItem)}`, ML + 10, undefined, { width: CW - 20 });
-                doc.moveDown(0.1);
-              }
-            }
-            doc.moveDown(0.3);
-          }
-        }
-      } else if (typeof content === "object") {
-        const renderObj = (obj: any, indent: number) => {
-          for (const [key, val] of Object.entries(obj)) {
-            checkPage(20);
-            if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
-              doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
-                .text(`${key}: ${val}`, ML + indent, undefined, { width: CW - indent });
-              doc.moveDown(0.1);
-            } else if (Array.isArray(val)) {
-              doc.fontSize(9).fillColor(headingColor).font("Helvetica-Bold")
-                .text(`${key}:`, ML + indent, undefined, { width: CW - indent });
-              doc.moveDown(0.1);
-              for (const item of val) {
-                checkPage(20);
-                doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
-                  .text(`• ${typeof item === "string" ? item : JSON.stringify(item)}`, ML + indent + 5, undefined, { width: CW - indent - 10 });
-                doc.moveDown(0.1);
-              }
-            }
-          }
-        };
-        renderObj(content, 0);
-      }
+      doc.fontSize(8).font("Helvetica-Oblique").fillColor(mutedColor)
+        .text(content.footerNote, ML, undefined, { width: CW, lineGap: 2 });
     }
 
     const totalPages = doc.bufferedPageRange().count;

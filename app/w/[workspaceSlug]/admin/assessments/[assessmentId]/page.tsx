@@ -234,6 +234,13 @@ export default function AssessmentDetailPage() {
   const [showCollab, setShowCollab] = useState(false);
   const [selectedSheet, setSelectedSheet] = useState<ObservationSheetRecord | null>(null);
 
+  const [showAiSheetDialog, setShowAiSheetDialog] = useState(false);
+  const [aiSheetExerciseId, setAiSheetExerciseId] = useState("");
+  const [aiSheetInstructions, setAiSheetInstructions] = useState("");
+  const [aiSheetType, setAiSheetType] = useState("verhaltensanker-bogen");
+  const [aiSheetGenerating, setAiSheetGenerating] = useState(false);
+  const [aiSheetError, setAiSheetError] = useState("");
+
   interface LinkedAnalysis {
     id: string;
     title: string;
@@ -905,34 +912,41 @@ export default function AssessmentDetailPage() {
   };
 
   const handleCreateAISheet = async () => {
-    const exerciseId = window.prompt("Für welche Übung? (leer lassen für allgemein)");
-    const matchedExercise = exerciseId ? exercises.find(e => e.name.toLowerCase().includes(exerciseId.toLowerCase()) || e.id === exerciseId) : null;
+    setAiSheetExerciseId("");
+    setAiSheetInstructions("");
+    setAiSheetType("verhaltensanker-bogen");
+    setAiSheetError("");
+    setShowAiSheetDialog(true);
+  };
 
-    let mtmmContext = "";
-    if (matchedExercise) {
-      const mappedComps = getMtmmForExercise(matchedExercise.id);
-      if (mappedComps.length > 0) {
-        mtmmContext = `\n\nMTMM-Zuordnung für "${matchedExercise.name}":\n` +
-          mappedComps.map(m => `- ${m.competencyNode.name} (Gewicht: ${m.weight})`).join("\n");
-      }
-    }
-
-    const prompt = window.prompt("Beschreiben Sie den gewünschten Beobachtungsbogen:" + (mtmmContext ? `\n\nHinweis: MTMM-Kompetenzen werden automatisch einbezogen.` : ""));
-    if (!prompt) return;
+  const handleSubmitAISheet = async () => {
+    setAiSheetGenerating(true);
+    setAiSheetError("");
+    const matchedExercise = aiSheetExerciseId ? exercises.find(e => e.id === aiSheetExerciseId) : null;
     try {
-      await fetch(`${apiBase}/observation-sheets`, {
+      const res = await fetch(`${apiBase}/observation-sheets`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: matchedExercise ? `KI-Bogen: ${matchedExercise.name}` : "KI-Beobachtungsbogen",
-          description: prompt + mtmmContext,
           exerciseId: matchedExercise?.id || null,
-          type: "ai",
           aiGenerated: true,
+          sheetType: aiSheetType,
+          additionalInstructions: aiSheetInstructions.trim() || undefined,
         }),
       });
+      if (!res.ok) {
+        const data = await res.json();
+        setAiSheetError(data.error || "Generierung fehlgeschlagen.");
+        return;
+      }
+      setShowAiSheetDialog(false);
       fetchObservationSheets();
-    } catch {}
+    } catch {
+      setAiSheetError("Netzwerkfehler bei der Generierung.");
+    } finally {
+      setAiSheetGenerating(false);
+    }
   };
 
   const handleDownloadSheetPdf = async (sheet: ObservationSheetRecord) => {
@@ -2573,6 +2587,114 @@ export default function AssessmentDetailPage() {
                 </div>
               </div>
 
+              {showAiSheetDialog && (
+                <div className="border border-purple-200 bg-purple-50/50 rounded-xl p-5 mb-4" data-testid="section-ai-sheet-dialog">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                    </svg>
+                    <h3 className="text-sm font-bold text-purple-800">KI-Beobachtungsbogen generieren</h3>
+                  </div>
+                  <p className="text-xs text-purple-600 mb-4">Die KI erstellt einen professionellen Beobachtungsbogen auf Basis Ihrer Anforderungen, MTMM-Zuordnungen und Kompetenzen.</p>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Übung</label>
+                      <select
+                        value={aiSheetExerciseId}
+                        onChange={(e) => setAiSheetExerciseId(e.target.value)}
+                        data-testid="select-ai-sheet-exercise"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
+                      >
+                        <option value="">Allgemein (alle Kompetenzen)</option>
+                        {exercises.map((ex) => {
+                          const mappingCount = getMtmmForExercise(ex.id).length;
+                          return (
+                            <option key={ex.id} value={ex.id}>
+                              {ex.name} ({ex.type}){mappingCount > 0 ? ` — ${mappingCount} Kompetenzen zugeordnet` : ""}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    {aiSheetExerciseId && getMtmmForExercise(aiSheetExerciseId).length > 0 && (
+                      <div className="bg-white border border-purple-200 rounded-lg p-3" data-testid="ai-sheet-mtmm-preview">
+                        <p className="text-xs font-medium text-purple-700 mb-2">MTMM-Kompetenzen (werden automatisch einbezogen):</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {getMtmmForExercise(aiSheetExerciseId).map(m => (
+                            <span key={m.competencyNodeId} className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              m.weight >= 1.5 ? "bg-emerald-100 text-emerald-700" :
+                              m.weight >= 1.0 ? "bg-blue-100 text-blue-700" :
+                              "bg-amber-100 text-amber-700"
+                            }`}>
+                              {m.competencyNode.name} ({m.weight.toFixed(1)})
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Bogentyp</label>
+                      <select
+                        value={aiSheetType}
+                        onChange={(e) => setAiSheetType(e.target.value)}
+                        data-testid="select-ai-sheet-type"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
+                      >
+                        <option value="verhaltensanker-bogen">Verhaltensanker-Bogen</option>
+                        <option value="kompetenzmatrix">Kompetenzmatrix</option>
+                        <option value="freitext-bogen">Freitext-Bogen</option>
+                        <option value="kombinierter-bogen">Kombinierter Bogen</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Zusätzliche Hinweise (optional)</label>
+                      <textarea
+                        value={aiSheetInstructions}
+                        onChange={(e) => setAiSheetInstructions(e.target.value)}
+                        rows={2}
+                        placeholder="z.B. Besonderer Fokus auf Kommunikationsverhalten, Bewertungsskala 1-4 statt 1-5..."
+                        data-testid="textarea-ai-sheet-instructions"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
+                      />
+                    </div>
+
+                    {aiSheetError && <p className="text-sm text-red-600" data-testid="text-ai-sheet-error">{aiSheetError}</p>}
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleSubmitAISheet}
+                        disabled={aiSheetGenerating}
+                        data-testid="button-submit-ai-sheet"
+                        className="rounded-lg bg-purple-600 text-white text-sm font-medium px-5 py-2 hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                      >
+                        {aiSheetGenerating ? (
+                          <>
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                            KI generiert...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+                            Bogen generieren
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setShowAiSheetDialog(false)}
+                        disabled={aiSheetGenerating}
+                        className="text-xs text-slate-500 hover:text-slate-700 transition"
+                      >
+                        Abbrechen
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {showCreateSheet && (
                 <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
                   <form onSubmit={handleCreateObservationSheet} className="space-y-3" data-testid="form-create-sheet">
@@ -2703,8 +2825,21 @@ export default function AssessmentDetailPage() {
                             )}
                           </div>
                         )}
-                        {sheet.description && (
+                        {sheet.content?.competencies && Array.isArray(sheet.content.competencies) && sheet.content.competencies.length > 0 && !sheet.exerciseId && (
+                          <div className="flex flex-wrap gap-1 mt-1 mb-1">
+                            {sheet.content.competencies.map((c: string, ci: number) => (
+                              <span key={ci} className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600">{c}</span>
+                            ))}
+                          </div>
+                        )}
+                        {sheet.content?.exerciseName && (
+                          <p className="text-xs text-slate-500">{sheet.content.exerciseName}</p>
+                        )}
+                        {sheet.description && !sheet.content?.sections && (
                           <p className="text-xs text-slate-500 line-clamp-2">{sheet.description}</p>
+                        )}
+                        {sheet.content?.sections && (
+                          <p className="text-xs text-slate-400">{sheet.content.sections.length} Abschnitte · {sheet.content.sections.reduce((acc: number, s: any) => acc + (s.items?.length || 0), 0)} Kriterien</p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 ml-3 shrink-0">
