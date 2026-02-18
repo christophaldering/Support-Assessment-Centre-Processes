@@ -510,75 +510,19 @@ export default function RequirementsAnalysisPage() {
     } catch {}
   };
 
-  const handleDownloadDocx = async () => {
-    if (!extraction) return;
-    const sections: string[] = [];
-
-    sections.push("ANFORDERUNGSANALYSE — ERGEBNISSE\n");
-    if (clientName) sections.push(`Kunde: ${clientName}`);
-    if (projectName) sections.push(`Projekt: ${projectName}`);
-    sections.push(`Datum: ${extraction.analysisDate || "–"}`);
-    sections.push(`Form: ${extraction.analysisForm || "–"}`);
-    sections.push(`Teilnehmende: ${extraction.participants.join(", ") || "–"}`);
-    sections.push("");
-
-    sections.push("UNTERNEHMEN & ROLLE");
-    sections.push(`Unternehmen: ${extraction.company || "–"}`);
-    sections.push(`Ziel-Funktion: ${extraction.targetRole || "–"}`);
-    sections.push(`Besetzung ab: ${extraction.startDate || "–"}`);
-    sections.push("");
-
-    sections.push("ASSESSMENT");
-    sections.push(`Durchführungstermin: ${extraction.assessmentDate || "–"}`);
-    sections.push(`Art: ${extraction.assessmentType || "–"}`);
-    sections.push(`Dauer: ${extraction.assessmentDuration || "–"}`);
-    sections.push("");
-
-    sections.push("DURCHFÜHRENDE");
-    const lc = extraction.leadConsultant;
-    sections.push(`Berater: ${lc.firstName} ${lc.lastName}, ${lc.role} — ${lc.email}`);
-    if (extraction.secondConsultant) {
-      const sc = extraction.secondConsultant;
-      sections.push(`Zweit-Berater: ${sc.firstName} ${sc.lastName}, ${sc.role} — ${sc.email}`);
-    }
-    extraction.additionalObservers.forEach((obs, i) => {
-      sections.push(`Beobachter ${i+1}: ${obs.firstName} ${obs.lastName}, ${obs.role} — ${obs.email}`);
-    });
-    sections.push("");
-
-    sections.push("KANDIDATEN");
-    extraction.candidates.forEach((c, i) => {
-      sections.push(`${i+1}. ${c.firstName} ${c.lastName} — ${c.currentRole} bei ${c.currentCompany} — ${c.email}`);
-    });
-    sections.push("");
-
-    sections.push("KOMPETENZEN");
-    extraction.competencies.filter(c => c.selected).forEach(c => {
-      sections.push(`• ${c.name}: ${c.description}`);
-    });
-    sections.push("");
-
-    sections.push("ASSESSMENT-BAUSTEINE");
-    extraction.assessmentModules.filter(m => m.selected).forEach(m => {
-      sections.push(`• ${m.name} (${MODULE_TYPE_LABELS[m.type] || m.type}): ${m.description}`);
-    });
-    sections.push("");
-
-    sections.push("SPEZIFISCHE FRAGESTELLUNGEN");
-    extraction.specificQuestions.forEach(q => sections.push(`• ${q}`));
-    sections.push("");
-
-    sections.push("STELLENSPEZIFISCHE ERFOLGSMERKMALE");
-    extraction.successCriteria.forEach(c => sections.push(`★ ${c}`));
-
-    const text = sections.join("\n");
-    const blob = new Blob([text], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Anforderungsanalyse_${clientName || "Export"}_${new Date().toISOString().split("T")[0]}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleDownloadPdf = async () => {
+    if (!currentAnalysisId) return;
+    try {
+      const res = await fetch(`/api/w/${slug}/requirements-analysis/${currentAnalysisId}/pdf`);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Anforderungsanalyse_${clientName || "Export"}_${new Date().toISOString().split("T")[0]}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {}
   };
 
   const handleAdoptForProject = async () => {
@@ -1338,12 +1282,12 @@ export default function RequirementsAnalysisPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={handleDownloadDocx}
+                      onClick={handleDownloadPdf}
                       className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition flex items-center gap-2"
-                      data-testid="button-download-docx"
+                      data-testid="button-download-pdf"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                      Herunterladen
+                      PDF herunterladen
                     </button>
                     {assessmentId && currentAnalysisId && !adoptSuccess && (
                       <button
