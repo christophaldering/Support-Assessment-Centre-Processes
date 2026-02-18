@@ -123,33 +123,41 @@ Regeln:
 - Sprache muss professionell und für erfahrene Beobachter geeignet sein`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5-nano",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "Du bist ein Experte für Assessment Center Diagnostik und Beobachtungsbogen-Design. Du erstellst professionelle, praxistaugliche Beobachtungsbögen.",
+          content: "Du bist ein Experte für Assessment Center Diagnostik und Beobachtungsbogen-Design. Du erstellst professionelle, praxistaugliche Beobachtungsbögen. Antworte ausschließlich in validem JSON.",
         },
         { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" },
-      max_completion_tokens: 4096,
+      max_completion_tokens: 8192,
     });
 
     const content = response.choices[0]?.message?.content || "{}";
-    const parsed = JSON.parse(content);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      console.error("Failed to parse AI response:", content.substring(0, 500));
+      return NextResponse.json({ error: "KI-Antwort konnte nicht verarbeitet werden." }, { status: 500 });
+    }
+
+    const sections = Array.isArray(parsed.sections) ? parsed.sections : [];
 
     const template = await prisma.observationSheetTemplate.create({
       data: {
-        name,
+        name: parsed.title || name,
         description: parsed.description || null,
         type,
         content: parsed,
-        structuredData: parsed.sections || null,
+        structuredData: sections,
         ratingScale: ratingScale || "1-5",
         competencyNames: parsed.suggestedCompetencies || (Array.isArray(competencies) ? competencies : []),
         exerciseIds: body.exerciseIds || [],
         competencyModelId: body.competencyModelId || null,
-        tags: parsed.tags || [],
+        tags: Array.isArray(parsed.tags) ? parsed.tags : [],
         targetLevels: targetLevel ? [targetLevel] : [],
         aiGenerated: true,
         workspaceId: workspace.id,

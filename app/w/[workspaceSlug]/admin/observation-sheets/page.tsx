@@ -427,86 +427,28 @@ export default function ObservationSheetsPage() {
     return [];
   };
 
-  const downloadAsHTML = (tmpl: ObservationSheetTemplate) => {
-    const typeLabel = TEMPLATE_TYPE_LABELS[tmpl.type] || tmpl.type;
-    const sections = getSections(tmpl);
-    const scaleLabel = tmpl.ratingScale || "1-5";
-    const headerFields = tmpl.content?.headerFields || ["Kandidat/in", "Übung", "Beobachter/in", "Datum"];
-
-    let html = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>${tmpl.name}</title>
-<style>
-body{font-family:'Segoe UI',system-ui,sans-serif;max-width:800px;margin:0 auto;padding:40px 24px;color:#1a1a1a;font-size:14px}
-h1{font-size:22px;margin-bottom:4px}
-h2{font-size:16px;margin:24px 0 8px;border-bottom:2px solid #e2e8f0;padding-bottom:4px}
-.meta{color:#64748b;font-size:12px;margin-bottom:24px}
-.meta span{margin-right:16px}
-.header-fields{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
-.header-field{border:1px solid #cbd5e1;border-radius:6px;padding:8px 16px;min-width:160px;font-size:13px}
-.header-field label{display:block;font-size:11px;color:#64748b;margin-bottom:2px}
-.header-field .line{border-bottom:1px solid #e2e8f0;height:20px}
-.section{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:16px}
-.section h3{font-size:14px;margin:0 0 4px}
-.comp-badge{display:inline-block;background:#eff6ff;color:#2563eb;font-size:11px;padding:2px 8px;border-radius:12px;margin-bottom:8px}
-.item{background:white;border:1px solid #e2e8f0;border-radius:6px;padding:12px;margin-top:8px}
-.item-label{font-weight:600;font-size:13px}
-.item-help{color:#94a3b8;font-size:12px;margin-top:2px}
-.anchors{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.anchor{background:#f1f5f9;border:1px solid #e2e8f0;font-size:11px;padding:2px 8px;border-radius:4px}
-.rating-row{display:flex;gap:8px;margin-top:8px;align-items:center}
-.rating-box{width:28px;height:28px;border:1px solid #cbd5e1;border-radius:4px;text-align:center;line-height:28px;font-size:11px;color:#94a3b8}
-.footer{margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;color:#64748b;font-size:12px}
-.tags{margin-top:16px}
-.tag{display:inline-block;background:#f1f5f9;color:#475569;font-size:11px;padding:2px 8px;border-radius:12px;margin-right:4px}
-@media print{body{padding:20px}@page{margin:1.5cm}}
-</style></head><body>
-<h1>${tmpl.name}</h1>
-<div class="meta">
-<span>${typeLabel}</span>
-<span>Skala: ${scaleLabel}</span>
-${tmpl.aiGenerated ? '<span>KI-generiert</span>' : ''}
-<span>${new Date(tmpl.createdAt).toLocaleDateString("de-DE")}</span>
-</div>
-${tmpl.description ? `<p style="color:#475569;margin-bottom:20px">${tmpl.description}</p>` : ''}
-<div class="header-fields">
-${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div class="header-field"><label>${f}</label><div class="line"></div></div>`).join("")}
-</div>`;
-
-    const scaleValues = scaleLabel === "a-e" ? ["A","B","C","D","E"] : Array.from({length: parseInt(scaleLabel.split("-")[1]) || 5}, (_, i) => String(i + 1));
-
-    sections.forEach((section: any, si: number) => {
-      html += `<div class="section"><h3>${section.title || `Abschnitt ${si + 1}`}</h3>`;
-      if (section.competency) html += `<span class="comp-badge">${section.competency}</span>`;
-      if (section.items && Array.isArray(section.items)) {
-        section.items.forEach((item: any) => {
-          html += `<div class="item"><div class="item-label">${item.label || ""}</div>`;
-          if (item.helpText) html += `<div class="item-help">${item.helpText}</div>`;
-          if (item.anchors && Array.isArray(item.anchors) && item.anchors.length > 0) {
-            html += `<div class="anchors">${item.anchors.map((a: string) => `<span class="anchor">${a}</span>`).join("")}</div>`;
-          }
-          html += `<div class="rating-row">${scaleValues.map((v: string) => `<div class="rating-box">${v}</div>`).join("")}</div>`;
-          html += `</div>`;
-        });
+  const downloadAsPDF = async (tmpl: ObservationSheetTemplate) => {
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/observation-sheet-templates/${tmpl.id}/pdf`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "PDF-Download fehlgeschlagen");
+        return;
       }
-      html += `</div>`;
-    });
-
-    if (tmpl.content?.footerNote) {
-      html += `<div class="footer">${tmpl.content.footerNote}</div>`;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${tmpl.name.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, "_")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("PDF-Download fehlgeschlagen.");
     }
-    if (tmpl.tags && tmpl.tags.length > 0) {
-      html += `<div class="tags">${tmpl.tags.map((t: string) => `<span class="tag">${t}</span>`).join("")}</div>`;
-    }
-    html += `</body></html>`;
-
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${tmpl.name.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, "_")}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   const handleDetailSave = async () => {
@@ -1298,6 +1240,19 @@ ${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div cla
               {previewTemplateId && (
                 <>
                   <button
+                    onClick={async () => {
+                      const tmpl = await loadTemplate(previewTemplateId);
+                      if (tmpl) downloadAsPDF(tmpl);
+                    }}
+                    className="px-5 py-2.5 rounded-lg text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                    data-testid="button-preview-pdf"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Als PDF
+                  </button>
+                  <button
                     onClick={() => openView(previewTemplateId)}
                     className="px-5 py-2.5 rounded-lg text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50"
                   >
@@ -1437,14 +1392,14 @@ ${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div cla
                   Zurück
                 </button>
                 <button
-                  onClick={() => downloadAsHTML(detailTemplate)}
+                  onClick={() => downloadAsPDF(detailTemplate)}
                   className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2"
                   data-testid="button-download"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                   </svg>
-                  Herunterladen
+                  Als PDF herunterladen
                 </button>
                 <button
                   onClick={() => openDetail(detailTemplate.id)}
@@ -1559,13 +1514,13 @@ ${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div cla
                   Abbrechen
                 </button>
                 <button
-                  onClick={() => downloadAsHTML(detailTemplate)}
+                  onClick={() => downloadAsPDF(detailTemplate)}
                   className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                   </svg>
-                  Herunterladen
+                  Als PDF herunterladen
                 </button>
                 <button
                   onClick={handleDetailSave}
