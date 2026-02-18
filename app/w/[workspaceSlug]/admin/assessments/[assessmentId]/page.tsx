@@ -189,6 +189,16 @@ export default function AssessmentDetailPage() {
 
   const [showCollab, setShowCollab] = useState(false);
 
+  interface MtmmMapping {
+    exerciseId: string;
+    competencyNodeId: string;
+    weight: number;
+    exercise: { id: string; name: string };
+    competencyNode: { id: string; name: string; description: string | null; sortOrder: number };
+  }
+  const [mtmmMappings, setMtmmMappings] = useState<MtmmMapping[]>([]);
+  const [mtmmLoading, setMtmmLoading] = useState(false);
+
   const apiBase = `/api/w/${workspaceSlug}/assessments/${assessmentId}`;
 
   const fetchAssessment = useCallback(async () => {
@@ -255,6 +265,15 @@ export default function AssessmentDetailPage() {
       const res = await fetch(`${apiBase}/observation-sheets`);
       if (res.ok) setObservationSheets(await res.json());
     } catch {}
+  }, [apiBase]);
+
+  const fetchMtmmMappings = useCallback(async () => {
+    setMtmmLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/exercise-competency-mappings`);
+      if (res.ok) setMtmmMappings(await res.json());
+    } catch {}
+    finally { setMtmmLoading(false); }
   }, [apiBase]);
 
   const fetchLibraryItems = useCallback(async () => {
@@ -399,7 +418,8 @@ export default function AssessmentDetailPage() {
     fetchCandidates();
     fetchAvailableUsers();
     fetchObservationSheets();
-  }, [fetchAssessment, fetchExercises, fetchDocuments, fetchCandidates, fetchAvailableUsers, fetchObservationSheets]);
+    fetchMtmmMappings();
+  }, [fetchAssessment, fetchExercises, fetchDocuments, fetchCandidates, fetchAvailableUsers, fetchObservationSheets, fetchMtmmMappings]);
 
   const handleSaveAssessment = async () => {
     setSaving(true);
@@ -621,16 +641,35 @@ export default function AssessmentDetailPage() {
     }
   };
 
+  const getMtmmForExercise = (exerciseId: string) => {
+    return mtmmMappings
+      .filter(m => m.exerciseId === exerciseId)
+      .sort((a, b) => b.weight - a.weight);
+  };
+
   const handleCreateAISheet = async () => {
-    const prompt = window.prompt("Beschreiben Sie den gewünschten Beobachtungsbogen:");
+    const exerciseId = window.prompt("Für welche Übung? (leer lassen für allgemein)");
+    const matchedExercise = exerciseId ? exercises.find(e => e.name.toLowerCase().includes(exerciseId.toLowerCase()) || e.id === exerciseId) : null;
+
+    let mtmmContext = "";
+    if (matchedExercise) {
+      const mappedComps = getMtmmForExercise(matchedExercise.id);
+      if (mappedComps.length > 0) {
+        mtmmContext = `\n\nMTMM-Zuordnung für "${matchedExercise.name}":\n` +
+          mappedComps.map(m => `- ${m.competencyNode.name} (Gewicht: ${m.weight})`).join("\n");
+      }
+    }
+
+    const prompt = window.prompt("Beschreiben Sie den gewünschten Beobachtungsbogen:" + (mtmmContext ? `\n\nHinweis: MTMM-Kompetenzen werden automatisch einbezogen.` : ""));
     if (!prompt) return;
     try {
       await fetch(`${apiBase}/observation-sheets`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: "KI-Beobachtungsbogen",
-          description: prompt,
+          name: matchedExercise ? `KI-Bogen: ${matchedExercise.name}` : "KI-Beobachtungsbogen",
+          description: prompt + mtmmContext,
+          exerciseId: matchedExercise?.id || null,
           type: "ai",
           aiGenerated: true,
         }),
@@ -1271,6 +1310,103 @@ export default function AssessmentDetailPage() {
           </div>
         </div>
 
+        {/* MTMM-Matrix Overview */}
+        <div id="mtmm-matrix" className="bg-white border border-slate-200 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-brand-navy">MTMM-Matrix</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Multi-Trait-Multi-Method — Zuordnung Übungen × Kompetenzen</p>
+            </div>
+            <div className="flex gap-2">
+              {mtmmMappings.length > 0 && (
+                <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 font-medium" data-testid="text-mtmm-count">
+                  {mtmmMappings.length} Zuordnung{mtmmMappings.length !== 1 ? "en" : ""}
+                </span>
+              )}
+              <Link
+                href={`/w/${workspaceSlug}/admin/competencies`}
+                data-testid="link-edit-mtmm"
+                className="rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
+              >
+                MTMM bearbeiten
+              </Link>
+            </div>
+          </div>
+
+          {mtmmLoading ? (
+            <p className="text-sm text-slate-400 text-center py-4">Laden...</p>
+          ) : mtmmMappings.length === 0 ? (
+            <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg" data-testid="mtmm-empty-state">
+              <svg className="w-10 h-10 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v1.5c0 .621-.504 1.125-1.125 1.125" />
+              </svg>
+              <p className="text-sm text-slate-500 mb-2">Noch keine MTMM-Zuordnung definiert</p>
+              <p className="text-xs text-slate-400 mb-4">Definieren Sie, welche Übungen welche Kompetenzen messen sollen.</p>
+              <Link
+                href={`/w/${workspaceSlug}/admin/competencies`}
+                className="inline-flex items-center gap-1.5 text-sm text-brand-blue hover:underline font-medium"
+              >
+                Zur MTMM-Matrix
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+            </div>
+          ) : (() => {
+            const uniqueExercises = [...new Map(mtmmMappings.map(m => [m.exercise.id, m.exercise])).values()];
+            const uniqueNodes = [...new Map(mtmmMappings.map(m => [m.competencyNode.id, m.competencyNode])).values()]
+              .sort((a, b) => a.sortOrder - b.sortOrder);
+            const mappingLookup = new Map(mtmmMappings.map(m => [`${m.exerciseId}:${m.competencyNodeId}`, m.weight]));
+
+            return (
+              <div className="overflow-x-auto" data-testid="mtmm-overview-table">
+                <table className="text-sm border-collapse w-full">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 px-3 font-medium text-slate-600 bg-slate-50 rounded-tl-lg sticky left-0 z-10 min-w-[160px]">Übung (Methode)</th>
+                      {uniqueNodes.map(node => (
+                        <th key={node.id} className="text-center py-2 px-2 font-medium text-slate-600 bg-slate-50 min-w-[100px]" title={node.description || node.name}>
+                          <span className="text-xs leading-tight block">{node.name}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {uniqueExercises.map(ex => (
+                      <tr key={ex.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                        <td className="py-2 px-3 font-medium text-slate-800 sticky left-0 bg-white z-10">{ex.name}</td>
+                        {uniqueNodes.map(node => {
+                          const weight = mappingLookup.get(`${ex.id}:${node.id}`);
+                          return (
+                            <td key={node.id} className="text-center py-2 px-2">
+                              {weight !== undefined ? (
+                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-xs font-bold ${
+                                  weight >= 1.5 ? "bg-emerald-100 text-emerald-700" :
+                                  weight >= 1.0 ? "bg-blue-100 text-blue-700" :
+                                  "bg-amber-50 text-amber-600"
+                                }`}>
+                                  {weight.toFixed(1)}
+                                </span>
+                              ) : (
+                                <span className="text-slate-200">–</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="flex items-center gap-4 mt-3 text-xs text-slate-400">
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-100 inline-block"></span> ≥ 1.5 Primär</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-100 inline-block"></span> 1.0–1.4 Standard</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-50 border border-amber-200 inline-block"></span> &lt; 1.0 Sekundär</span>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
         {/* Documents */}
         <div className="bg-white border border-slate-200 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
@@ -1564,6 +1700,28 @@ export default function AssessmentDetailPage() {
                     </select>
                   </div>
                 </div>
+                {sheetExerciseId && getMtmmForExercise(sheetExerciseId).length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3" data-testid="mtmm-competency-hints">
+                    <p className="text-xs font-medium text-blue-700 mb-2 flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                      </svg>
+                      MTMM-Kompetenzen für diese Übung:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {getMtmmForExercise(sheetExerciseId).map(m => (
+                        <span key={m.competencyNodeId} className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          m.weight >= 1.5 ? "bg-emerald-100 text-emerald-700" :
+                          m.weight >= 1.0 ? "bg-blue-100 text-blue-700" :
+                          "bg-amber-100 text-amber-700"
+                        }`}>
+                          {m.competencyNode.name} ({m.weight.toFixed(1)})
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-blue-500 mt-1.5">Diese Kompetenzen sollten im Beobachtungsbogen berücksichtigt werden.</p>
+                  </div>
+                )}
                 {sheetError && <p className="text-sm text-red-500" data-testid="text-sheet-error">{sheetError}</p>}
                 <button
                   type="submit"
@@ -1600,9 +1758,24 @@ export default function AssessmentDetailPage() {
                       )}
                     </div>
                     {sheet.exerciseId && (
-                      <p className="text-xs text-brand-blue mb-1">
-                        Übung: {exercises.find((ex) => ex.id === sheet.exerciseId)?.name || sheet.exerciseId}
-                      </p>
+                      <div className="mb-1">
+                        <p className="text-xs text-brand-blue">
+                          Übung: {exercises.find((ex) => ex.id === sheet.exerciseId)?.name || sheet.exerciseId}
+                        </p>
+                        {getMtmmForExercise(sheet.exerciseId).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {getMtmmForExercise(sheet.exerciseId).map(m => (
+                              <span key={m.competencyNodeId} className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                                m.weight >= 1.5 ? "bg-emerald-50 text-emerald-600" :
+                                m.weight >= 1.0 ? "bg-blue-50 text-blue-600" :
+                                "bg-amber-50 text-amber-600"
+                              }`}>
+                                {m.competencyNode.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     )}
                     {sheet.description && (
                       <p className="text-xs text-slate-500">{sheet.description}</p>
