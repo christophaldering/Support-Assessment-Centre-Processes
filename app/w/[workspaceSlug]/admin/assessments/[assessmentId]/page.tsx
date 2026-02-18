@@ -272,6 +272,9 @@ export default function AssessmentDetailPage() {
   const [mtmmInlineGrid, setMtmmInlineGrid] = useState<Record<string, Record<string, {mapped: boolean; weight: number}>>>({});
   const [mtmmSaving, setMtmmSaving] = useState(false);
   const [mtmmSaveMsg, setMtmmSaveMsg] = useState("");
+  const [mtmmAiLoading, setMtmmAiLoading] = useState(false);
+  const [mtmmAiRationale, setMtmmAiRationale] = useState<{exerciseId: string; nodeId: string; weight: number; rationale: string}[]>([]);
+  const [mtmmAiSummary, setMtmmAiSummary] = useState("");
   const [showInlineMtmm, setShowInlineMtmm] = useState(false);
 
   const apiBase = `/api/w/${workspaceSlug}/assessments/${assessmentId}`;
@@ -435,6 +438,62 @@ export default function AssessmentDetailPage() {
       }
     } catch { setMtmmSaveMsg("Fehler beim Speichern"); }
     finally { setMtmmSaving(false); }
+  };
+
+  const handleMtmmAiSuggest = async () => {
+    if (!mtmmCompetencyModel || exercises.length === 0) return;
+    const competencyNodes = mtmmCompetencyModel.nodes.filter(n => n.nodeType === "competency" || n.nodeType === "domain");
+    const hasPriorMappings = mtmmMappings.length > 0 || Object.values(mtmmInlineGrid).some(nodes => Object.values(nodes).some(v => v.mapped));
+    if (hasPriorMappings) {
+      const confirmed = window.confirm("Bestehende Zuordnungen werden durch den KI-Vorschlag ersetzt. Sie können die Vorschläge vor dem Speichern noch anpassen. Fortfahren?");
+      if (!confirmed) return;
+    }
+    setMtmmAiLoading(true);
+    setMtmmAiRationale([]);
+    setMtmmAiSummary("");
+    try {
+      const dominantNodeType = competencyNodes.length > 0
+        ? competencyNodes.reduce((acc, n) => { acc[n.nodeType] = (acc[n.nodeType] || 0) + 1; return acc; }, {} as Record<string, number>)
+        : {};
+      const detectedLevel = Object.entries(dominantNodeType).sort((a, b) => b[1] - a[1])[0]?.[0] || "competency";
+      const res = await fetch(`${apiBase}/mtmm-suggest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          level: detectedLevel,
+          exercises: exercises.map(e => ({ id: e.id, name: e.name, type: e.type })),
+          nodes: competencyNodes.map(n => ({ id: n.id, name: n.name, nodeType: n.nodeType })),
+        }),
+      });
+      if (res.ok) {
+        const suggestions: {exerciseId: string; nodeId: string; weight: number; rationale?: string}[] = await res.json();
+        setMtmmAiRationale(suggestions.map(s => ({ ...s, rationale: s.rationale || "" })));
+        const grid: Record<string, Record<string, {mapped: boolean; weight: number}>> = {};
+        for (const ex of exercises) {
+          grid[ex.id] = {};
+          for (const node of competencyNodes) {
+            const match = suggestions.find(s => s.exerciseId === ex.id && s.nodeId === node.id);
+            grid[ex.id][node.id] = { mapped: !!match, weight: match?.weight ?? 1.0 };
+          }
+        }
+        setMtmmInlineGrid(grid);
+        setShowInlineMtmm(true);
+        const nonDefault = suggestions.filter(s => s.weight !== 1.0);
+        let summary = `KI-Vorschlag: ${suggestions.length} Zuordnung${suggestions.length !== 1 ? "en" : ""} generiert.`;
+        if (nonDefault.length > 0) {
+          summary += ` ${nonDefault.length} davon mit abweichender Gewichtung (≠ 1.0).`;
+        }
+        summary += " Dies ist ein Entwurf — prüfen und anpassen Sie die Zuordnungen, bevor Sie speichern.";
+        setMtmmAiSummary(summary);
+      } else {
+        const d = await res.json();
+        setMtmmAiSummary(d.error || "KI-Vorschlag fehlgeschlagen");
+      }
+    } catch {
+      setMtmmAiSummary("KI-Vorschlag fehlgeschlagen");
+    } finally {
+      setMtmmAiLoading(false);
+    }
   };
 
   const fetchLinkedAnalysis = useCallback(async () => {
@@ -2722,32 +2781,70 @@ export default function AssessmentDetailPage() {
                 <div>
                   <h2 className="text-lg font-semibold text-brand-navy" data-testid="heading-mtmm">MTMM-Matrix</h2>
                   <p className="text-xs text-slate-500 mt-0.5">Multi-Trait-Multi-Method — Zuordnung Übungen × Kompetenzen</p>
+                  {mtmmCompetencyModel && (
+                    <p className="text-xs text-slate-400 mt-1">
+                      Kompetenzmodell: <span className="font-medium text-slate-600">{mtmmCompetencyModel.name}</span>
+                      <span className="text-slate-300 mx-1">·</span>
+                      {mtmmCompetencyModel.nodes.filter(n => n.nodeType === "competency" || n.nodeType === "domain").length} Kompetenzen × {exercises.length} Übungen
+                    </p>
+                  )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                   {mtmmMappings.length > 0 && (
                     <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 font-medium" data-testid="text-mtmm-count">
                       {mtmmMappings.length} Zuordnung{mtmmMappings.length !== 1 ? "en" : ""}
                     </span>
                   )}
                   {mtmmCompetencyModel && exercises.length > 0 && (
-                    <button
-                      onClick={() => {
-                        if (!showInlineMtmm) initInlineMtmmGrid();
-                        setShowInlineMtmm(!showInlineMtmm);
-                      }}
-                      data-testid="button-toggle-inline-mtmm"
-                      className="rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue/5 transition-colors"
-                    >
-                      {showInlineMtmm ? "Schnellzuordnung schließen" : "Schnellzuordnung"}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => {
+                          if (!showInlineMtmm) initInlineMtmmGrid();
+                          setShowInlineMtmm(!showInlineMtmm);
+                          setMtmmAiRationale([]);
+                          setMtmmAiSummary("");
+                        }}
+                        data-testid="button-toggle-inline-mtmm"
+                        className="rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue/5 transition-colors"
+                      >
+                        {showInlineMtmm ? "Zuordnung schließen" : "Manuelle Zuordnung"}
+                      </button>
+                      <button
+                        onClick={handleMtmmAiSuggest}
+                        disabled={mtmmAiLoading}
+                        data-testid="button-mtmm-ai-suggest"
+                        className="rounded-lg bg-purple-600 text-white text-sm font-medium px-4 py-2 hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                      >
+                        {mtmmAiLoading ? (
+                          <>
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                            KI analysiert…
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+                            KI-Vorschlag
+                          </>
+                        )}
+                      </button>
+                    </>
                   )}
-                  <Link
-                    href={`/w/${workspaceSlug}/admin/competencies`}
-                    data-testid="link-edit-mtmm"
-                    className="rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
-                  >
-                    MTMM bearbeiten
-                  </Link>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4" data-testid="mtmm-weight-legend">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600 mb-1">Gewichtungen erklärt</p>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Die Zahl in jeder Zelle gibt die <span className="font-semibold">Gewichtung</span> an, mit der eine Übung eine Kompetenz misst.
+                      <span className="font-semibold"> 1.0 = Standard</span> (Normalgewichtung).
+                      Werte <span className="font-semibold">&gt; 1.0</span> bedeuten, dass die Übung diese Kompetenz besonders gut erfasst.
+                      Werte <span className="font-semibold">&lt; 1.0</span> stehen für eine sekundäre/ergänzende Messung.
+                      Standardmäßig sind alle Gewichtungen auf 1.0 gesetzt.
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -2755,10 +2852,11 @@ export default function AssessmentDetailPage() {
                 <div className="bg-white border border-slate-200 rounded-xl p-6 mt-4">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-sm font-semibold text-brand-navy">Schnellzuordnung</h3>
+                      <h3 className="text-sm font-semibold text-brand-navy">
+                        {mtmmAiRationale.length > 0 ? "KI-Vorschlag — Zuordnung prüfen & anpassen" : "Manuelle Zuordnung"}
+                      </h3>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Kompetenzmodell: <span className="font-medium text-slate-600">{mtmmCompetencyModel.name}</span>
-                        {" · "}{mtmmCompetencyModel.nodes.filter(n => n.nodeType === "competency" || n.nodeType === "domain").length} Kompetenzen × {exercises.length} Übungen
+                        Setzen Sie Häkchen, um Kompetenzen Übungen zuzuordnen. Gewichtung 1.0 = Standard.
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -2772,13 +2870,58 @@ export default function AssessmentDetailPage() {
                         {mtmmSaving ? "Speichert…" : "Zuordnungen speichern"}
                       </button>
                       <button
-                        onClick={() => setShowInlineMtmm(false)}
+                        onClick={() => { setShowInlineMtmm(false); setMtmmAiRationale([]); setMtmmAiSummary(""); }}
+                        data-testid="button-close-inline-mtmm"
                         className="rounded-lg border border-slate-200 text-slate-600 text-xs font-medium px-3 py-2 hover:bg-slate-50 transition-colors"
                       >
                         Schließen
                       </button>
                     </div>
                   </div>
+
+                  {mtmmAiSummary && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4" data-testid="mtmm-ai-summary">
+                      <div className="flex items-start gap-2">
+                        <svg className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+                        <p className="text-xs text-purple-700">{mtmmAiSummary}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {mtmmAiRationale.length > 0 && (
+                    <details className="mb-4 group" data-testid="mtmm-ai-rationale-details">
+                      <summary className="cursor-pointer text-xs font-semibold text-purple-700 hover:text-purple-900 select-none flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                        KI-Begründungen anzeigen ({mtmmAiRationale.length} Zuordnungen)
+                        <span className="text-[10px] text-purple-400 font-normal ml-2">— Originalvorschlag der KI, manuelle Änderungen nicht enthalten</span>
+                      </summary>
+                      <div className="mt-2 bg-purple-50/50 border border-purple-100 rounded-lg p-4 max-h-64 overflow-y-auto" data-testid="mtmm-ai-rationale-list">
+                        <div className="space-y-2">
+                          {mtmmAiRationale.map((r, i) => {
+                            const exName = exercises.find(e => e.id === r.exerciseId)?.name || r.exerciseId;
+                            const nodeName = mtmmCompetencyModel.nodes.find(n => n.id === r.nodeId)?.name || r.nodeId;
+                            return (
+                              <div key={i} className="flex items-start gap-2 text-xs">
+                                <div className="flex-shrink-0 mt-0.5">
+                                  <span className={`inline-flex items-center justify-center w-6 h-6 rounded text-[10px] font-bold ${
+                                    r.weight >= 1.5 ? "bg-emerald-100 text-emerald-700" :
+                                    r.weight >= 1.0 ? "bg-blue-100 text-blue-700" :
+                                    "bg-amber-50 text-amber-600 border border-amber-200"
+                                  }`}>{r.weight.toFixed(1)}</span>
+                                </div>
+                                <div>
+                                  <span className="font-semibold text-slate-700">{exName}</span>
+                                  <span className="text-slate-400 mx-1">→</span>
+                                  <span className="font-medium text-slate-600">{nodeName}</span>
+                                  {r.rationale && <p className="text-slate-500 mt-0.5">{r.rationale}</p>}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </details>
+                  )}
                   <div className="overflow-x-auto" data-testid="mtmm-inline-grid">
                     <table className="text-xs border-collapse w-full">
                       <thead>
@@ -2862,16 +3005,28 @@ export default function AssessmentDetailPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v1.5c0 .621-.504 1.125-1.125 1.125" />
                   </svg>
                   <p className="text-sm text-slate-500 mb-2">Noch keine MTMM-Zuordnung definiert</p>
-                  <p className="text-xs text-slate-400 mb-4">Definieren Sie, welche Übungen welche Kompetenzen messen sollen.</p>
-                  <Link
-                    href={`/w/${workspaceSlug}/admin/competencies`}
-                    className="inline-flex items-center gap-1.5 text-sm text-brand-blue hover:underline font-medium"
-                  >
-                    Zur MTMM-Matrix
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
-                  </Link>
+                  <p className="text-xs text-slate-400 mb-4">Nutzen Sie „Manuelle Zuordnung" oder „KI-Vorschlag", um Kompetenzen den Übungen zuzuordnen.</p>
+                  {mtmmCompetencyModel && exercises.length > 0 && (
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={() => { initInlineMtmmGrid(); setShowInlineMtmm(true); }}
+                        data-testid="button-empty-manual-mtmm"
+                        className="inline-flex items-center gap-1.5 text-sm text-brand-blue hover:underline font-medium"
+                      >
+                        Manuelle Zuordnung starten
+                      </button>
+                      <span className="text-slate-300">oder</span>
+                      <button
+                        onClick={handleMtmmAiSuggest}
+                        disabled={mtmmAiLoading}
+                        data-testid="button-empty-ai-mtmm"
+                        className="inline-flex items-center gap-1.5 text-sm text-purple-600 hover:underline font-medium"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+                        KI-Vorschlag generieren
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (() => {
                 const uniqueExercisesTable = [...new Map(mtmmMappings.map(m => [m.exercise.id, m.exercise])).values()];
