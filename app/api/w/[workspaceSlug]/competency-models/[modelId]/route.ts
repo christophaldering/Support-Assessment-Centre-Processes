@@ -76,7 +76,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Kompetenzmodell nicht gefunden" }, { status: 404 });
     }
 
-    const { name, description, status, version } = await req.json();
+    const { name, description, status, version, companyName, modelYear } = await req.json();
 
     const model = await prisma.competencyModel.update({
       where: { id: params.modelId },
@@ -85,6 +85,8 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         ...(description !== undefined && { description }),
         ...(status !== undefined && { status }),
         ...(version !== undefined && { version }),
+        ...(companyName !== undefined && { companyName }),
+        ...(modelYear !== undefined && { modelYear: modelYear ? parseInt(String(modelYear), 10) || null : null }),
       },
     });
 

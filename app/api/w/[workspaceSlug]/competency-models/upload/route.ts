@@ -30,6 +30,8 @@ Antworte AUSSCHLIESSLICH mit validem JSON in diesem Format:
 {
   "modelName": "<Name des Kompetenzmodells>",
   "modelDescription": "<Zusammenfassende Beschreibung des Modells>",
+  "companyName": "<Name des Unternehmens, falls im Dokument erkennbar, sonst null>",
+  "modelYear": <Jahr des Modells als Zahl, falls im Dokument erkennbar (z.B. 2023), sonst null>,
   "language": "<de|en|mixed>",
   "hierarchy": [
     {

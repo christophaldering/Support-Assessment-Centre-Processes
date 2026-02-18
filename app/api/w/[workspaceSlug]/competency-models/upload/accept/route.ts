@@ -61,6 +61,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
           workspaceId: workspace.id,
           name: modelName,
           description: modelDescription || null,
+          companyName: companyName || null,
+          modelYear: modelYear ? parseInt(String(modelYear), 10) || null : null,
           status: "draft",
           sourceType: "uploaded",
           sourceFileName: fileName || null,

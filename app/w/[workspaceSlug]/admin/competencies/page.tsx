@@ -8,8 +8,12 @@ interface CompetencyModel {
   id: string;
   name: string;
   description: string | null;
+  companyName: string | null;
+  modelYear: number | null;
   status: string;
   version: number;
+  sourceType?: string;
+  createdAt?: string;
   nodes: CompetencyNode[];
 }
 
@@ -194,6 +198,8 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [newCompanyName, setNewCompanyName] = useState("");
+  const [newModelYear, setNewModelYear] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [expandedModelId, setExpandedModelId] = useState<string | null>(null);
@@ -225,12 +231,14 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
       const res = await fetch(`/api/w/${workspaceSlug}/competency-models`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName, description: newDescription || null }),
+        body: JSON.stringify({ name: newName, description: newDescription || null, companyName: newCompanyName || null, modelYear: newModelYear || null }),
       });
       if (!res.ok) { const d = await res.json(); setCreateError(d.error || "Fehler beim Erstellen."); return; }
       setShowCreate(false);
       setNewName("");
       setNewDescription("");
+      setNewCompanyName("");
+      setNewModelYear("");
       fetchModels();
     } catch { setCreateError("Etwas ist schiefgelaufen."); }
     finally { setCreating(false); }
@@ -301,6 +309,8 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
           hierarchy: uploadResult.hierarchy,
           assessment: uploadResult.assessment,
           fileName: uploadResult.fileName,
+          companyName: uploadResult.companyName || null,
+          modelYear: uploadResult.modelYear || null,
         }),
       });
       if (!res.ok) {
@@ -404,15 +414,66 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
           {uploadMode === "preview" && uploadResult && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-brand-navy">Analyse-Ergebnis</h2>
+                <h2 className="text-lg font-semibold text-brand-navy">Analyse-Ergebnis – Validierung & Anpassung</h2>
                 <button onClick={() => { setUploadMode("none"); setUploadFile(null); setUploadResult(null); }} className="text-xs text-slate-400 hover:text-slate-600">Schließen</button>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Modellname</span>
-                  <p className="text-sm font-semibold text-brand-navy mt-1" data-testid="text-parsed-model-name">{uploadResult.modelName}</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-5 text-xs text-blue-800">
+                Die KI hat das Dokument analysiert. Bitte prüfen, bestätigen oder verändern Sie die Ergebnisse, bevor Sie das Modell übernehmen.
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Modellname</label>
+                  <input
+                    type="text"
+                    value={uploadResult.modelName || ""}
+                    onChange={(e) => setUploadResult({ ...uploadResult, modelName: e.target.value })}
+                    className={inputClass}
+                    data-testid="input-parsed-model-name"
+                  />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Unternehmen</label>
+                  <input
+                    type="text"
+                    value={uploadResult.companyName || ""}
+                    onChange={(e) => setUploadResult({ ...uploadResult, companyName: e.target.value })}
+                    className={inputClass}
+                    placeholder="z.B. Siemens AG"
+                    data-testid="input-parsed-company-name"
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Beschreibung</label>
+                  <textarea
+                    value={uploadResult.modelDescription || ""}
+                    onChange={(e) => setUploadResult({ ...uploadResult, modelDescription: e.target.value })}
+                    rows={2}
+                    className={inputClass}
+                    data-testid="input-parsed-model-description"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Modelljahr</label>
+                  <input
+                    type="number"
+                    value={uploadResult.modelYear || ""}
+                    onChange={(e) => setUploadResult({ ...uploadResult, modelYear: e.target.value ? parseInt(e.target.value) : null })}
+                    className={inputClass}
+                    placeholder={`z.B. ${new Date().getFullYear()}`}
+                    min="1990"
+                    max="2099"
+                    data-testid="input-parsed-model-year"
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-slate-50 rounded-xl p-4">
                 <div className="bg-slate-50 rounded-xl p-4">
                   <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Qualität</span>
                   <div className="flex items-center gap-2 mt-1">
@@ -502,35 +563,116 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
               )}
 
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-brand-navy mb-3">Extrahierte Struktur</h3>
-                <div className="bg-slate-50 rounded-xl p-4 max-h-96 overflow-y-auto">
-                  {uploadResult.hierarchy?.map((cluster: any, ci: number) => (
-                    <div key={ci} className="mb-4 last:mb-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="bg-brand-navy text-white text-[10px] font-bold px-2 py-0.5 rounded">Cluster</span>
-                        <span className="text-sm font-semibold text-brand-navy">{cluster.name}</span>
-                      </div>
-                      {cluster.description && <p className="text-xs text-slate-500 ml-16 mb-2">{cluster.description}</p>}
-                      {cluster.children?.map((comp: any, coi: number) => (
-                        <div key={coi} className="ml-6 mb-2">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">Kompetenz</span>
-                            <span className="text-sm font-medium text-slate-800">{comp.name}</span>
-                          </div>
-                          {comp.description && <p className="text-xs text-slate-500 ml-20 mb-1">{comp.description}</p>}
-                          {comp.children?.map((anchor: any, ai2: number) => (
-                            <div key={ai2} className="ml-12 flex items-start gap-2 mb-0.5">
-                              <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5">Anker</span>
-                              <div>
-                                <span className="text-xs text-slate-700">{anchor.name}</span>
-                                {anchor.description && <p className="text-[11px] text-slate-400">{anchor.description}</p>}
-                              </div>
-                            </div>
-                          ))}
+                <h3 className="text-sm font-semibold text-brand-navy mb-3">Extrahierte Struktur <span className="text-xs font-normal text-slate-400 ml-2">(Klicken zum Bearbeiten)</span></h3>
+                <div className="bg-slate-50 rounded-xl p-4 max-h-[500px] overflow-y-auto">
+                  {uploadResult.hierarchy?.map((cluster: any, ci: number) => {
+                    const updateCluster = (field: string, value: string) => {
+                      const h = [...uploadResult.hierarchy];
+                      h[ci] = { ...h[ci], [field]: value };
+                      setUploadResult({ ...uploadResult, hierarchy: h });
+                    };
+                    return (
+                      <div key={ci} className="mb-4 last:mb-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="bg-brand-navy text-white text-[10px] font-bold px-2 py-0.5 rounded shrink-0">Cluster</span>
+                          <input
+                            type="text"
+                            value={cluster.name}
+                            onChange={(e) => updateCluster("name", e.target.value)}
+                            className="text-sm font-semibold text-brand-navy bg-transparent border-b border-transparent hover:border-slate-300 focus:border-brand-blue focus:outline-none w-full"
+                            data-testid={`input-cluster-name-${ci}`}
+                          />
+                          <button onClick={() => { const h = uploadResult.hierarchy.filter((_: any, i: number) => i !== ci); setUploadResult({ ...uploadResult, hierarchy: h }); }} className="text-xs text-red-400 hover:text-red-600 shrink-0" data-testid={`button-delete-cluster-${ci}`}>✕</button>
                         </div>
-                      ))}
-                    </div>
-                  ))}
+                        <div className="ml-16 mb-2">
+                          <input
+                            type="text"
+                            value={cluster.description || ""}
+                            onChange={(e) => updateCluster("description", e.target.value)}
+                            placeholder="Beschreibung..."
+                            className="text-xs text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-brand-blue focus:outline-none w-full"
+                          />
+                        </div>
+                        {cluster.children?.map((comp: any, coi: number) => {
+                          const updateComp = (field: string, value: string) => {
+                            const h = [...uploadResult.hierarchy];
+                            const ch = [...(h[ci].children || [])];
+                            ch[coi] = { ...ch[coi], [field]: value };
+                            h[ci] = { ...h[ci], children: ch };
+                            setUploadResult({ ...uploadResult, hierarchy: h });
+                          };
+                          const deleteComp = () => {
+                            const h = [...uploadResult.hierarchy];
+                            h[ci] = { ...h[ci], children: h[ci].children.filter((_: any, i: number) => i !== coi) };
+                            setUploadResult({ ...uploadResult, hierarchy: h });
+                          };
+                          return (
+                            <div key={coi} className="ml-6 mb-2">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded shrink-0">Kompetenz</span>
+                                <input
+                                  type="text"
+                                  value={comp.name}
+                                  onChange={(e) => updateComp("name", e.target.value)}
+                                  className="text-sm font-medium text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-brand-blue focus:outline-none w-full"
+                                  data-testid={`input-comp-name-${ci}-${coi}`}
+                                />
+                                <button onClick={deleteComp} className="text-xs text-red-400 hover:text-red-600 shrink-0">✕</button>
+                              </div>
+                              <div className="ml-20 mb-1">
+                                <input
+                                  type="text"
+                                  value={comp.description || ""}
+                                  onChange={(e) => updateComp("description", e.target.value)}
+                                  placeholder="Beschreibung..."
+                                  className="text-xs text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-brand-blue focus:outline-none w-full"
+                                />
+                              </div>
+                              {comp.children?.map((anchor: any, ai2: number) => {
+                                const updateAnchor = (field: string, value: string) => {
+                                  const h = [...uploadResult.hierarchy];
+                                  const ch = [...(h[ci].children || [])];
+                                  const anch = [...(ch[coi].children || [])];
+                                  anch[ai2] = { ...anch[ai2], [field]: value };
+                                  ch[coi] = { ...ch[coi], children: anch };
+                                  h[ci] = { ...h[ci], children: ch };
+                                  setUploadResult({ ...uploadResult, hierarchy: h });
+                                };
+                                const deleteAnchor = () => {
+                                  const h = [...uploadResult.hierarchy];
+                                  const ch = [...(h[ci].children || [])];
+                                  ch[coi] = { ...ch[coi], children: ch[coi].children.filter((_: any, i: number) => i !== ai2) };
+                                  h[ci] = { ...h[ci], children: ch };
+                                  setUploadResult({ ...uploadResult, hierarchy: h });
+                                };
+                                return (
+                                  <div key={ai2} className="ml-12 flex items-start gap-2 mb-0.5">
+                                    <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 shrink-0">Anker</span>
+                                    <div className="flex-1 min-w-0">
+                                      <input
+                                        type="text"
+                                        value={anchor.name}
+                                        onChange={(e) => updateAnchor("name", e.target.value)}
+                                        className="text-xs text-slate-700 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-brand-blue focus:outline-none w-full"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={anchor.description || ""}
+                                        onChange={(e) => updateAnchor("description", e.target.value)}
+                                        placeholder="Beschreibung..."
+                                        className="text-[11px] text-slate-400 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-brand-blue focus:outline-none w-full"
+                                      />
+                                    </div>
+                                    <button onClick={deleteAnchor} className="text-xs text-red-400 hover:text-red-600 shrink-0 mt-0.5">✕</button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -564,13 +706,25 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
         <div className="bg-white border border-slate-200 rounded-xl p-6">
           <h2 className="text-lg font-semibold text-brand-navy mb-4">Neues Kompetenzmodell erstellen</h2>
           <form onSubmit={handleCreate} className="space-y-4" data-testid="form-create-model">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
-              <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} required data-testid="input-model-name" className={inputClass} placeholder="z.B. Management-Kompetenzen" />
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+                <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} required data-testid="input-model-name" className={inputClass} placeholder="z.B. Management-Kompetenzen" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Unternehmen</label>
+                <input type="text" value={newCompanyName} onChange={(e) => setNewCompanyName(e.target.value)} data-testid="input-model-company" className={inputClass} placeholder="z.B. Siemens AG" />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
-              <textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={3} data-testid="input-model-description" className={inputClass} placeholder="Optionale Beschreibung" />
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
+                <textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={2} data-testid="input-model-description" className={inputClass} placeholder="Optionale Beschreibung" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Modelljahr</label>
+                <input type="number" value={newModelYear} onChange={(e) => setNewModelYear(e.target.value)} data-testid="input-model-year" className={inputClass} placeholder={`z.B. ${new Date().getFullYear()}`} min="1990" max="2099" />
+              </div>
             </div>
             {createError && <p className="text-sm text-red-500" data-testid="text-create-error">{createError}</p>}
             <button type="submit" disabled={creating || !newName.trim()} data-testid="button-submit-model" className={`${btnPrimary} px-6 disabled:opacity-50`}>
@@ -593,14 +747,22 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
                   <div className="flex items-center gap-3 mb-1">
                     <h3 className="font-semibold text-brand-navy">{model.name}</h3>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge.bg} ${badge.text}`} data-testid={`badge-status-${model.id}`}>{badge.label}</span>
-                    {(model as any).sourceType === "uploaded" && (
+                    {model.sourceType === "uploaded" && (
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">Hochgeladen</span>
                     )}
+                    {model.modelYear && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500" data-testid={`badge-year-${model.id}`}>{model.modelYear}</span>
+                    )}
                   </div>
-                  {model.description && <p className="text-sm text-slate-500">{model.description}</p>}
+                  <div className="flex items-center gap-2">
+                    {model.companyName && <span className="text-sm text-slate-600 font-medium" data-testid={`text-company-${model.id}`}>{model.companyName}</span>}
+                    {model.companyName && model.description && <span className="text-slate-300">·</span>}
+                    {model.description && <span className="text-sm text-slate-500">{model.description}</span>}
+                  </div>
                   <div className="flex gap-4 mt-2 text-xs text-slate-400">
                     <span>Version {model.version}</span>
                     <span>{model.nodes?.length ?? 0} Knoten</span>
+                    {model.modelYear && <span>Stand: {model.modelYear}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1153,17 +1315,57 @@ function WeightsTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
     setEditWeights(merged);
   };
 
+  const [aiLoading, setAiLoading] = useState(false);
+
   const handleAiSuggest = async () => {
     setAiMessage("");
+    if (modelNodes.length === 0) {
+      setAiMessage("Bitte wählen Sie ein Kompetenzmodell mit Knoten aus.");
+      return;
+    }
+    setAiLoading(true);
     try {
+      const competencyNames = modelNodes.map((n) => n.name);
+      const targetRole = newRole || editRole || undefined;
       const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "suggest_weights", context: { modelId: selectedModelId } }),
+        body: JSON.stringify({
+          action: "suggest_weights",
+          competencies: competencyNames,
+          targetRole,
+          workspaceSlug,
+        }),
       });
       const data = await res.json();
-      setAiMessage(data.message || data.error || "Unbekannte Antwort.");
+      if (data.success && data.data?.weights) {
+        const aiWeights = data.data.weights as { competency: string; weight: number; rationale: string }[];
+        const mappedWeights = modelNodes.map((node) => {
+          const match = aiWeights.find((w) =>
+            w.competency.toLowerCase() === node.name.toLowerCase() ||
+            node.name.toLowerCase().includes(w.competency.toLowerCase()) ||
+            w.competency.toLowerCase().includes(node.name.toLowerCase())
+          );
+          return { nodeId: node.id, weight: match ? Math.round(match.weight * 100) / 100 : 1 };
+        });
+
+        if (editingProfileId) {
+          setEditWeights(mappedWeights);
+        } else {
+          setNewWeights(mappedWeights);
+          if (!showCreate) setShowCreate(true);
+        }
+
+        const rationales = aiWeights
+          .filter((w) => w.rationale)
+          .map((w) => `${w.competency}: ${w.weight.toFixed(2)} – ${w.rationale}`)
+          .join("\n");
+        setAiMessage(`KI-Gewichtung angewendet:\n${rationales}`);
+      } else {
+        setAiMessage(data.error || "KI konnte keine Gewichtung vorschlagen.");
+      }
     } catch { setAiMessage("Fehler bei der KI-Anfrage."); }
+    finally { setAiLoading(false); }
   };
 
   const renderWeightsTable = (weights: WeightEntry[], onChange: (idx: number, weight: number) => void, prefix: string) => (
@@ -1208,8 +1410,8 @@ function WeightsTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-500" data-testid="text-profile-count">{profiles.length} Profile</p>
             <div className="flex gap-2">
-              <button onClick={handleAiSuggest} data-testid="button-ai-suggest-weights" className="rounded-lg bg-purple-600 text-white text-sm font-medium px-4 py-2 hover:bg-purple-700 transition-colors">
-                KI-Assistent: Gewichtung vorschlagen
+              <button onClick={handleAiSuggest} disabled={aiLoading} data-testid="button-ai-suggest-weights" className="rounded-lg bg-purple-600 text-white text-sm font-medium px-4 py-2 hover:bg-purple-700 transition-colors disabled:opacity-50">
+                {aiLoading ? "KI analysiert..." : "KI-Assistent: Gewichtung vorschlagen"}
               </button>
               <button onClick={() => setShowCreate(!showCreate)} data-testid="button-create-profile" className={btnPrimary}>
                 {showCreate ? "Abbrechen" : "Neues Profil"}
@@ -1218,7 +1420,7 @@ function WeightsTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
           </div>
 
           {aiMessage && (
-            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-sm text-purple-800" data-testid="text-ai-weight-message">
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-sm text-purple-800 whitespace-pre-line" data-testid="text-ai-weight-message">
               {aiMessage}
             </div>
           )}
