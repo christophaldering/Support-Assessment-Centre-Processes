@@ -41,6 +41,7 @@ interface AnalysisResult {
   targetLevels: string[];
   author: string;
   sourceContext: string;
+  description: string;
   file: File;
 }
 
@@ -348,6 +349,12 @@ function DetailModal({
   const [editTitle, setEditTitle] = useState(item.title);
   const [editDescription, setEditDescription] = useState(item.description || "");
   const [editSourceContext, setEditSourceContext] = useState(item.sourceContext || item.metadataJson?.sourceContext || "");
+
+  useEffect(() => {
+    setEditTitle(item.title);
+    setEditDescription(item.description || "");
+    setEditSourceContext(item.sourceContext || item.metadataJson?.sourceContext || "");
+  }, [item.id, item.title, item.description, item.sourceContext, item.metadataJson]);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -818,7 +825,7 @@ export default function ExerciseLibraryPage() {
       const pf = pendingFiles[i];
       setAnalyzeProgress({ current: i + 1, total: pendingFiles.length });
 
-      const title = generateTitle(
+      const fallbackTitle = generateTitle(
         pf.exerciseType,
         pf.sourceContext,
         pf.targetLevels,
@@ -826,40 +833,64 @@ export default function ExerciseLibraryPage() {
       );
 
       try {
-        const res = await fetch(`/api/w/${slug}/exercise-library/analyze`, {
+        const formData = new FormData();
+        formData.append("file", pf.file);
+        const res = await fetch(`/api/w/${slug}/exercise-library/analyze-content`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title,
-            exerciseType: pf.exerciseType,
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          results.push({
+            fileIndex: i,
             fileName: pf.file.name,
-            description: "",
-            sourceContext: pf.sourceContext,
+            generatedTitle: data.suggestedTitle || fallbackTitle,
+            suggestedTags: data.tags || [],
+            exerciseType: data.exerciseType || pf.exerciseType,
+            targetLevels: data.targetLevels?.length > 0 ? data.targetLevels : [...pf.targetLevels],
+            author: data.author || pf.author,
+            sourceContext: data.sourceContext || pf.sourceContext,
+            description: data.description || "",
+            file: pf.file,
+          });
+        } else {
+          const metaRes = await fetch(`/api/w/${slug}/exercise-library/analyze`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: fallbackTitle,
+              exerciseType: pf.exerciseType,
+              fileName: pf.file.name,
+              description: "",
+              sourceContext: pf.sourceContext,
+              author: pf.author,
+            }),
+          });
+          const metaData = metaRes.ok ? await metaRes.json() : { tags: [], title: fallbackTitle };
+          results.push({
+            fileIndex: i,
+            fileName: pf.file.name,
+            generatedTitle: metaData.suggestedTitle || metaData.title || fallbackTitle,
+            suggestedTags: metaData.tags || [],
+            exerciseType: pf.exerciseType,
+            targetLevels: [...pf.targetLevels],
             author: pf.author,
-          }),
-        });
-        const data = res.ok ? await res.json() : { tags: [], title };
-        results.push({
-          fileIndex: i,
-          fileName: pf.file.name,
-          generatedTitle: data.suggestedTitle || data.title || title,
-          suggestedTags: data.tags || [],
-          exerciseType: pf.exerciseType,
-          targetLevels: [...pf.targetLevels],
-          author: pf.author,
-          sourceContext: pf.sourceContext,
-          file: pf.file,
-        });
+            sourceContext: pf.sourceContext,
+            description: "",
+            file: pf.file,
+          });
+        }
       } catch {
         results.push({
           fileIndex: i,
           fileName: pf.file.name,
-          generatedTitle: title,
+          generatedTitle: fallbackTitle,
           suggestedTags: [],
           exerciseType: pf.exerciseType,
           targetLevels: [...pf.targetLevels],
           author: pf.author,
           sourceContext: pf.sourceContext,
+          description: "",
           file: pf.file,
         });
       }
@@ -920,7 +951,7 @@ export default function ExerciseLibraryPage() {
       formData.append("title", ar.generatedTitle);
       formData.append("exerciseType", ar.exerciseType);
       formData.append("targetLevels", ar.targetLevels.join(","));
-      formData.append("description", "");
+      formData.append("description", ar.description || "");
       formData.append("sourceProjectId", "");
       formData.append("tags", ar.suggestedTags.join(","));
       formData.append("languagesAvailable", "DE");
@@ -1110,7 +1141,7 @@ export default function ExerciseLibraryPage() {
                         Analysiere ({analyzeProgress.current}/{analyzeProgress.total})...
                       </>
                     ) : (
-                      "Analysieren"
+                      "KI-Inhaltsanalyse starten"
                     )}
                   </button>
                   {!analyzing && (
@@ -1156,7 +1187,7 @@ export default function ExerciseLibraryPage() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                        <div>
+                        <div className="md:col-span-2">
                           <label className="block text-xs font-medium text-slate-600 mb-1">
                             Generierter Titel
                           </label>
@@ -1183,7 +1214,74 @@ export default function ExerciseLibraryPage() {
                             ))}
                           </select>
                         </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">Autor</label>
+                          <input
+                            type="text"
+                            value={ar.author}
+                            onChange={(e) => updateAnalysisResult(idx, { author: e.target.value })}
+                            placeholder="z.B. Christoph Aldering"
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            data-testid={`input-author-result-${idx}`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">Ursprünglich konzipiert für</label>
+                          <input
+                            type="text"
+                            value={ar.sourceContext}
+                            onChange={(e) => updateAnalysisResult(idx, { sourceContext: e.target.value })}
+                            placeholder="z.B. REWE Group"
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            data-testid={`input-source-result-${idx}`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">Zielgruppe</label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {TARGET_LEVELS.map((level) => (
+                              <label
+                                key={level}
+                                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs cursor-pointer border transition-colors ${
+                                  ar.targetLevels.includes(level)
+                                    ? "border-[hsl(14,48%,44%)] bg-[hsl(14,48%,44%)]/10 text-[hsl(14,48%,44%)]"
+                                    : "border-slate-200 text-slate-600 hover:border-slate-300"
+                                }`}
+                                data-testid={`checkbox-level-result-${idx}-${level.replace(/\s/g, "-")}`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={ar.targetLevels.includes(level)}
+                                  onChange={() => {
+                                    const next = ar.targetLevels.includes(level)
+                                      ? ar.targetLevels.filter((l) => l !== level)
+                                      : [...ar.targetLevels, level];
+                                    updateAnalysisResult(idx, { targetLevels: next });
+                                  }}
+                                  className="sr-only"
+                                />
+                                {LEVEL_SHORT[level] || level}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
                       </div>
+
+                      {ar.description && (
+                        <div className="mb-3">
+                          <label className="block text-xs font-medium text-slate-600 mb-1">
+                            KI-Kurzbeschreibung
+                            <span className="ml-1 text-xs text-emerald-600 font-normal">(wird mit Baustein gespeichert)</span>
+                          </label>
+                          <textarea
+                            value={ar.description}
+                            onChange={(e) => updateAnalysisResult(idx, { description: e.target.value })}
+                            rows={3}
+                            className="w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            data-testid={`textarea-description-${idx}`}
+                          />
+                        </div>
+                      )}
 
                       <div className="mb-3">
                         <label className="block text-xs font-medium text-slate-600 mb-1">
