@@ -696,6 +696,7 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
                 </button>
               </div>
             </div>
+          </div>
           )}
         </div>
       )}
