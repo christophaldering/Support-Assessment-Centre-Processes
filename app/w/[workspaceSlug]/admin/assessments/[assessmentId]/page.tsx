@@ -44,6 +44,23 @@ interface DocumentRecord {
   uploadedBy: { id: string; name: string } | null;
 }
 
+interface PortalDocRecord {
+  id: string;
+  assessmentId: string;
+  exerciseId: string | null;
+  category: string;
+  title: string;
+  description: string | null;
+  objectPath: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  releaseStatus: string;
+  releasedAt: string | null;
+  sortOrder: number;
+  createdAt: string;
+}
+
 interface CandidateRecord {
   id: string;
   name: string;
@@ -199,6 +216,8 @@ export default function AssessmentDetailPage() {
   const [docWatermark, setDocWatermark] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [docUploadSection, setDocUploadSection] = useState<string | null>(null);
+  const [portalDocs, setPortalDocs] = useState<PortalDocRecord[]>([]);
 
   const [candidates, setCandidates] = useState<CandidateRecord[]>([]);
   const [availableUsers, setAvailableUsers] = useState<CandidateRecord[]>([]);
@@ -339,6 +358,13 @@ export default function AssessmentDetailPage() {
       if (res.ok) {
         setDocuments(await res.json());
       }
+    } catch {}
+  }, [apiBase]);
+
+  const fetchPortalDocs = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiBase}/portal-documents`);
+      if (res.ok) setPortalDocs(await res.json());
     } catch {}
   }, [apiBase]);
 
@@ -650,13 +676,14 @@ export default function AssessmentDetailPage() {
     fetchAssessment();
     fetchExercises();
     fetchDocuments();
+    fetchPortalDocs();
     fetchCandidates();
     fetchAvailableUsers();
     fetchObservationSheets();
     fetchMtmmMappings();
     fetchLinkedAnalysis();
     fetchMtmmModel();
-  }, [fetchAssessment, fetchExercises, fetchDocuments, fetchCandidates, fetchAvailableUsers, fetchObservationSheets, fetchMtmmMappings, fetchLinkedAnalysis, fetchMtmmModel]);
+  }, [fetchAssessment, fetchExercises, fetchDocuments, fetchPortalDocs, fetchCandidates, fetchAvailableUsers, fetchObservationSheets, fetchMtmmMappings, fetchLinkedAnalysis, fetchMtmmModel]);
 
   const handleSaveAssessment = async () => {
     setSaving(true);
@@ -838,6 +865,51 @@ export default function AssessmentDetailPage() {
       await fetch(`${apiBase}/documents/${docId}`, { method: "DELETE" });
       fetchDocuments();
     } catch {}
+  };
+
+  const handleUploadPortalDoc = async (exerciseId: string | null, category: string) => {
+    if (!docName || !docFile) return;
+    setUploading(true);
+    setUploadError("");
+    try {
+      const formData = new FormData();
+      formData.append("title", docName);
+      formData.append("category", category);
+      formData.append("releaseStatus", "locked");
+      if (exerciseId) formData.append("exerciseId", exerciseId);
+      formData.append("file", docFile);
+
+      const res = await fetch(`${apiBase}/portal-documents`, { method: "POST", body: formData });
+      if (!res.ok) {
+        const data = await res.json();
+        setUploadError(data.error || "Fehler beim Hochladen.");
+        return;
+      }
+      setDocUploadSection(null);
+      setDocName("");
+      setDocFile(null);
+      fetchPortalDocs();
+      fetchDocuments();
+    } catch {
+      setUploadError("Etwas ist schiefgelaufen.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleTogglePortalDocRelease = async (doc: PortalDocRecord) => {
+    const newStatus = doc.releaseStatus === "released" ? "locked" : "released";
+    await fetch(`${apiBase}/portal-documents/${doc.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ releaseStatus: newStatus }),
+    });
+    fetchPortalDocs();
+  };
+
+  const handleDeletePortalDoc = async (docId: string) => {
+    await fetch(`${apiBase}/portal-documents/${docId}`, { method: "DELETE" });
+    fetchPortalDocs();
   };
 
   const toggleVisibleTo = (role: string) => {
@@ -3430,166 +3502,261 @@ export default function AssessmentDetailPage() {
             </div>
           )}
 
-          {activeSection === "documents" && (
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-brand-navy" data-testid="heading-documents">Dokumente</h2>
-                <button
-                  onClick={() => setShowUpload(!showUpload)}
-                  data-testid="button-upload-document"
-                  className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
-                >
-                  {showUpload ? "Abbrechen" : "Dokument hochladen"}
-                </button>
-              </div>
+          {activeSection === "documents" && (() => {
+            const generalLegacy = documents.filter(d => !d.exerciseId);
+            const generalPortal = portalDocs.filter(d => d.category === "general" && !d.exerciseId);
+            const prepPortal = portalDocs.filter(d => d.category === "preparation");
+            const infoPortal = portalDocs.filter(d => d.category === "info");
 
-              {showUpload && (
-                <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
-                  <form onSubmit={handleUploadDocument} className="space-y-3" data-testid="form-upload-document">
-                    <div className="grid md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
-                        <input
-                          type="text"
-                          value={docName}
-                          onChange={(e) => setDocName(e.target.value)}
-                          required
-                          data-testid="input-document-name"
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Datei *</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
-                          required
-                          data-testid="input-document-file"
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 file:mr-3 file:rounded file:border-0 file:bg-brand-blue/10 file:px-3 file:py-1 file:text-xs file:font-medium file:text-brand-blue"
-                        />
-                      </div>
-                    </div>
+            const exerciseTypeIcons: Record<string, string> = {
+              presentation: "M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5",
+              interview: "M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155",
+              group_discussion: "M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z",
+              case_study: "M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25",
+              role_play: "M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z",
+              in_tray: "M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-17.5 0V6.108c0-1.135.845-2.098 1.976-2.192a48.424 48.424 0 011.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z",
+              other: "M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z",
+            };
+            const exTypeLabels: Record<string, string> = {
+              presentation: "Präsentation", interview: "Interview", group_discussion: "Gruppendiskussion",
+              case_study: "Fallstudie", role_play: "Rollenspiel", in_tray: "Postkorb",
+              psychometric: "Psychometrisch", other: "Sonstiges",
+            };
+
+            const renderUploadForm = (sectionKey: string, exerciseId: string | null, category: string) => {
+              if (docUploadSection !== sectionKey) return null;
+              return (
+                <div className="border border-slate-200 rounded-lg p-4 mt-3 bg-slate-50" data-testid={`upload-form-${sectionKey}`}>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Übung (optional)</label>
-                      <select
-                        value={docExerciseId}
-                        onChange={(e) => setDocExerciseId(e.target.value)}
-                        data-testid="select-document-exercise"
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                      >
-                        <option value="">Keine Übung</option>
-                        {exercises.map((ex) => (
-                          <option key={ex.id} value={ex.id}>{ex.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Sichtbar für</label>
-                      <div className="flex flex-wrap gap-2">
-                        {ALL_ROLES.map((role) => (
-                          <button
-                            key={role}
-                            type="button"
-                            onClick={() => toggleVisibleTo(role)}
-                            data-testid={`button-visible-${role.toLowerCase()}`}
-                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                              docVisibleTo.includes(role)
-                                ? "bg-brand-blue text-white border-brand-blue"
-                                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-                            }`}
-                          >
-                            {ROLE_LABELS[role]}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Name *</label>
                       <input
-                        type="checkbox"
-                        id="watermark"
-                        checked={docWatermark}
-                        onChange={(e) => setDocWatermark(e.target.checked)}
-                        data-testid="checkbox-watermark"
-                        className="rounded border-slate-300"
+                        value={docName}
+                        onChange={e => setDocName(e.target.value)}
+                        data-testid={`input-doc-name-${sectionKey}`}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue outline-none"
+                        placeholder="z.B. Aufgabenstellung"
                       />
-                      <label htmlFor="watermark" className="text-sm text-slate-700">Wasserzeichen</label>
                     </div>
-                    {uploadError && <p className="text-sm text-red-500" data-testid="text-upload-error">{uploadError}</p>}
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Datei *</label>
+                      <input
+                        type="file"
+                        onChange={e => setDocFile(e.target.files?.[0] || null)}
+                        data-testid={`input-doc-file-${sectionKey}`}
+                        className="w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-navy/10 file:text-brand-navy hover:file:bg-brand-navy/20"
+                      />
+                    </div>
+                  </div>
+                  {uploadError && <p className="text-sm text-red-500 mb-2">{uploadError}</p>}
+                  <div className="flex gap-2">
                     <button
-                      type="submit"
-                      disabled={uploading || !docName.trim() || !docFile}
-                      data-testid="button-submit-document"
-                      className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
+                      onClick={() => handleUploadPortalDoc(exerciseId, category)}
+                      disabled={!docName.trim() || !docFile || uploading}
+                      data-testid={`button-upload-${sectionKey}`}
+                      className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue/90 disabled:opacity-50 transition-colors"
                     >
                       {uploading ? "Wird hochgeladen…" : "Hochladen"}
                     </button>
-                  </form>
+                    <button
+                      onClick={() => { setDocUploadSection(null); setDocName(""); setDocFile(null); setUploadError(""); }}
+                      className="text-sm text-slate-500 hover:text-slate-700"
+                    >
+                      Abbrechen
+                    </button>
+                  </div>
                 </div>
-              )}
+              );
+            };
 
-              <div className="overflow-hidden rounded-lg border border-slate-200">
-                <table className="w-full text-sm" data-testid="table-documents">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Name</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Dateiname</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Typ</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Größe</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Sichtbar für</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Hochgeladen von</th>
-                      <th className="text-right px-4 py-3 font-medium text-slate-600">Aktionen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {documents.map((doc) => (
-                      <tr key={doc.id} className="border-b border-slate-100 hover:bg-slate-50/50" data-testid={`row-document-${doc.id}`}>
-                        <td className="px-4 py-3 font-medium text-slate-900">{doc.name}</td>
-                        <td className="px-4 py-3 text-slate-500 text-xs">{doc.fileName}</td>
-                        <td className="px-4 py-3 text-slate-500 text-xs">{doc.mimeType}</td>
-                        <td className="px-4 py-3 text-slate-500 text-xs">{formatFileSize(doc.fileSize)}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-1">
-                            {doc.visibleTo.map((r) => (
-                              <span key={r} className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                                {ROLE_LABELS[r] || r}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-slate-500 text-xs">{doc.uploadedBy?.name ?? "–"}</td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => handleDownloadDocument(doc.id)}
-                              data-testid={`button-download-${doc.id}`}
-                              className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
-                            >
-                              Herunterladen
-                            </button>
-                            <button
-                              onClick={() => handleDeleteDocument(doc.id)}
-                              data-testid={`button-delete-document-${doc.id}`}
-                              className="text-xs text-red-500 hover:text-red-700 font-medium"
-                            >
-                              Löschen
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {documents.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                          Keine Dokumente vorhanden.
-                        </td>
-                      </tr>
+            const renderDocRow = (doc: PortalDocRecord | DocumentRecord, isPortal: boolean) => {
+              const title = isPortal ? (doc as PortalDocRecord).title : (doc as DocumentRecord).name;
+              const fileName = isPortal ? (doc as PortalDocRecord).fileName : (doc as DocumentRecord).fileName;
+              const fileSize = isPortal ? (doc as PortalDocRecord).fileSize : (doc as DocumentRecord).fileSize;
+              const releaseStatus = isPortal ? (doc as PortalDocRecord).releaseStatus : null;
+
+              return (
+                <div key={doc.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50/50 transition-colors" data-testid={`doc-item-${doc.id}`}>
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">{title}</p>
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      {fileName && <span>{fileName}</span>}
+                      {fileSize != null && fileSize > 0 && <span>· {formatFileSize(fileSize)}</span>}
+                    </div>
+                  </div>
+                  {isPortal && (
+                    <button
+                      onClick={() => handleTogglePortalDocRelease(doc as PortalDocRecord)}
+                      data-testid={`toggle-release-${doc.id}`}
+                      className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                        releaseStatus === "released"
+                          ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                          : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                      }`}
+                    >
+                      {releaseStatus === "released" ? (
+                        <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>Freigegeben</>
+                      ) : (
+                        <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>Gesperrt</>
+                      )}
+                    </button>
+                  )}
+                  {!isPortal && (
+                    <button
+                      onClick={() => handleDownloadDocument(doc.id)}
+                      data-testid={`button-download-${doc.id}`}
+                      className="text-xs text-brand-blue hover:text-brand-blue/80 font-medium"
+                    >
+                      Herunterladen
+                    </button>
+                  )}
+                  <button
+                    onClick={() => isPortal ? handleDeletePortalDoc(doc.id) : handleDeleteDocument(doc.id)}
+                    data-testid={`button-delete-${doc.id}`}
+                    className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            };
+
+            return (
+              <div className="space-y-6" data-testid="section-documents">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-bold text-brand-navy" data-testid="heading-documents">Dokumente & Bausteine</h2>
+                    <p className="text-sm text-slate-500">Alle Dokumente gruppiert nach Baustein. Portal-Dokumente können für Kandidaten freigegeben werden.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="px-5 py-3 bg-gradient-to-r from-brand-navy/5 to-brand-blue/5 border-b border-slate-200 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-brand-navy" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                      </svg>
+                      <h3 className="text-sm font-semibold text-brand-navy">Allgemeine Dokumente</h3>
+                      <span className="text-xs text-slate-400 ml-1">{generalLegacy.length + generalPortal.length}</span>
+                    </div>
+                    <button
+                      onClick={() => { setDocUploadSection(docUploadSection === "general" ? null : "general"); setDocName(""); setDocFile(null); setUploadError(""); }}
+                      data-testid="button-add-general-doc"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-brand-blue hover:text-brand-navy transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                      Hinzufügen
+                    </button>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {generalPortal.map(d => renderDocRow(d, true))}
+                    {generalLegacy.map(d => renderDocRow(d, false))}
+                    {generalLegacy.length === 0 && generalPortal.length === 0 && (
+                      <p className="px-5 py-6 text-sm text-slate-400 text-center">Keine allgemeinen Dokumente vorhanden</p>
                     )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                  </div>
+                  {renderUploadForm("general", null, "general")}
+                </div>
 
+                {exercises.map(ex => {
+                  const exPortalDocs = portalDocs.filter(d => d.exerciseId === ex.id);
+                  const exLegacyDocs = documents.filter(d => d.exerciseId === ex.id);
+                  const total = exPortalDocs.length + exLegacyDocs.length;
+                  const released = exPortalDocs.filter(d => d.releaseStatus === "released").length;
+                  const sectionKey = `exercise-${ex.id}`;
+
+                  return (
+                    <div key={ex.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden" data-testid={`doc-section-${ex.id}`}>
+                      <div className="px-5 py-3 bg-gradient-to-r from-brand-navy/5 to-brand-blue/5 border-b border-slate-200 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d={exerciseTypeIcons[ex.type] || exerciseTypeIcons.other} />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-brand-navy">{ex.name}</h3>
+                            <div className="flex items-center gap-2 text-xs text-slate-400">
+                              <span>{exTypeLabels[ex.type] || ex.type}</span>
+                              {ex.duration && <span>· {ex.duration} Min.</span>}
+                              <span>· {total} Dok.</span>
+                              {released > 0 && <span className="text-emerald-500">· {released} freigegeben</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => { setDocUploadSection(docUploadSection === sectionKey ? null : sectionKey); setDocName(""); setDocFile(null); setUploadError(""); }}
+                          data-testid={`button-add-doc-${ex.id}`}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-brand-blue hover:text-brand-navy transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                          Hinzufügen
+                        </button>
+                      </div>
+                      <div className="divide-y divide-slate-100">
+                        {exPortalDocs.map(d => renderDocRow(d, true))}
+                        {exLegacyDocs.map(d => renderDocRow(d, false))}
+                        {total === 0 && (
+                          <p className="px-5 py-6 text-sm text-slate-400 text-center">Keine Dokumente für diesen Baustein</p>
+                        )}
+                      </div>
+                      {renderUploadForm(sectionKey, ex.id, "exercise")}
+                    </div>
+                  );
+                })}
+
+                {prepPortal.length > 0 && (
+                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                    <div className="px-5 py-3 bg-gradient-to-r from-brand-navy/5 to-brand-blue/5 border-b border-slate-200 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-brand-navy" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                        </svg>
+                        <h3 className="text-sm font-semibold text-brand-navy">Vorbereitungsdokumente</h3>
+                        <span className="text-xs text-slate-400 ml-1">{prepPortal.length}</span>
+                      </div>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {prepPortal.map(d => renderDocRow(d, true))}
+                    </div>
+                  </div>
+                )}
+
+                {infoPortal.length > 0 && (
+                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                    <div className="px-5 py-3 bg-gradient-to-r from-brand-navy/5 to-brand-blue/5 border-b border-slate-200 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-brand-navy" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        </svg>
+                        <h3 className="text-sm font-semibold text-brand-navy">Informationsmaterial</h3>
+                        <span className="text-xs text-slate-400 ml-1">{infoPortal.length}</span>
+                      </div>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {infoPortal.map(d => renderDocRow(d, true))}
+                    </div>
+                  </div>
+                )}
+
+                {exercises.length === 0 && generalLegacy.length === 0 && generalPortal.length === 0 && (
+                  <div className="bg-white border border-slate-200 border-dashed rounded-xl py-12 text-center">
+                    <svg className="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <p className="text-sm text-slate-500">Erstellen Sie zunächst Übungen unter "Bausteine", um hier Dokumente zuzuordnen.</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {activeSection === "portal" && (
             <PortalManagementSection
