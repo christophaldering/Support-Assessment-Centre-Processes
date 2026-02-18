@@ -331,11 +331,13 @@ function DetailModal({
   slug,
   onClose,
   onUpdated,
+  onItemUpdated,
 }: {
   item: ExerciseLibraryItem;
   slug: string;
   onClose: () => void;
   onUpdated?: () => void;
+  onItemUpdated?: (updated: ExerciseLibraryItem) => void;
 }) {
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -409,6 +411,8 @@ function DetailModal({
         setError(d.error || "Fehler beim Speichern");
         return;
       }
+      const updatedItem = await res.json();
+      onItemUpdated?.(updatedItem);
       setSuccessMsg("Gespeichert");
       setEditing(false);
       onUpdated?.();
@@ -1438,7 +1442,7 @@ export default function ExerciseLibraryPage() {
       </footer>
 
       {selectedItem && (
-        <DetailModal item={selectedItem} slug={slug} onClose={handleModalClose} onUpdated={fetchItems} />
+        <DetailModal item={selectedItem} slug={slug} onClose={handleModalClose} onUpdated={fetchItems} onItemUpdated={setSelectedItem} />
       )}
     </div>
   );
