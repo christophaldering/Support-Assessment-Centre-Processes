@@ -68,7 +68,6 @@ interface SavedAnalysis {
   transcript: string | null;
 }
 
-const ACCENT = "hsl(14, 48%, 44%)";
 
 const MODULE_TYPE_LABELS: Record<string, string> = {
   presentation: "Präsentation", interview: "Interview-Leitfaden", case_study: "Fallstudie",
@@ -585,8 +584,8 @@ export default function RequirementsAnalysisPage() {
         <div className="border-b bg-brand-navy/5 border-brand-navy/10">
           <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ color: ACCENT }}><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.193-9.193a4.5 4.5 0 00-6.364 0l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
-              <span className="font-medium" style={{ color: ACCENT }}>Kontext: Assessment-Projekt</span>
+              <svg className="w-4 h-4 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.193-9.193a4.5 4.5 0 00-6.364 0l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
+              <span className="font-medium text-brand-blue">Kontext: Assessment-Projekt</span>
               <span className="text-slate-400">·</span>
               <span className="text-slate-500">Wählen oder erstellen Sie eine Analyse, dann übernehmen Sie die Ergebnisse für Ihr Projekt</span>
             </div>
@@ -605,8 +604,7 @@ export default function RequirementsAnalysisPage() {
         <aside className="w-[280px] shrink-0 border-r border-slate-200 bg-white p-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 56px)", position: "sticky", top: "56px" }}>
           <button
             onClick={startNew}
-            className="w-full mb-4 px-4 py-2.5 text-white rounded-lg font-medium text-sm shadow-sm hover:opacity-90 transition flex items-center justify-center gap-2"
-            style={{ backgroundColor: ACCENT }}
+            className="w-full mb-4 px-4 py-2.5 text-white rounded-lg font-medium text-sm shadow-sm hover:opacity-90 transition flex items-center justify-center gap-2 bg-brand-navy"
             data-testid="button-new-analysis-sidebar"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -628,9 +626,8 @@ export default function RequirementsAnalysisPage() {
                     <button
                       onClick={() => loadSaved(a)}
                       className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors pr-8 ${
-                        isActive ? "text-white font-medium" : "text-slate-700 hover:bg-white"
+                        isActive ? "text-white font-medium bg-brand-navy" : "text-slate-700 hover:bg-slate-50"
                       }`}
-                      style={isActive ? { backgroundColor: ACCENT } : undefined}
                       data-testid={`button-load-analysis-${a.id}`}
                     >
                       <p className="font-medium truncate text-xs">{a.title}</p>
@@ -670,7 +667,7 @@ export default function RequirementsAnalysisPage() {
 
           <section className="mb-6" data-testid="section-input">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-slate-800" style={{ fontFamily: "Playfair Display, serif" }}>
+              <h2 className="text-lg font-bold text-brand-navy">
                 Input — Anforderungsanalyse
               </h2>
             </div>
@@ -679,7 +676,7 @@ export default function RequirementsAnalysisPage() {
               <div>
                 <label className="text-xs font-medium text-slate-600 mb-1 block">Kunde</label>
                 <input
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   placeholder="z.B. DER Touristik, Siemens AG..."
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
@@ -689,7 +686,7 @@ export default function RequirementsAnalysisPage() {
               <div>
                 <label className="text-xs font-medium text-slate-600 mb-1 block">Projekt</label>
                 <input
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   placeholder="z.B. CEO-Nachfolge, Vorstandsbesetzung..."
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
@@ -700,7 +697,7 @@ export default function RequirementsAnalysisPage() {
 
             <div
               className={`relative border-2 border-dashed rounded-xl p-5 mb-3 transition-colors text-center cursor-pointer ${
-                dragActive ? "border-[hsl(14,48%,44%)] bg-orange-50" : "border-slate-300 hover:border-slate-400 bg-slate-50"
+                dragActive ? "border-brand-blue bg-blue-50" : "border-slate-300 hover:border-slate-400 bg-slate-50"
               }`}
               onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
@@ -762,7 +759,7 @@ export default function RequirementsAnalysisPage() {
 
             <p className="text-xs font-medium text-slate-600 mb-1.5">Transkript / Freitext eingeben</p>
             <textarea
-              className="w-full h-40 border border-slate-300 rounded-xl p-4 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)] resize-y"
+              className="w-full h-40 border border-slate-300 rounded-xl p-4 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue resize-y"
               placeholder="Fügen Sie hier die Ergebnisse, den Mitschrieb oder das Transkript einer Anforderungsanalyse ein..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -783,7 +780,7 @@ export default function RequirementsAnalysisPage() {
                         setResearchUrls(updated);
                       }}
                       placeholder="https://..."
-                      className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                      className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                       data-testid={`input-research-url-${i}`}
                     />
                     <button
@@ -815,8 +812,7 @@ export default function RequirementsAnalysisPage() {
               <button
                 onClick={handleAnalyze}
                 disabled={analyzing || (inputText.trim().length < 20 && uploadedFiles.length === 0)}
-                className="px-6 py-2.5 text-white rounded-lg font-medium text-sm shadow-sm hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                style={{ backgroundColor: ACCENT }}
+                className="px-6 py-2.5 text-white rounded-lg font-medium text-sm shadow-sm hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 bg-brand-navy"
                 data-testid="button-analyze"
               >
                 {analyzing ? (
@@ -846,7 +842,7 @@ export default function RequirementsAnalysisPage() {
             )}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="section-results">
               <div className="space-y-5">
-                <h2 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2" style={{ fontFamily: "Playfair Display, serif" }}>
+                <h2 className="text-lg font-bold text-brand-navy border-b border-slate-200 pb-2">
                   Output — Extrahierte Daten
                 </h2>
 
@@ -924,7 +920,7 @@ export default function RequirementsAnalysisPage() {
                   <ul className="space-y-2">
                     {extraction.successCriteria.map((c, i) => (
                       <li key={i} className="flex items-start gap-2 group">
-                        <span className="text-xs mt-1" style={{ color: ACCENT }}>&#9733;</span>
+                        <span className="text-xs mt-1 text-brand-blue">&#9733;</span>
                         <span className="flex-1 text-sm text-slate-700">{c}</span>
                         <button onClick={() => removeCriterion(i)} className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition text-xs shrink-0" data-testid={`button-remove-criterion-${i}`}>
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -936,7 +932,7 @@ export default function RequirementsAnalysisPage() {
               </div>
 
               <div className="space-y-5">
-                <h2 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2" style={{ fontFamily: "Playfair Display, serif" }}>
+                <h2 className="text-lg font-bold text-brand-navy border-b border-slate-200 pb-2">
                   Empfehlungen
                 </h2>
 
@@ -1258,8 +1254,7 @@ export default function RequirementsAnalysisPage() {
                       </p>
                       <button
                         onClick={() => router.push(`/w/${slug}/admin/assessments/${assessmentId}`)}
-                        className="mt-2 text-xs font-medium px-3 py-1 rounded-lg text-white transition hover:opacity-90"
-                        style={{ backgroundColor: ACCENT }}
+                        className="mt-2 text-xs font-medium px-3 py-1 rounded-lg text-white transition hover:opacity-90 bg-brand-navy"
                         data-testid="link-back-to-assessment"
                       >
                         Zurück zum Assessment →
@@ -1293,8 +1288,7 @@ export default function RequirementsAnalysisPage() {
                       <button
                         onClick={handleAdoptForProject}
                         disabled={adopting}
-                        className="px-5 py-2 rounded-lg text-sm font-medium text-white shadow-sm hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2"
-                        style={{ backgroundColor: ACCENT }}
+                        className="px-5 py-2 rounded-lg text-sm font-medium text-white shadow-sm hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2 bg-brand-navy"
                         data-testid="button-adopt-for-project"
                       >
                         {adopting ? (
