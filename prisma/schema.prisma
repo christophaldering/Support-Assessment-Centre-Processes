@@ -735,26 +735,31 @@ model ObservationSheet {
 }
 
 model ObservationSheetTemplate {
-  id                String   @id @default(uuid())
-  workspaceId       String   @map("workspace_id")
-  name              String
-  description       String?
-  type              String   @default("manual")
-  content           Json?
-  fileKey           String?  @map("file_key")
-  fileName          String?  @map("file_name")
-  fileSize          Int?     @map("file_size")
-  mimeType          String?  @map("mime_type")
-  originalFileKey   String?  @map("original_file_key")
-  originalFileName  String?  @map("original_file_name")
-  cdAdaptedFileKey  String?  @map("cd_adapted_file_key")
-  cdAdaptedFileName String?  @map("cd_adapted_file_name")
-  aiGenerated       Boolean  @default(false) @map("ai_generated")
-  status            String   @default("active")
-  tags              String[]
-  targetLevels      String[] @map("target_levels")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id                  String   @id @default(uuid())
+  workspaceId         String   @map("workspace_id")
+  name                String
+  description         String?
+  type                String   @default("manual")
+  content             Json?
+  structuredData      Json?    @map("structured_data")
+  ratingScale         String?  @map("rating_scale")
+  exerciseIds         String[] @map("exercise_ids")
+  competencyModelId   String?  @map("competency_model_id")
+  competencyNames     String[] @map("competency_names")
+  fileKey             String?  @map("file_key")
+  fileName            String?  @map("file_name")
+  fileSize            Int?     @map("file_size")
+  mimeType            String?  @map("mime_type")
+  originalFileKey     String?  @map("original_file_key")
+  originalFileName    String?  @map("original_file_name")
+  cdAdaptedFileKey    String?  @map("cd_adapted_file_key")
+  cdAdaptedFileName   String?  @map("cd_adapted_file_name")
+  aiGenerated         Boolean  @default(false) @map("ai_generated")
+  status              String   @default("active")
+  tags                String[]
+  targetLevels        String[] @map("target_levels")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   workspace         Workspace @relation(fields: [workspaceId], references: [id])
 
