@@ -118,6 +118,10 @@ model User {
   assessmentId        String?  @map("assessment_id")
   forcePasswordChange Boolean  @default(false) @map("force_password_change")
   status              String   @default("active")
+  observerType        String?  @map("observer_type")
+  canExport           Boolean  @default(true) @map("can_export")
+  accessCode          String?  @map("access_code")
+  language            String   @default("de")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
@@ -148,6 +152,8 @@ model Assessment {
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
   autoDeleteDays Int?     @map("auto_delete_days")
   processStep    Int      @default(0) @map("process_step")
+  targetPosition String?  @map("target_position")
+  workflowConfig Json?    @map("workflow_config")
 
   workspace          Workspace @relation(fields: [workspaceId], references: [id])
   client             Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)

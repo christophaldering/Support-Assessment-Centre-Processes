@@ -60,7 +60,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const { name, description, location, startDate, endDate, status, designMode, autoDeleteDays, clientId, clientName } = await req.json();
+    const { name, description, location, startDate, endDate, status, designMode, autoDeleteDays, clientId, clientName, targetPosition, workflowConfig } = await req.json();
 
     if (!name) {
       return NextResponse.json({ error: "Name ist erforderlich" }, { status: 400 });
@@ -106,6 +106,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         autoDeleteDays: autoDeleteDays != null ? parseInt(autoDeleteDays) : null,
         clientId: resolvedClientId,
         clientName: resolvedClientName,
+        targetPosition: targetPosition || null,
+        workflowConfig: workflowConfig || null,
       },
     });
 
