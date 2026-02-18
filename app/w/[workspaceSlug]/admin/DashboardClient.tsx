@@ -53,10 +53,9 @@ const ROLE_LABELS: Record<string, string> = {
   OBSERVER: "Beobachter",
   PROJECT_ASSISTANT: "Projektassistenten",
   HR_CLIENT: "HR-Kunden",
-  CANDIDATE: "Kandidaten",
 };
 
-const ROLE_ORDER = ["ADMIN", "MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"];
+const TEAM_ROLE_ORDER = ["ADMIN", "MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT"];
 
 interface Props {
   assessments: AssessmentItem[];
@@ -131,7 +130,7 @@ export default function DashboardClient({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [collapsedClients, setCollapsedClients] = useState<Set<string>>(new Set());
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [collapsedRoles, setCollapsedRoles] = useState<Set<string>>(new Set());
 
   const base = `/w/${workspaceSlug}/admin`;
 
@@ -150,24 +149,33 @@ export default function DashboardClient({
     return sorted;
   }, [localAssessments]);
 
+  const teamUsers = useMemo(() => {
+    return users.filter((u) => !u.roles.every((r) => r === "CANDIDATE"));
+  }, [users]);
+
   const roleGroups = useMemo(() => {
     const groups: Record<string, UserItem[]> = {};
-    for (const role of ROLE_ORDER) {
+    for (const role of TEAM_ROLE_ORDER) {
       groups[role] = [];
     }
-    for (const user of users) {
+    for (const user of teamUsers) {
       for (const role of user.roles) {
+        if (role === "CANDIDATE") continue;
         if (!groups[role]) groups[role] = [];
         groups[role].push(user);
       }
     }
     return groups;
-  }, [users]);
+  }, [teamUsers]);
 
-  const filteredUsers = useMemo(() => {
-    if (!selectedRole) return users;
-    return users.filter((u) => u.roles.includes(selectedRole));
-  }, [users, selectedRole]);
+  function toggleRole(key: string) {
+    setCollapsedRoles((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   function toggleClient(key: string) {
     setCollapsedClients((prev) => {
@@ -533,7 +541,7 @@ export default function DashboardClient({
             <p className="text-xs text-slate-500 mt-1">Übungen</p>
           </div>
           <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-team">
-            <p className="text-2xl font-bold text-blue-700">{users.length}</p>
+            <p className="text-2xl font-bold text-blue-700">{teamUsers.length}</p>
             <p className="text-xs text-slate-500 mt-1">Team</p>
           </div>
         </div>
@@ -628,71 +636,59 @@ export default function DashboardClient({
               <div className="px-5 py-4 border-b border-slate-200">
                 <h3 className="text-sm font-semibold text-brand-navy" data-testid="text-team-title">Team</h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  {users.length} Person{users.length !== 1 ? "en" : ""} · {ROLE_ORDER.filter((r) => (roleGroups[r]?.length ?? 0) > 0).length} Rollen
+                  {teamUsers.length} Person{teamUsers.length !== 1 ? "en" : ""} · {TEAM_ROLE_ORDER.filter((r) => (roleGroups[r]?.length ?? 0) > 0).length} Rollen
                 </p>
               </div>
 
-              <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap gap-1.5">
-                <button
-                  onClick={() => setSelectedRole(null)}
-                  className={`text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors ${
-                    selectedRole === null
-                      ? "bg-brand-navy text-white"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                  }`}
-                  data-testid="filter-role-all"
-                >
-                  Alle ({users.length})
-                </button>
-                {ROLE_ORDER.map((role) => {
-                  const count = roleGroups[role]?.length ?? 0;
-                  if (count === 0) return null;
-                  const isActive = selectedRole === role;
+              <div className="max-h-[480px] overflow-y-auto">
+                {TEAM_ROLE_ORDER.map((role) => {
+                  const members = roleGroups[role] ?? [];
+                  if (members.length === 0) return null;
+                  const isCollapsed = collapsedRoles.has(role);
                   return (
-                    <button
-                      key={role}
-                      onClick={() => setSelectedRole(isActive ? null : role)}
-                      className={`text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors ${
-                        isActive
-                          ? "bg-brand-navy text-white"
-                          : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                      }`}
-                      data-testid={`filter-role-${role.toLowerCase()}`}
-                    >
-                      {ROLE_LABELS[role] ?? role} ({count})
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="divide-y divide-slate-50 max-h-[400px] overflow-y-auto">
-                {filteredUsers.length === 0 ? (
-                  <div className="px-5 py-6 text-center">
-                    <p className="text-xs text-slate-400">Keine Benutzer in dieser Rolle.</p>
-                  </div>
-                ) : (
-                  filteredUsers.map((u) => (
-                    <div key={u.id} className="px-5 py-2.5 flex items-center gap-3" data-testid={`user-${u.id}`}>
-                      <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase">
-                          {u.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                    <div key={role} className="border-b border-slate-100 last:border-b-0">
+                      <button
+                        onClick={() => toggleRole(role)}
+                        className="w-full flex items-center gap-3 px-5 py-2.5 bg-slate-50/60 hover:bg-slate-100/60 transition-colors text-left"
+                        data-testid={`toggle-role-${role.toLowerCase()}`}
+                      >
+                        <svg
+                          className={`w-3 h-3 text-slate-400 transition-transform ${isCollapsed ? "" : "rotate-90"}`}
+                          fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                        <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                          {ROLE_LABELS[role] ?? role}
                         </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-slate-700 truncate">{u.name}</p>
-                        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                          {u.roles.map((r) => (
-                            <span
-                              key={r}
-                              className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500"
-                            >
-                              {ROLE_LABELS[r] ?? r}
-                            </span>
+                        <span className="text-[10px] text-slate-400 tabular-nums">
+                          {members.length}
+                        </span>
+                      </button>
+                      {!isCollapsed && (
+                        <div className="divide-y divide-slate-50">
+                          {members.map((u) => (
+                            <div key={u.id} className="px-5 py-2 flex items-center gap-3 pl-10" data-testid={`user-${u.id}`}>
+                              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                                <span className="text-[9px] font-bold text-slate-500 uppercase">
+                                  {u.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-slate-700 truncate">{u.name}</p>
+                                <p className="text-[10px] text-slate-400 truncate">{u.email}</p>
+                              </div>
+                            </div>
                           ))}
                         </div>
-                      </div>
+                      )}
                     </div>
-                  ))
+                  );
+                })}
+                {teamUsers.length === 0 && (
+                  <div className="px-5 py-6 text-center">
+                    <p className="text-xs text-slate-400">Noch keine Teammitglieder.</p>
+                  </div>
                 )}
               </div>
 
