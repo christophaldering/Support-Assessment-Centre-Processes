@@ -61,6 +61,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     });
 
     const PW = 595.28;
+    const PH = 841.89;
     const ML = 55;
     const MR = 55;
     const CW = PW - ML - MR;
@@ -72,24 +73,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     const lightRule = "#e2e8f0";
     const sectionBg = "#f8fafc";
 
-    function addFooter() {
-      doc.save();
-      doc.fontSize(7).font("Helvetica").fillColor(mutedColor)
-        .text("© Christoph Aldering · Private initiative / concept", ML, doc.page.height - 45, { width: CW, align: "center" });
-      doc.restore();
-    }
-
-    function accentLine() {
-      doc.save();
-      doc.rect(0, 0, PW, 3).fill(accentColor);
-      doc.restore();
-    }
-
     function checkPage(needed: number = 100) {
-      if (doc.y > doc.page.height - needed) {
+      if (doc.y > PH - 70 - needed) {
         doc.addPage();
-        accentLine();
-        addFooter();
       }
     }
 
@@ -114,8 +100,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       doc.fontSize(9).font("Helvetica").fillColor(bodyColor).text(text, ML, undefined, { width: CW, lineGap: 2 });
     }
 
-    accentLine();
-    addFooter();
+    doc.save();
+    doc.rect(0, 0, PW, 3).fill(accentColor);
+    doc.restore();
 
     doc.moveDown(1.5);
 
@@ -260,14 +247,31 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       });
     }
 
-    doc.moveDown(2);
-    checkPage(30);
+    doc.moveDown(1);
     doc.moveTo(ML, doc.y).lineTo(ML + CW, doc.y).strokeColor(lightRule).lineWidth(0.5).stroke();
     doc.moveDown(0.5);
     doc.fontSize(7).font("Helvetica").fillColor(mutedColor).text(
       `Erstellt am ${new Date(analysis.createdAt).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" })}`,
       { align: "right", width: CW }
     );
+
+    const totalPages = doc.bufferedPageRange().count;
+    for (let i = 0; i < totalPages; i++) {
+      doc.switchToPage(i);
+
+      if (i > 0) {
+        doc.save();
+        doc.rect(0, 0, PW, 3).fill(accentColor);
+        doc.restore();
+      }
+
+      doc.save();
+      doc.fontSize(7).font("Helvetica").fillColor(mutedColor)
+        .text("© Christoph Aldering · Private initiative / concept  ·  Eco-Print", ML, PH - 45, { width: CW * 0.7, lineBreak: false });
+      doc.fontSize(7).font("Helvetica").fillColor(mutedColor)
+        .text(`Seite ${i + 1} / ${totalPages}`, ML + CW * 0.7, PH - 45, { width: CW * 0.3, align: "right", lineBreak: false });
+      doc.restore();
+    }
 
     doc.end();
     const pdfBuffer = await pdfReady;

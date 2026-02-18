@@ -115,19 +115,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     let pageNum = 0;
     const tocEntries: { title: string; page: number }[] = [];
 
-    function accentLine() {
-      doc.save();
-      doc.rect(0, 0, PW, 3).fill(copperStr);
-      doc.restore();
-    }
-
     function addFooter() {
-      doc.save();
-      doc.fontSize(7).font("Helvetica").fillColor(lightMuted)
-        .text("© Christoph Aldering · Private initiative / concept", ML, PH - 45, { width: CW, align: "center" });
-      doc.fontSize(6).font("Helvetica-Oblique").fillColor("#cbd5e1")
-        .text("VERTRAULICH / CONFIDENTIAL", ML, PH - 35, { width: CW, align: "center" });
-      doc.restore();
     }
 
     function newPage(tocTitle?: string) {
@@ -135,7 +123,6 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
         doc.addPage();
       }
       pageNum++;
-      accentLine();
       if (tocTitle) {
         tocEntries.push({ title: tocTitle, page: pageNum });
       }
@@ -165,10 +152,8 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
     function checkPage(needed: number = 80) {
       if (doc.y > PH - 70 - needed) {
-        addFooter();
         doc.addPage();
         pageNum++;
-        accentLine();
         doc.y = 20;
       }
     }
@@ -918,8 +903,21 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     const range = doc.bufferedPageRange();
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
+
+      if (i > 0) {
+        doc.save();
+        doc.rect(0, 0, PW, 3).fill(copperStr);
+        doc.restore();
+      }
+
+      doc.save();
       doc.fontSize(7).font("Helvetica").fillColor(lightMuted)
-        .text(`Seite ${i + 1} von ${range.count}`, ML, PH - 55, { width: CW, align: "right" });
+        .text("© Christoph Aldering  ·  Eco-Print", ML, PH - 50, { width: CW * 0.5, lineBreak: false });
+      doc.fontSize(6).font("Helvetica-Oblique").fillColor("#cbd5e1")
+        .text("VERTRAULICH", ML + CW * 0.5, PH - 50, { width: CW * 0.25, align: "center", lineBreak: false });
+      doc.fontSize(7).font("Helvetica").fillColor(lightMuted)
+        .text(`Seite ${i + 1} / ${range.count}`, ML + CW * 0.75, PH - 50, { width: CW * 0.25, align: "right", lineBreak: false });
+      doc.restore();
     }
 
     if (tocEntries.length > 0) {

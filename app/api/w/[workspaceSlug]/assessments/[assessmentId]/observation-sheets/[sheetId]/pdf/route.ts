@@ -45,10 +45,17 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   }
 
   try {
+    const PW = 595.28;
+    const PH = 841.89;
+    const ML = 55;
+    const MR = 55;
+    const CW = PW - ML - MR;
+
     const doc = new PDFDocument({
       layout: "portrait",
       size: "A4",
-      margins: { top: 50, bottom: 60, left: 55, right: 55 },
+      margins: { top: 50, bottom: 60, left: ML, right: MR },
+      bufferPages: true,
     });
 
     const chunks: Buffer[] = [];
@@ -58,112 +65,128 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
       doc.on("end", () => resolve(Buffer.concat(chunks)));
     });
 
-    const pageW = 595.28 - 110;
-    const copper = [163, 82, 55] as [number, number, number];
-    const navy = [15, 23, 42] as [number, number, number];
-    const copperStr = `rgb(${copper.join(",")})`;
-    const navyStr = `rgb(${navy.join(",")})`;
-    const slateStr = "rgb(100,116,139)";
+    const accentColor = "#a35237";
+    const headingColor = "#1e293b";
+    const bodyColor = "#374151";
+    const mutedColor = "#6b7280";
+    const lightRule = "#e2e8f0";
 
-    doc.rect(0, 0, 595.28, 65).fill(copperStr);
-    doc.fillColor("white").fontSize(18).font("Helvetica-Bold")
-      .text("Beobachtungsbogen", 55, 18, { width: pageW });
-    doc.fontSize(10).font("Helvetica")
-      .text(sheet.name, 55, 42, { width: pageW });
-
-    doc.fillColor(navyStr).moveDown(2);
-    let y = 90;
-
-    doc.fontSize(9).fillColor(slateStr).font("Helvetica");
-    doc.text(`Assessment: ${assessment?.name || params.assessmentId}`, 55, y);
-    y += 16;
-    if (exercise) {
-      doc.text(`Übung: ${exercise.name} (${exercise.type || ""})`, 55, y);
-      y += 16;
+    function checkPage(needed: number = 80) {
+      if (doc.y > PH - 70 - needed) {
+        doc.addPage();
+      }
     }
-    doc.text(`Typ: ${sheet.type === "ai" ? "KI-generiert" : sheet.type === "template" ? "Vorlage" : "Manuell"}`, 55, y);
-    y += 16;
-    doc.text(`Erstellt: ${new Date(sheet.createdAt).toLocaleDateString("de-DE")}`, 55, y);
-    y += 24;
+
+    doc.save();
+    doc.rect(0, 0, PW, 3).fill(accentColor);
+    doc.restore();
+
+    doc.moveDown(0.5);
+    doc.fontSize(18).font("Helvetica-Bold").fillColor(headingColor)
+      .text("Beobachtungsbogen", ML);
+    doc.moveDown(0.2);
+    doc.fontSize(11).font("Helvetica").fillColor(accentColor)
+      .text(sheet.name, ML, undefined, { width: CW });
+    doc.moveDown(0.3);
+    doc.moveTo(ML, doc.y).lineTo(ML + CW, doc.y).strokeColor(lightRule).lineWidth(0.5).stroke();
+    doc.moveDown(0.5);
+
+    doc.fontSize(9).fillColor(mutedColor).font("Helvetica");
+    const metaLines: string[] = [];
+    metaLines.push(`Assessment: ${assessment?.name || params.assessmentId}`);
+    if (exercise) metaLines.push(`Übung: ${exercise.name} (${exercise.type || ""})`);
+    metaLines.push(`Typ: ${sheet.type === "ai" ? "KI-generiert" : sheet.type === "template" ? "Vorlage" : "Manuell"}`);
+    metaLines.push(`Erstellt: ${new Date(sheet.createdAt).toLocaleDateString("de-DE")}`);
+    doc.text(metaLines.join("  ·  "), ML, undefined, { width: CW });
+    doc.moveDown(0.8);
 
     if (mtmmMappings.length > 0) {
-      doc.fontSize(11).fillColor(navyStr).font("Helvetica-Bold")
-        .text("MTMM-Kompetenzen", 55, y);
-      y += 18;
-      doc.fontSize(9).fillColor(slateStr).font("Helvetica");
+      checkPage(60);
+      doc.fontSize(11).fillColor(accentColor).font("Helvetica-Bold")
+        .text("MTMM-Kompetenzen", ML);
+      doc.moveDown(0.15);
+      doc.moveTo(ML, doc.y).lineTo(ML + CW, doc.y).strokeColor(accentColor).lineWidth(0.5).stroke();
+      doc.moveDown(0.4);
+      doc.fontSize(9).fillColor(bodyColor).font("Helvetica");
       for (const m of mtmmMappings) {
+        checkPage(20);
         const weightLabel = m.weight >= 1.5 ? "Primär" : m.weight >= 1.0 ? "Standard" : "Sekundär";
-        doc.text(`• ${m.competencyNode.name} — Gewicht: ${m.weight.toFixed(1)} (${weightLabel})`, 60, y, { width: pageW - 10 });
-        y += 14;
-        if (y > 750) { doc.addPage(); y = 50; }
+        doc.text(`• ${m.competencyNode.name} — ${m.weight.toFixed(1)} (${weightLabel})`, ML + 5, undefined, { width: CW - 10 });
+        doc.moveDown(0.15);
       }
-      y += 10;
+      doc.moveDown(0.5);
     }
 
     if (sheet.description) {
-      doc.fontSize(11).fillColor(navyStr).font("Helvetica-Bold")
-        .text("Beschreibung", 55, y);
-      y += 18;
-      doc.fontSize(9).fillColor(slateStr).font("Helvetica")
-        .text(sheet.description, 55, y, { width: pageW, lineGap: 3 });
-      y = doc.y + 16;
+      checkPage(60);
+      doc.fontSize(11).fillColor(accentColor).font("Helvetica-Bold")
+        .text("Beschreibung", ML);
+      doc.moveDown(0.15);
+      doc.moveTo(ML, doc.y).lineTo(ML + CW, doc.y).strokeColor(accentColor).lineWidth(0.5).stroke();
+      doc.moveDown(0.4);
+      doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
+        .text(sheet.description, ML, undefined, { width: CW, lineGap: 3 });
+      doc.moveDown(0.8);
     }
 
     if (sheet.content) {
-      if (y > 700) { doc.addPage(); y = 50; }
-      doc.fontSize(11).fillColor(navyStr).font("Helvetica-Bold")
-        .text("Inhalt", 55, y);
-      y += 18;
+      checkPage(60);
+      doc.fontSize(11).fillColor(accentColor).font("Helvetica-Bold")
+        .text("Inhalt", ML);
+      doc.moveDown(0.15);
+      doc.moveTo(ML, doc.y).lineTo(ML + CW, doc.y).strokeColor(accentColor).lineWidth(0.5).stroke();
+      doc.moveDown(0.4);
 
       const content = sheet.content as any;
       if (typeof content === "string") {
-        doc.fontSize(9).fillColor(slateStr).font("Helvetica")
-          .text(content, 55, y, { width: pageW, lineGap: 3 });
+        doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
+          .text(content, ML, undefined, { width: CW, lineGap: 3 });
       } else if (Array.isArray(content)) {
         for (const item of content) {
-          if (y > 730) { doc.addPage(); y = 50; }
+          checkPage(30);
           if (typeof item === "string") {
-            doc.fontSize(9).fillColor(slateStr).font("Helvetica")
-              .text(`• ${item}`, 60, y, { width: pageW - 10 });
-            y = doc.y + 6;
+            doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
+              .text(`• ${item}`, ML + 5, undefined, { width: CW - 10 });
+            doc.moveDown(0.2);
           } else if (item && typeof item === "object") {
             if (item.title || item.name || item.label) {
-              doc.fontSize(10).fillColor(navyStr).font("Helvetica-Bold")
-                .text(item.title || item.name || item.label, 55, y, { width: pageW });
-              y = doc.y + 4;
+              doc.fontSize(10).fillColor(headingColor).font("Helvetica-Bold")
+                .text(item.title || item.name || item.label, ML, undefined, { width: CW });
+              doc.moveDown(0.15);
             }
             if (item.description || item.text || item.value) {
-              doc.fontSize(9).fillColor(slateStr).font("Helvetica")
-                .text(String(item.description || item.text || item.value), 60, y, { width: pageW - 10, lineGap: 2 });
-              y = doc.y + 8;
+              doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
+                .text(String(item.description || item.text || item.value), ML + 5, undefined, { width: CW - 10, lineGap: 2 });
+              doc.moveDown(0.3);
             }
             if (item.items && Array.isArray(item.items)) {
               for (const subItem of item.items) {
-                if (y > 730) { doc.addPage(); y = 50; }
-                doc.fontSize(9).fillColor(slateStr).font("Helvetica")
-                  .text(`  – ${typeof subItem === "string" ? subItem : subItem.text || subItem.name || JSON.stringify(subItem)}`, 65, y, { width: pageW - 20 });
-                y = doc.y + 4;
+                checkPage(20);
+                doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
+                  .text(`  – ${typeof subItem === "string" ? subItem : subItem.text || subItem.name || JSON.stringify(subItem)}`, ML + 10, undefined, { width: CW - 20 });
+                doc.moveDown(0.1);
               }
             }
+            doc.moveDown(0.3);
           }
         }
       } else if (typeof content === "object") {
         const renderObj = (obj: any, indent: number) => {
           for (const [key, val] of Object.entries(obj)) {
-            if (y > 730) { doc.addPage(); y = 50; }
+            checkPage(20);
             if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
-              doc.fontSize(9).fillColor(slateStr).font("Helvetica")
-                .text(`${key}: ${val}`, 55 + indent, y, { width: pageW - indent });
-              y = doc.y + 4;
+              doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
+                .text(`${key}: ${val}`, ML + indent, undefined, { width: CW - indent });
+              doc.moveDown(0.1);
             } else if (Array.isArray(val)) {
-              doc.fontSize(9).fillColor(navyStr).font("Helvetica-Bold")
-                .text(`${key}:`, 55 + indent, y, { width: pageW - indent });
-              y = doc.y + 4;
+              doc.fontSize(9).fillColor(headingColor).font("Helvetica-Bold")
+                .text(`${key}:`, ML + indent, undefined, { width: CW - indent });
+              doc.moveDown(0.1);
               for (const item of val) {
-                if (y > 730) { doc.addPage(); y = 50; }
-                doc.fontSize(9).fillColor(slateStr).font("Helvetica")
-                  .text(`• ${typeof item === "string" ? item : JSON.stringify(item)}`, 60 + indent, y, { width: pageW - indent - 10 });
-                y = doc.y + 4;
+                checkPage(20);
+                doc.fontSize(9).fillColor(bodyColor).font("Helvetica")
+                  .text(`• ${typeof item === "string" ? item : JSON.stringify(item)}`, ML + indent + 5, undefined, { width: CW - indent - 10 });
+                doc.moveDown(0.1);
               }
             }
           }
@@ -172,10 +195,23 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
       }
     }
 
-    const footerY = 841.89 - 40;
-    doc.fontSize(7).fillColor(slateStr).font("Helvetica")
-      .text("Executive Diagnostics Suite — Beobachtungsbogen", 55, footerY, { width: pageW, align: "center" });
-    doc.text("Eco-Print · minimaler Tintenverbrauch", 55, footerY + 10, { width: pageW, align: "center" });
+    const totalPages = doc.bufferedPageRange().count;
+    for (let i = 0; i < totalPages; i++) {
+      doc.switchToPage(i);
+
+      if (i > 0) {
+        doc.save();
+        doc.rect(0, 0, PW, 3).fill(accentColor);
+        doc.restore();
+      }
+
+      doc.save();
+      doc.fontSize(7).font("Helvetica").fillColor(mutedColor)
+        .text("Executive Diagnostics Suite — Beobachtungsbogen  ·  Eco-Print", ML, PH - 45, { width: CW * 0.7, lineBreak: false });
+      doc.fontSize(7).font("Helvetica").fillColor(mutedColor)
+        .text(`Seite ${i + 1} / ${totalPages}`, ML + CW * 0.7, PH - 45, { width: CW * 0.3, align: "right", lineBreak: false });
+      doc.restore();
+    }
 
     doc.end();
     const pdfBuffer = await pdfPromise;

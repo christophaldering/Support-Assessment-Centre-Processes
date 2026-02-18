@@ -438,13 +438,14 @@ export async function generatePdf(data: ReportData): Promise<Buffer> {
     const tableLeft = 50;
 
     let xPos = tableLeft;
-    doc.fontSize(8).fillColor("#ffffff");
+    doc.fontSize(8);
     for (let i = 0; i < headers.length; i++) {
       const w = colWidths[i]!;
-      doc.rect(xPos, tableTop, w, 18).fill(primary);
-      doc.fillColor("#ffffff").text(headers[i]!, xPos + 3, tableTop + 4, { width: w - 6 });
+      doc.rect(xPos, tableTop, w, 18).fill("#f1f5f9");
+      doc.fillColor(primary).font("Helvetica-Bold").text(headers[i]!, xPos + 3, tableTop + 4, { width: w - 6 });
       xPos += w;
     }
+    doc.font("Helvetica");
 
     let rowY = tableTop + 18;
     doc.fillColor(textColor).fontSize(8);
