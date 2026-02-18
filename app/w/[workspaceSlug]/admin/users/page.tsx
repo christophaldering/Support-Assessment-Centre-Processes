@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -30,6 +30,14 @@ const ROLE_LABELS: Record<string, string> = {
   HR_CLIENT: "HR-Auftraggeber",
   CANDIDATE: "Kandidat",
 };
+const ROLE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  ADMIN: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
+  MODERATOR: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  OBSERVER: { bg: "bg-teal-50", text: "text-teal-700", border: "border-teal-200" },
+  PROJECT_ASSISTANT: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
+  HR_CLIENT: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+  CANDIDATE: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
+};
 
 export default function UserManagementPage() {
   const params = useParams();
@@ -50,8 +58,12 @@ export default function UserManagementPage() {
   const [createError, setCreateError] = useState("");
   const [creating, setCreating] = useState(false);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editRoles, setEditRoles] = useState<string[]>([]);
+  const [addRoleDropdown, setAddRoleDropdown] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -81,15 +93,23 @@ export default function UserManagementPage() {
         const data = await res.json();
         setAssessments(data);
       }
-    } catch {
-      // non-critical
-    }
+    } catch {}
   }, [workspaceSlug]);
 
   useEffect(() => {
     fetchUsers();
     fetchAssessments();
   }, [fetchUsers, fetchAssessments]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setAddRoleDropdown(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,29 +149,71 @@ export default function UserManagementPage() {
     }
   };
 
-  const handleUpdateRoles = async (userId: string) => {
+  const handleAddRole = async (userId: string, role: string) => {
+    const user = users.find((u) => u.id === userId);
+    if (!user || user.roles.includes(role)) return;
+    setActionLoading(userId);
+    setActionError(null);
     try {
-      await fetch(`/api/w/${workspaceSlug}/users/${userId}`, {
+      const updatedRoles = [...user.roles, role];
+      const res = await fetch(`/api/w/${workspaceSlug}/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roles: editRoles }),
+        body: JSON.stringify({ roles: updatedRoles }),
       });
-      setEditingId(null);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setActionError(data.error || "Rolle konnte nicht hinzugefügt werden.");
+        return;
+      }
+      setAddRoleDropdown(null);
       fetchUsers();
     } catch {
-      // handled silently
-    }
+      setActionError("Fehler beim Hinzufügen der Rolle.");
+    } finally { setActionLoading(null); }
+  };
+
+  const handleRemoveRole = async (userId: string, role: string) => {
+    const user = users.find((u) => u.id === userId);
+    if (!user) return;
+    const updatedRoles = user.roles.filter((r) => r !== role);
+    if (updatedRoles.length === 0) return;
+    setActionLoading(userId);
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roles: updatedRoles }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setActionError(data.error || "Rolle konnte nicht entfernt werden.");
+        return;
+      }
+      fetchUsers();
+    } catch {
+      setActionError("Fehler beim Entfernen der Rolle.");
+    } finally { setActionLoading(null); }
   };
 
   const handleDeactivate = async (userId: string) => {
+    setActionLoading(userId);
+    setActionError(null);
     try {
-      await fetch(`/api/w/${workspaceSlug}/users/${userId}`, {
+      const res = await fetch(`/api/w/${workspaceSlug}/users/${userId}`, {
         method: "DELETE",
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setActionError(data.error || "Benutzer konnte nicht deaktiviert werden.");
+        return;
+      }
+      setDeleteConfirm(null);
       fetchUsers();
     } catch {
-      // handled silently
-    }
+      setActionError("Fehler beim Deaktivieren.");
+    } finally { setActionLoading(null); }
   };
 
   const toggleRole = (role: string, current: string[], setter: (r: string[]) => void) => {
@@ -313,121 +375,150 @@ export default function UserManagementPage() {
 
         {loading && <p className="text-sm text-slate-400">Laden…</p>}
 
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <table className="w-full text-sm" data-testid="table-users">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Name</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">E-Mail</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Rollen</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Status</th>
-                <th className="text-right px-4 py-3 font-medium text-slate-600">Aktionen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50/50" data-testid={`row-user-${u.id}`}>
-                  <td className="px-4 py-3 font-medium text-slate-900">{u.name}</td>
-                  <td className="px-4 py-3 text-slate-500">{u.email}</td>
-                  <td className="px-4 py-3">
-                    {editingId === u.id ? (
-                      <div className="flex flex-wrap gap-1">
-                        {ALL_ROLES.map((role) => (
-                          <button
-                            key={role}
-                            type="button"
-                            onClick={() => toggleRole(role, editRoles, setEditRoles)}
-                            className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                              editRoles.includes(role)
-                                ? "bg-brand-blue text-white border-brand-blue"
-                                : "bg-white text-slate-500 border-slate-200"
-                            }`}
-                          >
-                            {ROLE_LABELS[role]}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-1">
-                        {u.roles.map((r) => (
+        {actionError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 flex items-center justify-between" data-testid="text-action-error">
+            <p className="text-sm text-red-700">{actionError}</p>
+            <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        )}
+
+        <div className="space-y-3" data-testid="list-users">
+          {users.map((u) => {
+            const availableRoles = ALL_ROLES.filter((r) => !u.roles.includes(r));
+            const isDeleting = deleteConfirm === u.id;
+            const isLoading = actionLoading === u.id;
+
+            return (
+              <div
+                key={u.id}
+                className={`bg-white border rounded-xl p-5 transition-all ${isDeleting ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}
+                data-testid={`card-user-${u.id}`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-sm font-semibold text-brand-navy truncate" data-testid={`text-name-${u.id}`}>{u.name}</h3>
+                      <span
+                        className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${
+                          u.status === "active"
+                            ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                            : "bg-red-50 text-red-500 border border-red-200"
+                        }`}
+                      >
+                        {u.status === "active" ? "Aktiv" : "Inaktiv"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mb-3" data-testid={`text-email-${u.id}`}>{u.email}</p>
+
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {u.roles.map((role) => {
+                        const colors = ROLE_COLORS[role] || { bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200" };
+                        return (
                           <span
-                            key={r}
-                            className={`text-xs px-2 py-0.5 rounded-full ${
-                              r === "ADMIN"
-                                ? "bg-purple-50 text-purple-600"
-                                : r === "CANDIDATE"
-                                  ? "bg-amber-50 text-amber-600"
-                                  : "bg-slate-100 text-slate-600"
-                            }`}
+                            key={role}
+                            className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border ${colors.bg} ${colors.text} ${colors.border}`}
+                            data-testid={`chip-role-${u.id}-${role.toLowerCase()}`}
                           >
-                            {ROLE_LABELS[r] || r}
+                            {ROLE_LABELS[role] || role}
+                            {u.roles.length > 1 ? (
+                              <button
+                                onClick={() => handleRemoveRole(u.id, role)}
+                                disabled={isLoading}
+                                className="ml-0.5 hover:opacity-70 transition-opacity disabled:opacity-30"
+                                title={`Rolle "${ROLE_LABELS[role]}" entfernen`}
+                                data-testid={`button-remove-role-${u.id}-${role.toLowerCase()}`}
+                              >
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            ) : (
+                              <span className="ml-0.5 opacity-20 cursor-not-allowed" title="Mindestens eine Rolle erforderlich">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                              </span>
+                            )}
                           </span>
-                        ))}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        u.status === "active"
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-red-50 text-red-500"
-                      }`}
-                    >
-                      {u.status === "active" ? "Aktiv" : "Inaktiv"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {editingId === u.id ? (
-                      <div className="flex justify-end gap-2">
+                        );
+                      })}
+
+                      {availableRoles.length > 0 && (
+                        <div className="relative" ref={addRoleDropdown === u.id ? dropdownRef : undefined}>
+                          <button
+                            onClick={() => setAddRoleDropdown(addRoleDropdown === u.id ? null : u.id)}
+                            disabled={isLoading}
+                            className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-dashed border-slate-300 text-slate-400 hover:text-slate-600 hover:border-slate-400 transition-colors disabled:opacity-30"
+                            data-testid={`button-add-role-${u.id}`}
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                            Rolle
+                          </button>
+
+                          {addRoleDropdown === u.id && (
+                            <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[180px]" data-testid={`dropdown-roles-${u.id}`}>
+                              <p className="px-3 py-1.5 text-[10px] font-bold tracking-widest text-slate-400 uppercase">Rolle hinzufügen</p>
+                              {availableRoles.map((role) => {
+                                const colors = ROLE_COLORS[role] || { bg: "bg-slate-100", text: "text-slate-600", border: "" };
+                                return (
+                                  <button
+                                    key={role}
+                                    onClick={() => handleAddRole(u.id, role)}
+                                    className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
+                                    data-testid={`button-assign-role-${u.id}-${role.toLowerCase()}`}
+                                  >
+                                    <span className={`w-2 h-2 rounded-full ${colors.bg} border ${colors.border}`} />
+                                    {ROLE_LABELS[role]}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isDeleting ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-red-600 font-medium">Wirklich löschen?</span>
                         <button
-                          onClick={() => handleUpdateRoles(u.id)}
-                          className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
+                          onClick={() => handleDeactivate(u.id)}
+                          disabled={isLoading}
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                          data-testid={`button-confirm-delete-${u.id}`}
                         >
-                          Speichern
+                          {isLoading ? "…" : "Ja, löschen"}
                         </button>
                         <button
-                          onClick={() => setEditingId(null)}
-                          className="text-xs text-slate-400 hover:text-slate-600"
+                          onClick={() => setDeleteConfirm(null)}
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors"
+                          data-testid={`button-cancel-delete-${u.id}`}
                         >
                           Abbrechen
                         </button>
                       </div>
                     ) : (
-                      <div className="flex justify-end gap-2">
+                      u.status === "active" && (
                         <button
-                          onClick={() => {
-                            setEditingId(u.id);
-                            setEditRoles([...u.roles]);
-                          }}
-                          data-testid={`button-edit-${u.id}`}
-                          className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
+                          onClick={() => setDeleteConfirm(u.id)}
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 transition-colors"
+                          data-testid={`button-delete-${u.id}`}
                         >
-                          Rollen bearbeiten
+                          Deaktivieren
                         </button>
-                        {u.status === "active" && (
-                          <button
-                            onClick={() => handleDeactivate(u.id)}
-                            data-testid={`button-deactivate-${u.id}`}
-                            className="text-xs text-red-500 hover:text-red-700 font-medium"
-                          >
-                            Deaktivieren
-                          </button>
-                        )}
-                      </div>
+                      )
                     )}
-                  </td>
-                </tr>
-              ))}
-              {users.length === 0 && !loading && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
-                    Keine Benutzer vorhanden.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {users.length === 0 && !loading && (
+            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center">
+              <p className="text-sm text-slate-400">Keine Benutzer vorhanden.</p>
+            </div>
+          )}
         </div>
       </main>
 
