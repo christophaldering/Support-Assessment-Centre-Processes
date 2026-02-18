@@ -179,54 +179,46 @@ export default function DashboardClient({
     }
   }
 
-  const inputClass = "w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 transition-colors";
-  const inputStyle = { borderColor: `${primary}25`, color: textColor, backgroundColor: bgColor };
-  const focusRing = { "--tw-ring-color": `${primary}30` } as React.CSSProperties;
+  const inputClass = "w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors";
 
   function renderCreateModal() {
     if (!showCreate) return null;
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
         <div
-          className="rounded-2xl border shadow-xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
-          style={{ backgroundColor: bgColor, borderColor: `${primary}15` }}
+          className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
           data-testid="dialog-create-project"
         >
-          <h3
-            className="text-xl font-bold mb-6"
-            style={{ fontFamily: `'${headingFont}', serif`, color: primary }}
-          >
+          <h3 className="text-xl font-semibold text-brand-navy mb-6">
             Neues Assessment erstellen
           </h3>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="text-sm font-medium block mb-1" style={{ color: textColor }}>Assessment-Name *</label>
+              <label className="text-sm font-medium text-slate-700 block mb-1">Assessment-Name *</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className={inputClass}
-                style={{ ...inputStyle, ...focusRing }}
                 placeholder="z.B. CEO REWE"
                 data-testid="input-project-name"
                 autoFocus
               />
             </div>
             <div>
-              <label className="text-sm font-medium block mb-1" style={{ color: textColor }}>Kunde</label>
+              <label className="text-sm font-medium text-slate-700 block mb-1">Kunde</label>
               <input
                 type="text"
                 value={form.clientName}
                 onChange={(e) => setForm({ ...form, clientName: e.target.value })}
                 className={inputClass}
-                style={{ ...inputStyle, ...focusRing }}
                 placeholder="z.B. REWE Group"
                 data-testid="input-client-name"
               />
             </div>
             <div>
-              <label className="text-sm font-medium block mb-1" style={{ color: textColor }}>Vorlage verwenden</label>
+              <label className="text-sm font-medium text-slate-700 block mb-1">Vorlage verwenden</label>
               <select
                 value={form.copyFromId}
                 onChange={(e) => {
@@ -241,7 +233,6 @@ export default function DashboardClient({
                   setForm({ ...form, copyFromId: selectedId });
                 }}
                 className={inputClass}
-                style={{ ...inputStyle, ...focusRing }}
                 data-testid="select-copy-from"
               >
                 <option value="">— Keine Vorlage —</option>
@@ -251,28 +242,27 @@ export default function DashboardClient({
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium block mb-1" style={{ color: textColor }}>Beschreibung</label>
+              <label className="text-sm font-medium text-slate-700 block mb-1">Beschreibung</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 className={inputClass + " min-h-[70px] resize-y"}
-                style={{ ...inputStyle, ...focusRing }}
                 placeholder="Kurze Beschreibung..."
                 data-testid="input-project-description"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium block mb-1" style={{ color: textColor }}>Startdatum</label>
-                <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className={inputClass} style={{ ...inputStyle, ...focusRing }} data-testid="input-project-start-date" />
+                <label className="text-sm font-medium text-slate-700 block mb-1">Startdatum</label>
+                <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className={inputClass} data-testid="input-project-start-date" />
               </div>
               <div>
-                <label className="text-sm font-medium block mb-1" style={{ color: textColor }}>Enddatum</label>
-                <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className={inputClass} style={{ ...inputStyle, ...focusRing }} data-testid="input-project-end-date" />
+                <label className="text-sm font-medium text-slate-700 block mb-1">Enddatum</label>
+                <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className={inputClass} data-testid="input-project-end-date" />
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium block mb-2" style={{ color: textColor }}>Design-Modus</label>
+              <label className="text-sm font-medium text-slate-700 block mb-2">Design-Modus</label>
               <div className="grid grid-cols-3 gap-2">
                 {(["ai_full", "ai_supported", "classic"] as const).map((mode) => {
                   const ml = designModeLabels[mode] ?? { de: mode, icon: "✋" };
@@ -282,13 +272,11 @@ export default function DashboardClient({
                       key={mode}
                       type="button"
                       onClick={() => setForm({ ...form, designMode: mode })}
-                      className="rounded-lg border px-3 py-2.5 text-xs font-medium transition-all text-center"
-                      style={{
-                        borderColor: selected ? primary : `${primary}20`,
-                        backgroundColor: selected ? `${primary}08` : "transparent",
-                        color: selected ? primary : textColor,
-                        boxShadow: selected ? `0 0 0 1px ${primary}` : "none",
-                      }}
+                      className={`rounded-lg border px-3 py-2.5 text-xs font-medium transition-all text-center ${
+                        selected
+                          ? "border-blue-500 bg-blue-50/60 text-blue-700 ring-1 ring-blue-500"
+                          : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                      }`}
                       data-testid={`button-design-mode-${mode}`}
                     >
                       <span className="block text-base mb-0.5">{ml.icon}</span>
@@ -299,8 +287,8 @@ export default function DashboardClient({
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium block mb-1" style={{ color: textColor }}>Auto-Löschung</label>
-              <select value={form.autoDeleteDays} onChange={(e) => setForm({ ...form, autoDeleteDays: e.target.value })} className={inputClass} style={{ ...inputStyle, ...focusRing }} data-testid="select-auto-delete-days">
+              <label className="text-sm font-medium text-slate-700 block mb-1">Auto-Löschung</label>
+              <select value={form.autoDeleteDays} onChange={(e) => setForm({ ...form, autoDeleteDays: e.target.value })} className={inputClass} data-testid="select-auto-delete-days">
                 <option value="">Keine</option>
                 <option value="30">30 Tage</option>
                 <option value="60">60 Tage</option>
@@ -314,8 +302,7 @@ export default function DashboardClient({
               <button
                 type="button"
                 onClick={() => setShowCreate(false)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-slate-50"
-                style={{ borderColor: `${primary}20`, color: textColor }}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
                 data-testid="button-cancel-create"
               >
                 Abbrechen
@@ -323,8 +310,7 @@ export default function DashboardClient({
               <button
                 type="submit"
                 disabled={creating}
-                className="px-5 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: primary }}
+                className="px-5 py-2 text-sm font-medium text-white rounded-lg bg-brand-navy transition-colors hover:opacity-90 disabled:opacity-50"
                 data-testid="button-submit-create"
               >
                 {creating ? "Wird erstellt..." : "Erstellen"}
@@ -343,20 +329,19 @@ export default function DashboardClient({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmDelete(null)}>
         <div
-          className="rounded-2xl border shadow-xl w-full max-w-md p-8"
-          style={{ backgroundColor: bgColor, borderColor: `${primary}20` }}
+          className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-md p-8"
           onClick={(e) => e.stopPropagation()}
           data-testid="dialog-confirm-delete"
         >
-          <h3 className="text-lg font-bold mb-4" style={{ fontFamily: `'${headingFont}', serif`, color: "#ef4444" }}>Assessment löschen</h3>
-          <p className="text-sm mb-6" style={{ color: textColor }}>
+          <h3 className="text-lg font-semibold text-red-600 mb-4">Assessment löschen</h3>
+          <p className="text-sm text-slate-600 mb-6">
             Möchten Sie &laquo;{project.name}&raquo; wirklich löschen? Alle zugehörigen Daten werden unwiderruflich entfernt.
           </p>
           <div className="flex justify-end gap-3">
-            <button type="button" onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium rounded-lg border hover:bg-slate-50" style={{ borderColor: `${primary}20`, color: textColor }} data-testid="button-cancel-delete">
+            <button type="button" onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50" data-testid="button-cancel-delete">
               Abbrechen
             </button>
-            <button type="button" onClick={() => handleDelete(confirmDelete)} disabled={deletingId === confirmDelete} className="px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: "#ef4444" }} data-testid="button-confirm-delete">
+            <button type="button" onClick={() => handleDelete(confirmDelete)} disabled={deletingId === confirmDelete} className="px-5 py-2 text-sm font-medium text-white rounded-lg bg-red-600 hover:opacity-90 disabled:opacity-50" data-testid="button-confirm-delete">
               {deletingId === confirmDelete ? "Wird gelöscht..." : "Endgültig löschen"}
             </button>
           </div>
@@ -372,37 +357,13 @@ export default function DashboardClient({
   const totalCandidates = localAssessments.reduce((sum, a) => sum + a.candidateCount, 0);
   const totalExercises = localAssessments.reduce((sum, a) => sum + a.exerciseCount, 0);
 
-  const kpis = [
-    { label: "Assessments", value: localAssessments.length, sub: `${activeCount} aktiv`, icon: "briefcase" },
-    { label: "Teilnehmer", value: totalCandidates, sub: "gesamt", icon: "people" },
-    { label: "Übungen", value: totalExercises, sub: "zugewiesen", icon: "puzzle" },
-    { label: "Team", value: totalUsers, sub: `${roleSummary.length} Rollen`, icon: "shield" },
-  ];
-
-  function KpiIcon({ icon }: { icon: string }) {
-    const cls = "w-5 h-5";
-    const props = { className: cls, fill: "none", viewBox: "0 0 24 24", strokeWidth: 1.5, stroke: primary };
-    switch (icon) {
-      case "briefcase":
-        return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>;
-      case "people":
-        return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>;
-      case "puzzle":
-        return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.401.604-.401.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.959.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 01-.61-.58v0z" /></svg>;
-      case "shield":
-        return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>;
-      default:
-        return null;
-    }
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50" style={{ color: textColor }}>
+    <div className="min-h-screen flex flex-col bg-slate-50">
       {renderCreateModal()}
       {renderDeleteConfirmation()}
 
       <header className="bg-brand-navy text-white">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
               href={`/w/${workspaceSlug}/admin`}
@@ -430,48 +391,42 @@ export default function DashboardClient({
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8 space-y-8">
 
-        <div className="mb-8">
-          <h1
-            className="text-2xl font-bold tracking-tight text-brand-navy"
-            style={{ fontFamily: `'${headingFont}', serif` }}
-            data-testid="text-dashboard-title"
-          >
+        <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-brand-navy mb-2" data-testid="text-dashboard-title">
             Enterprise Cockpit
-          </h1>
-          <p className="text-sm mt-1 opacity-50">
-            {workspaceName} · Diagnostik-Plattform
+          </h2>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Zentrale Übersicht über alle Assessments, Module und Werkzeuge.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" data-testid="kpi-grid">
-          {kpis.map((kpi) => (
-            <div
-              key={kpi.label}
-              className="bg-white rounded-xl border p-5 transition-shadow hover:shadow-sm"
-              style={{ borderColor: `${primary}10` }}
-              data-testid={`kpi-${kpi.label.toLowerCase()}`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primary}08` }}>
-                  <KpiIcon icon={kpi.icon} />
-                </div>
-              </div>
-              <div className="text-2xl font-bold tabular-nums" style={{ color: textColor, fontFamily: `'${headingFont}', serif` }}>{kpi.value}</div>
-              <div className="text-xs mt-0.5 opacity-50">{kpi.label} · {kpi.sub}</div>
-            </div>
-          ))}
+        <div className="grid md:grid-cols-4 gap-4" data-testid="kpi-grid">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-assessments">
+            <p className="text-2xl font-bold text-brand-navy">{localAssessments.length}</p>
+            <p className="text-xs text-slate-500 mt-1">Assessments</p>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-teilnehmer">
+            <p className="text-2xl font-bold text-purple-700">{totalCandidates}</p>
+            <p className="text-xs text-slate-500 mt-1">Teilnehmer</p>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-übungen">
+            <p className="text-2xl font-bold text-emerald-700">{totalExercises}</p>
+            <p className="text-xs text-slate-500 mt-1">Übungen</p>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-team">
+            <p className="text-2xl font-bold text-blue-700">{totalUsers}</p>
+            <p className="text-xs text-slate-500 mt-1">Team</p>
+          </div>
         </div>
 
-        <div className="mb-10">
-          <div className="flex items-center justify-between mb-5">
+        <div className="bg-white border border-slate-200 rounded-xl" data-testid="section-assessments">
+          <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold" style={{ fontFamily: `'${headingFont}', serif`, color: textColor }} data-testid="text-assessments-title">
-                Assessments
-              </h2>
-              <p className="text-xs opacity-50 mt-0.5">
-                {activeCount > 0 && <span className="font-medium" style={{ color: "#16a34a" }}>{activeCount} aktiv</span>}
+              <h3 className="text-base font-semibold text-brand-navy">Assessments</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {activeCount > 0 && <span className="font-medium text-emerald-600">{activeCount} aktiv</span>}
                 {activeCount > 0 && draftCount > 0 && " · "}
                 {draftCount > 0 && <span>{draftCount} Entwurf</span>}
                 {(activeCount > 0 || draftCount > 0) && completedCount > 0 && " · "}
@@ -481,8 +436,7 @@ export default function DashboardClient({
             </div>
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium text-white rounded-xl transition-all hover:opacity-90 hover:shadow-md"
-              style={{ backgroundColor: primary }}
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white rounded-lg bg-brand-navy transition-all hover:opacity-90"
               data-testid="button-create-project"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -493,113 +447,72 @@ export default function DashboardClient({
           </div>
 
           {localAssessments.length === 0 ? (
-            <div className="bg-white rounded-xl border p-12 text-center" style={{ borderColor: `${primary}10` }}>
-              <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: `${primary}08` }}>
-                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke={primary}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" />
-                </svg>
-              </div>
-              <p className="text-sm opacity-50 mb-4">Noch keine Assessments vorhanden.</p>
+            <div className="p-12 text-center">
+              <p className="text-sm text-slate-500 mb-4">Noch keine Assessments vorhanden.</p>
               <button
                 onClick={() => setShowCreate(true)}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-white rounded-xl hover:opacity-90"
-                style={{ backgroundColor: primary }}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-white rounded-lg bg-brand-navy hover:opacity-90"
                 data-testid="button-create-first-project"
               >
                 Erstes Assessment erstellen
               </button>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="assessments-grid">
+            <div className="divide-y divide-slate-100">
               {localAssessments.map((a) => {
                 const st = statusLabels[a.status] ?? { de: a.status, color: "#94a3b8", bg: "#f9fafb" };
                 const dm = designModeLabels[a.designMode] ?? { de: a.designMode, icon: "✋" };
-                const progress = Math.round(a.ratingProgress);
                 return (
                   <div
                     key={a.id}
-                    className="bg-white rounded-xl border group cursor-pointer transition-all hover:shadow-md hover:border-opacity-40"
-                    style={{ borderColor: `${primary}12` }}
+                    className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50/80 cursor-pointer transition-colors group"
                     onClick={() => router.push(`${base}/assessments/${a.id}`)}
                     data-testid={`card-assessment-${a.id}`}
                   >
-                    <div className="p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span
-                              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                              style={{ backgroundColor: st.bg, color: st.color }}
-                            >
-                              {st.de}
-                            </span>
-                            {a.autoDeleteDays && (
-                              <span className="text-[10px] opacity-40 flex items-center gap-0.5" title={`Auto-Löschung nach ${a.autoDeleteDays} Tagen`}>
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                {a.autoDeleteDays}d
-                              </span>
-                            )}
-                          </div>
-                          <h3
-                            className="text-sm font-bold truncate group-hover:underline"
-                            style={{ fontFamily: `'${headingFont}', serif`, color: textColor }}
-                          >
-                            {a.name}
-                          </h3>
-                          {a.clientName && (
-                            <p className="text-[11px] opacity-50 mt-0.5 truncate">{a.clientName}</p>
-                          )}
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setConfirmDelete(a.id); }}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-red-50 shrink-0 ml-2"
-                          style={{ color: "#ef4444" }}
-                          data-testid={`button-delete-assessment-${a.id}`}
-                          title="Löschen"
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h4 className="text-sm font-semibold text-slate-800 group-hover:text-brand-navy transition-colors truncate">
+                          {a.name}
+                        </h4>
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0"
+                          style={{ backgroundColor: st.bg, color: st.color }}
                         >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                          </svg>
-                        </button>
+                          {st.de}
+                        </span>
                       </div>
-
-                      <div className="flex items-center gap-2 text-[11px] opacity-50 mb-3">
+                      <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                        {a.clientName && <span>{a.clientName}</span>}
                         <span>{formatDate(a.startDate)} — {formatDate(a.endDate)}</span>
+                        <span>{dm.icon} {dm.de}</span>
                       </div>
-
-                      <div className="grid grid-cols-3 gap-3 mb-3">
-                        <div className="text-center">
-                          <div className="text-base font-bold tabular-nums" style={{ color: textColor }}>{a.candidateCount}</div>
-                          <div className="text-[10px] opacity-40">Teilnehmer</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-base font-bold tabular-nums" style={{ color: textColor }}>{a.exerciseCount}</div>
-                          <div className="text-[10px] opacity-40">Übungen</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-base font-bold tabular-nums" style={{ color: textColor }}>{a.reportCount}</div>
-                          <div className="text-[10px] opacity-40">Berichte</div>
-                        </div>
-                      </div>
-
-                      {progress > 0 && (
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between text-[10px] mb-1">
-                            <span className="opacity-50">Bewertungsfortschritt</span>
-                            <span className="font-medium" style={{ color: primary }}>{progress}%</span>
-                          </div>
-                          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: `${primary}10` }}>
-                            <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: primary }} />
-                          </div>
-                        </div>
-                      )}
                     </div>
-
-                    <div className="flex items-center justify-between px-5 py-3 border-t" style={{ borderColor: `${primary}06` }}>
-                      <span className="text-[10px] opacity-40 flex items-center gap-1">
-                        <span>{dm.icon}</span> {dm.de}
-                      </span>
-                      <span className="text-[11px] font-medium group-hover:underline" style={{ color: primary }}>
+                    <div className="flex items-center gap-5 text-center shrink-0">
+                      <div>
+                        <p className="text-sm font-bold text-slate-700 tabular-nums">{a.exerciseCount}</p>
+                        <p className="text-[10px] text-slate-400">Übungen</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-700 tabular-nums">{a.candidateCount}</p>
+                        <p className="text-[10px] text-slate-400">Teilnehmer</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-700 tabular-nums">{a.reportCount}</p>
+                        <p className="text-[10px] text-slate-400">Berichte</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(a.id); }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-red-50 text-red-500"
+                        data-testid={`button-delete-assessment-${a.id}`}
+                        title="Löschen"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                      <span className="text-xs font-medium text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity">
                         Öffnen →
                       </span>
                     </div>
@@ -610,43 +523,38 @@ export default function DashboardClient({
           )}
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl border" style={{ borderColor: `${primary}10` }}>
-              <div className="px-5 py-4 border-b" style={{ borderColor: `${primary}06` }}>
-                <h2 className="text-sm font-bold" style={{ fontFamily: `'${headingFont}', serif`, color: textColor }} data-testid="text-team-title">
-                  Team
-                </h2>
-                <p className="text-[11px] opacity-50 mt-0.5">
+            <div className="bg-white border border-slate-200 rounded-xl">
+              <div className="px-5 py-4 border-b border-slate-200">
+                <h3 className="text-sm font-semibold text-brand-navy" data-testid="text-team-title">Team</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">
                   {totalUsers} Person{totalUsers !== 1 ? "en" : ""}
                 </p>
               </div>
-              <div className="divide-y" style={{ borderColor: `${primary}06` }}>
+              <div className="divide-y divide-slate-100">
                 {roleSummary.map((r) => (
                   <div
                     key={r.role}
                     className="flex items-center justify-between px-5 py-2.5"
                   >
-                    <span className="text-xs" style={{ color: r.count > 0 ? textColor : `${textColor}50` }}>
+                    <span className={`text-xs ${r.count > 0 ? "text-slate-700" : "text-slate-300"}`}>
                       {r.label}
                     </span>
                     <span
-                      className="text-[11px] font-bold tabular-nums min-w-[24px] text-center rounded-full py-0.5"
-                      style={{
-                        backgroundColor: r.count > 0 ? `${primary}10` : "transparent",
-                        color: r.count > 0 ? primary : `${textColor}30`,
-                      }}
+                      className={`text-[11px] font-bold tabular-nums min-w-[24px] text-center rounded-full py-0.5 ${
+                        r.count > 0 ? "bg-blue-50 text-blue-600" : "text-slate-300"
+                      }`}
                     >
                       {r.count}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="px-5 py-3 border-t" style={{ borderColor: `${primary}06` }}>
+              <div className="px-5 py-3 border-t border-slate-200">
                 <Link
                   href={`${base}/users`}
-                  className="text-[11px] font-medium hover:underline"
-                  style={{ color: primary }}
+                  className="text-[11px] font-medium text-brand-blue hover:underline"
                   data-testid="link-manage-users"
                 >
                   Benutzer verwalten →
@@ -655,67 +563,54 @@ export default function DashboardClient({
             </div>
           </div>
 
-          <div className="lg:col-span-3">
-            <div className="mb-4">
-              <h2 className="text-sm font-bold" style={{ fontFamily: `'${headingFont}', serif`, color: textColor }} data-testid="text-modules-title">
-                Module & Werkzeuge
-              </h2>
-              <p className="text-[11px] opacity-50 mt-0.5">
-                Werkzeuge für Ihre Assessment-Center
-              </p>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" data-testid="modules-grid">
-              {modules.map((mod) => (
-                <Link
-                  key={mod.title}
-                  href={mod.href}
-                  className="group"
-                  data-testid={`link-module-${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-                >
-                  <div
-                    className="bg-white rounded-xl border p-4 h-full transition-all hover:shadow-md"
-                    style={{ borderColor: `${primary}10` }}
+          <div className="lg:col-span-2">
+            <div className="bg-white border border-slate-200 rounded-xl">
+              <div className="px-5 py-4 border-b border-slate-200">
+                <h3 className="text-sm font-semibold text-brand-navy" data-testid="text-modules-title">Module & Werkzeuge</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Werkzeuge für Ihre Assessment-Center
+                </p>
+              </div>
+              <div className="divide-y divide-slate-100" data-testid="modules-grid">
+                {modules.map((mod) => (
+                  <Link
+                    key={mod.title}
+                    href={mod.href}
+                    className="group flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50/80 transition-colors"
+                    data-testid={`link-module-${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: `${primary}08` }}
-                      >
-                        <ModuleIcon icon={mod.icon} color={primary} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3
-                            className="text-xs font-semibold group-hover:underline truncate"
-                            style={{ color: textColor, fontFamily: `'${headingFont}', serif` }}
-                          >
-                            {mod.title}
-                          </h3>
-                          {mod.count !== undefined && (
-                            <span
-                              className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full shrink-0 ml-1"
-                              style={{ backgroundColor: `${primary}08`, color: primary }}
-                            >
-                              {mod.count}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] leading-relaxed opacity-50 line-clamp-2 mt-0.5">
-                          {mod.description}
-                        </p>
-                      </div>
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-blue-50/80">
+                      <ModuleIcon icon={mod.icon} color="#3b82f6" />
                     </div>
-                  </div>
-                </Link>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-slate-700 group-hover:text-brand-navy transition-colors">
+                          {mod.title}
+                        </span>
+                        {mod.count !== undefined && (
+                          <span className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 shrink-0">
+                            {mod.count}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                        {mod.description}
+                      </p>
+                    </div>
+                    <svg className="w-4 h-4 text-slate-300 group-hover:text-brand-blue shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </div>
+
       </main>
 
-      <footer className="border-t py-5 bg-white" style={{ borderColor: `${primary}08` }}>
-        <p className="text-center text-[11px] opacity-40">
+      <footer className="border-t border-slate-200 py-5 bg-white">
+        <p className="text-center text-[11px] text-slate-400">
           &copy; Christoph Aldering &middot; Private initiative / concept
         </p>
       </footer>
