@@ -1438,7 +1438,7 @@ export default function ExerciseLibraryPage() {
       </footer>
 
       {selectedItem && (
-        <DetailModal item={selectedItem} slug={slug} onClose={handleModalClose} />
+        <DetailModal item={selectedItem} slug={slug} onClose={handleModalClose} onUpdated={fetchItems} />
       )}
     </div>
   );

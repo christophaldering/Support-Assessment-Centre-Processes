@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission, hasAnyPermission } from "@/lib/rbac";
+import { sanitizeRichText } from "@/lib/sanitize";
 
 interface RouteContext {
   params: { workspaceSlug: string; itemId: string };
@@ -80,7 +81,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       where: { id: params.itemId },
       data: {
         ...(title !== undefined && { title }),
-        ...(description !== undefined && { description }),
+        ...(description !== undefined && { description: sanitizeRichText(description) }),
         ...(tags !== undefined && { tags }),
         ...(exerciseType !== undefined && { exerciseType }),
         ...(targetLevels !== undefined && { targetLevels }),

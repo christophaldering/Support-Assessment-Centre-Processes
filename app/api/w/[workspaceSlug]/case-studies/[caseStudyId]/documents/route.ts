@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
+import { sanitizeRichText } from "@/lib/sanitize";
 
 interface RouteContext {
   params: { workspaceSlug: string; caseStudyId: string };
@@ -39,8 +40,11 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const body = await req.json();
     const { documentType, documentId, updates } = body;
 
-    if (!documentType || !documentId || !updates) {
-      return NextResponse.json({ error: "documentType, documentId und updates sind erforderlich" }, { status: 400 });
+    if (!documentType || !updates) {
+      return NextResponse.json({ error: "documentType und updates sind erforderlich" }, { status: 400 });
+    }
+    if (documentType !== "briefing" && !documentId) {
+      return NextResponse.json({ error: "documentId ist erforderlich" }, { status: 400 });
     }
 
     const dataJson = caseStudy.dataJson as any;
@@ -77,8 +81,20 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
           updated = true;
         }
       }
+    } else if (documentType === "briefing") {
+      const sanitizedUpdates = { ...updates };
+      if (sanitizedUpdates.customHtml) {
+        sanitizedUpdates.customHtml = sanitizeRichText(sanitizedUpdates.customHtml);
+      }
+      if (dataJson.briefing) {
+        dataJson.briefing = { ...dataJson.briefing, ...sanitizedUpdates };
+        updated = true;
+      } else {
+        dataJson.briefing = sanitizedUpdates;
+        updated = true;
+      }
     } else {
-      return NextResponse.json({ error: "Unbekannter documentType. Erlaubt: email, protocol, news" }, { status: 400 });
+      return NextResponse.json({ error: "Unbekannter documentType. Erlaubt: email, protocol, news, briefing" }, { status: 400 });
     }
 
     if (!updated) {

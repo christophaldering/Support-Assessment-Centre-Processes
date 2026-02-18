@@ -2,7 +2,10 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import type { CaseStudyData, AssessmentQuestions, Email } from "@/lib/case-studies/varexia";
+
+const RichTextEditor = dynamic(() => import("@/app/components/RichTextEditor"), { ssr: false });
 
 type Tab =
   | "briefing"
@@ -56,6 +59,10 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [localData, setLocalData] = useState<CaseStudyData>(data);
+  const [editingBriefing, setEditingBriefing] = useState(false);
+  const [briefingHtml, setBriefingHtml] = useState("");
+  const [savingBriefing, setSavingBriefing] = useState(false);
+  const [briefingMsg, setBriefingMsg] = useState("");
 
   const saveDocument = async () => {
     if (!editingDoc || !caseStudyId) return;
@@ -91,6 +98,75 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
       }
     } catch {}
     setSaving(false);
+  };
+
+  const briefingToHtml = () => {
+    const b = localData.briefing;
+    if (!b) return "<p>Keine Briefing-Daten vorhanden.</p>";
+    if (b.customHtml) return b.customHtml;
+    let html = "";
+    html += `<h2>Your Role / Situation</h2>`;
+    html += `<p>${b.role || ""}</p>`;
+    html += `<p>${b.situation || ""}</p>`;
+    html += `<p>You have received a selection of internal and external documents shortly before the meeting. The material is deliberately incomplete. This reflects the reality of executive decision-making.</p>`;
+    html += `<h2>Your Task</h2>`;
+    html += `<p>You are asked to structure and articulate your judgment along two dimensions:</p>`;
+    if (b.analysisQuestions?.length) {
+      html += `<h3>1. Analysis</h3><ul>`;
+      b.analysisQuestions.forEach((q: string) => { html += `<li>${q}</li>`; });
+      html += `</ul>`;
+    }
+    if (b.conclusionQuestions?.length) {
+      html += `<h3>2. Conclusions / Assessment</h3><ul>`;
+      b.conclusionQuestions.forEach((q: string) => { html += `<li>${q}</li>`; });
+      html += `</ul>`;
+    }
+    if (b.tasks?.length) {
+      html += `<h3>3. Tasks</h3><ul>`;
+      b.tasks.forEach((t: string) => { html += `<li>${t}</li>`; });
+      html += `</ul>`;
+    }
+    html += `<h2>Framework</h2>`;
+    html += `<p>You have limited time and incomplete information. This is intentional.</p>`;
+    html += `<p>Individual analysis: ${b.timeMinutes || "?"} min · Presentation: ${b.presentationMinutes || "?"} min</p>`;
+    return html;
+  };
+
+  const startEditBriefing = () => {
+    setBriefingHtml(briefingToHtml());
+    setEditingBriefing(true);
+    setBriefingMsg("");
+  };
+
+  const saveBriefing = async () => {
+    if (!caseStudyId) return;
+    setSavingBriefing(true);
+    setBriefingMsg("");
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/case-studies/${caseStudyId}/documents`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentType: "briefing",
+          documentId: "briefing",
+          updates: { ...localData.briefing, customHtml: briefingHtml },
+        }),
+      });
+      if (res.ok) {
+        setLocalData(prev => ({
+          ...prev,
+          briefing: { ...prev.briefing!, customHtml: briefingHtml },
+        }));
+        setEditingBriefing(false);
+        setBriefingMsg("Gespeichert");
+        setTimeout(() => setBriefingMsg(""), 2500);
+      } else {
+        setBriefingMsg("Fehler beim Speichern");
+      }
+    } catch {
+      setBriefingMsg("Fehler beim Speichern");
+    }
+    setSavingBriefing(false);
   };
 
   const internalEmails = localData.emails.filter((e) => e.category === "internal");
@@ -182,12 +258,62 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
 
             {activeTab === "briefing" && (
               <div className="max-w-3xl mx-auto space-y-8" data-testid="section-briefing">
-                <div>
-                  <h1 className="text-2xl font-serif font-bold text-slate-900 mb-2">Aufgabenstellung</h1>
-                  <p className="text-sm text-slate-500">Independent Assessment · Confidential</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-2xl font-serif font-bold text-slate-900 mb-2">Aufgabenstellung</h1>
+                    <p className="text-sm text-slate-500">Independent Assessment · Confidential</p>
+                  </div>
+                  {caseStudyId && !editingBriefing && (
+                    <button
+                      onClick={startEditBriefing}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                      data-testid="button-edit-briefing"
+                    >
+                      Bearbeiten
+                    </button>
+                  )}
                 </div>
 
-                {localData.briefing ? (
+                {briefingMsg && (
+                  <div className={`p-3 rounded-lg text-sm ${briefingMsg === "Gespeichert" ? "bg-emerald-50 border border-emerald-200 text-emerald-700" : "bg-red-50 border border-red-200 text-red-700"}`}>
+                    {briefingMsg}
+                  </div>
+                )}
+
+                {editingBriefing ? (
+                  <div className="space-y-4">
+                    <RichTextEditor
+                      content={briefingHtml}
+                      onChange={setBriefingHtml}
+                      placeholder="Briefing-Text eingeben..."
+                      minHeight="400px"
+                    />
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={saveBriefing}
+                        disabled={savingBriefing}
+                        className="px-5 py-2 text-white rounded-lg text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+                        style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
+                        data-testid="button-save-briefing"
+                      >
+                        {savingBriefing ? "Wird gespeichert..." : "Speichern"}
+                      </button>
+                      <button
+                        onClick={() => setEditingBriefing(false)}
+                        className="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-sm hover:bg-slate-50 transition"
+                        data-testid="button-cancel-briefing"
+                      >
+                        Abbrechen
+                      </button>
+                    </div>
+                  </div>
+                ) : localData.briefing?.customHtml ? (
+                  <div
+                    className="rounded-xl border border-slate-200 p-8 text-slate-700 leading-relaxed prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: localData.briefing.customHtml }}
+                    data-testid="briefing-custom-html"
+                  />
+                ) : localData.briefing ? (
                   <div className="rounded-xl border border-slate-200 p-8 space-y-6 text-slate-700 leading-relaxed">
                     <h2 className="text-lg font-serif font-bold text-slate-900">Your Role / Situation</h2>
                     <p>{localData.briefing.role}</p>
@@ -195,13 +321,6 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                     <p>
                       You have received a selection of internal and external documents shortly before the meeting. The material is deliberately
                       incomplete. This reflects the reality of executive decision-making.
-                    </p>
-                    <p>
-                      You are expected to work with the information available, explicitly acknowledge blind spots, and distinguish clearly between
-                      what can be assessed with confidence and what cannot.
-                    </p>
-                    <p>
-                      You will present your assessment directly to the Executive Board. You are speaking to the Board, not about it.
                     </p>
 
                     <hr className="border-slate-100" />
@@ -263,74 +382,8 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-slate-200 p-8 space-y-6 text-slate-700 leading-relaxed">
-                    <h2 className="text-lg font-serif font-bold text-slate-900">Your Role / Situation</h2>
-                    <p>
-                      Please imagine the following situation: You have been asked by the Executive Board of the <strong>VAREXIA Group</strong> to
-                      provide an independent, senior-level assessment of the Group&apos;s current situation. Varexia is a publicly listed European
-                      stock corporation (SE) with a dual management structure.
-                    </p>
-                    <p>
-                      You have received a selection of internal and external documents shortly before the meeting. The material is deliberately
-                      incomplete. This reflects the reality of executive decision-making.
-                    </p>
-                    <p>
-                      You are expected to work with the information available, explicitly acknowledge blind spots, and distinguish clearly between
-                      what can be assessed with confidence and what cannot.
-                    </p>
-                    <p>
-                      You will present your assessment directly to the Executive Board. You are speaking to the Board, not about it.
-                    </p>
-
-                    <hr className="border-slate-100" />
-                    <h2 className="text-lg font-serif font-bold text-slate-900">Your Task</h2>
-                    <p>You are asked to structure and articulate your judgment along two dimensions:</p>
-
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="font-semibold text-slate-800 mb-2">1. Analysis</h3>
-                        <ul className="list-disc pl-5 space-y-2 text-sm">
-                          <li>How do you assess the current situation of the Varexia Group based on the available information?</li>
-                          <li>Which patterns, tensions and interdependencies do you see across the organization, the financial profile and the governance system?</li>
-                          <li>Where do you see the most relevant challenges?</li>
-                          <li>Where do you see uncertainty or blind spots that should be named explicitly?</li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-slate-800 mb-2">2. Conclusions / Assessment</h3>
-                        <ul className="list-disc pl-5 space-y-2 text-sm">
-                          <li>What conclusions do you draw from your analysis?</li>
-                          <li>Which issues require explicit prioritization or decision at Executive Board level?</li>
-                          <li>Where do you see a need for action – and where consciously not?</li>
-                          <li>Which conflicting objectives do you consider structurally irresolvable and therefore requiring a deliberate choice?</li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
-                      <p className="font-semibold text-amber-900 mb-1">Important:</p>
-                      <p className="text-amber-800">
-                        The objective is not to propose a comprehensive action plan or an &ldquo;optimal solution.&rdquo;
-                        What matters is the clarity of your reasoning, the quality of your prioritization, and the explicit handling of trade-offs.
-                      </p>
-                    </div>
-
-                    <hr className="border-slate-100" />
-                    <h2 className="text-lg font-serif font-bold text-slate-900">Framework</h2>
-                    <p>
-                      You have limited time and incomplete information. This is intentional. Your task is to provide a clear, coherent and
-                      senior-level assessment under uncertainty.
-                    </p>
-                    <div className="flex gap-8 mt-2">
-                      <div className="bg-slate-100 rounded-lg px-4 py-3 text-center">
-                        <div className="text-xl font-serif font-bold text-slate-900">60</div>
-                        <div className="text-xs text-slate-500">min · Individual analysis</div>
-                      </div>
-                      <div className="bg-slate-100 rounded-lg px-4 py-3 text-center">
-                        <div className="text-xl font-serif font-bold text-slate-900">15</div>
-                        <div className="text-xs text-slate-500">min · Presentation</div>
-                      </div>
-                    </div>
+                  <div className="rounded-xl border border-slate-200 p-8 text-center text-slate-400">
+                    Kein Briefing vorhanden.
                   </div>
                 )}
               </div>

@@ -69,6 +69,7 @@ export interface BriefingData {
   conclusionQuestions: string[];
   timeMinutes: number;
   presentationMinutes: number;
+  customHtml?: string;
 }
 
 export interface BoardImpression {
