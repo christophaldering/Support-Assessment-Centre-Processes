@@ -120,27 +120,12 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
     };
   });
 
-  const roleGroups: Record<string, typeof users> = {};
-  const roleLabels: Record<string, string> = {
-    ADMIN: "Administratoren",
-    MODERATOR: "Moderatoren",
-    OBSERVER: "Beobachter",
-    PROJECT_ASSISTANT: "Projektassistenten",
-    HR_CLIENT: "HR-Kunden",
-    CANDIDATE: "Kandidaten",
-  };
-
-  for (const user of users) {
-    for (const role of user.roles) {
-      if (!roleGroups[role]) roleGroups[role] = [];
-      roleGroups[role].push(user);
-    }
-  }
-
-  const roleSummary = Object.entries(roleLabels).map(([role, label]) => ({
-    role,
-    label,
-    count: roleGroups[role]?.length ?? 0,
+  const serializedUsers = users.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    roles: u.roles,
+    status: u.status,
   }));
 
   const base = `/w/${params.workspaceSlug}/admin`;
@@ -203,7 +188,7 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   return (
     <DashboardClient
       assessments={serializedAssessments}
-      roleSummary={roleSummary}
+      users={serializedUsers}
       modules={modules}
       workspaceSlug={params.workspaceSlug}
       workspaceName={workspace.name}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -24,10 +24,12 @@ interface AssessmentItem {
   autoDeleteDays: number | null;
 }
 
-interface RoleSummary {
-  role: string;
-  label: string;
-  count: number;
+interface UserItem {
+  id: string;
+  name: string;
+  email: string;
+  roles: string[];
+  status: string;
 }
 
 interface ModuleItem {
@@ -45,9 +47,20 @@ const designModeLabels: Record<string, { de: string; icon: string }> = {
   classic: { de: "Manuell", icon: "✋" },
 };
 
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: "Administratoren",
+  MODERATOR: "Moderatoren",
+  OBSERVER: "Beobachter",
+  PROJECT_ASSISTANT: "Projektassistenten",
+  HR_CLIENT: "HR-Kunden",
+  CANDIDATE: "Kandidaten",
+};
+
+const ROLE_ORDER = ["ADMIN", "MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"];
+
 interface Props {
   assessments: AssessmentItem[];
-  roleSummary: RoleSummary[];
+  users: UserItem[];
   modules: ModuleItem[];
   workspaceSlug: string;
   workspaceName: string;
@@ -97,7 +110,7 @@ function ModuleIcon({ icon, color }: { icon: string; color: string }) {
 }
 
 export default function DashboardClient({
-  assessments, roleSummary, modules, workspaceSlug, workspaceName,
+  assessments, users, modules, workspaceSlug, workspaceName,
   primary, textColor, bgColor, headingFont, isMaster, userRoles,
 }: Props) {
   const router = useRouter();
@@ -117,8 +130,53 @@ export default function DashboardClient({
   const [localAssessments, setLocalAssessments] = useState<AssessmentItem[]>(assessments);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [collapsedClients, setCollapsedClients] = useState<Set<string>>(new Set());
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   const base = `/w/${workspaceSlug}/admin`;
+
+  const clientGroups = useMemo(() => {
+    const groups: Record<string, AssessmentItem[]> = {};
+    for (const a of localAssessments) {
+      const key = a.clientName || "__none__";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(a);
+    }
+    const sorted = Object.entries(groups).sort(([a], [b]) => {
+      if (a === "__none__") return 1;
+      if (b === "__none__") return -1;
+      return a.localeCompare(b, "de");
+    });
+    return sorted;
+  }, [localAssessments]);
+
+  const roleGroups = useMemo(() => {
+    const groups: Record<string, UserItem[]> = {};
+    for (const role of ROLE_ORDER) {
+      groups[role] = [];
+    }
+    for (const user of users) {
+      for (const role of user.roles) {
+        if (!groups[role]) groups[role] = [];
+        groups[role].push(user);
+      }
+    }
+    return groups;
+  }, [users]);
+
+  const filteredUsers = useMemo(() => {
+    if (!selectedRole) return users;
+    return users.filter((u) => u.roles.includes(selectedRole));
+  }, [users, selectedRole]);
+
+  function toggleClient(key: string) {
+    setCollapsedClients((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -350,7 +408,66 @@ export default function DashboardClient({
     );
   }
 
-  const totalUsers = roleSummary.reduce((sum, r) => sum + r.count, 0);
+  function renderAssessmentRow(a: AssessmentItem) {
+    const st = statusLabels[a.status] ?? { de: a.status, color: "#94a3b8", bg: "#f9fafb" };
+    const dm = designModeLabels[a.designMode] ?? { de: a.designMode, icon: "✋" };
+    return (
+      <div
+        key={a.id}
+        className="px-6 py-3.5 flex items-center gap-4 hover:bg-slate-50/80 cursor-pointer transition-colors group"
+        onClick={() => router.push(`${base}/assessments/${a.id}`)}
+        data-testid={`card-assessment-${a.id}`}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <h4 className="text-sm font-semibold text-slate-800 group-hover:text-brand-navy transition-colors truncate">
+              {a.name}
+            </h4>
+            <span
+              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0"
+              style={{ backgroundColor: st.bg, color: st.color }}
+            >
+              {st.de}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-slate-400">
+            <span>{formatDate(a.startDate)} — {formatDate(a.endDate)}</span>
+            <span>{dm.icon} {dm.de}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-5 text-center shrink-0">
+          <div>
+            <p className="text-sm font-bold text-slate-700 tabular-nums">{a.exerciseCount}</p>
+            <p className="text-[10px] text-slate-400">Übungen</p>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-700 tabular-nums">{a.candidateCount}</p>
+            <p className="text-[10px] text-slate-400">Teilnehmer</p>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-700 tabular-nums">{a.reportCount}</p>
+            <p className="text-[10px] text-slate-400">Berichte</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); setConfirmDelete(a.id); }}
+            className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-red-50 text-red-500"
+            data-testid={`button-delete-assessment-${a.id}`}
+            title="Löschen"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+          </button>
+          <span className="text-xs font-medium text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity">
+            Öffnen →
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   const activeCount = localAssessments.filter((a) => a.status === "active").length;
   const draftCount = localAssessments.filter((a) => a.status === "draft").length;
   const completedCount = localAssessments.filter((a) => a.status === "completed").length;
@@ -416,7 +533,7 @@ export default function DashboardClient({
             <p className="text-xs text-slate-500 mt-1">Übungen</p>
           </div>
           <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-team">
-            <p className="text-2xl font-bold text-blue-700">{totalUsers}</p>
+            <p className="text-2xl font-bold text-blue-700">{users.length}</p>
             <p className="text-xs text-slate-500 mt-1">Team</p>
           </div>
         </div>
@@ -426,6 +543,9 @@ export default function DashboardClient({
             <div>
               <h3 className="text-base font-semibold text-brand-navy">Assessments</h3>
               <p className="text-xs text-slate-500 mt-0.5">
+                {clientGroups.length > 1
+                  ? `${clientGroups.filter(([k]) => k !== "__none__").length} Kunden · `
+                  : ""}
                 {activeCount > 0 && <span className="font-medium text-emerald-600">{activeCount} aktiv</span>}
                 {activeCount > 0 && draftCount > 0 && " · "}
                 {draftCount > 0 && <span>{draftCount} Entwurf</span>}
@@ -457,65 +577,44 @@ export default function DashboardClient({
                 Erstes Assessment erstellen
               </button>
             </div>
-          ) : (
+          ) : clientGroups.length === 1 ? (
             <div className="divide-y divide-slate-100">
-              {localAssessments.map((a) => {
-                const st = statusLabels[a.status] ?? { de: a.status, color: "#94a3b8", bg: "#f9fafb" };
-                const dm = designModeLabels[a.designMode] ?? { de: a.designMode, icon: "✋" };
+              {clientGroups[0][1].map((a) => renderAssessmentRow(a))}
+            </div>
+          ) : (
+            <div>
+              {clientGroups.map(([clientKey, items]) => {
+                const isCollapsed = collapsedClients.has(clientKey);
+                const clientLabel = clientKey === "__none__" ? "Ohne Kunde" : clientKey;
+                const clientActiveCount = items.filter((a) => a.status === "active").length;
                 return (
-                  <div
-                    key={a.id}
-                    className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50/80 cursor-pointer transition-colors group"
-                    onClick={() => router.push(`${base}/assessments/${a.id}`)}
-                    data-testid={`card-assessment-${a.id}`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="text-sm font-semibold text-slate-800 group-hover:text-brand-navy transition-colors truncate">
-                          {a.name}
-                        </h4>
-                        <span
-                          className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0"
-                          style={{ backgroundColor: st.bg, color: st.color }}
-                        >
-                          {st.de}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-[11px] text-slate-400">
-                        {a.clientName && <span>{a.clientName}</span>}
-                        <span>{formatDate(a.startDate)} — {formatDate(a.endDate)}</span>
-                        <span>{dm.icon} {dm.de}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-5 text-center shrink-0">
-                      <div>
-                        <p className="text-sm font-bold text-slate-700 tabular-nums">{a.exerciseCount}</p>
-                        <p className="text-[10px] text-slate-400">Übungen</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-700 tabular-nums">{a.candidateCount}</p>
-                        <p className="text-[10px] text-slate-400">Teilnehmer</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-700 tabular-nums">{a.reportCount}</p>
-                        <p className="text-[10px] text-slate-400">Berichte</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(a.id); }}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-red-50 text-red-500"
-                        data-testid={`button-delete-assessment-${a.id}`}
-                        title="Löschen"
+                  <div key={clientKey} className="border-b border-slate-100 last:border-b-0">
+                    <button
+                      onClick={() => toggleClient(clientKey)}
+                      className="w-full flex items-center gap-3 px-6 py-3 bg-slate-50/60 hover:bg-slate-100/60 transition-colors text-left"
+                      data-testid={`toggle-client-${clientKey}`}
+                    >
+                      <svg
+                        className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isCollapsed ? "" : "rotate-90"}`}
+                        fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                        </svg>
-                      </button>
-                      <span className="text-xs font-medium text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity">
-                        Öffnen →
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      </svg>
+                      <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        {clientLabel}
                       </span>
-                    </div>
+                      <span className="text-[10px] text-slate-400 tabular-nums">
+                        {items.length} Assessment{items.length !== 1 ? "s" : ""}
+                        {clientActiveCount > 0 && (
+                          <span className="ml-1 text-emerald-500 font-medium">({clientActiveCount} aktiv)</span>
+                        )}
+                      </span>
+                    </button>
+                    {!isCollapsed && (
+                      <div className="divide-y divide-slate-50">
+                        {items.map((a) => renderAssessmentRow(a))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -529,28 +628,74 @@ export default function DashboardClient({
               <div className="px-5 py-4 border-b border-slate-200">
                 <h3 className="text-sm font-semibold text-brand-navy" data-testid="text-team-title">Team</h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  {totalUsers} Person{totalUsers !== 1 ? "en" : ""}
+                  {users.length} Person{users.length !== 1 ? "en" : ""} · {ROLE_ORDER.filter((r) => (roleGroups[r]?.length ?? 0) > 0).length} Rollen
                 </p>
               </div>
-              <div className="divide-y divide-slate-100">
-                {roleSummary.map((r) => (
-                  <div
-                    key={r.role}
-                    className="flex items-center justify-between px-5 py-2.5"
-                  >
-                    <span className={`text-xs ${r.count > 0 ? "text-slate-700" : "text-slate-300"}`}>
-                      {r.label}
-                    </span>
-                    <span
-                      className={`text-[11px] font-bold tabular-nums min-w-[24px] text-center rounded-full py-0.5 ${
-                        r.count > 0 ? "bg-blue-50 text-blue-600" : "text-slate-300"
+
+              <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setSelectedRole(null)}
+                  className={`text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors ${
+                    selectedRole === null
+                      ? "bg-brand-navy text-white"
+                      : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                  }`}
+                  data-testid="filter-role-all"
+                >
+                  Alle ({users.length})
+                </button>
+                {ROLE_ORDER.map((role) => {
+                  const count = roleGroups[role]?.length ?? 0;
+                  if (count === 0) return null;
+                  const isActive = selectedRole === role;
+                  return (
+                    <button
+                      key={role}
+                      onClick={() => setSelectedRole(isActive ? null : role)}
+                      className={`text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors ${
+                        isActive
+                          ? "bg-brand-navy text-white"
+                          : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                       }`}
+                      data-testid={`filter-role-${role.toLowerCase()}`}
                     >
-                      {r.count}
-                    </span>
-                  </div>
-                ))}
+                      {ROLE_LABELS[role] ?? role} ({count})
+                    </button>
+                  );
+                })}
               </div>
+
+              <div className="divide-y divide-slate-50 max-h-[400px] overflow-y-auto">
+                {filteredUsers.length === 0 ? (
+                  <div className="px-5 py-6 text-center">
+                    <p className="text-xs text-slate-400">Keine Benutzer in dieser Rolle.</p>
+                  </div>
+                ) : (
+                  filteredUsers.map((u) => (
+                    <div key={u.id} className="px-5 py-2.5 flex items-center gap-3" data-testid={`user-${u.id}`}>
+                      <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase">
+                          {u.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-slate-700 truncate">{u.name}</p>
+                        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                          {u.roles.map((r) => (
+                            <span
+                              key={r}
+                              className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500"
+                            >
+                              {ROLE_LABELS[r] ?? r}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
               <div className="px-5 py-3 border-t border-slate-200">
                 <Link
                   href={`${base}/users`}
