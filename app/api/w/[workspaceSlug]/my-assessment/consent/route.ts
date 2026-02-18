@@ -13,7 +13,10 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!session.roles.includes("CANDIDATE")) {
+  const isCandidate = session.roles.includes("CANDIDATE");
+  const isAdmin = session.roles.includes("ADMIN") || session.roles.includes("MODERATOR");
+
+  if (!isCandidate && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -23,6 +26,10 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 
   if (!workspace) {
     return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+  }
+
+  if (isAdmin && !isCandidate) {
+    return NextResponse.json({ templates: [], records: [], allConsented: true });
   }
 
   const templates = await prisma.consentTemplate.findMany({

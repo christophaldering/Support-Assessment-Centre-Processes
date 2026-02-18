@@ -12,7 +12,10 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!session.roles.includes("CANDIDATE")) {
+  const isCandidate = session.roles.includes("CANDIDATE");
+  const isAdmin = session.roles.includes("ADMIN") || session.roles.includes("MODERATOR");
+
+  if (!isCandidate && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -29,13 +32,30 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     select: { assessmentId: true, roles: true, workspaceId: true },
   });
 
-  if (!user || user.workspaceId !== workspace.id || !user.assessmentId) {
+  if (!user || user.workspaceId !== workspace.id) {
+    return NextResponse.json({ error: "No assessment assigned" }, { status: 404 });
+  }
+
+  let assessmentId = user.assessmentId;
+  if (!assessmentId && isAdmin) {
+    const firstAssessment = await prisma.assessment.findFirst({
+      where: { workspaceId: workspace.id },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+    if (!firstAssessment) {
+      return NextResponse.json({ error: "No assessment found" }, { status: 404 });
+    }
+    assessmentId = firstAssessment.id;
+  }
+
+  if (!assessmentId) {
     return NextResponse.json({ error: "No assessment assigned" }, { status: 404 });
   }
 
   const assessment = await prisma.assessment.findFirst({
     where: {
-      id: user.assessmentId,
+      id: assessmentId,
       workspaceId: workspace.id,
     },
     include: {
