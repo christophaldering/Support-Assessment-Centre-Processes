@@ -11,6 +11,10 @@ async function main() {
 
   if (existing) {
     workspaceId = existing.id;
+    if (!existing.aiEnabled) {
+      await prisma.workspace.update({ where: { id: existing.id }, data: { aiEnabled: true } });
+      console.log("Seed: Enabled AI for aestimamus workspace.");
+    }
     console.log("Seed: aestimamus workspace already exists, skipping workspace creation.");
   } else {
     const workspace = await prisma.workspace.create({
@@ -18,6 +22,7 @@ async function main() {
         slug: "aestimamus",
         name: "aestimamus",
         status: "active",
+        aiEnabled: true,
         adminPasswordHash: adminHash,
         dataResidency: "EU",
         theme: {

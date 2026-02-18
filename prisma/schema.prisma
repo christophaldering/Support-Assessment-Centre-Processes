@@ -185,14 +185,17 @@ model Document {
 }
 
 model CompetencyModel {
-  id           String   @id @default(uuid())
-  workspaceId  String   @map("workspace_id")
-  name         String
-  description  String?
-  version      Int      @default(1)
-  status       String   @default("draft")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  workspaceId    String   @map("workspace_id")
+  name           String
+  description    String?
+  version        Int      @default(1)
+  status         String   @default("draft")
+  sourceType     String   @default("manual") @map("source_type")
+  sourceFileName String?  @map("source_file_name")
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
 
   workspace    Workspace @relation(fields: [workspaceId], references: [id])
   nodes        CompetencyNode[]
