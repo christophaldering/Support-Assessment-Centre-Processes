@@ -167,92 +167,11 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
             ))}
           </div>
 
-          {caseStudyId && (
+          {caseStudyId && currentLogoUrl && (
             <div className="px-3 py-4 border-t border-slate-200 mt-auto">
               <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-2 px-1">Branding</p>
-              <div className="flex items-center gap-2">
-                {currentLogoUrl ? (
-                  <div className="flex items-center gap-2 w-full">
-                    <img src={currentLogoUrl} alt="Logo" className="h-8 w-auto object-contain rounded bg-white border border-slate-200 p-1" />
-                    <button
-                      onClick={() => logoInputRef.current?.click()}
-                      className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
-                      data-testid="button-change-logo"
-                    >
-                      Ändern
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2 w-full">
-                    <button
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={uploadingLogo}
-                      className="w-full text-xs text-slate-500 hover:text-slate-700 bg-white border border-dashed border-slate-300 hover:border-slate-400 rounded-lg px-3 py-2 transition-colors text-center"
-                      data-testid="button-upload-logo"
-                    >
-                      {uploadingLogo ? "Wird hochgeladen..." : "Logo hochladen"}
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (!caseStudyId) return;
-                        setGeneratingLogo(true);
-                        try {
-                          const res = await fetch(`/api/w/${workspaceSlug}/case-studies/${caseStudyId}/generate-logo`, { method: "POST" });
-                          if (res.ok) {
-                            const result = await res.json();
-                            setCurrentLogoUrl(result.logoUrl + "?t=" + Date.now());
-                          }
-                        } catch {}
-                        setGeneratingLogo(false);
-                      }}
-                      disabled={generatingLogo}
-                      className="w-full text-xs text-white hover:opacity-90 rounded-lg px-3 py-2 transition-colors text-center disabled:opacity-50"
-                      style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
-                      data-testid="button-generate-logo"
-                    >
-                      {generatingLogo ? "KI generiert..." : "KI-Logo generieren"}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file || !caseStudyId) return;
-                  setUploadingLogo(true);
-                  try {
-                    const formData = new FormData();
-                    formData.append("file", file);
-                    const res = await fetch(`/api/w/${workspaceSlug}/case-studies/${caseStudyId}/logo`, {
-                      method: "POST",
-                      body: formData,
-                    });
-                    if (res.ok) {
-                      const data = await res.json();
-                      setCurrentLogoUrl(data.logoUrl + "?t=" + Date.now());
-                    }
-                  } catch {}
-                  setUploadingLogo(false);
-                  e.target.value = "";
-                }}
-                data-testid="input-logo-file"
-              />
-
-              <div className="mt-4 pt-4 border-t border-slate-200">
-                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-2 px-1">Export</p>
-                <a
-                  href={`/api/w/${workspaceSlug}/case-studies/${caseStudyId}/export-pdf`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 text-xs text-slate-600 hover:text-slate-800 bg-white border border-slate-300 hover:border-slate-400 rounded-lg px-3 py-2 transition-colors text-center"
-                  data-testid="button-export-pdf"
-                >
-                  <span>📄</span> PDF exportieren (A4 quer)
-                </a>
+              <div className="flex items-center gap-2 w-full">
+                <img src={currentLogoUrl} alt="Logo" className="h-8 w-auto object-contain rounded bg-white border border-slate-200 p-1" />
               </div>
             </div>
           )}

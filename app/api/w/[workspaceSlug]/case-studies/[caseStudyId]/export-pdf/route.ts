@@ -12,6 +12,11 @@ function n(v: any): number {
   return typeof v === "number" ? v : parseFloat(v) || 0;
 }
 
+function s(v: any): string {
+  if (v === null || v === undefined) return "";
+  return String(v);
+}
+
 export async function GET(req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
   const master = hasMasterAuth();
@@ -40,9 +45,12 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Fallstudie nicht gefunden" }, { status: 404 });
   }
 
-  const data = caseStudy.dataJson as any;
+  let data = caseStudy.dataJson as any;
   if (!data) {
     return NextResponse.json({ error: "Keine Daten vorhanden" }, { status: 400 });
+  }
+  if (data.data && typeof data.data === "object" && data.data.name) {
+    data = data.data;
   }
 
   const questions = caseStudy.questionsJson as any;
@@ -157,10 +165,10 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       const startY = doc.y;
       data.metrics.forEach((m: any, i: number) => {
         const x = startX + (i % 4) * colW;
-        doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text(m.label, x, startY, { width: colW - 10 });
-        doc.fontSize(14).font("Helvetica-Bold").fillColor("#1e293b").text(m.value, x, startY + 12, { width: colW - 10 });
-        const trendColor = m.trend?.includes("down") ? "#ef4444" : m.trend === "up" ? "#22c55e" : "#6b7280";
-        doc.fontSize(8).font("Helvetica").fillColor(trendColor).text(m.trend || "", x, startY + 30, { width: colW - 10 });
+        doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text(s(m.label), x, startY, { width: colW - 10 });
+        doc.fontSize(14).font("Helvetica-Bold").fillColor("#1e293b").text(s(m.value), x, startY + 12, { width: colW - 10 });
+        const trendColor = s(m.trend).includes("down") ? "#ef4444" : m.trend === "up" ? "#22c55e" : "#6b7280";
+        doc.fontSize(8).font("Helvetica").fillColor(trendColor).text(s(m.trend), x, startY + 30, { width: colW - 10 });
       });
       doc.y = startY + 50;
       doc.moveDown(1);
@@ -171,12 +179,13 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       checkPage();
       sectionTitle(`Geschäftseinheiten (${data.businessUnits.length})`);
       data.businessUnits.forEach((bu: any) => {
+        if (!bu) return;
         checkPage(80);
-        doc.fontSize(11).font("Helvetica-Bold").fillColor("#1e293b").text(bu.name);
+        doc.fontSize(11).font("Helvetica-Bold").fillColor("#1e293b").text(s(bu.name));
         doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
           .text(`Umsatz: €${n(bu.revenue).toFixed(2)} Mrd  |  EBITDA: €${n(bu.ebitda).toFixed(2)} Mrd  |  Marge: ${n(bu.margin)}%  |  MA: ${n(bu.employees).toLocaleString()}`);
         if (bu.tension) {
-          doc.fontSize(8).font("Helvetica-Oblique").fillColor("#92400e").text(`"${bu.tension}"`);
+          doc.fontSize(8).font("Helvetica-Oblique").fillColor("#92400e").text(s(bu.tension));
         }
         doc.moveDown(0.5);
       });
@@ -188,12 +197,13 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       addHeader("Kommunikation", `${data.emails.length} E-Mails`);
 
       data.emails.forEach((email: any) => {
+        if (!email) return;
         checkPage(100);
-        doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b").text(email.subject || "No Subject");
+        doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b").text(s(email.subject) || "No Subject");
         doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
-          .text(`Von: ${email.from}  |  ${email.date}${email.to ? `  |  An: ${email.to}` : ""}`);
+          .text(`Von: ${s(email.from)}  |  ${s(email.date)}${email.to ? `  |  An: ${s(email.to)}` : ""}`);
         doc.moveDown(0.3);
-        const content = email.content || "";
+        const content = s(email.content);
         doc.fontSize(8).font("Helvetica").fillColor("#374151").text(content.substring(0, 800), { width: pageW, lineGap: 1 });
         if (content.length > 800) {
           doc.fontSize(7).fillColor("#9ca3af").text("[...]");
@@ -210,12 +220,13 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       addHeader("Protokolle", `${data.protocols.length} Dokumente`);
 
       data.protocols.forEach((p: any) => {
+        if (!p) return;
         checkPage(100);
-        doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b").text(p.title);
+        doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b").text(s(p.title));
         doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
-          .text(`${p.date}${p.location ? ` · ${p.location}` : ""}${p.participants ? ` · ${p.participants}` : ""}`);
+          .text(`${s(p.date)}${p.location ? ` · ${s(p.location)}` : ""}${p.participants ? ` · ${s(p.participants)}` : ""}`);
         doc.moveDown(0.3);
-        const content = p.content || "";
+        const content = s(p.content);
         doc.fontSize(8).font("Helvetica").fillColor("#374151").text(content.substring(0, 600), { width: pageW, lineGap: 1 });
         if (content.length > 600) {
           doc.fontSize(7).fillColor("#9ca3af").text("[...]");
@@ -230,14 +241,15 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       addHeader("News & Media", `${data.newsArticles.length} Artikel`);
 
       data.newsArticles.forEach((article: any) => {
+        if (!article) return;
         checkPage(100);
-        doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b").text(article.headline);
+        doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b").text(s(article.headline) || s(article.title));
         if (article.subtitle) {
-          doc.fontSize(8).font("Helvetica-Oblique").fillColor("#6b7280").text(article.subtitle);
+          doc.fontSize(8).font("Helvetica-Oblique").fillColor("#6b7280").text(s(article.subtitle));
         }
-        doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text(`${article.source} · ${article.date}`);
+        doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text(`${s(article.source)} · ${s(article.date)}`);
         doc.moveDown(0.3);
-        const content = article.content || "";
+        const content = s(article.content);
         doc.fontSize(8).font("Helvetica").fillColor("#374151").text(content.substring(0, 600), { width: pageW, lineGap: 1 });
         if (content.length > 600) {
           doc.fontSize(7).fillColor("#9ca3af").text("[...]");
@@ -377,8 +389,8 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
         "Cache-Control": "no-cache",
       },
     });
-  } catch (err) {
-    console.error("PDF export error:", err);
-    return NextResponse.json({ error: "Fehler beim PDF-Export" }, { status: 500 });
+  } catch (err: any) {
+    console.error("PDF export error:", err?.message || err, err?.stack);
+    return NextResponse.json({ error: `Fehler beim PDF-Export: ${err?.message || "Unbekannter Fehler"}` }, { status: 500 });
   }
 }

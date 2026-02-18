@@ -58,6 +58,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       sourceType: true,
       status: true,
       aiGenerated: true,
+      logoUrl: true,
       createdAt: true,
       updatedAt: true,
     },

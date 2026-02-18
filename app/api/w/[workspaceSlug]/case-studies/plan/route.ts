@@ -34,16 +34,18 @@ Antworte AUSSCHLIESSLICH mit validem JSON in folgender Struktur:
   ]
 }
 
-Erstelle einen realistischen Mix aus:
-- 1 Strategisches Briefing (category: briefing)
-- 4-6 E-Mails von verschiedenen Stakeholdern mit unterschiedlichen Perspektiven und Spannungsfeldern (category: email)
-- 2-3 Sitzungsprotokolle (Vorstand, Aufsichtsrat, Strategiemeeting) (category: protocol)
-- 2-3 Nachrichtenartikel (Fachpresse, Wirtschaftsmedien) (category: news)
-- 1-2 Interne Berichte (HR-Survey, Managementbewertung) (category: report)
-- 1 Finanzanalyse / Bilanzübersicht (category: financial)
-- 1 HR-Dashboard / Mitarbeiterkennzahlen (category: hr)
+Erstelle einen realistischen Mix aus Dokumenten. Die Gesamtanzahl wird vom Benutzer vorgegeben.
 
-Insgesamt 12-18 Dokumente. Alle mit "selected": true.`;
+Verteile die Dokumente proportional auf folgende Kategorien:
+- 1 Strategisches Briefing (category: briefing) [immer genau 1]
+- E-Mails von verschiedenen Stakeholdern mit unterschiedlichen Perspektiven und Spannungsfeldern (category: email) [ca. 30-40% der Gesamtanzahl]
+- Sitzungsprotokolle (Vorstand, Aufsichtsrat, Strategiemeeting) (category: protocol) [ca. 15-20%]
+- Nachrichtenartikel (Fachpresse, Wirtschaftsmedien) (category: news) [ca. 15-20%]
+- Interne Berichte (HR-Survey, Managementbewertung) (category: report) [ca. 10%]
+- 1 Finanzanalyse / Bilanzübersicht (category: financial) [immer genau 1]
+- 1 HR-Dashboard / Mitarbeiterkennzahlen (category: hr) [immer genau 1]
+
+Alle mit "selected": true.`;
 
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
@@ -68,6 +70,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       targetLevel,
       difficulty,
       referenceDate,
+      documentCount,
     } = body;
 
     if (!industry || !strategicSituation) {
@@ -84,7 +87,8 @@ Strategische Situation: ${strategicSituation}
 Finanzielles Szenario: ${financialScenario || "Herausfordernd"}
 Kernspannungen: ${keyTensions || "Nicht spezifiziert"}
 Zielgruppe/Level: ${targetLevel || "SE-Level/Vorstand"}
-Schwierigkeitsgrad: ${difficulty || "Hoch"}${referenceDate ? `\nReferenzdatum (Stichtag): ${referenceDate}` : ""}`;
+Schwierigkeitsgrad: ${difficulty || "Hoch"}
+Anzahl der zu erstellenden Vorgänge/Dokumente insgesamt: ${parseInt(documentCount) || 15}. Erstelle EXAKT diese Anzahl an Dokumenten.${referenceDate ? `\nReferenzdatum (Stichtag): ${referenceDate}` : ""}`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",

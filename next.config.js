@@ -2,6 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push("pdfkit");
+    }
+    return config;
+  },
   experimental: {
     instrumentationHook: true,
     serverActions: {
@@ -10,6 +17,7 @@ const nextConfig = {
     outputFileTracingIncludes: {
       "/api/w/\\[workspaceSlug\\]/case-studies/upload": ["./lib/pdf-extract.mjs", "./node_modules/pdfjs-dist/**/*"],
       "/api/w/\\[workspaceSlug\\]/requirements-analysis/extract": ["./lib/pdf-extract.mjs", "./node_modules/pdfjs-dist/**/*"],
+      "/api/w/\\[workspaceSlug\\]/case-studies/\\[caseStudyId\\]/export-pdf": ["./node_modules/pdfkit/js/data/**/*"],
     },
   },
   eslint: {

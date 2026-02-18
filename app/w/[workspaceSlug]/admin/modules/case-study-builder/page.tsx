@@ -15,6 +15,7 @@ interface CaseStudySummary {
   sourceType: string;
   status: string;
   aiGenerated: boolean;
+  logoUrl: string | null;
   referenceDate: string | null;
   createdAt: string;
 }
@@ -446,31 +447,64 @@ export default function CaseStudyBuilderPage() {
                     data-testid={`card-case-study-${cs.id}`}
                   >
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
-                          <h3 className="font-semibold text-base" style={{ fontFamily: "'Playfair Display', serif", color: "hsl(14, 48%, 44%)" }}>
-                            {cs.companyName}
-                          </h3>
-                          {statusBadge(cs.status)}
-                          {cs.aiGenerated && (
-                            <span className="text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
-                              KI
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-slate-500 mb-2">{cs.title}</p>
-                        {cs.description && <p className="text-xs text-slate-400 mb-3">{cs.description}</p>}
-                        <div className="flex items-center gap-4 text-[11px] text-slate-400">
-                          <span>Typ: {cs.type}</span>
-                          <span>·</span>
-                          <span>Schwierigkeit: {difficultyLabel(cs.difficulty)}</span>
-                          <span>·</span>
-                          <span>Quelle: {sourceLabel(cs.sourceType)}</span>
-                          <span>·</span>
-                          <span>{new Date(cs.createdAt).toLocaleDateString("de-DE")}</span>
+                      <div className="flex items-start gap-4 flex-1">
+                        {cs.logoUrl && (
+                          <img
+                            src={cs.logoUrl}
+                            alt={`${cs.companyName} Logo`}
+                            className="h-12 w-12 object-contain rounded-lg bg-white border border-slate-100 p-1 shrink-0"
+                            data-testid={`img-logo-${cs.id}`}
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="font-semibold text-base" style={{ fontFamily: "'Playfair Display', serif", color: "hsl(14, 48%, 44%)" }}>
+                              {cs.companyName}
+                            </h3>
+                            {statusBadge(cs.status)}
+                            {cs.aiGenerated && (
+                              <span className="text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                                KI
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-500 mb-2">{cs.title}</p>
+                          {cs.description && <p className="text-xs text-slate-400 mb-3">{cs.description}</p>}
+                          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+                            <span>Typ: {cs.type}</span>
+                            <span>·</span>
+                            <span>Schwierigkeit: {difficultyLabel(cs.difficulty)}</span>
+                            <span>·</span>
+                            <span>Quelle: {sourceLabel(cs.sourceType)}</span>
+                            <span>·</span>
+                            <span>{new Date(cs.createdAt).toLocaleDateString("de-DE")}</span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
+                        <a
+                          href={`/api/w/${workspaceSlug}/case-studies/${cs.id}/export-pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 transition-colors flex items-center gap-1"
+                          data-testid={`button-export-pdf-${cs.id}`}
+                        >
+                          <span>📄</span> PDF
+                        </a>
+                        {!cs.logoUrl && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`/api/w/${workspaceSlug}/case-studies/${cs.id}/generate-logo`, { method: "POST" });
+                                if (res.ok) fetchCaseStudies();
+                              } catch {}
+                            }}
+                            className="text-xs px-3 py-1.5 rounded-lg border border-purple-200 text-purple-600 hover:text-purple-800 hover:border-purple-300 transition-colors"
+                            data-testid={`button-generate-logo-${cs.id}`}
+                          >
+                            KI-Logo
+                          </button>
+                        )}
                         <Link
                           href={`${base}/modules/case-study/${cs.id}`}
                           className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 transition-colors"
