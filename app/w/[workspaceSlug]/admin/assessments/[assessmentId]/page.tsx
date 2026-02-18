@@ -1291,7 +1291,7 @@ export default function AssessmentDetailPage() {
               </div>
 
               <Link
-                href={`/w/${workspaceSlug}/admin/requirements`}
+                href={`/w/${workspaceSlug}/admin/requirements?assessmentId=${assessment?.id || ""}`}
                 className="block bg-white border-2 border-dashed border-brand-blue/30 hover:border-brand-blue/60 rounded-xl p-6 transition-colors group"
                 data-testid="link-requirements-analysis"
               >

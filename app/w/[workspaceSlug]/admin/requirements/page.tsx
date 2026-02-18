@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface Person {
@@ -140,13 +140,19 @@ function PersonBlock({
 
 export default function RequirementsAnalysisPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const slug = params.workspaceSlug as string;
+  const assessmentId = searchParams.get("assessmentId");
 
   const [inputText, setInputText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [extraction, setExtraction] = useState<Extraction | null>(null);
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
+
+  const [adopting, setAdopting] = useState(false);
+  const [adoptSuccess, setAdoptSuccess] = useState<{ competenciesApplied: number; assessmentName: string } | null>(null);
 
   const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -484,6 +490,33 @@ export default function RequirementsAnalysisPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleAdoptForProject = async () => {
+    if (!assessmentId || !currentAnalysisId) return;
+    setAdopting(true);
+    setAdoptSuccess(null);
+    try {
+      const res = await fetch(`/api/w/${slug}/assessments/${assessmentId}/apply-analysis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ analysisId: currentAnalysisId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Fehler beim Übernehmen");
+        return;
+      }
+      const data = await res.json();
+      setAdoptSuccess({
+        competenciesApplied: data.competenciesApplied || 0,
+        assessmentName: data.assessment?.name || "",
+      });
+    } catch {
+      setError("Netzwerkfehler beim Übernehmen");
+    } finally {
+      setAdopting(false);
+    }
+  };
+
   const handleUpdateAutoDelete = async (id: string, date: string | null) => {
     try {
       await fetch(`/api/w/${slug}/requirements-analysis/${id}`, {
@@ -512,6 +545,26 @@ export default function RequirementsAnalysisPage() {
           </div>
         </div>
       </header>
+
+      {assessmentId && (
+        <div className="border-b" style={{ backgroundColor: `${ACCENT}08`, borderColor: `${ACCENT}15` }}>
+          <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ color: ACCENT }}><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.193-9.193a4.5 4.5 0 00-6.364 0l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
+              <span className="font-medium" style={{ color: ACCENT }}>Kontext: Assessment-Projekt</span>
+              <span className="text-slate-400">·</span>
+              <span className="text-slate-500">Wählen oder erstellen Sie eine Analyse, dann übernehmen Sie die Ergebnisse für Ihr Projekt</span>
+            </div>
+            <button
+              onClick={() => router.push(`/w/${slug}/admin/assessments/${assessmentId}`)}
+              className="text-xs text-slate-500 hover:text-slate-700 transition"
+              data-testid="link-back-assessment-top"
+            >
+              ← Zurück
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-1">
         <aside className="w-[280px] shrink-0 border-r border-slate-200 bg-slate-50/50 p-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 56px)", position: "sticky", top: "56px" }}>
@@ -1020,15 +1073,70 @@ export default function RequirementsAnalysisPage() {
                   <span>KI-generierte Empfehlungen — bitte prüfen, anpassen und ergänzen. Diese Vorschläge basieren auf dem eingegebenen Text und ersetzen keine fachliche Einschätzung.</span>
                 </div>
 
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={handleDownloadDocx}
-                    className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition flex items-center gap-2"
-                    data-testid="button-download-docx"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                    Ergebnisse herunterladen (DOCX)
-                  </button>
+                {adoptSuccess && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3" data-testid="section-adopt-success">
+                    <svg className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-emerald-800">Erfolgreich übernommen</p>
+                      <p className="text-xs text-emerald-600 mt-0.5">
+                        Daten wurden in das Assessment &laquo;{adoptSuccess.assessmentName}&raquo; übernommen.
+                        {adoptSuccess.competenciesApplied > 0 && ` ${adoptSuccess.competenciesApplied} Kompetenz${adoptSuccess.competenciesApplied !== 1 ? "en" : ""} angelegt.`}
+                      </p>
+                      <button
+                        onClick={() => router.push(`/w/${slug}/admin/assessments/${assessmentId}`)}
+                        className="mt-2 text-xs font-medium px-3 py-1 rounded-lg text-white transition hover:opacity-90"
+                        style={{ backgroundColor: ACCENT }}
+                        data-testid="link-back-to-assessment"
+                      >
+                        Zurück zum Assessment →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-6 flex items-center justify-between">
+                  <div>
+                    {assessmentId && (
+                      <button
+                        onClick={() => router.push(`/w/${slug}/admin/assessments/${assessmentId}`)}
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition"
+                        data-testid="link-back-assessment"
+                      >
+                        ← Zurück zum Assessment
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleDownloadDocx}
+                      className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition flex items-center gap-2"
+                      data-testid="button-download-docx"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                      Herunterladen
+                    </button>
+                    {assessmentId && currentAnalysisId && !adoptSuccess && (
+                      <button
+                        onClick={handleAdoptForProject}
+                        disabled={adopting}
+                        className="px-5 py-2 rounded-lg text-sm font-medium text-white shadow-sm hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2"
+                        style={{ backgroundColor: ACCENT }}
+                        data-testid="button-adopt-for-project"
+                      >
+                        {adopting ? (
+                          <>
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                            Wird übernommen...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Für Projekt übernehmen
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
