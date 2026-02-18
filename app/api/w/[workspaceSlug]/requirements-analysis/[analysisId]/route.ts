@@ -355,8 +355,15 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
   if ("error" in auth && auth.error) return auth.error;
   const { analysis, workspace, userId } = auth as { analysis: NonNullable<typeof auth.analysis>; workspace: NonNullable<typeof auth.workspace>; userId: string };
 
-  await prisma.requirementsAnalysis.delete({
-    where: { id: analysis.id },
+  await prisma.$transaction(async (tx) => {
+    await tx.assessment.updateMany({
+      where: { sourceAnalysisId: analysis.id },
+      data: { sourceAnalysisId: null },
+    });
+
+    await tx.requirementsAnalysis.delete({
+      where: { id: analysis.id },
+    });
   });
 
   await logAudit({
