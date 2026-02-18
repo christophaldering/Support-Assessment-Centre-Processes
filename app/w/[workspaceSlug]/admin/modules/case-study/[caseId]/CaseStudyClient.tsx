@@ -50,6 +50,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
   const [selectedNewsId, setSelectedNewsId] = useState<string>("");
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(logoUrl || null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [generatingLogo, setGeneratingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [editingDoc, setEditingDoc] = useState<{ type: string; id: string } | null>(null);
   const [editForm, setEditForm] = useState<any>({});
@@ -182,14 +183,36 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => logoInputRef.current?.click()}
-                    disabled={uploadingLogo}
-                    className="w-full text-xs text-slate-500 hover:text-slate-700 bg-white border border-dashed border-slate-300 hover:border-slate-400 rounded-lg px-3 py-2 transition-colors text-center"
-                    data-testid="button-upload-logo"
-                  >
-                    {uploadingLogo ? "Wird hochgeladen..." : "Logo hochladen"}
-                  </button>
+                  <div className="flex flex-col gap-2 w-full">
+                    <button
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={uploadingLogo}
+                      className="w-full text-xs text-slate-500 hover:text-slate-700 bg-white border border-dashed border-slate-300 hover:border-slate-400 rounded-lg px-3 py-2 transition-colors text-center"
+                      data-testid="button-upload-logo"
+                    >
+                      {uploadingLogo ? "Wird hochgeladen..." : "Logo hochladen"}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!caseStudyId) return;
+                        setGeneratingLogo(true);
+                        try {
+                          const res = await fetch(`/api/w/${workspaceSlug}/case-studies/${caseStudyId}/generate-logo`, { method: "POST" });
+                          if (res.ok) {
+                            const result = await res.json();
+                            setCurrentLogoUrl(result.logoUrl + "?t=" + Date.now());
+                          }
+                        } catch {}
+                        setGeneratingLogo(false);
+                      }}
+                      disabled={generatingLogo}
+                      className="w-full text-xs text-white hover:opacity-90 rounded-lg px-3 py-2 transition-colors text-center disabled:opacity-50"
+                      style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
+                      data-testid="button-generate-logo"
+                    >
+                      {generatingLogo ? "KI generiert..." : "KI-Logo generieren"}
+                    </button>
+                  </div>
                 )}
               </div>
               <input
@@ -218,6 +241,19 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                 }}
                 data-testid="input-logo-file"
               />
+
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-2 px-1">Export</p>
+                <a
+                  href={`/api/w/${workspaceSlug}/case-studies/${caseStudyId}/export-pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 text-xs text-slate-600 hover:text-slate-800 bg-white border border-slate-300 hover:border-slate-400 rounded-lg px-3 py-2 transition-colors text-center"
+                  data-testid="button-export-pdf"
+                >
+                  <span>📄</span> PDF exportieren (A4 quer)
+                </a>
+              </div>
             </div>
           )}
         </nav>

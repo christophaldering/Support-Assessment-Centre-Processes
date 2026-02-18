@@ -158,8 +158,9 @@ export default function CaseStudyBuilderPage() {
       }
 
       const data = await res.json();
+      if (data.id) triggerLogoGeneration(data.id);
       setPreviewData(data);
-      setSuccess("Fallstudie erfolgreich aus Upload erstellt!");
+      setSuccess("Fallstudie erfolgreich aus Upload erstellt! Logo wird im Hintergrund erstellt...");
       setMode("preview");
       fetchCaseStudies();
     } catch {
@@ -221,6 +222,12 @@ export default function CaseStudyBuilderPage() {
     });
   }
 
+  function triggerLogoGeneration(caseStudyId: string) {
+    fetch(`/api/w/${workspaceSlug}/case-studies/${caseStudyId}/generate-logo`, {
+      method: "POST",
+    }).catch(() => {});
+  }
+
   async function handleGenerateFromPlan() {
     if (!documentPlan) return;
     setError("");
@@ -244,8 +251,9 @@ export default function CaseStudyBuilderPage() {
       }
 
       const data = await res.json();
+      if (data.id) triggerLogoGeneration(data.id);
       setPreviewData(data);
-      setSuccess("Fallstudie erfolgreich generiert!");
+      setSuccess("Fallstudie erfolgreich generiert! Logo wird im Hintergrund erstellt...");
       setMode("preview");
       fetchCaseStudies();
     } catch {
@@ -281,8 +289,9 @@ export default function CaseStudyBuilderPage() {
       }
 
       const data = await res.json();
+      if (data.id) triggerLogoGeneration(data.id);
       setPreviewData(data);
-      setSuccess("Fallstudie erfolgreich generiert!");
+      setSuccess("Fallstudie erfolgreich generiert! Logo wird im Hintergrund erstellt...");
       setMode("preview");
       fetchCaseStudies();
     } catch {
