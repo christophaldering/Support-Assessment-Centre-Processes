@@ -1547,6 +1547,21 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
   const [error, setError] = useState("");
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState("");
+  const [savedMappings, setSavedMappings] = useState<{ id: string; exerciseId: string; competencyNodeId: string; weight: number; exercise: { id: string; name: string }; competencyNode: { id: string; name: string; description: string | null; sortOrder: number } }[]>([]);
+  const [savedMappingsLoading, setSavedMappingsLoading] = useState(false);
+
+  const fetchSavedMappings = useCallback(async (assessmentId: string) => {
+    if (!assessmentId) { setSavedMappings([]); return; }
+    setSavedMappingsLoading(true);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${assessmentId}/exercise-competency-mappings`);
+      if (res.ok) {
+        const data = await res.json();
+        setSavedMappings(Array.isArray(data) ? data.filter((m: any) => m.exercise && m.competencyNode) : []);
+      } else setSavedMappings([]);
+    } catch { setSavedMappings([]); }
+    finally { setSavedMappingsLoading(false); }
+  }, [workspaceSlug]);
 
   const fetchInit = useCallback(async () => {
     try {
@@ -1691,6 +1706,7 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
       });
       if (res.ok) {
         setSaveMsg("MTMM-Matrix gespeichert.");
+        fetchSavedMappings(selectedAssessmentId);
         setTimeout(() => setSaveMsg(""), 3000);
       } else {
         const d = await res.json();
@@ -1711,7 +1727,7 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
         <div className="grid md:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Assessment auswählen</label>
-            <select value={selectedAssessmentId} onChange={(e) => setSelectedAssessmentId(e.target.value)} data-testid="select-mapping-assessment" className={inputClass}>
+            <select value={selectedAssessmentId} onChange={(e) => { setSelectedAssessmentId(e.target.value); fetchSavedMappings(e.target.value); }} data-testid="select-mapping-assessment" className={inputClass}>
               <option value="">– Bitte wählen –</option>
               {assessments.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
@@ -1760,6 +1776,112 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
           </div>
         )}
       </div>
+
+      {selectedAssessmentId && (
+        <div className="bg-white border border-slate-200 rounded-xl p-6" data-testid="section-saved-mappings">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-brand-navy">Bestehende Zuordnungen</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Bereits gespeicherte MTMM-Zuordnungen für dieses Assessment</p>
+            </div>
+            {savedMappings.length > 0 && (
+              <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 font-medium" data-testid="text-saved-count">
+                {savedMappings.length} Zuordnung{savedMappings.length !== 1 ? "en" : ""}
+              </span>
+            )}
+          </div>
+
+          {savedMappingsLoading ? (
+            <p className="text-sm text-slate-400 text-center py-4">Laden…</p>
+          ) : savedMappings.length === 0 ? (
+            <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg" data-testid="saved-mappings-empty">
+              <svg className="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v1.5c0 .621-.504 1.125-1.125 1.125" />
+              </svg>
+              <p className="text-sm text-slate-500">Noch keine Zuordnungen gespeichert</p>
+              <p className="text-xs text-slate-400 mt-1">Wählen Sie oben eine Zuordnungsebene, um Übungen Kompetenzen zuzuordnen.</p>
+            </div>
+          ) : (() => {
+            const uniqueExercises = [...new Map(savedMappings.map(m => [m.exercise.id, m.exercise])).values()];
+            const uniqueNodes = [...new Map(savedMappings.map(m => [m.competencyNode.id, m.competencyNode])).values()]
+              .sort((a, b) => a.sortOrder - b.sortOrder);
+            const mappingLookup = new Map(savedMappings.map(m => [`${m.exerciseId}:${m.competencyNodeId}`, m.weight]));
+            const totalMapped = savedMappings.length;
+            const primaryCount = savedMappings.filter(m => m.weight >= 1.5).length;
+            const standardCount = savedMappings.filter(m => m.weight >= 1.0 && m.weight < 1.5).length;
+            const secondaryCount = savedMappings.filter(m => m.weight < 1.0).length;
+
+            return (
+              <>
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  <div className="bg-slate-50 rounded-lg p-3 text-center">
+                    <div className="text-xl font-bold text-brand-navy">{totalMapped}</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Gesamt</div>
+                  </div>
+                  <div className="bg-emerald-50 rounded-lg p-3 text-center">
+                    <div className="text-xl font-bold text-emerald-700">{primaryCount}</div>
+                    <div className="text-[10px] text-emerald-600 mt-0.5">Primär (≥1.5)</div>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-3 text-center">
+                    <div className="text-xl font-bold text-blue-700">{standardCount}</div>
+                    <div className="text-[10px] text-blue-600 mt-0.5">Standard (1.0–1.4)</div>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg p-3 text-center">
+                    <div className="text-xl font-bold text-amber-700">{secondaryCount}</div>
+                    <div className="text-[10px] text-amber-600 mt-0.5">Sekundär (&lt;1.0)</div>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto" data-testid="saved-mappings-table">
+                  <table className="text-sm border-collapse w-full">
+                    <thead>
+                      <tr className="border-b border-slate-200">
+                        <th className="text-left py-2 px-3 font-medium text-slate-600 bg-slate-50 rounded-tl-lg sticky left-0 z-10 min-w-[160px]">Übung</th>
+                        {uniqueNodes.map(node => (
+                          <th key={node.id} className="text-center py-2 px-2 font-medium text-slate-600 bg-slate-50 min-w-[100px]" title={node.description || node.name}>
+                            <span className="text-xs leading-tight block">{node.name}</span>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {uniqueExercises.map(ex => (
+                        <tr key={ex.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                          <td className="py-2 px-3 font-medium text-slate-800 sticky left-0 bg-white z-10">{ex.name}</td>
+                          {uniqueNodes.map(node => {
+                            const weight = mappingLookup.get(`${ex.id}:${node.id}`);
+                            return (
+                              <td key={node.id} className="text-center py-2 px-2">
+                                {weight !== undefined ? (
+                                  <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-xs font-bold ${
+                                    weight >= 1.5 ? "bg-emerald-100 text-emerald-700" :
+                                    weight >= 1.0 ? "bg-blue-100 text-blue-700" :
+                                    "bg-amber-50 text-amber-600"
+                                  }`}>
+                                    {weight.toFixed(1)}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-200">–</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex items-center gap-4 mt-3 text-xs text-slate-400">
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-100 inline-block"></span> ≥ 1.5 Primär</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-100 inline-block"></span> 1.0–1.4 Standard</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-50 border border-amber-200 inline-block"></span> &lt; 1.0 Sekundär</span>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
 
       {error && <p className="text-sm text-red-500" data-testid="text-error">{error}</p>}
       {aiError && (
