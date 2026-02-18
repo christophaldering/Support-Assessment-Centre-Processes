@@ -50,8 +50,10 @@ interface ObservationSheetRecord {
   description: string | null;
   exerciseId: string | null;
   type: string;
+  content: any;
   status: string;
   aiGenerated: boolean;
+  createdBy: string | null;
   createdAt: string;
 }
 
@@ -188,6 +190,7 @@ export default function AssessmentDetailPage() {
   const [varexiaSeeded, setVarexiaSeeded] = useState(false);
 
   const [showCollab, setShowCollab] = useState(false);
+  const [selectedSheet, setSelectedSheet] = useState<ObservationSheetRecord | null>(null);
 
   interface MtmmMapping {
     exerciseId: string;
@@ -676,6 +679,48 @@ export default function AssessmentDetailPage() {
       });
       fetchObservationSheets();
     } catch {}
+  };
+
+  const handleDownloadSheetPdf = async (sheet: ObservationSheetRecord) => {
+    try {
+      const res = await fetch(`${apiBase}/observation-sheets/${sheet.id}/pdf`);
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Beobachtungsbogen_${sheet.name.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, "_")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("PDF-Download fehlgeschlagen.");
+    }
+  };
+
+  const renderContentPreview = (content: any): string => {
+    if (!content) return "Kein Inhalt vorhanden.";
+    if (typeof content === "string") return content;
+    if (Array.isArray(content)) {
+      return content.map((item, i) => {
+        if (typeof item === "string") return `${i + 1}. ${item}`;
+        if (item && typeof item === "object") {
+          const title = item.title || item.name || item.label || "";
+          const desc = item.description || item.text || item.value || "";
+          return `${title}${desc ? `: ${desc}` : ""}`;
+        }
+        return JSON.stringify(item);
+      }).join("\n");
+    }
+    if (typeof content === "object") {
+      return Object.entries(content).map(([key, val]) => {
+        if (typeof val === "string" || typeof val === "number") return `${key}: ${val}`;
+        if (Array.isArray(val)) return `${key}: ${val.join(", ")}`;
+        return `${key}: ${JSON.stringify(val)}`;
+      }).join("\n");
+    }
+    return JSON.stringify(content, null, 2);
   };
 
   const handleToggleLibrary = () => {
@@ -1739,11 +1784,12 @@ export default function AssessmentDetailPage() {
             {observationSheets.map((sheet) => (
               <div
                 key={sheet.id}
-                className="border border-slate-200 rounded-lg px-4 py-3"
+                className="border border-slate-200 rounded-lg px-4 py-3 hover:border-brand-blue/40 hover:bg-blue-50/20 transition-colors cursor-pointer"
                 data-testid={`row-sheet-${sheet.id}`}
+                onClick={() => setSelectedSheet(sheet)}
               >
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-sm font-medium text-slate-900">{sheet.name}</p>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -1778,10 +1824,22 @@ export default function AssessmentDetailPage() {
                       </div>
                     )}
                     {sheet.description && (
-                      <p className="text-xs text-slate-500">{sheet.description}</p>
+                      <p className="text-xs text-slate-500 line-clamp-2">{sheet.description}</p>
                     )}
                   </div>
-                  <span className="text-xs text-slate-400">{formatDate(sheet.createdAt)}</span>
+                  <div className="flex items-center gap-2 ml-3 shrink-0">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDownloadSheetPdf(sheet); }}
+                      data-testid={`button-download-sheet-${sheet.id}`}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-brand-blue hover:bg-blue-50 transition-colors"
+                      title="Als PDF herunterladen"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                      </svg>
+                    </button>
+                    <span className="text-xs text-slate-400">{formatDate(sheet.createdAt)}</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1803,6 +1861,110 @@ export default function AssessmentDetailPage() {
         </svg>
         Zusammenarbeit
       </button>
+
+      {selectedSheet && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSelectedSheet(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto mx-4" onClick={(e) => e.stopPropagation()} data-testid="modal-sheet-detail">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-brand-navy">{selectedSheet.name}</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    selectedSheet.type === "ai" ? "bg-purple-50 text-purple-600" :
+                    selectedSheet.type === "template" ? "bg-blue-50 text-blue-600" :
+                    "bg-slate-100 text-slate-600"
+                  }`}>
+                    {selectedSheet.type === "ai" ? "KI" : selectedSheet.type === "template" ? "Vorlage" : "Manuell"}
+                  </span>
+                  {selectedSheet.aiGenerated && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-600">KI-generiert</span>
+                  )}
+                  <span className="text-xs text-slate-400">{formatDate(selectedSheet.createdAt)}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownloadSheetPdf(selectedSheet)}
+                  data-testid="button-modal-download-pdf"
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-blue-700 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  PDF
+                </button>
+                <button
+                  onClick={() => setSelectedSheet(null)}
+                  data-testid="button-close-sheet-detail"
+                  className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-5 space-y-5">
+              {selectedSheet.exerciseId && (
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Übung</h3>
+                  <p className="text-sm text-brand-blue font-medium">
+                    {exercises.find((ex) => ex.id === selectedSheet.exerciseId)?.name || selectedSheet.exerciseId}
+                  </p>
+                  {getMtmmForExercise(selectedSheet.exerciseId).length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs text-slate-500 mb-1.5">MTMM-Kompetenzen:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {getMtmmForExercise(selectedSheet.exerciseId).map(m => (
+                          <span key={m.competencyNodeId} className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            m.weight >= 1.5 ? "bg-emerald-100 text-emerald-700" :
+                            m.weight >= 1.0 ? "bg-blue-100 text-blue-700" :
+                            "bg-amber-100 text-amber-700"
+                          }`}>
+                            {m.competencyNode.name} ({m.weight.toFixed(1)})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {selectedSheet.description && (
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Beschreibung</h3>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{selectedSheet.description}</p>
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Inhalt</h3>
+                {selectedSheet.content ? (
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                    <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed" data-testid="text-sheet-content">
+                      {renderContentPreview(selectedSheet.content)}
+                    </pre>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400 italic">Kein strukturierter Inhalt vorhanden. Der Bogen wurde als Metadaten-Eintrag erstellt.</p>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100 pt-4">
+                <div className="grid grid-cols-2 gap-3 text-xs text-slate-500">
+                  <div>
+                    <span className="font-medium">ID:</span> <span className="font-mono text-slate-400">{selectedSheet.id.slice(0, 8)}…</span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Status:</span> {selectedSheet.status}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CollaborationPanel
         workspaceSlug={workspaceSlug}
