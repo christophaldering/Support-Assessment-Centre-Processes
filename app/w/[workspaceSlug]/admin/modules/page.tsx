@@ -40,6 +40,22 @@ export default async function ModulesPage({ params }: Props) {
 
   const base = `/w/${params.workspaceSlug}/admin`;
 
+  const dbCaseStudies = await prisma.caseStudy.findMany({
+    where: { workspaceId: workspace.id },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      subtitle: true,
+      companyName: true,
+      description: true,
+      type: true,
+      difficulty: true,
+      sourceType: true,
+      status: true,
+    },
+  });
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: bgColor, color: textColor }}>
       <header className="text-white sticky top-0 z-50" style={{ backgroundColor: primary }}>
@@ -122,12 +138,12 @@ export default async function ModulesPage({ params }: Props) {
                 <span className="text-xs mt-3 inline-block opacity-40">→ Öffnen</span>
               </div>
             </Link>
-            {cases.map((c) => {
-              const isActive = c.status === "active";
+            {dbCaseStudies.map((cs) => {
+              const isActive = cs.status === "active";
               return (
-                <div key={c.id} data-testid={`card-module-${c.id}`}>
+                <div key={cs.id} data-testid={`card-module-${cs.id}`}>
                   {isActive ? (
-                    <Link href={`${base}/modules/case-study/${c.id}`} data-testid={`link-case-study-${c.id}`}>
+                    <Link href={`${base}/modules/case-study/${cs.id}`} data-testid={`link-case-study-${cs.id}`}>
                       <div
                         className="rounded-xl border p-6 transition-all hover:shadow-lg group cursor-pointer"
                         style={{ borderColor: `${primary}20`, backgroundColor: bgColor }}
@@ -138,9 +154,9 @@ export default async function ModulesPage({ params }: Props) {
                               className="font-semibold text-base group-hover:underline"
                               style={{ color: primary, fontFamily: `'${headingFont}', serif` }}
                             >
-                              {c.title}
+                              {cs.companyName}
                             </h3>
-                            <p className="text-xs opacity-50 mt-0.5">{c.subtitle}</p>
+                            <p className="text-xs opacity-50 mt-0.5">{cs.title}</p>
                           </div>
                           <span
                             className="text-[10px] font-bold text-white rounded-full px-2.5 py-1"
@@ -149,11 +165,13 @@ export default async function ModulesPage({ params }: Props) {
                             Aktiv
                           </span>
                         </div>
-                        <p className="text-sm opacity-60 leading-relaxed mb-3">{c.description}</p>
+                        <p className="text-sm opacity-60 leading-relaxed mb-3 line-clamp-3">{cs.description}</p>
                         <div className="flex items-center gap-3 text-[11px] opacity-40">
-                          <span>Typ: {c.type}</span>
+                          <span>Typ: {cs.type}</span>
                           <span>·</span>
-                          <span>Schwierigkeit: {c.difficulty}</span>
+                          <span>Schwierigkeit: {cs.difficulty}</span>
+                          <span>·</span>
+                          <span>Quelle: {cs.sourceType === "ai_generated" ? "KI-generiert" : cs.sourceType === "uploaded" ? "Hochgeladen" : cs.sourceType}</span>
                         </div>
                         <span className="text-xs mt-3 inline-block opacity-40">→ Öffnen</span>
                       </div>
@@ -169,25 +187,43 @@ export default async function ModulesPage({ params }: Props) {
                             className="font-semibold text-base"
                             style={{ color: primary, fontFamily: `'${headingFont}', serif` }}
                           >
-                            {c.title}
+                            {cs.companyName}
                           </h3>
-                          <p className="text-xs opacity-50 mt-0.5">{c.subtitle}</p>
+                          <p className="text-xs opacity-50 mt-0.5">{cs.title}</p>
                         </div>
                         <span className="text-[10px] font-bold text-slate-500 border border-slate-300 rounded-full px-2.5 py-1">
-                          Bald verfügbar
+                          Entwurf
                         </span>
                       </div>
-                      <p className="text-sm opacity-60 leading-relaxed mb-3">{c.description}</p>
+                      <p className="text-sm opacity-60 leading-relaxed mb-3 line-clamp-3">{cs.description}</p>
                       <div className="flex items-center gap-3 text-[11px] opacity-40">
-                        <span>Typ: {c.type}</span>
+                        <span>Typ: {cs.type}</span>
                         <span>·</span>
-                        <span>Schwierigkeit: {c.difficulty}</span>
+                        <span>Schwierigkeit: {cs.difficulty}</span>
                       </div>
                     </div>
                   )}
                 </div>
               );
             })}
+            {dbCaseStudies.length === 0 && cases.filter(c => c.status === "active").map((c) => (
+              <Link key={c.id} href={`${base}/modules/case-study/${c.id}`} data-testid={`link-case-study-${c.id}`}>
+                <div
+                  className="rounded-xl border p-6 transition-all hover:shadow-lg group cursor-pointer"
+                  style={{ borderColor: `${primary}20`, backgroundColor: bgColor }}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-semibold text-base group-hover:underline" style={{ color: primary, fontFamily: `'${headingFont}', serif` }}>{c.title}</h3>
+                      <p className="text-xs opacity-50 mt-0.5">{c.subtitle}</p>
+                    </div>
+                    <span className="text-[10px] font-bold text-white rounded-full px-2.5 py-1" style={{ backgroundColor: "#16a34a" }}>Aktiv</span>
+                  </div>
+                  <p className="text-sm opacity-60 leading-relaxed mb-3">{c.description}</p>
+                  <span className="text-xs mt-3 inline-block opacity-40">→ Öffnen</span>
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
 
