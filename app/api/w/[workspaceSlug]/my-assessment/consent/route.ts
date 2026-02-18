@@ -14,7 +14,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   }
 
   const isCandidate = session.roles.includes("CANDIDATE");
-  const isAdmin = session.roles.includes("ADMIN") || session.roles.includes("MODERATOR");
+  const isAdmin = session.roles.some((r: string) => ["ADMIN", "WORKSPACE_ADMIN", "MASTER_ADMIN", "MODERATOR"].includes(r));
 
   if (!isCandidate && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

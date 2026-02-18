@@ -52,7 +52,7 @@ async function main() {
         email: "christoph.aldering@aestimamus.com",
         name: "Christoph Aldering",
         passwordHash: adminHash,
-        roles: ["ADMIN"],
+        roles: ["WORKSPACE_ADMIN"],
         workspaceId,
         forcePasswordChange: true,
         status: "active",

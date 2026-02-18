@@ -1143,112 +1143,121 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                   </div>
                 </div>
                 {localData.newsArticles && localData.newsArticles.length > 0 ? (
-                  selectedNews ? (
-                    <div>
-                      <button
-                        onClick={() => { setSelectedNewsId(""); setEditingDoc(null); }}
-                        className="text-xs text-slate-500 hover:text-slate-800 mb-4 flex items-center gap-1"
-                        data-testid="button-back-news"
-                      >
-                        ← Back to articles
-                      </button>
-                      {editingDoc?.type === "news" && editingDoc.id === selectedNews.id ? (
-                        <article className="max-w-3xl" data-testid="form-edit-news">
-                          <div className="mb-6 space-y-3">
-                            <span className="text-xs text-slate-400">{selectedNews.source} · {selectedNews.date}</span>
-                            <div>
-                              <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Headline</label>
-                              <input
-                                type="text"
-                                value={editForm.headline || ""}
-                                onChange={(e) => setEditForm({ ...editForm, headline: e.target.value })}
-                                className="w-full text-2xl font-serif font-bold text-slate-900 bg-white border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
-                                data-testid="input-edit-news-headline"
-                              />
+                  <div className="flex gap-4 h-[calc(100vh-14rem)]">
+                    <div className="w-1/3 rounded-xl border border-slate-200 flex flex-col overflow-hidden">
+                      <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+                        <span className="font-semibold text-slate-900 text-sm">Artikel</span>
+                        <span className="text-[10px] bg-slate-200 text-slate-600 rounded-full px-2 py-0.5">{localData.newsArticles.length}</span>
+                      </div>
+                      <div className="flex-1 overflow-y-auto">
+                        {localData.newsArticles.map((article) => (
+                          <button
+                            key={article.id}
+                            onClick={() => { setSelectedNewsId(article.id); setEditingDoc(null); }}
+                            className={`flex flex-col w-full text-left p-4 border-b border-slate-100 transition-colors hover:bg-slate-50 ${
+                              selectedNewsId === article.id ? "bg-slate-100 border-l-4 border-l-rose-700" : "border-l-4 border-l-transparent"
+                            }`}
+                            data-testid={`button-news-${article.id}`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[10px] bg-blue-50 text-blue-700 rounded-full px-2 py-0.5">{article.source}</span>
+                              <span className="text-[10px] text-slate-400">{article.date}</span>
                             </div>
-                            <div>
-                              <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Subtitle</label>
-                              <input
-                                type="text"
-                                value={editForm.subtitle || ""}
-                                onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
-                                className="w-full text-base text-slate-500 italic bg-white border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
-                                data-testid="input-edit-news-subtitle"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Content</label>
-                            <textarea
-                              value={editForm.content || ""}
-                              onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                              className="w-full min-h-[400px] text-sm text-slate-700 bg-white border border-slate-200 rounded-lg px-4 py-3 resize-none leading-relaxed focus:outline-none focus:ring-2 focus:ring-slate-300"
-                              data-testid="input-edit-news-content"
-                            />
-                          </div>
-                          <div className="mt-4 flex items-center gap-3">
-                            <button
-                              onClick={saveDocument}
-                              disabled={saving}
-                              className="px-4 py-2 text-xs font-medium text-white rounded-lg transition-colors disabled:opacity-50"
-                              style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
-                              data-testid="button-save-news"
-                            >
-                              {saving ? "Speichern..." : "Speichern"}
-                            </button>
-                            <button
-                              onClick={() => setEditingDoc(null)}
-                              className="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
-                              data-testid="button-cancel-news"
-                            >
-                              Abbrechen
-                            </button>
-                          </div>
-                        </article>
-                      ) : (
-                        <article className="max-w-3xl">
-                          <div className="mb-6">
-                            <div className="flex items-start justify-between">
+                            <span className="text-xs font-medium text-slate-800 line-clamp-2">{article.headline}</span>
+                            <span className="text-[11px] text-slate-400 mt-1 line-clamp-1">{article.subtitle}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex-1 rounded-xl border border-slate-200 flex flex-col overflow-hidden bg-white">
+                      {selectedNews ? (
+                        editingDoc?.type === "news" && editingDoc.id === selectedNews.id ? (
+                          <div className="flex flex-col h-full" data-testid="form-edit-news">
+                            <div className="p-6 border-b border-slate-100 bg-slate-50/50 space-y-3">
                               <span className="text-xs text-slate-400">{selectedNews.source} · {selectedNews.date}</span>
-                              {caseStudyId && (
-                                <button
-                                  onClick={() => {
-                                    setEditingDoc({ type: "news", id: selectedNews.id });
-                                    setEditForm({ headline: selectedNews.headline, subtitle: selectedNews.subtitle, content: selectedNews.content });
-                                  }}
-                                  className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors ml-3 shrink-0"
-                                  data-testid="button-edit-news"
-                                >
-                                  Bearbeiten
-                                </button>
-                              )}
+                              <div>
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Headline</label>
+                                <input
+                                  type="text"
+                                  value={editForm.headline || ""}
+                                  onChange={(e) => setEditForm({ ...editForm, headline: e.target.value })}
+                                  className="w-full text-lg font-serif font-bold text-slate-900 bg-white border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                  data-testid="input-edit-news-headline"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Subtitle</label>
+                                <input
+                                  type="text"
+                                  value={editForm.subtitle || ""}
+                                  onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
+                                  className="w-full text-sm text-slate-500 italic bg-white border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                  data-testid="input-edit-news-subtitle"
+                                />
+                              </div>
                             </div>
-                            <h2 className="text-2xl font-serif font-bold text-slate-900 mt-2 mb-2">{selectedNews.headline}</h2>
-                            <p className="text-base text-slate-500 italic">{selectedNews.subtitle}</p>
+                            <div className="flex-1 overflow-y-auto p-6">
+                              <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Content</label>
+                              <textarea
+                                value={editForm.content || ""}
+                                onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+                                className="w-full h-full min-h-[300px] text-sm text-slate-700 bg-white border border-slate-200 rounded-lg px-4 py-3 resize-none leading-relaxed focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                data-testid="input-edit-news-content"
+                              />
+                            </div>
+                            <div className="px-6 py-3 border-t border-slate-100 flex items-center gap-3">
+                              <button
+                                onClick={saveDocument}
+                                disabled={saving}
+                                className="px-4 py-2 text-xs font-medium text-white rounded-lg transition-colors disabled:opacity-50"
+                                style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
+                                data-testid="button-save-news"
+                              >
+                                {saving ? "Speichern..." : "Speichern"}
+                              </button>
+                              <button
+                                onClick={() => setEditingDoc(null)}
+                                className="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+                                data-testid="button-cancel-news"
+                              >
+                                Abbrechen
+                              </button>
+                            </div>
                           </div>
-                          <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{selectedNews.content}</div>
-                        </article>
+                        ) : (
+                          <>
+                            <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                              <div className="flex items-start justify-between mb-2">
+                                <span className="text-xs text-slate-400">{selectedNews.source} · {selectedNews.date}</span>
+                                {caseStudyId && (
+                                  <button
+                                    onClick={() => {
+                                      setEditingDoc({ type: "news", id: selectedNews.id });
+                                      setEditForm({ headline: selectedNews.headline, subtitle: selectedNews.subtitle, content: selectedNews.content });
+                                    }}
+                                    className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors ml-3 shrink-0"
+                                    data-testid="button-edit-news"
+                                  >
+                                    Bearbeiten
+                                  </button>
+                                )}
+                              </div>
+                              <h2 className="text-xl font-serif font-bold text-slate-900 mb-1" data-testid="text-news-headline">{selectedNews.headline}</h2>
+                              <p className="text-sm text-slate-500 italic">{selectedNews.subtitle}</p>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-6 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap" data-testid="text-news-body">
+                              {selectedNews.content}
+                            </div>
+                          </>
+                        )
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-slate-300">
+                          <p>Artikel auswählen</p>
+                        </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {localData.newsArticles.map((article) => (
-                        <button
-                          key={article.id}
-                          onClick={() => setSelectedNewsId(article.id)}
-                          className="w-full text-left rounded-xl border border-slate-200 p-6 hover:border-slate-400 transition-colors"
-                          data-testid={`button-news-${article.id}`}
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[10px] bg-blue-50 text-blue-700 rounded-full px-2 py-0.5">{article.source}</span>
-                            <span className="text-[10px] text-slate-400">{article.date}</span>
-                          </div>
-                          <h3 className="text-base font-serif font-bold text-slate-900 mb-1">{article.headline}</h3>
-                          <p className="text-sm text-slate-500">{article.subtitle}</p>
-                        </button>
-                      ))}
-                    </div>
-                  )
+                  </div>
                 ) : (
                   <p className="text-sm text-slate-400">No news articles available.</p>
                 )}

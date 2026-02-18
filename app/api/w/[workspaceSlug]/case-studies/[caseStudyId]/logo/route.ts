@@ -112,10 +112,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     for (const ext of possibleExts) {
       const key = `.private/case-study-logos/${params.caseStudyId}.${ext}`;
       try {
-        const result = await storageClient.downloadAsBytes(key);
-        if (result) {
-          const chunks = Array.isArray(result) ? result : [result];
-          fileBuffer = Buffer.concat(chunks.map((c: any) => Buffer.from(c)));
+        const { ok, value: rawBuffer } = await storageClient.downloadAsBytes(key);
+        if (ok && rawBuffer) {
+          fileBuffer = Array.isArray(rawBuffer) ? Buffer.concat(rawBuffer) : Buffer.from(rawBuffer);
           const typeMap: Record<string, string> = {
             png: "image/png",
             jpg: "image/jpeg",

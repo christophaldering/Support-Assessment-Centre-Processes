@@ -222,8 +222,9 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session && !master && !hasPermission(session.roles, "brandrules.manage")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const isMasterAdmin = master || (session && session.roles.some((r: string) => ["MASTER_ADMIN"].includes(r)));
+  if (!isMasterAdmin) {
+    return NextResponse.json({ error: "Style-Guide-Upload ist nur für den Master-Administrator verfügbar." }, { status: 403 });
   }
 
   try {

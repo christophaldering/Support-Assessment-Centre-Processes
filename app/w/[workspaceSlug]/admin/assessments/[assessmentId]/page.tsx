@@ -95,13 +95,17 @@ interface LibraryItem {
   _count?: { variants: number };
 }
 
-const ALL_ROLES = ["ADMIN", "MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"] as const;
+const ALL_ROLES = ["MASTER_ADMIN", "WORKSPACE_ADMIN", "MODERATOR", "OBSERVER", "PROJECT_OFFICE", "CLIENT", "CANDIDATE"] as const;
 const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Admin",
+  MASTER_ADMIN: "Master-Administrator",
+  WORKSPACE_ADMIN: "Workspace-Administrator",
+  ADMIN: "Workspace-Administrator",
   MODERATOR: "Moderator",
   OBSERVER: "Beobachter",
-  PROJECT_ASSISTANT: "Projektassistent",
-  HR_CLIENT: "HR-Auftraggeber",
+  PROJECT_OFFICE: "Projektoffice",
+  PROJECT_ASSISTANT: "Projektoffice",
+  CLIENT: "Auftraggeber",
+  HR_CLIENT: "Auftraggeber",
   CANDIDATE: "Kandidat",
 };
 

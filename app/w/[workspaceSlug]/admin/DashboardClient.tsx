@@ -48,14 +48,18 @@ const designModeLabels: Record<string, { de: string; icon: string }> = {
 };
 
 const ROLE_LABELS: Record<string, string> = {
+  MASTER_ADMIN: "Master-Administratoren",
+  WORKSPACE_ADMIN: "Workspace-Administratoren",
   ADMIN: "Administratoren",
   MODERATOR: "Moderatoren",
   OBSERVER: "Beobachter",
+  PROJECT_OFFICE: "Projektoffice",
   PROJECT_ASSISTANT: "Projektassistenten",
+  CLIENT: "Auftraggeber",
   HR_CLIENT: "HR-Kunden",
 };
 
-const TEAM_ROLE_ORDER = ["ADMIN", "MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT"];
+const TEAM_ROLE_ORDER = ["MASTER_ADMIN", "WORKSPACE_ADMIN", "ADMIN", "MODERATOR", "OBSERVER", "PROJECT_OFFICE", "PROJECT_ASSISTANT", "CLIENT", "HR_CLIENT"];
 
 interface Props {
   assessments: AssessmentItem[];

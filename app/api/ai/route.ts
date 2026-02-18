@@ -385,7 +385,7 @@ Alle Texte auf Deutsch.`,
         return NextResponse.json({ error: "Autonomer Diagnosemodus ist nicht aktiviert." }, { status: 403 });
       }
 
-      if (session && !session.roles.includes("ADMIN")) {
+      if (session && !session.roles.some((r: string) => ["ADMIN", "WORKSPACE_ADMIN", "MASTER_ADMIN"].includes(r))) {
         return NextResponse.json({ error: "Nur Administratoren können den autonomen Diagnosemodus nutzen." }, { status: 403 });
       }
 

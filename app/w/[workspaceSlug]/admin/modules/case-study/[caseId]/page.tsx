@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
 import { getWorkspaceAuth, hasMasterAuth, getUserSession } from "@/lib/session";
-import { varexiaData, assessmentQuestions, cases } from "@/lib/case-studies/varexia";
 import { prisma } from "@/lib/db";
 import CaseStudyClient from "./CaseStudyClient";
 import type { CaseStudyData, AssessmentQuestions } from "@/lib/case-studies/varexia";
@@ -8,10 +7,6 @@ import type { CaseStudyData, AssessmentQuestions } from "@/lib/case-studies/vare
 interface Props {
   params: { workspaceSlug: string; caseId: string };
 }
-
-const caseDataMap: Record<string, typeof varexiaData> = {
-  varexia: varexiaData,
-};
 
 function safeBalanceItem(item: any): { item: string; value: number } {
   return {
@@ -157,19 +152,6 @@ export default async function CaseStudyPage({ params }: Props) {
 
   if (!masterAuth && wsAuth !== params.workspaceSlug && !hasUserAccess) {
     redirect(`/w/${params.workspaceSlug}/login`);
-  }
-
-  const hardcodedEntry = cases.find((c) => c.id === params.caseId && c.status === "active");
-  const hardcodedData = caseDataMap[params.caseId];
-
-  if (hardcodedEntry && hardcodedData) {
-    return (
-      <CaseStudyClient
-        data={hardcodedData}
-        questions={assessmentQuestions}
-        workspaceSlug={params.workspaceSlug}
-      />
-    );
   }
 
   const workspace = await prisma.workspace.findUnique({

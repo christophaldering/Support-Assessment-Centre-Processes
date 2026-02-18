@@ -213,7 +213,7 @@ export default function CandidatePortal() {
         if (!res.ok) { router.push(`/w/${workspaceSlug}/login`); return; }
         const data = await res.json();
         if (data.forcePasswordChange) { router.push(`/w/${workspaceSlug}/change-password`); return; }
-        if (!data.roles.includes("CANDIDATE") && !data.roles.includes("ADMIN") && !data.roles.includes("MODERATOR")) { router.push(`/w/${workspaceSlug}/admin`); return; }
+        if (!data.roles.includes("CANDIDATE") && !data.roles.some((r: string) => ["ADMIN", "WORKSPACE_ADMIN", "MASTER_ADMIN", "MODERATOR"].includes(r))) { router.push(`/w/${workspaceSlug}/admin`); return; }
         setUser(data);
       })
       .catch(() => router.push(`/w/${workspaceSlug}/login`))
@@ -357,7 +357,7 @@ export default function CandidatePortal() {
     );
   }
 
-  const isPreview = user.roles.includes("ADMIN") || user.roles.includes("MODERATOR");
+  const isPreview = user.roles.some((r: string) => ["ADMIN", "WORKSPACE_ADMIN", "MASTER_ADMIN", "MODERATOR"].includes(r));
 
   const portalDocs = assessment.portalDocuments || [];
   const legacyDocs = assessment.documents || [];

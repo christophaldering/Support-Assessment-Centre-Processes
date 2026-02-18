@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { ROLE_DISPLAY_NAMES, getDisplayRoles } from "@/lib/rbac";
 
 interface UserRecord {
   id: string;
@@ -21,20 +22,17 @@ interface Assessment {
   status: string;
 }
 
-const ALL_ROLES = ["ADMIN", "MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"] as const;
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Admin",
-  MODERATOR: "Moderator",
-  OBSERVER: "Beobachter",
-  PROJECT_ASSISTANT: "Projektassistent",
-  HR_CLIENT: "HR-Auftraggeber",
-  CANDIDATE: "Kandidat",
-};
+const ALL_ROLES = getDisplayRoles();
+const ROLE_LABELS: Record<string, string> = { ...ROLE_DISPLAY_NAMES };
 const ROLE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  MASTER_ADMIN: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
+  WORKSPACE_ADMIN: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
   ADMIN: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
   MODERATOR: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
   OBSERVER: { bg: "bg-teal-50", text: "text-teal-700", border: "border-teal-200" },
+  PROJECT_OFFICE: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
   PROJECT_ASSISTANT: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
+  CLIENT: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
   HR_CLIENT: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
   CANDIDATE: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
 };

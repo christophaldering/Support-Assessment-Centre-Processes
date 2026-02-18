@@ -43,7 +43,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   const { action, roles } = await req.json();
 
   if (action === "approve") {
-    const ALLOWED_ROLES = ["MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"];
+    const ALLOWED_ROLES = ["MODERATOR", "OBSERVER", "PROJECT_OFFICE", "PROJECT_ASSISTANT", "CLIENT", "HR_CLIENT", "CANDIDATE"];
     const filteredRoles = roles && roles.length > 0
       ? roles.filter((r: string) => ALLOWED_ROLES.includes(r))
       : ["OBSERVER"];

@@ -13,12 +13,12 @@ interface AccessRequestRecord {
   createdAt: string;
 }
 
-const ASSIGNABLE_ROLES = ["MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"] as const;
+const ASSIGNABLE_ROLES = ["MODERATOR", "OBSERVER", "PROJECT_OFFICE", "CLIENT", "CANDIDATE"] as const;
 const ROLE_LABELS: Record<string, string> = {
   MODERATOR: "Moderator",
   OBSERVER: "Beobachter",
-  PROJECT_ASSISTANT: "Projektassistent",
-  HR_CLIENT: "HR-Auftraggeber",
+  PROJECT_OFFICE: "Projektoffice",
+  CLIENT: "Auftraggeber",
   CANDIDATE: "Kandidat",
 };
 

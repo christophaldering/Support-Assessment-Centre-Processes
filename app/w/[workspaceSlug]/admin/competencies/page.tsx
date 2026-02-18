@@ -98,15 +98,19 @@ const SCALE_TYPE_LABELS: Record<string, string> = {
 };
 
 const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Admin",
+  MASTER_ADMIN: "Master-Administrator",
+  WORKSPACE_ADMIN: "Workspace-Administrator",
+  ADMIN: "Workspace-Administrator",
   MODERATOR: "Moderator",
   OBSERVER: "Beobachter",
-  PROJECT_ASSISTANT: "Projektassistent",
-  HR_CLIENT: "HR-Auftraggeber",
+  PROJECT_OFFICE: "Projektoffice",
+  PROJECT_ASSISTANT: "Projektoffice",
+  CLIENT: "Auftraggeber",
+  HR_CLIENT: "Auftraggeber",
   CANDIDATE: "Kandidat",
 };
 
-const ALL_ROLES = ["ADMIN", "MODERATOR", "OBSERVER", "PROJECT_ASSISTANT", "HR_CLIENT", "CANDIDATE"];
+const ALL_ROLES = ["MASTER_ADMIN", "WORKSPACE_ADMIN", "MODERATOR", "OBSERVER", "PROJECT_OFFICE", "CLIENT", "CANDIDATE"];
 const NODE_TYPES = ["domain", "competency", "sub", "anchor", "custom"];
 
 const inputClass = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue";
@@ -270,7 +274,7 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
       const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate_model" }),
+        body: JSON.stringify({ action: "generate_model", workspaceSlug }),
       });
       const data = await res.json();
       setAiMessage(data.message || data.error || "Unbekannte Antwort.");
@@ -911,7 +915,7 @@ function ModelDetail({ workspaceSlug, model, onRefresh }: { workspaceSlug: strin
       const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "write_anchors", context: { nodeId, modelId: model.id } }),
+        body: JSON.stringify({ action: "write_anchors", context: { nodeId, modelId: model.id }, workspaceSlug }),
       });
       const data = await res.json();
       setAiNodeMessage(data.message || data.error || "Unbekannte Antwort.");

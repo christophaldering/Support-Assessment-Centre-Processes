@@ -45,7 +45,7 @@ export default function WorkspaceUserLoginPage() {
         router.push(`/w/${workspaceSlug}/assessment`);
       } else if (data.user.roles.length === 1 && data.user.roles[0] === "OBSERVER") {
         router.push(`/w/${workspaceSlug}/observer`);
-      } else if (data.user.roles.length === 1 && data.user.roles[0] === "HR_CLIENT") {
+      } else if (data.user.roles.length === 1 && (data.user.roles[0] === "HR_CLIENT" || data.user.roles[0] === "CLIENT")) {
         router.push(`/w/${workspaceSlug}/observer`);
       } else {
         router.push(`/w/${workspaceSlug}/admin`);

@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     }
 
     const userId = master ? "master" : session!.userId;
-    const isAdmin = master || (session && session.roles.includes("ADMIN"));
+    const isAdmin = master || (session && session.roles.some((r: string) => ["ADMIN", "WORKSPACE_ADMIN", "MASTER_ADMIN"].includes(r)));
 
     if (note.authorId !== userId && !isAdmin) {
       return NextResponse.json({ error: "Zugriff verweigert" }, { status: 403 });
@@ -105,7 +105,7 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
     }
 
     const userId = master ? "master" : session!.userId;
-    const isAdmin = master || (session && session.roles.includes("ADMIN"));
+    const isAdmin = master || (session && session.roles.some((r: string) => ["ADMIN", "WORKSPACE_ADMIN", "MASTER_ADMIN"].includes(r)));
 
     if (note.authorId !== userId && !isAdmin) {
       return NextResponse.json({ error: "Zugriff verweigert" }, { status: 403 });

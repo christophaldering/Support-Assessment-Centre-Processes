@@ -86,7 +86,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const svgBuffer = Buffer.from(svgContent, "utf-8");
     const key = `.private/case-study-logos/${params.caseStudyId}.svg`;
     const storageClient = getStorageClient();
-    await storageClient.uploadFromBytes(key, svgBuffer);
+    const uploadResult = await storageClient.uploadFromBytes(key, svgBuffer);
+    if (uploadResult && !uploadResult.ok) {
+      console.error("Logo storage upload error:", uploadResult.error);
+      return NextResponse.json({ error: "Logo konnte nicht gespeichert werden" }, { status: 500 });
+    }
 
     const logoUrl = `/api/w/${params.workspaceSlug}/case-studies/${params.caseStudyId}/logo`;
 

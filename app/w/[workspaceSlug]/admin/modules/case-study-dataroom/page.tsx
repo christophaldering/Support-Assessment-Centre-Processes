@@ -143,9 +143,9 @@ export default function CaseStudyDataroomPage() {
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl" data-testid="section-varexia-link">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">Integrierte Fallstudie</p>
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">Referenz-Fallstudie</p>
               <h3 className="text-base font-bold text-slate-800">Varexia SE — Datenraum</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Hardcodierte Referenz-Fallstudie mit vollständigem interaktivem Datenraum (6 Tabs)</p>
+              <p className="text-xs text-slate-500 mt-0.5">Vollständige Referenz-Fallstudie mit interaktivem Datenraum. Bitte zuerst über die API seeden, falls noch nicht vorhanden.</p>
             </div>
             <Link
               href={`/w/${slug}/admin/modules/case-study-dataroom/varexia`}
