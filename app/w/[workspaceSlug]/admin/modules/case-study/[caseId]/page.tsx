@@ -104,6 +104,25 @@ function safeData(raw: any): CaseStudyData {
     hrSurvey: raw.hrSurvey || { title: "", participantsInvited: 0, responseRate: 0, categories: [], comments: [], hrComment: "" },
     leadershipSummary: raw.leadershipSummary || "",
     leadershipConference: raw.leadershipConference || "",
+    organigramm: Array.isArray(raw.organigramm)
+      ? raw.organigramm.map((o: any) => ({
+          name: o.name || "Unknown",
+          role: o.role || "",
+          department: o.department || "",
+          reportsTo: o.reportsTo || null,
+        }))
+      : [],
+    briefing: raw.briefing
+      ? {
+          role: raw.briefing.role || "",
+          situation: raw.briefing.situation || "",
+          tasks: Array.isArray(raw.briefing.tasks) ? raw.briefing.tasks : [],
+          analysisQuestions: Array.isArray(raw.briefing.analysisQuestions) ? raw.briefing.analysisQuestions : [],
+          conclusionQuestions: Array.isArray(raw.briefing.conclusionQuestions) ? raw.briefing.conclusionQuestions : [],
+          timeMinutes: typeof raw.briefing.timeMinutes === "number" ? raw.briefing.timeMinutes : 60,
+          presentationMinutes: typeof raw.briefing.presentationMinutes === "number" ? raw.briefing.presentationMinutes : 15,
+        }
+      : undefined,
   };
 }
 

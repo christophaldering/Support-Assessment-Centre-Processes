@@ -54,6 +54,23 @@ export interface ManagementMember {
   division?: string;
 }
 
+export interface OrganigrammEntry {
+  name: string;
+  role: string;
+  department: string;
+  reportsTo: string | null;
+}
+
+export interface BriefingData {
+  role: string;
+  situation: string;
+  tasks: string[];
+  analysisQuestions: string[];
+  conclusionQuestions: string[];
+  timeMinutes: number;
+  presentationMinutes: number;
+}
+
 export interface BoardImpression {
   title: string;
   topic: string;
@@ -127,6 +144,8 @@ export interface CaseStudyData {
   hrSurvey: HRSurveyData;
   leadershipSummary: string;
   leadershipConference: string;
+  organigramm?: OrganigrammEntry[];
+  briefing?: BriefingData;
 }
 
 export interface CaseEntry {

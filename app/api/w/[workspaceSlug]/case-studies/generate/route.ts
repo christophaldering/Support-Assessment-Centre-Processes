@@ -208,6 +208,12 @@ Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokoll
       }
 
       const dataJson = parsed.data || parsed;
+      if (parsed.briefing && !dataJson.briefing) {
+        dataJson.briefing = parsed.briefing;
+      }
+      if (parsed.organigramm && !dataJson.organigramm) {
+        dataJson.organigramm = parsed.organigramm;
+      }
       const questionsJson = parsed.questions || null;
       const companyName = dataJson.name || `${industry}-Unternehmen`;
 
@@ -259,6 +265,12 @@ Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokoll
       }
 
       const dataJson = parsed.data || parsed;
+      if (parsed.briefing && !dataJson.briefing) {
+        dataJson.briefing = parsed.briefing;
+      }
+      if (parsed.organigramm && !dataJson.organigramm) {
+        dataJson.organigramm = parsed.organigramm;
+      }
       const questionsJson = parsed.questions || null;
       const companyName = dataJson.name || "Unbekanntes Unternehmen";
 
