@@ -3,6 +3,9 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const RichTextEditor = dynamic(() => import("@/app/components/RichTextEditor"), { ssr: false });
 
 interface ExerciseLibraryItem {
   id: string;
@@ -327,14 +330,22 @@ function DetailModal({
   item,
   slug,
   onClose,
+  onUpdated,
 }: {
   item: ExerciseLibraryItem;
   slug: string;
   onClose: () => void;
+  onUpdated?: () => void;
 }) {
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(item.title);
+  const [editDescription, setEditDescription] = useState(item.description || "");
+  const [editSourceContext, setEditSourceContext] = useState(item.sourceContext || item.metadataJson?.sourceContext || "");
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -379,6 +390,36 @@ function DetailModal({
     }
   };
 
+  const handleSave = async () => {
+    setSaving(true);
+    setError("");
+    setSuccessMsg("");
+    try {
+      const res = await fetch(`/api/w/${slug}/exercise-library/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editTitle,
+          description: editDescription,
+          sourceContext: editSourceContext,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || "Fehler beim Speichern");
+        return;
+      }
+      setSuccessMsg("Gespeichert");
+      setEditing(false);
+      onUpdated?.();
+      setTimeout(() => setSuccessMsg(""), 2500);
+    } catch {
+      setError("Fehler beim Speichern");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const author = item.metadataJson?.author || "";
   const sourceCtx = item.sourceContext || item.metadataJson?.sourceContext || "";
   const isCaseStudy = item.exerciseType === "case_study";
@@ -395,27 +436,54 @@ function DetailModal({
         className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[85vh] overflow-y-auto"
         data-testid={`detail-modal-${item.id}`}
       >
-        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h2
-            className="text-lg font-bold text-slate-800"
-            style={{ fontFamily: "Playfair Display, serif" }}
-            data-testid="text-modal-title"
-          >
-            {item.title}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
-            data-testid="button-close-modal"
-          >
-            <CloseIcon />
-          </button>
+        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+          {editing ? (
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="text-lg font-bold text-slate-800 bg-transparent border-b-2 border-slate-300 focus:border-slate-600 focus:outline-none flex-1 mr-4"
+              style={{ fontFamily: "Playfair Display, serif" }}
+              data-testid="input-edit-title"
+            />
+          ) : (
+            <h2
+              className="text-lg font-bold text-slate-800"
+              style={{ fontFamily: "Playfair Display, serif" }}
+              data-testid="text-modal-title"
+            >
+              {editTitle || item.title}
+            </h2>
+          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {!editing && (
+              <button
+                onClick={() => setEditing(true)}
+                className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                data-testid="button-toggle-edit"
+              >
+                Bearbeiten
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+              data-testid="button-close-modal"
+            >
+              <CloseIcon />
+            </button>
+          </div>
         </div>
 
         <div className="px-6 py-5 space-y-4">
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm" data-testid="text-modal-error">
               {error}
+            </div>
+          )}
+          {successMsg && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm" data-testid="text-modal-success">
+              {successMsg}
             </div>
           )}
 
@@ -432,20 +500,29 @@ function DetailModal({
                 {new Date(item.createdAt).toLocaleDateString("de-DE")}
               </p>
             </div>
-            {author && (
+            {(author || editing) && (
               <div>
                 <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Autor</span>
                 <p className="text-slate-800 mt-0.5" data-testid="text-modal-author">{author}</p>
               </div>
             )}
-            {sourceCtx && (
-              <div>
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                  Ursprünglich konzipiert für
-                </span>
-                <p className="text-slate-800 mt-0.5" data-testid="text-modal-source">{sourceCtx}</p>
-              </div>
-            )}
+            <div>
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                Ursprünglich konzipiert für
+              </span>
+              {editing ? (
+                <input
+                  type="text"
+                  value={editSourceContext}
+                  onChange={(e) => setEditSourceContext(e.target.value)}
+                  placeholder="z.B. Projekt XY"
+                  className="mt-0.5 w-full text-sm text-slate-800 bg-transparent border-b border-slate-300 focus:border-slate-600 focus:outline-none"
+                  data-testid="input-edit-source-context"
+                />
+              ) : (
+                <p className="text-slate-800 mt-0.5" data-testid="text-modal-source">{sourceCtx || "–"}</p>
+              )}
+            </div>
           </div>
 
           {item.targetLevels.length > 0 && (
@@ -470,16 +547,29 @@ function DetailModal({
             </div>
           )}
 
-          {item.description && (
-            <div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                Kurze Beschreibung
-              </span>
-              <p className="text-sm text-slate-700 mt-1 leading-relaxed" data-testid="text-modal-description">
-                {item.description}
-              </p>
-            </div>
-          )}
+          <div>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              Beschreibung / Instruktion
+            </span>
+            {editing ? (
+              <div className="mt-2" data-testid="editor-description">
+                <RichTextEditor
+                  content={editDescription}
+                  onChange={setEditDescription}
+                  placeholder="Übungsbeschreibung, Instruktion, Hinweise..."
+                  minHeight="180px"
+                />
+              </div>
+            ) : (
+              <div className="text-sm text-slate-700 mt-1 leading-relaxed" data-testid="text-modal-description">
+                {editDescription ? (
+                  <div dangerouslySetInnerHTML={{ __html: editDescription }} />
+                ) : (
+                  <p className="text-slate-400 italic">Keine Beschreibung vorhanden</p>
+                )}
+              </div>
+            )}
+          </div>
 
           {item.originalFileName && (
             <div>
@@ -509,60 +599,89 @@ function DetailModal({
           )}
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex items-center gap-3 rounded-b-2xl">
-          {item.originalFileKey && (
+        <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex items-center gap-3 rounded-b-2xl z-10">
+          {editing ? (
             <>
               <button
-                onClick={handleDownload}
-                disabled={downloading}
-                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 px-5 py-2 text-white rounded-lg text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
                 style={{ backgroundColor: ACCENT }}
-                data-testid="button-download"
+                data-testid="button-save-exercise"
               >
-                {downloading ? <SpinnerIcon /> : <DownloadIcon />}
-                Herunterladen
+                {saving ? <SpinnerIcon /> : null}
+                {saving ? "Wird gespeichert..." : "Speichern"}
               </button>
               <button
-                onClick={handlePreview}
-                className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition"
-                data-testid="button-preview"
+                onClick={() => {
+                  setEditing(false);
+                  setEditTitle(item.title);
+                  setEditDescription(item.description || "");
+                  setEditSourceContext(item.sourceContext || item.metadataJson?.sourceContext || "");
+                }}
+                className="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-sm hover:bg-slate-50 transition"
+                data-testid="button-cancel-edit"
               >
-                <EyeIcon />
-                Vorschau
+                Abbrechen
               </button>
             </>
-          )}
-
-          {isCaseStudy && (
+          ) : (
             <>
+              {item.originalFileKey && (
+                <>
+                  <button
+                    onClick={handleDownload}
+                    disabled={downloading}
+                    className="flex items-center gap-2 px-4 py-2 text-white rounded-lg text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+                    style={{ backgroundColor: ACCENT }}
+                    data-testid="button-download"
+                  >
+                    {downloading ? <SpinnerIcon /> : <DownloadIcon />}
+                    Herunterladen
+                  </button>
+                  <button
+                    onClick={handlePreview}
+                    className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition"
+                    data-testid="button-preview"
+                  >
+                    <EyeIcon />
+                    Vorschau
+                  </button>
+                </>
+              )}
+
+              {isCaseStudy && (
+                <>
+                  <button
+                    className="px-4 py-2 border border-slate-300 text-slate-400 rounded-lg text-sm cursor-not-allowed"
+                    disabled
+                    data-testid="button-digitalize"
+                  >
+                    Digitalisieren (bald)
+                  </button>
+                  <Link
+                    href={`/w/${slug}/admin/modules/case-study-dataroom`}
+                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm hover:bg-slate-50 transition"
+                    data-testid="link-case-study-dataroom"
+                  >
+                    Fallstudien-Datenraum öffnen
+                  </Link>
+                </>
+              )}
+
+              <div className="flex-1" />
+
               <button
-                className="px-4 py-2 border border-slate-300 text-slate-400 rounded-lg text-sm cursor-not-allowed"
-                disabled
-                data-testid="button-digitalize"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-1.5 px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg text-sm transition"
+                data-testid="button-delete"
               >
-                Digitalisieren (bald)
+                {deleting ? <SpinnerIcon /> : <TrashIcon />}
+                Löschen
               </button>
-              <Link
-                href={`/w/${slug}/admin/modules/case-study-dataroom`}
-                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm hover:bg-slate-50 transition"
-                data-testid="link-case-study-dataroom"
-              >
-                Fallstudien-Datenraum öffnen
-              </Link>
             </>
           )}
-
-          <div className="flex-1" />
-
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex items-center gap-1.5 px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg text-sm transition"
-            data-testid="button-delete"
-          >
-            {deleting ? <SpinnerIcon /> : <TrashIcon />}
-            Löschen
-          </button>
         </div>
       </div>
     </div>
