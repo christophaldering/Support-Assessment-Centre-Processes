@@ -196,8 +196,7 @@ export default function CandidatePortal() {
       if (res.ok) setAssessment(await res.json());
       if (submit) {
         setSelectedQuestionnaire(null);
-        setView("documents");
-        setActiveCategory("questionnaires");
+        setView("welcome");
       }
     } catch {}
     setSubmittingQuestionnaire(false);
