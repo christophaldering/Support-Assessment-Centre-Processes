@@ -27,8 +27,22 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
   }
 
+  const searchParams = req.nextUrl.searchParams;
+  const search = searchParams.get("search") || "";
+  const typeFilter = searchParams.get("type") || "";
+
+  const where: any = { workspaceId: workspace.id };
+
+  if (search) {
+    where.name = { contains: search, mode: "insensitive" };
+  }
+
+  if (typeFilter) {
+    where.type = typeFilter;
+  }
+
   const templates = await prisma.observationSheetTemplate.findMany({
-    where: { workspaceId: workspace.id },
+    where,
     orderBy: { createdAt: "desc" },
   });
 
@@ -48,7 +62,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const { name, description, type, content, tags, targetLevels } = await req.json();
+    const { name, description, type, content, structuredData, ratingScale, exerciseIds, competencyModelId, competencyNames, tags, targetLevels } = await req.json();
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -68,6 +82,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         description: description ?? null,
         type: type ?? "manual",
         content: content ?? null,
+        structuredData: structuredData ?? null,
+        ratingScale: ratingScale ?? null,
+        exerciseIds: exerciseIds ?? [],
+        competencyModelId: competencyModelId ?? null,
+        competencyNames: competencyNames ?? [],
         tags: tags ?? [],
         targetLevels: targetLevels ?? [],
         workspaceId: workspace.id,
