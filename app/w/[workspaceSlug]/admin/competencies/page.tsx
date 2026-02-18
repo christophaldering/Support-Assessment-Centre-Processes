@@ -125,7 +125,7 @@ export default function CompetencyManagementPage() {
     { key: "models", label: "Kompetenzmodelle" },
     { key: "scales", label: "Skalen" },
     { key: "weights", label: "Gewichtungsprofile" },
-    { key: "mapping", label: "Übungs-Zuordnung" },
+    { key: "mapping", label: "MTMM-Matrix" },
   ];
 
   return (
@@ -156,7 +156,7 @@ export default function CompetencyManagementPage() {
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-brand-navy">Kompetenzmodelle</h1>
-          <p className="text-sm text-slate-500">Kompetenzrahmen, Dimensionen, Skalen und Zuordnungen verwalten</p>
+          <p className="text-sm text-slate-500">Kompetenzrahmen, Dimensionen, Skalen und MTMM-Matrix verwalten</p>
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-slate-200">
@@ -1517,17 +1517,36 @@ function WeightsTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
   );
 }
 
+type MtmmLevel = "domain" | "competency" | "sub" | "anchor";
+
+const MTMM_LEVEL_OPTIONS: { key: MtmmLevel; label: string; description: string }[] = [
+  { key: "domain", label: "Cluster / Domänen", description: "Gröbste Ebene — nur übergeordnete Kompetenzcluster zuordnen" },
+  { key: "competency", label: "Kompetenzen", description: "Standard-Ebene — einzelne Kompetenzen den Übungen zuordnen" },
+  { key: "sub", label: "Subkompetenzen / Dimensionen", description: "Feinere Ebene — Subkompetenzen und Dimensionen zuordnen" },
+  { key: "anchor", label: "Verhaltensanker", description: "Feinste Ebene — jeden einzelnen Verhaltensanker zuordnen" },
+];
+
+const MTMM_LEVEL_TYPES: Record<MtmmLevel, string[]> = {
+  domain: ["domain"],
+  competency: ["domain", "competency"],
+  sub: ["domain", "competency", "sub"],
+  anchor: ["domain", "competency", "sub", "anchor"],
+};
+
 function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: ReturnType<typeof useRouter> }) {
   const [assessments, setAssessments] = useState<AssessmentRecord[]>([]);
   const [models, setModels] = useState<CompetencyModel[]>([]);
   const [selectedAssessmentId, setSelectedAssessmentId] = useState("");
   const [selectedModelId, setSelectedModelId] = useState("");
+  const [selectedLevel, setSelectedLevel] = useState<MtmmLevel | "">("");
   const [exercises, setExercises] = useState<ExerciseRecord[]>([]);
   const [mappings, setMappings] = useState<Record<string, Record<string, { mapped: boolean; weight: number }>>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [error, setError] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   const fetchInit = useCallback(async () => {
     try {
@@ -1544,13 +1563,25 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
   useEffect(() => { fetchInit(); }, [fetchInit]);
 
   const selectedModel = models.find((m) => m.id === selectedModelId);
-  const leafNodes = (selectedModel?.nodes || []).filter((n) => {
-    const hasChildren = (selectedModel?.nodes || []).some((c) => c.parentId === n.id);
-    return !hasChildren;
-  });
+
+  const getNodesForLevel = useCallback((level: MtmmLevel) => {
+    if (!selectedModel) return [];
+    const allNodes = selectedModel.nodes || [];
+    const targetType = level;
+    const nodesOfType = allNodes.filter((n) => n.nodeType === targetType);
+    if (nodesOfType.length > 0) return nodesOfType;
+    const allowedTypes = MTMM_LEVEL_TYPES[level];
+    const deepest = [...allowedTypes].reverse().find((t) => allNodes.some((n) => n.nodeType === t));
+    return deepest ? allNodes.filter((n) => n.nodeType === deepest) : allNodes.filter((n) => {
+      const hasChildren = allNodes.some((c) => c.parentId === n.id);
+      return !hasChildren;
+    });
+  }, [selectedModel]);
+
+  const matrixNodes = selectedLevel ? getNodesForLevel(selectedLevel) : [];
 
   const fetchMappingData = useCallback(async () => {
-    if (!selectedAssessmentId || !selectedModelId) return;
+    if (!selectedAssessmentId || !selectedModelId || !selectedLevel) return;
     setLoading(true);
     setError("");
     try {
@@ -1564,10 +1595,11 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
       setExercises(exList);
 
       const existingMappings: MappingRecord[] = mapRes.ok ? await mapRes.json() : [];
+      const nodes = getNodesForLevel(selectedLevel);
       const grid: Record<string, Record<string, { mapped: boolean; weight: number }>> = {};
       for (const ex of exList) {
         grid[ex.id] = {};
-        for (const node of leafNodes) {
+        for (const node of nodes) {
           const existing = existingMappings.find((m) => m.exerciseId === ex.id && m.competencyNodeId === node.id);
           grid[ex.id][node.id] = { mapped: !!existing, weight: existing?.weight ?? 1 };
         }
@@ -1575,9 +1607,9 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
       setMappings(grid);
     } catch { setError("Fehler beim Laden der Zuordnungsdaten."); }
     finally { setLoading(false); }
-  }, [workspaceSlug, selectedAssessmentId, selectedModelId, leafNodes.length]);
+  }, [workspaceSlug, selectedAssessmentId, selectedModelId, selectedLevel, getNodesForLevel]);
 
-  useEffect(() => { fetchMappingData(); }, [selectedAssessmentId, selectedModelId]);
+  useEffect(() => { fetchMappingData(); }, [selectedAssessmentId, selectedModelId, selectedLevel]);
 
   const toggleMapping = (exerciseId: string, nodeId: string) => {
     setMappings((prev) => ({
@@ -1599,6 +1631,46 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
     }));
   };
 
+  const handleAiSuggest = async () => {
+    if (!selectedAssessmentId || !selectedModelId || !selectedLevel) return;
+    setAiGenerating(true);
+    setAiError("");
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}/mtmm-suggest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          competencyModelId: selectedModelId,
+          level: selectedLevel,
+          exerciseIds: exercises.map((e) => e.id),
+          nodeIds: matrixNodes.map((n) => n.id),
+          exercises: exercises.map((e) => ({ id: e.id, name: e.name, type: e.type })),
+          nodes: matrixNodes.map((n) => ({ id: n.id, name: n.name, nodeType: n.nodeType })),
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "KI-Vorschlag fehlgeschlagen");
+      }
+      const suggestions: { exerciseId: string; nodeId: string; weight: number; rationale?: string }[] = await res.json();
+      const newGrid: Record<string, Record<string, { mapped: boolean; weight: number }>> = {};
+      for (const ex of exercises) {
+        newGrid[ex.id] = {};
+        for (const node of matrixNodes) {
+          const suggestion = suggestions.find((s) => s.exerciseId === ex.id && s.nodeId === node.id);
+          newGrid[ex.id][node.id] = suggestion
+            ? { mapped: true, weight: suggestion.weight }
+            : { mapped: false, weight: 1 };
+        }
+      }
+      setMappings(newGrid);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "KI-Vorschlag fehlgeschlagen");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setSaveMsg("");
@@ -1618,7 +1690,7 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
         body: JSON.stringify({ mappings: flatMappings }),
       });
       if (res.ok) {
-        setSaveMsg("Zuordnungen gespeichert.");
+        setSaveMsg("MTMM-Matrix gespeichert.");
         setTimeout(() => setSaveMsg(""), 3000);
       } else {
         const d = await res.json();
@@ -1628,10 +1700,15 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
     finally { setSaving(false); }
   };
 
+  const showMatrix = selectedAssessmentId && selectedModelId && selectedLevel && !loading;
+
   return (
     <div className="space-y-6">
       <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <div className="grid md:grid-cols-2 gap-4">
+        <h2 className="text-lg font-semibold text-brand-navy mb-1">Generierung MTMM-Matrix</h2>
+        <p className="text-sm text-slate-500 mb-5">Multi-Trait-Multi-Method — Zuordnung von Übungen (Methoden) zu Kompetenzdimensionen (Traits)</p>
+
+        <div className="grid md:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Assessment auswählen</label>
             <select value={selectedAssessmentId} onChange={(e) => setSelectedAssessmentId(e.target.value)} data-testid="select-mapping-assessment" className={inputClass}>
@@ -1641,57 +1718,123 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Kompetenzmodell auswählen</label>
-            <select value={selectedModelId} onChange={(e) => setSelectedModelId(e.target.value)} data-testid="select-mapping-model" className={inputClass}>
+            <select value={selectedModelId} onChange={(e) => { setSelectedModelId(e.target.value); setSelectedLevel(""); }} data-testid="select-mapping-model" className={inputClass}>
               <option value="">– Bitte wählen –</option>
               {models.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
             </select>
           </div>
         </div>
+
+        {selectedAssessmentId && selectedModelId && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-3">Zuordnungsebene wählen</label>
+            <div className="grid md:grid-cols-2 gap-3" data-testid="section-level-selection">
+              {MTMM_LEVEL_OPTIONS.map((opt) => {
+                const nodesCount = getNodesForLevel(opt.key).length;
+                const isDisabled = nodesCount === 0;
+                return (
+                  <button
+                    key={opt.key}
+                    onClick={() => !isDisabled && setSelectedLevel(opt.key)}
+                    disabled={isDisabled}
+                    data-testid={`button-level-${opt.key}`}
+                    className={`text-left p-4 rounded-lg border-2 transition-all ${
+                      selectedLevel === opt.key
+                        ? "border-brand-blue bg-blue-50/50 ring-1 ring-brand-blue/20"
+                        : isDisabled
+                        ? "border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-sm font-semibold ${selectedLevel === opt.key ? "text-brand-blue" : "text-brand-navy"}`}>{opt.label}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${nodesCount > 0 ? "bg-slate-100 text-slate-600" : "bg-red-50 text-red-400"}`}>
+                        {nodesCount} {nodesCount === 1 ? "Element" : "Elemente"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500">{opt.description}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {error && <p className="text-sm text-red-500" data-testid="text-error">{error}</p>}
+      {aiError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700" data-testid="text-ai-error">
+          {aiError}
+          <button onClick={() => setAiError("")} className="ml-3 underline text-xs">Schließen</button>
+        </div>
+      )}
 
       {loading && <p className="text-sm text-slate-400">Laden…</p>}
 
-      {selectedAssessmentId && selectedModelId && !loading && exercises.length > 0 && leafNodes.length > 0 && (
+      {showMatrix && exercises.length > 0 && matrixNodes.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-brand-navy">Zuordnungsmatrix</h2>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-brand-navy">MTMM-Matrix</h2>
+              <p className="text-xs text-slate-500">Ebene: {MTMM_LEVEL_OPTIONS.find((o) => o.key === selectedLevel)?.label} · {exercises.length} Methoden × {matrixNodes.length} Traits</p>
+            </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={handleAiSuggest}
+                disabled={aiGenerating}
+                data-testid="button-ai-suggest-mtmm"
+                className="rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-medium px-4 py-2 hover:from-violet-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {aiGenerating ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    KI analysiert…
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    KI-Vorschlag generieren
+                  </>
+                )}
+              </button>
               {saveMsg && <span className="text-sm text-slate-500" data-testid="text-save-msg">{saveMsg}</span>}
               <button onClick={handleSave} disabled={saving} data-testid="button-save-mappings" className={`${btnPrimary} px-6 disabled:opacity-50`}>
-                {saving ? "Wird gespeichert…" : "Zuordnungen speichern"}
+                {saving ? "Wird gespeichert…" : "Matrix speichern"}
               </button>
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="text-sm border-collapse" data-testid="table-mapping-matrix">
+            <table className="text-sm border-collapse w-full" data-testid="table-mtmm-matrix">
               <thead>
                 <tr>
-                  <th className="text-left px-3 py-2 font-medium text-slate-600 border-b border-slate-200 sticky left-0 bg-white min-w-[150px]">Übung</th>
-                  {leafNodes.map((node) => (
+                  <th className="text-left px-3 py-2 font-medium text-slate-600 border-b border-slate-200 sticky left-0 bg-white min-w-[150px] z-10">Methode / Übung</th>
+                  {matrixNodes.map((node) => (
                     <th key={node.id} className="text-center px-2 py-2 font-medium text-slate-600 border-b border-slate-200 min-w-[120px]">
                       <div className="text-xs leading-tight">{node.name}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">{NODE_TYPE_LABELS[node.nodeType] || node.nodeType}</div>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {exercises.map((ex) => (
-                  <tr key={ex.id} className="border-b border-slate-100" data-testid={`row-mapping-${ex.id}`}>
-                    <td className="px-3 py-2 font-medium text-slate-900 sticky left-0 bg-white">{ex.name}</td>
-                    {leafNodes.map((node) => {
+                  <tr key={ex.id} className="border-b border-slate-100 hover:bg-slate-50/50" data-testid={`row-mtmm-${ex.id}`}>
+                    <td className="px-3 py-2 font-medium text-slate-900 sticky left-0 bg-white z-10">
+                      <div>{ex.name}</div>
+                      <div className="text-[10px] text-slate-400">{ex.type}</div>
+                    </td>
+                    {matrixNodes.map((node) => {
                       const cell = mappings[ex.id]?.[node.id];
                       if (!cell) return <td key={node.id} className="px-2 py-2 text-center" />;
                       return (
-                        <td key={node.id} className="px-2 py-2 text-center">
+                        <td key={node.id} className={`px-2 py-2 text-center ${cell.mapped ? "bg-blue-50/40" : ""}`}>
                           <div className="flex flex-col items-center gap-1">
                             <input
                               type="checkbox"
                               checked={cell.mapped}
                               onChange={() => toggleMapping(ex.id, node.id)}
-                              data-testid={`checkbox-mapping-${ex.id}-${node.id}`}
-                              className="rounded border-slate-300"
+                              data-testid={`checkbox-mtmm-${ex.id}-${node.id}`}
+                              className="rounded border-slate-300 text-brand-blue focus:ring-brand-blue"
                             />
                             {cell.mapped && (
                               <input
@@ -1701,7 +1844,7 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
                                 step="0.1"
                                 min="0"
                                 className="w-16 text-xs text-center rounded border border-slate-200 py-0.5"
-                                data-testid={`input-mapping-weight-${ex.id}-${node.id}`}
+                                data-testid={`input-mtmm-weight-${ex.id}-${node.id}`}
                               />
                             )}
                           </div>
@@ -1716,15 +1859,15 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
         </div>
       )}
 
-      {selectedAssessmentId && selectedModelId && !loading && exercises.length === 0 && (
+      {showMatrix && exercises.length === 0 && (
         <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
           Keine Übungen im ausgewählten Assessment vorhanden.
         </div>
       )}
 
-      {selectedAssessmentId && selectedModelId && !loading && leafNodes.length === 0 && exercises.length > 0 && (
+      {showMatrix && matrixNodes.length === 0 && exercises.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
-          Keine Blatt-Kompetenzen im ausgewählten Modell vorhanden.
+          Keine Kompetenzen auf der gewählten Ebene vorhanden. Bitte eine andere Ebene wählen.
         </div>
       )}
     </div>
