@@ -1998,7 +1998,12 @@ export default function AssessmentDetailPage() {
                       <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3" data-testid="banner-spec-library-search">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-semibold text-purple-700">Suche für Modulspezifikation: {specForLibrarySearch.name}</span>
-                          <button type="button" onClick={() => setSpecForLibrarySearch(null)} className="text-xs text-slate-400 hover:text-slate-600" data-testid="button-clear-spec-search">×</button>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-200 text-purple-700 font-medium">
+                              Typ: {EXERCISE_TYPE_LABELS[TYPE_MAP_DE_TO_KEY[specForLibrarySearch.type] || specForLibrarySearch.type] || specForLibrarySearch.type}
+                            </span>
+                            <button type="button" onClick={() => setSpecForLibrarySearch(null)} className="text-xs text-slate-400 hover:text-slate-600" data-testid="button-clear-spec-search">×</button>
+                          </div>
                         </div>
                         {specForLibrarySearch.description && <p className="text-xs text-purple-600 mb-1">{specForLibrarySearch.description}</p>}
                         {specForLibrarySearch.adaptationNotes && (
@@ -2023,7 +2028,31 @@ export default function AssessmentDetailPage() {
                       <p className="text-sm text-slate-400">Keine Einträge in der Bibliothek. Laden Sie die Varexia-Fallstudie oder erstellen Sie Übungen in der Bibliothek.</p>
                     ) : (
                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {libraryItems.map((item) => (
+                        {(() => {
+                          let filtered = libraryItems;
+                          if (specForLibrarySearch?.type) {
+                            const specKey = TYPE_MAP_DE_TO_KEY[specForLibrarySearch.type] || specForLibrarySearch.type?.toLowerCase().replace(/[\s-]+/g, "_") || "";
+                            filtered = libraryItems.filter(item => {
+                              const itemKey = TYPE_MAP_DE_TO_KEY[item.exerciseType] || item.exerciseType?.toLowerCase().replace(/[\s-]+/g, "_") || "";
+                              return itemKey === specKey;
+                            });
+                          }
+                          if (filtered.length === 0 && specForLibrarySearch?.type) {
+                            return (
+                              <div className="col-span-full text-center py-6">
+                                <p className="text-sm text-slate-500 mb-2">Keine Übungen vom Typ „{EXERCISE_TYPE_LABELS[TYPE_MAP_DE_TO_KEY[specForLibrarySearch.type] || specForLibrarySearch.type] || specForLibrarySearch.type}" in der Bibliothek gefunden.</p>
+                                <button
+                                  type="button"
+                                  onClick={() => setSpecForLibrarySearch(null)}
+                                  className="text-xs font-medium text-brand-blue hover:underline"
+                                  data-testid="button-show-all-library"
+                                >
+                                  Alle Übungen anzeigen
+                                </button>
+                              </div>
+                            );
+                          }
+                          return filtered.map((item) => (
                           <div key={item.id} className="border border-slate-200 rounded-lg p-3 bg-white" data-testid={`library-item-${item.id}`}>
                             <p className="font-medium text-sm text-slate-900 mb-1">{item.title}</p>
                             <div className="flex flex-wrap gap-1 mb-2">
@@ -2088,7 +2117,7 @@ export default function AssessmentDetailPage() {
                               </button>
                             </div>
                           </div>
-                        ))}
+                        ));})()}
                       </div>
                     )}
                   </div>
