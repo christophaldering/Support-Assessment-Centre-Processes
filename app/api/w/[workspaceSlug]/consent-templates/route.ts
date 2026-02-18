@@ -15,6 +15,7 @@ const VALID_CATEGORIES = [
   "data_export",
   "transcription",
   "general",
+  "assessment_participation",
 ];
 
 export async function GET(req: NextRequest, { params }: RouteContext) {

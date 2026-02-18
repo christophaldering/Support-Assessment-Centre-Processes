@@ -3874,6 +3874,19 @@ export default function AssessmentDetailPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                     </svg>
                   </Link>
+                  <Link
+                    href={`/w/${workspaceSlug}/admin/consent`}
+                    className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3 hover:border-brand-blue/40 hover:bg-blue-50/20 transition-colors"
+                    data-testid="link-consent-management"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Einwilligungen (DSGVO)</p>
+                      <p className="text-xs text-slate-500">Einwilligungsvorlagen verwalten und Einwilligungsstatus einsehen</p>
+                    </div>
+                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                  </Link>
                   <div className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3 opacity-60">
                     <div>
                       <p className="text-sm font-medium text-slate-900">Beobachterportal</p>

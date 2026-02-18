@@ -82,11 +82,16 @@ interface AssessmentData {
 const exerciseTypeLabels: Record<string, string> = {
   presentation: "Präsentation",
   interview: "Interview",
+  interview_guide: "Interview-Leitfaden",
   group_discussion: "Gruppendiskussion",
   case_study: "Fallstudie",
   role_play: "Rollenspiel",
+  behavior_simulation: "Verhaltenssimulation",
+  fact_finding: "Fact-Finding",
   in_tray: "Postkorb",
-  psychometric: "Psychometrisch",
+  psychometric: "Psychometrischer Test",
+  psychometric_test: "Psychometrischer Test",
+  self_reflection: "Selbstreflexion",
   other: "Sonstiges",
 };
 
@@ -96,7 +101,21 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type PortalView = "welcome" | "documents" | "exercise" | "questionnaire";
+type PortalView = "consent" | "welcome" | "documents" | "exercise" | "questionnaire" | "profile";
+
+interface ConsentTemplate {
+  id: string;
+  name: string;
+  content: string;
+  category: string;
+  version: number;
+}
+
+interface ConsentData {
+  templates: ConsentTemplate[];
+  records: { templateId: string; granted: boolean }[];
+  allConsented: boolean;
+}
 
 interface SidebarCategory {
   id: string;
@@ -119,6 +138,11 @@ export default function CandidatePortal() {
   const [assessmentLoading, setAssessmentLoading] = useState(false);
   const [noAssessment, setNoAssessment] = useState(false);
 
+  const [consentData, setConsentData] = useState<ConsentData | null>(null);
+  const [consentLoading, setConsentLoading] = useState(true);
+  const [consentGranting, setConsentGranting] = useState(false);
+  const [consentChecked, setConsentChecked] = useState<Record<string, boolean>>({});
+
   const [view, setView] = useState<PortalView>("welcome");
   const [activeCategory, setActiveCategory] = useState<string>("general");
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -127,6 +151,51 @@ export default function CandidatePortal() {
 
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, any>>({});
   const [submittingQuestionnaire, setSubmittingQuestionnaire] = useState(false);
+
+  const [consentError, setConsentError] = useState(false);
+
+  const fetchConsent = useCallback(async () => {
+    setConsentLoading(true);
+    setConsentError(false);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/my-assessment/consent`);
+      if (res.ok) {
+        const data = await res.json();
+        setConsentData(data);
+        if (!data.allConsented && data.templates.length > 0) {
+          setView("consent");
+        }
+        setConsentLoading(false);
+      } else {
+        setConsentError(true);
+      }
+    } catch {
+      setConsentError(true);
+    }
+  }, [workspaceSlug]);
+
+  const handleGrantConsent = async () => {
+    if (!consentData) return;
+    const unconsented = consentData.templates.filter(
+      t => !consentData.records.some(r => r.templateId === t.id && r.granted)
+    );
+    const allChecked = unconsented.every(t => consentChecked[t.id]);
+    if (!allChecked) return;
+
+    setConsentGranting(true);
+    try {
+      for (const template of unconsented) {
+        await fetch(`/api/w/${workspaceSlug}/my-assessment/consent`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId: template.id, granted: true }),
+        });
+      }
+      await fetchConsent();
+      setView("welcome");
+    } catch {}
+    setConsentGranting(false);
+  };
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -144,6 +213,7 @@ export default function CandidatePortal() {
   useEffect(() => {
     if (!user) return;
     setAssessmentLoading(true);
+    fetchConsent();
     fetch(`/api/w/${workspaceSlug}/my-assessment`)
       .then(async (res) => {
         if (res.status === 404) { setNoAssessment(true); return; }
@@ -152,7 +222,7 @@ export default function CandidatePortal() {
       })
       .catch(() => {})
       .finally(() => setAssessmentLoading(false));
-  }, [user, workspaceSlug]);
+  }, [user, workspaceSlug, fetchConsent]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -246,6 +316,37 @@ export default function CandidatePortal() {
 
   if (!assessment) return null;
 
+  if (consentLoading || consentError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          {consentError ? (
+            <>
+              <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+              </div>
+              <p className="text-sm text-slate-700 font-medium mb-2">Einwilligungsdaten konnten nicht geladen werden</p>
+              <p className="text-xs text-slate-500 mb-4">Bitte versuchen Sie es erneut.</p>
+              <button
+                onClick={() => fetchConsent()}
+                className="text-sm bg-brand-navy text-white px-5 py-2 rounded-lg hover:bg-brand-navy/90 transition-colors"
+              >
+                Erneut versuchen
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-8 h-8 border-2 border-brand-blue border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm text-slate-500">Einwilligungen werden geladen…</p>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const portalDocs = assessment.portalDocuments || [];
   const legacyDocs = assessment.documents || [];
   const selfAssessments = assessment.selfAssessments || [];
@@ -255,12 +356,7 @@ export default function CandidatePortal() {
   const prepDocs = portalDocs.filter(d => d.category === "preparation");
   const infoDocs = portalDocs.filter(d => d.category === "info");
 
-  const exercisesWithDocs = assessment.exercises
-    .filter(ex => {
-      const hasPortalDocs = portalDocs.some(d => d.exerciseId === ex.id);
-      const hasLegacyDocs = legacyDocs.some(d => d.exerciseId === ex.id);
-      return hasPortalDocs || hasLegacyDocs;
-    });
+  const allExercises = assessment.exercises;
 
   const releasedQuestionnaires = selfAssessments.filter(sa => sa.releaseStatus === "released");
 
@@ -290,7 +386,7 @@ export default function CandidatePortal() {
     });
   }
 
-  for (const ex of exercisesWithDocs) {
+  for (const ex of allExercises) {
     const exPortalDocs = portalDocs.filter(d => d.exerciseId === ex.id);
     const exLegacyDocs = legacyDocs.filter(d => d.exerciseId === ex.id);
     sidebarCategories.push({
@@ -346,6 +442,202 @@ export default function CandidatePortal() {
 
   const totalPortalDocsReleased = portalDocs.filter(d => d.releaseStatus === "released").length;
 
+  if (view === "consent" && consentData && consentData.templates.length > 0) {
+    const unconsented = consentData.templates.filter(
+      t => !consentData.records.some(r => r.templateId === t.id && r.granted)
+    );
+    const allCheckedNow = unconsented.every(t => consentChecked[t.id]);
+
+    return (
+      <div className="min-h-screen flex flex-col bg-white" data-testid="candidate-portal-consent">
+        <header className="bg-brand-navy text-white shrink-0">
+          <div className="px-6 h-14 flex items-center justify-between max-w-7xl mx-auto w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-lg bg-brand-blue/20 flex items-center justify-center">
+                <svg className="w-4 h-4 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+              </div>
+              <span className="text-sm font-semibold">Datenschutz & Einwilligung</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-white/70">{user.name}</span>
+              <button onClick={handleLogout} className="text-xs text-white/60 hover:text-white transition-colors" data-testid="button-logout-consent">
+                Abmelden
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center px-6 py-12">
+          <div className="max-w-2xl w-full">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 rounded-2xl bg-brand-blue/10 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-brand-navy mb-2" data-testid="text-consent-title">
+                Einwilligungserklärung
+              </h1>
+              <p className="text-sm text-slate-500 max-w-md mx-auto">
+                Bevor Sie auf das Portal zugreifen können, bitten wir Sie, die folgenden Einwilligungserklärungen zu lesen und zu bestätigen.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {unconsented.map(template => (
+                <div key={template.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden" data-testid={`consent-template-${template.id}`}>
+                  <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-brand-navy">{template.name}</h3>
+                      <span className="text-[10px] text-slate-400">Version {template.version}</span>
+                    </div>
+                  </div>
+                  <div className="px-6 py-4">
+                    <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto pr-2" data-testid={`consent-content-${template.id}`}>
+                      {template.content}
+                    </div>
+                  </div>
+                  <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={consentChecked[template.id] || false}
+                        onChange={e => setConsentChecked(prev => ({ ...prev, [template.id]: e.target.checked }))}
+                        data-testid={`checkbox-consent-${template.id}`}
+                        className="mt-0.5 w-4 h-4 rounded border-slate-300 text-brand-blue focus:ring-brand-blue/30"
+                      />
+                      <span className="text-sm text-slate-700 group-hover:text-brand-navy transition-colors">
+                        Ich habe die obige Erklärung gelesen und stimme zu.
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 text-center">
+              <button
+                onClick={handleGrantConsent}
+                disabled={!allCheckedNow || consentGranting}
+                data-testid="button-grant-consent"
+                className="inline-flex items-center gap-2 bg-brand-navy text-white text-sm font-medium px-8 py-3 rounded-lg hover:bg-brand-navy/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {consentGranting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Wird gespeichert…
+                  </>
+                ) : (
+                  <>
+                    Zustimmen und fortfahren
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-slate-400 mt-3">
+                Sie können Ihre Einwilligung jederzeit widerrufen.
+              </p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (view === "profile") {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50" data-testid="candidate-portal-profile">
+        <header className="bg-brand-navy text-white shrink-0">
+          <div className="px-6 h-14 flex items-center justify-between max-w-7xl mx-auto w-full">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setView("welcome")}
+                className="text-xs text-white/70 hover:text-white flex items-center gap-1 transition-colors"
+                data-testid="button-back-from-profile"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                Zurück
+              </button>
+              <span className="text-white/30">|</span>
+              <span className="text-sm font-semibold">Mein Profil</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-white/70">{user.name}</span>
+              <button onClick={handleLogout} className="text-xs text-white/60 hover:text-white transition-colors">Abmelden</button>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 px-6 py-8 max-w-2xl mx-auto w-full">
+          <div className="bg-white border border-slate-200 rounded-xl p-8">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-16 h-16 rounded-full bg-brand-navy/10 flex items-center justify-center text-2xl font-bold text-brand-navy">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-brand-navy" data-testid="text-profile-name">{user.name}</h2>
+                <p className="text-sm text-slate-500">{user.email}</p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Name</label>
+                <p className="text-sm text-slate-900 bg-slate-50 rounded-lg px-4 py-3">{user.name}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">E-Mail</label>
+                <p className="text-sm text-slate-900 bg-slate-50 rounded-lg px-4 py-3">{user.email}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Rolle</label>
+                <p className="text-sm text-slate-900 bg-slate-50 rounded-lg px-4 py-3">Kandidat*in</p>
+              </div>
+              {assessment && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Assessment</label>
+                  <p className="text-sm text-slate-900 bg-slate-50 rounded-lg px-4 py-3">{assessment.name}</p>
+                </div>
+              )}
+            </div>
+
+            {consentData && consentData.records.filter(r => r.granted).length > 0 && (
+              <div className="mt-8 pt-6 border-t border-slate-200">
+                <h3 className="text-sm font-semibold text-brand-navy mb-3">Erteilte Einwilligungen</h3>
+                <div className="space-y-2">
+                  {consentData.templates.filter(t => consentData.records.some(r => r.templateId === t.id && r.granted)).map(t => (
+                    <div key={t.id} className="flex items-center gap-2 text-sm text-slate-600">
+                      <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {t.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 pt-6 border-t border-slate-200">
+              <button
+                onClick={() => router.push(`/w/${workspaceSlug}/change-password`)}
+                data-testid="button-change-password"
+                className="text-sm text-brand-blue hover:text-brand-navy font-medium transition-colors"
+              >
+                Passwort ändern
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (view === "welcome") {
     return (
       <div className="min-h-screen flex flex-col bg-white" data-testid="candidate-portal">
@@ -360,7 +652,16 @@ export default function CandidatePortal() {
               <span className="text-sm font-semibold" data-testid="text-portal-title">Kandidat*innen Portal</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-xs text-white/70" data-testid="text-user-name">{user.name}</span>
+              <button
+                onClick={() => setView("profile")}
+                data-testid="button-profile"
+                className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
+              >
+                <div className="w-6 h-6 rounded-full bg-brand-blue/30 flex items-center justify-center text-[10px] font-bold text-white">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                {user.name}
+              </button>
               <button onClick={handleLogout} data-testid="button-logout" className="text-xs text-white/60 hover:text-white transition-colors">
                 Abmelden
               </button>
@@ -607,7 +908,16 @@ export default function CandidatePortal() {
             )}
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-xs text-white/70">{user.name}</span>
+            <button
+              onClick={() => setView("profile")}
+              data-testid="button-profile-doc"
+              className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
+            >
+              <div className="w-6 h-6 rounded-full bg-brand-blue/30 flex items-center justify-center text-[10px] font-bold text-white">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              {user.name}
+            </button>
             <button onClick={handleLogout} className="text-xs text-white/60 hover:text-white transition-colors" data-testid="button-logout">
               Abmelden
             </button>
