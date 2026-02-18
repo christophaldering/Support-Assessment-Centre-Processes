@@ -1144,15 +1144,6 @@ export default function AssessmentDetailPage() {
             </svg>
           ),
         },
-        {
-          key: "workflow",
-          label: "Workflow & Zeitplan",
-          icon: (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-            </svg>
-          ),
-        },
       ],
     },
     {
@@ -3225,115 +3216,6 @@ export default function AssessmentDetailPage() {
             </div>
           )}
 
-          {activeSection === "workflow" && (
-            <>
-              <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-brand-navy mb-2" data-testid="heading-workflow">Workflow & Zeitplan</h2>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Konfigurieren Sie den Durchführungsworkflow und aktivieren Sie spezielle Features für dieses Assessment.
-                </p>
-              </div>
-
-              <div className="bg-white border border-slate-200 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-brand-navy mb-4">Prozess-Timeline</h3>
-                <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                  {PROCESS_STEPS.map((step, idx) => {
-                    const stepReached = (assessment?.processStep || 0) >= idx;
-                    return (
-                      <div key={idx} className="flex items-center" data-testid={`workflow-step-${idx}`}>
-                        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${
-                          stepReached ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"
-                        }`}>
-                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                            stepReached ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"
-                          }`}>
-                            {stepReached ? (
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                              </svg>
-                            ) : idx + 1}
-                          </span>
-                          <span className="font-medium whitespace-nowrap">{step.label}</span>
-                        </div>
-                        {idx < PROCESS_STEPS.length - 1 && (
-                          <div className={`w-6 h-0.5 ${stepReached ? "bg-emerald-300" : "bg-slate-200"}`} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="bg-white border border-slate-200 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-brand-navy mb-4">Feature-Toggles</h3>
-                <div className="space-y-4">
-                  {[
-                    { key: "autoConsolidation", label: "Auto-Konsolidierung", desc: "Bewertungen werden automatisch konsolidiert, sobald alle Beobachter abgegeben haben." },
-                    { key: "competencyAveraging", label: "Kompetenz-Mittelwerte", desc: "Berechnet automatisch Durchschnittswerte über alle Beobachter pro Kompetenz." },
-                    { key: "noteSharing", label: "Notizen teilen", desc: "Beobachter können ihre Notizen mit dem gesamten Beobachter-Team teilen." },
-                    { key: "observerRotation", label: "Beobachter-Rotation", desc: "Automatische Zuordnung der Beobachter zu unterschiedlichen Übungen nach Rotationsplan." },
-                  ].map((toggle) => (
-                    <div key={toggle.key} className="flex items-start justify-between gap-4 py-2" data-testid={`toggle-${toggle.key}`}>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-800">{toggle.label}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{toggle.desc}</p>
-                      </div>
-                      <button
-                        onClick={() => setWorkflowConfig(prev => ({ ...prev, [toggle.key]: !prev[toggle.key] }))}
-                        data-testid={`switch-${toggle.key}`}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
-                          workflowConfig[toggle.key] ? "bg-brand-blue" : "bg-slate-200"
-                        }`}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          workflowConfig[toggle.key] ? "translate-x-6" : "translate-x-1"
-                        }`} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white border border-slate-200 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-brand-navy mb-4">Beobachter-Rollentyp</h3>
-                <div className="grid md:grid-cols-3 gap-3">
-                  {[
-                    { key: "silent", label: "Stiller Beobachter", desc: "Beobachtet und bewertet ohne aktive Teilnahme am Gespräch." },
-                    { key: "active", label: "Aktiver Beobachter", desc: "Kann Fragen stellen und aktiv am Assessment teilnehmen." },
-                    { key: "moderator", label: "Moderator", desc: "Leitet die Übung und moderiert den Ablauf." },
-                  ].map((role) => (
-                    <button
-                      key={role.key}
-                      onClick={() => setObserverRoleType(role.key)}
-                      data-testid={`observer-role-${role.key}`}
-                      className={`text-left p-4 rounded-lg border-2 transition-colors ${
-                        observerRoleType === role.key
-                          ? "border-brand-blue bg-blue-50/50"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <p className={`text-sm font-medium ${observerRoleType === role.key ? "text-brand-blue" : "text-slate-800"}`}>
-                        {role.label}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">{role.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleSaveWorkflowConfig}
-                  disabled={saving}
-                  data-testid="button-save-workflow"
-                  className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
-                >
-                  {saving ? "Wird gespeichert…" : "Workflow-Konfiguration speichern"}
-                </button>
-                {saveMsg && <span className="text-sm text-slate-500" data-testid="text-save-msg-workflow">{saveMsg}</span>}
-              </div>
-            </>
-          )}
 
           {activeSection === "activation" && (
             <>
