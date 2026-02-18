@@ -88,11 +88,16 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const EXERCISE_TYPE_LABELS: Record<string, string> = {
+  presentation: "Präsentation",
+  interview: "Interview",
   interview_guide: "Interview-Leitfaden",
   case_study: "Fallstudie",
-  fact_finding: "Fact-Finding-Simulation",
-  presentation: "Präsentation",
+  role_play: "Rollenspiel",
   behavior_simulation: "Verhaltenssimulation",
+  group_discussion: "Gruppendiskussion",
+  fact_finding: "Fact-Finding-Simulation",
+  in_tray: "Postkorb",
+  psychometric: "Psychometrischer Test",
   psychometric_test: "Psychometrischer Test",
   other: "Sonstiges",
 };

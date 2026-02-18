@@ -10,13 +10,32 @@ interface RouteContext {
 const VALID_EXERCISE_TYPES = [
   "presentation",
   "interview",
+  "interview_guide",
   "group_discussion",
   "case_study",
   "role_play",
+  "behavior_simulation",
   "in_tray",
+  "fact_finding",
   "psychometric",
+  "psychometric_test",
   "other",
 ];
+
+const TYPE_NORMALIZE: Record<string, string> = {
+  "Fallstudie": "case_study",
+  "Präsentation": "presentation",
+  "Interview": "interview",
+  "Interview-Leitfaden": "interview_guide",
+  "Fact-Finding": "fact_finding",
+  "Fact-Finding-Simulation": "fact_finding",
+  "Verhaltenssimulation": "behavior_simulation",
+  "Rollenspiel": "role_play",
+  "Psychometrischer Test": "psychometric_test",
+  "Gruppenübung": "group_discussion",
+  "Gruppendiskussion": "group_discussion",
+  "Postkorb": "in_tray",
+};
 
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
@@ -99,7 +118,9 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Übung nicht gefunden" }, { status: 404 });
     }
 
-    const { name, type, instructions, duration, sortOrder, status } = await req.json();
+    const { name, type: rawType, instructions, duration, sortOrder, status } = await req.json();
+
+    const type = rawType !== undefined ? (TYPE_NORMALIZE[rawType] || rawType) : undefined;
 
     if (type !== undefined && !VALID_EXERCISE_TYPES.includes(type)) {
       return NextResponse.json({ error: "Ungültiger Übungstyp" }, { status: 400 });
