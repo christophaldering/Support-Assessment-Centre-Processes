@@ -1322,7 +1322,7 @@ export default function AssessmentDetailPage() {
                     </p>
                   </div>
                   <Link
-                    href={`/w/${workspaceSlug}/admin/requirements?assessmentId=${assessment?.id || ""}`}
+                    href={`/w/${workspaceSlug}/admin/requirements?assessmentId=${assessment?.id || ""}${assessment?.sourceAnalysisId ? `&analysisId=${assessment.sourceAnalysisId}` : ""}`}
                     className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-brand-blue text-brand-blue text-xs font-medium px-3 py-1.5 hover:bg-brand-blue hover:text-white transition-colors"
                     data-testid="link-requirements-analysis"
                   >

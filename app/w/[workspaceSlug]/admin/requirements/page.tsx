@@ -144,6 +144,7 @@ export default function RequirementsAnalysisPage() {
   const router = useRouter();
   const slug = params.workspaceSlug as string;
   const assessmentId = searchParams.get("assessmentId");
+  const preselectedAnalysisId = searchParams.get("analysisId");
 
   const [inputText, setInputText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
@@ -197,6 +198,13 @@ export default function RequirementsAnalysisPage() {
   }, [slug]);
 
   useEffect(() => { fetchSaved(); }, [fetchSaved]);
+
+  useEffect(() => {
+    if (preselectedAnalysisId && savedAnalyses.length > 0 && !currentAnalysisId) {
+      const match = savedAnalyses.find(a => a.id === preselectedAnalysisId);
+      if (match) loadSaved(match);
+    }
+  }, [preselectedAnalysisId, savedAnalyses, currentAnalysisId]);
 
   const persistExtraction = useCallback(async (data: Extraction, analysisId: string | null) => {
     if (!analysisId) return;
