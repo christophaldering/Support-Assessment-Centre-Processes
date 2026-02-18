@@ -17,6 +17,8 @@ interface AssessmentRecord {
   clientName?: string | null;
   autoDeleteDays?: number | null;
   sourceAnalysisId?: string | null;
+  targetPosition?: string | null;
+  workflowConfig?: Record<string, any> | null;
 }
 
 interface ExerciseRecord {
@@ -120,7 +122,14 @@ function toDateInputValue(dateStr: string | null): string {
   return new Date(dateStr).toISOString().split("T")[0];
 }
 
-const STEPS = [
+type SectionKey = "overview" | "requirements" | "target_position" | "exercises" | "observation_sheets" | "mtmm" | "participants" | "documents" | "workflow" | "validation" | "activation";
+
+interface NavGroup {
+  label: string;
+  items: { key: SectionKey; label: string; icon: React.ReactNode }[];
+}
+
+const PROCESS_STEPS = [
   { label: "Anforderungsanalyse", short: "Analyse" },
   { label: "Zusammenstellung", short: "Aufbau" },
   { label: "Validierung", short: "Prüfung" },
@@ -207,7 +216,17 @@ export default function AssessmentDetailPage() {
   const [showCollab, setShowCollab] = useState(false);
   const [selectedSheet, setSelectedSheet] = useState<ObservationSheetRecord | null>(null);
 
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeSection, setActiveSection] = useState<SectionKey>("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [editTargetPosition, setEditTargetPosition] = useState("");
+  const [workflowConfig, setWorkflowConfig] = useState<Record<string, any>>({
+    autoConsolidation: false,
+    competencyAveraging: false,
+    noteSharing: false,
+    observerRotation: false,
+  });
+  const [observerRoleType, setObserverRoleType] = useState("silent");
 
   interface MtmmMapping {
     exerciseId: string;
@@ -242,7 +261,13 @@ export default function AssessmentDetailPage() {
       setEditEndDate(toDateInputValue(data.endDate));
       setEditStatus(data.status);
       setEditClientName(data.clientName ?? "");
-      setActiveStep(data.processStep || 0);
+      setEditTargetPosition(data.targetPosition ?? "");
+      if (data.workflowConfig) {
+        setWorkflowConfig(data.workflowConfig);
+        if (data.workflowConfig.observerRoleType) {
+          setObserverRoleType(data.workflowConfig.observerRoleType);
+        }
+      }
     } catch {
       setError("Fehler beim Laden des Assessments.");
     } finally {
@@ -458,12 +483,39 @@ export default function AssessmentDetailPage() {
           endDate: editEndDate || null,
           status: editStatus,
           clientName: editClientName || null,
+          targetPosition: editTargetPosition || null,
         }),
       });
       if (res.ok) {
         const data = await res.json();
         setAssessment(data);
         setSaveMsg("Gespeichert.");
+        setTimeout(() => setSaveMsg(""), 3000);
+      } else {
+        const data = await res.json();
+        setSaveMsg(data.error || "Fehler beim Speichern.");
+      }
+    } catch {
+      setSaveMsg("Etwas ist schiefgelaufen.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveWorkflowConfig = async () => {
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      const config = { ...workflowConfig, observerRoleType };
+      const res = await fetch(apiBase, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workflowConfig: config }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAssessment(data);
+        setSaveMsg("Workflow-Konfiguration gespeichert.");
         setTimeout(() => setSaveMsg(""), 3000);
       } else {
         const data = await res.json();
@@ -816,18 +868,6 @@ export default function AssessmentDetailPage() {
     }
   };
 
-  const handleStepChange = async (step: number) => {
-    setActiveStep(step);
-    const newProcessStep = Math.max(assessment?.processStep || 0, step);
-    try {
-      await fetch(apiBase, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ processStep: newProcessStep }),
-      });
-    } catch {}
-  };
-
   const handleActivateAssessment = async () => {
     setSaving(true);
     try {
@@ -869,8 +909,6 @@ export default function AssessmentDetailPage() {
     );
   }
 
-  const serverStep = assessment?.processStep || 0;
-
   const uniqueCompetencies = [...new Map(mtmmMappings.map(m => [m.competencyNode.id, m.competencyNode])).values()];
   const uniqueMtmmExercises = [...new Map(mtmmMappings.map(m => [m.exercise.id, m.exercise])).values()];
 
@@ -881,11 +919,148 @@ export default function AssessmentDetailPage() {
   const hasDescription = !!assessment?.description;
   const hasCandidates = candidates.length > 0;
   const hasDocuments = documents.length > 0;
+  const hasTargetPosition = !!assessment?.targetPosition;
+
+  const sectionComplete: Record<SectionKey, boolean> = {
+    overview: !!(assessment?.name && hasDescription),
+    requirements: !!assessment?.sourceAnalysisId,
+    target_position: hasTargetPosition,
+    exercises: hasExercises,
+    observation_sheets: hasSheets,
+    mtmm: hasMtmm,
+    participants: hasCandidates,
+    documents: hasDocuments,
+    workflow: !!(workflowConfig && Object.values(workflowConfig).some(v => v === true)),
+    validation: hasExercises && hasMtmm && hasSheets && hasDates && hasDescription,
+    activation: assessment?.status === "active",
+  };
+
+  const navGroups: NavGroup[] = [
+    {
+      label: "PLANUNG",
+      items: [
+        {
+          key: "overview",
+          label: "Übersicht",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-2.25-2.25v-2.25z" />
+            </svg>
+          ),
+        },
+        {
+          key: "requirements",
+          label: "Anforderungsanalyse",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+            </svg>
+          ),
+        },
+        {
+          key: "target_position",
+          label: "Zielposition",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+          ),
+        },
+      ],
+    },
+    {
+      label: "ZUSAMMENSTELLUNG",
+      items: [
+        {
+          key: "exercises",
+          label: "Übungen",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21" />
+            </svg>
+          ),
+        },
+        {
+          key: "observation_sheets",
+          label: "Beobachtungsbögen",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+          ),
+        },
+        {
+          key: "mtmm",
+          label: "MTMM-Matrix",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v1.5c0 .621-.504 1.125-1.125 1.125" />
+            </svg>
+          ),
+        },
+      ],
+    },
+    {
+      label: "DURCHFÜHRUNG",
+      items: [
+        {
+          key: "participants",
+          label: "Teilnehmer & Rollen",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+            </svg>
+          ),
+        },
+        {
+          key: "documents",
+          label: "Dokumente",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+          ),
+        },
+        {
+          key: "workflow",
+          label: "Workflow & Zeitplan",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+            </svg>
+          ),
+        },
+      ],
+    },
+    {
+      label: "ABSCHLUSS",
+      items: [
+        {
+          key: "validation",
+          label: "Validierung",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ),
+        },
+        {
+          key: "activation",
+          label: "Freischaltung",
+          icon: (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+          ),
+        },
+      ],
+    },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <header className="bg-brand-navy text-white">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
               href={`/w/${workspaceSlug}/admin`}
@@ -903,667 +1078,752 @@ export default function AssessmentDetailPage() {
             <span className="text-white/40">/</span>
             <span className="text-sm text-white/70">{assessment?.name}</span>
           </div>
-          <Link
-            href={`/w/${workspaceSlug}/admin/assessments`}
-            className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-            data-testid="link-back"
-          >
-            Zurück
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              data-testid="button-toggle-sidebar"
+              className="md:hidden text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
+            <Link
+              href={`/w/${workspaceSlug}/admin/assessments`}
+              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
+              data-testid="link-back"
+            >
+              Zurück
+            </Link>
+          </div>
         </div>
       </header>
 
-      <div className="sticky top-0 z-20 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {STEPS.map((step, idx) => {
-              const isCompleted = idx < serverStep;
-              const isActive = idx === activeStep;
-              const isClickable = true;
-              return (
-                <div key={idx} className="flex items-center flex-1 last:flex-initial">
-                  <button
-                    onClick={() => isClickable && handleStepChange(idx)}
-                    className="flex flex-col items-center gap-1.5 group"
-                    data-testid={`stepper-step-${idx}`}
-                  >
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                      isCompleted
-                        ? "bg-emerald-500 text-white shadow-sm"
-                        : isActive
-                        ? "bg-brand-blue text-white shadow-md ring-4 ring-brand-blue/20"
-                        : "bg-slate-200 text-slate-500 group-hover:bg-slate-300"
-                    }`}>
-                      {isCompleted ? (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
-                      ) : (
-                        idx + 1
-                      )}
-                    </div>
-                    <span className={`text-xs font-medium transition-colors hidden sm:block ${
-                      isActive ? "text-brand-blue" : isCompleted ? "text-emerald-600" : "text-slate-400"
-                    }`}>
-                      {step.label}
-                    </span>
-                    <span className={`text-xs font-medium transition-colors sm:hidden ${
-                      isActive ? "text-brand-blue" : isCompleted ? "text-emerald-600" : "text-slate-400"
-                    }`}>
-                      {step.short}
-                    </span>
-                  </button>
-                  {idx < STEPS.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-2 rounded-full transition-colors ${
-                      idx < serverStep ? "bg-emerald-400" : idx < activeStep ? "bg-brand-blue/30" : "bg-slate-200"
-                    }`} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8 space-y-8">
-
-        {activeStep === 0 && (
-          <>
-            <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-brand-navy mb-2">Schritt 1: Anforderungsanalyse</h2>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Definieren Sie die Grunddaten des Assessments und führen Sie eine Anforderungsanalyse durch.
-                Legen Sie fest, welche Kompetenzen bewertet werden sollen und welche Rahmenbedingungen gelten.
-              </p>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-brand-navy mb-4">Assessment-Details</h2>
-              <div className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      data-testid="input-edit-name"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Standort</label>
-                    <input
-                      type="text"
-                      value={editLocation}
-                      onChange={(e) => setEditLocation(e.target.value)}
-                      data-testid="input-edit-location"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                    />
-                  </div>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Kunde</label>
-                    <input
-                      type="text"
-                      value={editClientName}
-                      onChange={(e) => setEditClientName(e.target.value)}
-                      placeholder="z.B. REWE Group (optional)"
-                      data-testid="input-edit-client-name"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
-                  <textarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    rows={3}
-                    data-testid="input-edit-description"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                  />
-                </div>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Startdatum</label>
-                    <input
-                      type="date"
-                      value={editStartDate}
-                      onChange={(e) => setEditStartDate(e.target.value)}
-                      data-testid="input-edit-start-date"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Enddatum</label>
-                    <input
-                      type="date"
-                      value={editEndDate}
-                      onChange={(e) => setEditEndDate(e.target.value)}
-                      data-testid="input-edit-end-date"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                    <select
-                      value={editStatus}
-                      onChange={(e) => setEditStatus(e.target.value)}
-                      data-testid="select-edit-status"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                    >
-                      <option value="draft">Entwurf</option>
-                      <option value="active">Aktiv</option>
-                      <option value="completed">Abgeschlossen</option>
-                      <option value="archived">Archiviert</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleSaveAssessment}
-                    disabled={saving || !editName.trim()}
-                    data-testid="button-save-assessment"
-                    className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
-                  >
-                    {saving ? "Wird gespeichert…" : "Speichern"}
-                  </button>
-                  {saveMsg && <span className="text-sm text-slate-500" data-testid="text-save-msg">{saveMsg}</span>}
-                </div>
-              </div>
-            </div>
-
-            <Link
-              href={`/w/${workspaceSlug}/admin/requirements`}
-              className="block bg-white border-2 border-dashed border-brand-blue/30 hover:border-brand-blue/60 rounded-xl p-6 transition-colors group"
-              data-testid="link-requirements-analysis"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-brand-blue/10 flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-brand-navy group-hover:text-brand-blue transition-colors">Anforderungsanalyse öffnen</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Definieren Sie Kompetenzen und Anforderungen für dieses Assessment</p>
-                </div>
-                <svg className="w-5 h-5 text-slate-400 group-hover:text-brand-blue transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                </svg>
-              </div>
-            </Link>
-
-            {assessment?.sourceAnalysisId && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-                <p className="text-sm text-emerald-700">
-                  <span className="font-medium">Verknüpfte Analyse:</span>{" "}
-                  <span className="font-mono text-xs">{assessment.sourceAnalysisId}</span>
-                </p>
-              </div>
-            )}
-          </>
+      <div className="flex flex-1">
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/20 z-30 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+            data-testid="sidebar-overlay"
+          />
         )}
 
-        {activeStep === 1 && (
-          <>
-            <div className="flex flex-wrap gap-3 mb-2">
-              <Link
-                href={`/w/${workspaceSlug}/admin/exercise-library`}
-                className="inline-flex items-center gap-2 rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
-                data-testid="link-exercise-library"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21" />
-                </svg>
-                Übungsbibliothek
-              </Link>
-              <Link
-                href={`/w/${workspaceSlug}/admin/observation-sheets`}
-                className="inline-flex items-center gap-2 rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
-                data-testid="link-observation-sheets"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                </svg>
-                Beobachtungsbögen-Builder
-              </Link>
-              <Link
-                href={`/w/${workspaceSlug}/admin/competencies`}
-                className="inline-flex items-center gap-2 rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
-                data-testid="link-competencies"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6z" />
-                </svg>
-                MTMM bearbeiten
-              </Link>
-            </div>
+        <aside
+          className={`fixed md:sticky top-16 left-0 z-30 md:z-10 h-[calc(100vh-4rem)] w-64 bg-white border-r border-slate-200 overflow-y-auto transition-transform duration-200 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          }`}
+          data-testid="sidebar-navigation"
+        >
+          <nav className="py-4">
+            {navGroups.map((group) => (
+              <div key={group.label} className="mb-4">
+                <p className="px-4 mb-1.5 text-[10px] font-bold tracking-widest text-slate-400 uppercase" data-testid={`nav-group-${group.label.toLowerCase()}`}>
+                  {group.label}
+                </p>
+                {group.items.map((item) => {
+                  const isActive = activeSection === item.key;
+                  const isComplete = sectionComplete[item.key];
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setActiveSection(item.key);
+                        setSidebarOpen(false);
+                      }}
+                      data-testid={`nav-item-${item.key}`}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors relative ${
+                        isActive
+                          ? "text-brand-blue bg-blue-50/60 font-medium border-l-[3px] border-brand-blue"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-[3px] border-transparent"
+                      }`}
+                    >
+                      <span className={isActive ? "text-brand-blue" : "text-slate-400"}>{item.icon}</span>
+                      <span className="flex-1 text-left">{item.label}</span>
+                      <span
+                        className={`w-2 h-2 rounded-full shrink-0 ${isComplete ? "bg-emerald-400" : "bg-slate-200"}`}
+                        data-testid={`indicator-${item.key}`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+        </aside>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-brand-navy">Übungen</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleToggleLibrary}
-                    data-testid="button-import-library"
-                    className="rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
-                  >
-                    {showLibrary ? "Bibliothek schließen" : "Aus Bibliothek importieren"}
-                  </button>
-                  <button
-                    onClick={() => setShowCreateExercise(!showCreateExercise)}
-                    data-testid="button-create-exercise"
-                    className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
-                  >
-                    {showCreateExercise ? "Abbrechen" : "Neue Übung"}
-                  </button>
+        <main className="flex-1 md:ml-0 py-8 px-6 lg:px-10 space-y-8 min-w-0">
+
+          {activeSection === "overview" && (
+            <>
+              <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-brand-navy mb-2" data-testid="heading-overview">Übersicht</h2>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Verwalten Sie die Grunddaten des Assessments. Hier finden Sie eine Zusammenfassung aller relevanten Informationen.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="stat-exercises">
+                  <p className="text-2xl font-bold text-brand-navy">{exercises.length}</p>
+                  <p className="text-xs text-slate-500 mt-1">Übungen</p>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="stat-sheets">
+                  <p className="text-2xl font-bold text-purple-700">{observationSheets.length}</p>
+                  <p className="text-xs text-slate-500 mt-1">Beobachtungsbögen</p>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="stat-candidates">
+                  <p className="text-2xl font-bold text-emerald-700">{candidates.length}</p>
+                  <p className="text-xs text-slate-500 mt-1">Teilnehmer</p>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="stat-documents">
+                  <p className="text-2xl font-bold text-blue-700">{documents.length}</p>
+                  <p className="text-xs text-slate-500 mt-1">Dokumente</p>
                 </div>
               </div>
 
-              {showLibrary && (
-                <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-brand-navy">Übungsbibliothek</h3>
-                    <button
-                      onClick={handleSeedVarexia}
-                      disabled={seedingVarexia || varexiaSeeded}
-                      data-testid="button-seed-varexia"
-                      className="text-xs font-medium px-3 py-1.5 rounded-full border border-purple-400 text-purple-600 hover:bg-purple-500 hover:text-white disabled:opacity-50 transition-colors"
-                    >
-                      {varexiaSeeded ? "✓ Varexia SE geladen" : seedingVarexia ? "Wird geladen…" : "Varexia SE laden"}
-                    </button>
-                  </div>
-                  {libraryLoading ? (
-                    <p className="text-sm text-slate-400">Laden…</p>
-                  ) : libraryItems.length === 0 ? (
-                    <p className="text-sm text-slate-400">Keine Einträge in der Bibliothek. Laden Sie die Varexia-Fallstudie oder erstellen Sie Übungen in der Bibliothek.</p>
-                  ) : (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {libraryItems.map((item) => (
-                        <div key={item.id} className="border border-slate-200 rounded-lg p-3 bg-white" data-testid={`library-item-${item.id}`}>
-                          <p className="font-medium text-sm text-slate-900 mb-1">{item.title}</p>
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
-                              {EXERCISE_TYPE_LABELS[item.exerciseType] || item.exerciseType}
-                            </span>
-                            {item.targetLevels?.map((level) => (
-                              <span key={level} className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
-                                {level}
-                              </span>
-                            ))}
-                            {item.tags?.slice(0, 3).map((tag) => (
-                              <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                                {tag}
-                              </span>
-                            ))}
-                            {(item.tags?.length || 0) > 3 && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">
-                                +{item.tags.length - 3}
-                              </span>
-                            )}
-                          </div>
-                          {(item.clientName || item.projectName) && (
-                            <p className="text-xs text-slate-400 mb-1">
-                              {item.clientName && <><span className="font-medium">Kunde:</span> {item.clientName}</>}
-                              {item.clientName && item.projectName && " · "}
-                              {item.projectName && <><span className="font-medium">Projekt:</span> {item.projectName}</>}
-                            </p>
-                          )}
-                          {item.metadataJson?.description && (
-                            <p className="text-xs text-slate-500 mb-2 line-clamp-2">{typeof item.metadataJson.description === "string" ? item.metadataJson.description : ""}</p>
-                          )}
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleImportFromLibrary(item)}
-                              data-testid={`button-import-${item.id}`}
-                              className="text-xs font-medium text-brand-blue hover:text-brand-blue-dark"
-                            >
-                              Importieren
-                            </button>
-                            <button
-                              onClick={() => handleAIVariantImport(item)}
-                              data-testid={`button-ai-variant-${item.id}`}
-                              className="text-xs font-medium text-purple-600 hover:text-purple-800"
-                            >
-                              KI-Anpassung
-                            </button>
-                            <button
-                              onClick={() => {
-                                setBasisExercise(item);
-                                setShowBasisPicker(false);
-                                setShowLibrary(false);
-                                setShowCreateExercise(true);
-                                setExName(item.title + " (angepasst)");
-                                setExType(item.exerciseType);
-                                setExInstructions(item.metadataJson?.instructions || item.metadataJson?.description || "");
-                              }}
-                              data-testid={`button-basis-${item.id}`}
-                              className="text-xs font-medium text-emerald-600 hover:text-emerald-800"
-                            >
-                              Als Basis
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-brand-navy mb-4">Assessment-Details</h2>
+                <div className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        data-testid="input-edit-name"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                      />
                     </div>
-                  )}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Standort</label>
+                      <input
+                        type="text"
+                        value={editLocation}
+                        onChange={(e) => setEditLocation(e.target.value)}
+                        data-testid="input-edit-location"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Kunde</label>
+                      <input
+                        type="text"
+                        value={editClientName}
+                        onChange={(e) => setEditClientName(e.target.value)}
+                        placeholder="z.B. REWE Group (optional)"
+                        data-testid="input-edit-client-name"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
+                    <textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      rows={3}
+                      data-testid="input-edit-description"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    />
+                  </div>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Startdatum</label>
+                      <input
+                        type="date"
+                        value={editStartDate}
+                        onChange={(e) => setEditStartDate(e.target.value)}
+                        data-testid="input-edit-start-date"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Enddatum</label>
+                      <input
+                        type="date"
+                        value={editEndDate}
+                        onChange={(e) => setEditEndDate(e.target.value)}
+                        data-testid="input-edit-end-date"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                      <select
+                        value={editStatus}
+                        onChange={(e) => setEditStatus(e.target.value)}
+                        data-testid="select-edit-status"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                      >
+                        <option value="draft">Entwurf</option>
+                        <option value="active">Aktiv</option>
+                        <option value="completed">Abgeschlossen</option>
+                        <option value="archived">Archiviert</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleSaveAssessment}
+                      disabled={saving || !editName.trim()}
+                      data-testid="button-save-assessment"
+                      className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
+                    >
+                      {saving ? "Wird gespeichert…" : "Speichern"}
+                    </button>
+                    {saveMsg && <span className="text-sm text-slate-500" data-testid="text-save-msg">{saveMsg}</span>}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeSection === "requirements" && (
+            <>
+              <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-brand-navy mb-2" data-testid="heading-requirements">Anforderungsanalyse</h2>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Definieren Sie Kompetenzen und Anforderungen für dieses Assessment.
+                </p>
+              </div>
+
+              <Link
+                href={`/w/${workspaceSlug}/admin/requirements`}
+                className="block bg-white border-2 border-dashed border-brand-blue/30 hover:border-brand-blue/60 rounded-xl p-6 transition-colors group"
+                data-testid="link-requirements-analysis"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-brand-blue/10 flex items-center justify-center shrink-0">
+                    <svg className="w-6 h-6 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-brand-navy group-hover:text-brand-blue transition-colors">Anforderungsanalyse öffnen</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Definieren Sie Kompetenzen und Anforderungen für dieses Assessment</p>
+                  </div>
+                  <svg className="w-5 h-5 text-slate-400 group-hover:text-brand-blue transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </div>
+              </Link>
+
+              {assessment?.sourceAnalysisId && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4" data-testid="text-source-analysis">
+                  <p className="text-sm text-emerald-700">
+                    <span className="font-medium">Verknüpfte Analyse:</span>{" "}
+                    <span className="font-mono text-xs">{assessment.sourceAnalysisId}</span>
+                  </p>
                 </div>
               )}
+            </>
+          )}
 
-              {showCreateExercise && (
-                <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
-                  <form onSubmit={handleCreateExercise} className="space-y-3" data-testid="form-create-exercise">
-                    {basisExercise && (
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-2">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-semibold text-emerald-700">Basierend auf:</span>
-                          <button
-                            type="button"
-                            onClick={() => { setBasisExercise(null); setBasisChanges(""); }}
-                            className="text-xs text-red-500 hover:text-red-700"
-                          >
-                            Basis entfernen
-                          </button>
-                        </div>
-                        <p className="text-sm font-medium text-emerald-900">{basisExercise.title}</p>
-                        <p className="text-xs text-emerald-600">{EXERCISE_TYPE_LABELS[basisExercise.exerciseType] || basisExercise.exerciseType}</p>
-                        <div className="mt-2">
-                          <label className="block text-xs font-medium text-emerald-700 mb-1">Gewünschte Änderungen / Kontext-Verknüpfung</label>
-                          <textarea
-                            value={basisChanges}
-                            onChange={(e) => setBasisChanges(e.target.value)}
-                            rows={2}
-                            placeholder="z.B. Mitarbeitergespräch im Kontext der Fallstudie Varexia SE einbetten…"
-                            data-testid="input-basis-changes"
-                            className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 bg-white"
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {!basisExercise && (
-                      <div className="flex items-center gap-2 mb-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!showLibrary) fetchLibraryItems();
-                            setShowBasisPicker(!showBasisPicker);
-                          }}
-                          data-testid="button-select-basis"
-                          className="text-xs font-medium px-3 py-1.5 rounded-full border border-emerald-400 text-emerald-600 hover:bg-emerald-50 transition-colors"
-                        >
-                          Bestehende Übung als Basis verwenden
-                        </button>
-                      </div>
-                    )}
-                    {showBasisPicker && !basisExercise && (
-                      <div className="border border-emerald-200 rounded-lg p-3 bg-emerald-50/50 max-h-48 overflow-y-auto">
-                        {libraryLoading ? (
-                          <p className="text-xs text-slate-400">Laden…</p>
-                        ) : libraryItems.length === 0 ? (
-                          <p className="text-xs text-slate-400">Keine Übungen in der Bibliothek.</p>
-                        ) : (
-                          <div className="space-y-1">
-                            {libraryItems.map((item) => (
+          {activeSection === "target_position" && (
+            <>
+              <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-brand-navy mb-2" data-testid="heading-target-position">Zielposition</h2>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Definieren Sie die Zielposition für dieses Assessment. Dies hilft bei der Zuordnung passender Übungen und Kompetenzen.
+                </p>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-brand-navy mb-4">Zielposition definieren</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Position / Rolle</label>
+                    <input
+                      type="text"
+                      value={editTargetPosition}
+                      onChange={(e) => setEditTargetPosition(e.target.value)}
+                      placeholder="z.B. CEO, CFO, Bereichsleitung, Head of Sales"
+                      data-testid="input-target-position"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    />
+                    <p className="text-xs text-slate-400 mt-1.5">
+                      Geben Sie die Zielposition ein, für die das Assessment durchgeführt wird. Diese Information wird für die KI-gestützte Übungsgenerierung und Kompetenzempfehlungen verwendet.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleSaveAssessment}
+                      disabled={saving}
+                      data-testid="button-save-target-position"
+                      className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
+                    >
+                      {saving ? "Wird gespeichert…" : "Speichern"}
+                    </button>
+                    {saveMsg && <span className="text-sm text-slate-500" data-testid="text-save-msg-target">{saveMsg}</span>}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeSection === "exercises" && (
+            <>
+              <div className="flex flex-wrap gap-3 mb-2">
+                <Link
+                  href={`/w/${workspaceSlug}/admin/exercise-library`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
+                  data-testid="link-exercise-library"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21" />
+                  </svg>
+                  Übungsbibliothek
+                </Link>
+                <Link
+                  href={`/w/${workspaceSlug}/admin/observation-sheets`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
+                  data-testid="link-observation-sheets"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  Beobachtungsbögen-Builder
+                </Link>
+                <Link
+                  href={`/w/${workspaceSlug}/admin/competencies`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
+                  data-testid="link-competencies"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6z" />
+                  </svg>
+                  MTMM bearbeiten
+                </Link>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-brand-navy" data-testid="heading-exercises">Übungen</h2>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleToggleLibrary}
+                      data-testid="button-import-library"
+                      className="rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
+                    >
+                      {showLibrary ? "Bibliothek schließen" : "Aus Bibliothek importieren"}
+                    </button>
+                    <button
+                      onClick={() => setShowCreateExercise(!showCreateExercise)}
+                      data-testid="button-create-exercise"
+                      className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
+                    >
+                      {showCreateExercise ? "Abbrechen" : "Neue Übung"}
+                    </button>
+                  </div>
+                </div>
+
+                {showLibrary && (
+                  <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-brand-navy">Übungsbibliothek</h3>
+                      <button
+                        onClick={handleSeedVarexia}
+                        disabled={seedingVarexia || varexiaSeeded}
+                        data-testid="button-seed-varexia"
+                        className="text-xs font-medium px-3 py-1.5 rounded-full border border-purple-400 text-purple-600 hover:bg-purple-500 hover:text-white disabled:opacity-50 transition-colors"
+                      >
+                        {varexiaSeeded ? "✓ Varexia SE geladen" : seedingVarexia ? "Wird geladen…" : "Varexia SE laden"}
+                      </button>
+                    </div>
+                    {libraryLoading ? (
+                      <p className="text-sm text-slate-400">Laden…</p>
+                    ) : libraryItems.length === 0 ? (
+                      <p className="text-sm text-slate-400">Keine Einträge in der Bibliothek. Laden Sie die Varexia-Fallstudie oder erstellen Sie Übungen in der Bibliothek.</p>
+                    ) : (
+                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {libraryItems.map((item) => (
+                          <div key={item.id} className="border border-slate-200 rounded-lg p-3 bg-white" data-testid={`library-item-${item.id}`}>
+                            <p className="font-medium text-sm text-slate-900 mb-1">{item.title}</p>
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+                                {EXERCISE_TYPE_LABELS[item.exerciseType] || item.exerciseType}
+                              </span>
+                              {item.targetLevels?.map((level) => (
+                                <span key={level} className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                                  {level}
+                                </span>
+                              ))}
+                              {item.tags?.slice(0, 3).map((tag) => (
+                                <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                                  {tag}
+                                </span>
+                              ))}
+                              {(item.tags?.length || 0) > 3 && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">
+                                  +{item.tags.length - 3}
+                                </span>
+                              )}
+                            </div>
+                            {(item.clientName || item.projectName) && (
+                              <p className="text-xs text-slate-400 mb-1">
+                                {item.clientName && <><span className="font-medium">Kunde:</span> {item.clientName}</>}
+                                {item.clientName && item.projectName && " · "}
+                                {item.projectName && <><span className="font-medium">Projekt:</span> {item.projectName}</>}
+                              </p>
+                            )}
+                            {item.metadataJson?.description && (
+                              <p className="text-xs text-slate-500 mb-2 line-clamp-2">{typeof item.metadataJson.description === "string" ? item.metadataJson.description : ""}</p>
+                            )}
+                            <div className="flex gap-2">
                               <button
-                                key={item.id}
-                                type="button"
+                                onClick={() => handleImportFromLibrary(item)}
+                                data-testid={`button-import-${item.id}`}
+                                className="text-xs font-medium text-brand-blue hover:text-brand-blue-dark"
+                              >
+                                Importieren
+                              </button>
+                              <button
+                                onClick={() => handleAIVariantImport(item)}
+                                data-testid={`button-ai-variant-${item.id}`}
+                                className="text-xs font-medium text-purple-600 hover:text-purple-800"
+                              >
+                                KI-Anpassung
+                              </button>
+                              <button
                                 onClick={() => {
                                   setBasisExercise(item);
                                   setShowBasisPicker(false);
+                                  setShowLibrary(false);
+                                  setShowCreateExercise(true);
                                   setExName(item.title + " (angepasst)");
                                   setExType(item.exerciseType);
                                   setExInstructions(item.metadataJson?.instructions || item.metadataJson?.description || "");
                                 }}
-                                className="w-full text-left px-3 py-2 rounded hover:bg-emerald-100 transition-colors"
-                                data-testid={`button-pick-basis-${item.id}`}
+                                data-testid={`button-basis-${item.id}`}
+                                className="text-xs font-medium text-emerald-600 hover:text-emerald-800"
                               >
-                                <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                                <p className="text-xs text-slate-500">
-                                  {EXERCISE_TYPE_LABELS[item.exerciseType] || item.exerciseType}
-                                  {item.clientName && <span className="text-slate-400"> · {item.clientName}</span>}
-                                </p>
+                                Als Basis
                               </button>
-                            ))}
+                            </div>
                           </div>
-                        )}
+                        ))}
                       </div>
                     )}
-                    <div className="grid md:grid-cols-2 gap-3">
+                  </div>
+                )}
+
+                {showCreateExercise && (
+                  <div className="border border-slate-200 rounded-lg p-4 mb-4 bg-slate-50">
+                    <form onSubmit={handleCreateExercise} className="space-y-3" data-testid="form-create-exercise">
+                      {basisExercise && (
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-semibold text-emerald-700">Basierend auf:</span>
+                            <button
+                              type="button"
+                              onClick={() => { setBasisExercise(null); setBasisChanges(""); }}
+                              className="text-xs text-red-500 hover:text-red-700"
+                            >
+                              Basis entfernen
+                            </button>
+                          </div>
+                          <p className="text-sm font-medium text-emerald-900">{basisExercise.title}</p>
+                          <p className="text-xs text-emerald-600">{EXERCISE_TYPE_LABELS[basisExercise.exerciseType] || basisExercise.exerciseType}</p>
+                          <div className="mt-2">
+                            <label className="block text-xs font-medium text-emerald-700 mb-1">Gewünschte Änderungen / Kontext-Verknüpfung</label>
+                            <textarea
+                              value={basisChanges}
+                              onChange={(e) => setBasisChanges(e.target.value)}
+                              rows={2}
+                              placeholder="z.B. Mitarbeitergespräch im Kontext der Fallstudie Varexia SE einbetten…"
+                              data-testid="input-basis-changes"
+                              className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 bg-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {!basisExercise && (
+                        <div className="flex items-center gap-2 mb-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!showLibrary) fetchLibraryItems();
+                              setShowBasisPicker(!showBasisPicker);
+                            }}
+                            data-testid="button-select-basis"
+                            className="text-xs font-medium px-3 py-1.5 rounded-full border border-emerald-400 text-emerald-600 hover:bg-emerald-50 transition-colors"
+                          >
+                            Bestehende Übung als Basis verwenden
+                          </button>
+                        </div>
+                      )}
+                      {showBasisPicker && !basisExercise && (
+                        <div className="border border-emerald-200 rounded-lg p-3 bg-emerald-50/50 max-h-48 overflow-y-auto">
+                          {libraryLoading ? (
+                            <p className="text-xs text-slate-400">Laden…</p>
+                          ) : libraryItems.length === 0 ? (
+                            <p className="text-xs text-slate-400">Keine Übungen in der Bibliothek.</p>
+                          ) : (
+                            <div className="space-y-1">
+                              {libraryItems.map((item) => (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setBasisExercise(item);
+                                    setShowBasisPicker(false);
+                                    setExName(item.title + " (angepasst)");
+                                    setExType(item.exerciseType);
+                                    setExInstructions(item.metadataJson?.instructions || item.metadataJson?.description || "");
+                                  }}
+                                  className="w-full text-left px-3 py-2 rounded hover:bg-emerald-100 transition-colors"
+                                  data-testid={`button-pick-basis-${item.id}`}
+                                >
+                                  <p className="text-sm font-medium text-slate-900">{item.title}</p>
+                                  <p className="text-xs text-slate-500">
+                                    {EXERCISE_TYPE_LABELS[item.exerciseType] || item.exerciseType}
+                                    {item.clientName && <span className="text-slate-400"> · {item.clientName}</span>}
+                                  </p>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+                          <input
+                            type="text"
+                            value={exName}
+                            onChange={(e) => setExName(e.target.value)}
+                            required
+                            data-testid="input-exercise-name"
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Typ</label>
+                          <select
+                            value={exType}
+                            onChange={(e) => setExType(e.target.value)}
+                            data-testid="select-exercise-type"
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                          >
+                            {EXERCISE_TYPES.map((t) => (
+                              <option key={t} value={t}>{EXERCISE_TYPE_LABELS[t]}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
-                        <input
-                          type="text"
-                          value={exName}
-                          onChange={(e) => setExName(e.target.value)}
-                          required
-                          data-testid="input-exercise-name"
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Anweisungen</label>
+                        <textarea
+                          value={exInstructions}
+                          onChange={(e) => setExInstructions(e.target.value)}
+                          rows={2}
+                          data-testid="input-exercise-instructions"
                           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Typ</label>
-                        <select
-                          value={exType}
-                          onChange={(e) => setExType(e.target.value)}
-                          data-testid="select-exercise-type"
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                        >
-                          {EXERCISE_TYPES.map((t) => (
-                            <option key={t} value={t}>{EXERCISE_TYPE_LABELS[t]}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Anweisungen</label>
-                      <textarea
-                        value={exInstructions}
-                        onChange={(e) => setExInstructions(e.target.value)}
-                        rows={2}
-                        data-testid="input-exercise-instructions"
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                      />
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Dauer (Minuten)</label>
-                        <input
-                          type="number"
-                          value={exDuration}
-                          onChange={(e) => setExDuration(e.target.value)}
-                          min="0"
-                          data-testid="input-exercise-duration"
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Reihenfolge</label>
-                        <input
-                          type="number"
-                          value={exSortOrder}
-                          onChange={(e) => setExSortOrder(e.target.value)}
-                          min="0"
-                          data-testid="input-exercise-sort-order"
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                        />
-                      </div>
-                    </div>
-                    {exError && <p className="text-sm text-red-500" data-testid="text-exercise-error">{exError}</p>}
-                    {aiError && <p className="text-sm text-red-500" data-testid="text-ai-error">{aiError}</p>}
-
-                    {aiGenerating && (
-                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4" data-testid="ai-progress">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-purple-700">KI-Generierung</span>
-                          <span className="text-sm font-bold text-purple-700">{aiProgress}%</span>
-                        </div>
-                        <div className="w-full bg-purple-200 rounded-full h-2.5 mb-2">
-                          <div
-                            className="bg-purple-600 h-2.5 rounded-full transition-all duration-500"
-                            style={{ width: `${aiProgress}%` }}
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Dauer (Minuten)</label>
+                          <input
+                            type="number"
+                            value={exDuration}
+                            onChange={(e) => setExDuration(e.target.value)}
+                            min="0"
+                            data-testid="input-exercise-duration"
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                           />
                         </div>
-                        <p className="text-xs text-purple-600">{aiProgressLabel}</p>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Reihenfolge</label>
+                          <input
+                            type="number"
+                            value={exSortOrder}
+                            onChange={(e) => setExSortOrder(e.target.value)}
+                            min="0"
+                            data-testid="input-exercise-sort-order"
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                          />
+                        </div>
                       </div>
-                    )}
+                      {exError && <p className="text-sm text-red-500" data-testid="text-exercise-error">{exError}</p>}
+                      {aiError && <p className="text-sm text-red-500" data-testid="text-ai-error">{aiError}</p>}
 
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        disabled={exCreating || aiGenerating || !exName.trim()}
-                        data-testid="button-submit-exercise"
-                        className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
-                      >
-                        {exCreating ? "Wird erstellt…" : "Übung erstellen"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAIGenerateExercise}
-                        disabled={aiGenerating || exCreating || !exName.trim()}
-                        data-testid="button-ai-generate-exercise"
-                        className="rounded-lg bg-purple-600 text-white text-sm font-medium px-6 py-2 hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-                      >
-                        {aiGenerating ? (
-                          <>
-                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                            </svg>
-                            Generiert…
-                          </>
-                        ) : "KI-Generierung"}
-                      </button>
-                    </div>
-                  </form>
+                      {aiGenerating && (
+                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4" data-testid="ai-progress">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-purple-700">KI-Generierung</span>
+                            <span className="text-sm font-bold text-purple-700">{aiProgress}%</span>
+                          </div>
+                          <div className="w-full bg-purple-200 rounded-full h-2.5 mb-2">
+                            <div
+                              className="bg-purple-600 h-2.5 rounded-full transition-all duration-500"
+                              style={{ width: `${aiProgress}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-purple-600">{aiProgressLabel}</p>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <button
+                          type="submit"
+                          disabled={exCreating || aiGenerating || !exName.trim()}
+                          data-testid="button-submit-exercise"
+                          className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
+                        >
+                          {exCreating ? "Wird erstellt…" : "Übung erstellen"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAIGenerateExercise}
+                          disabled={aiGenerating || exCreating || !exName.trim()}
+                          data-testid="button-ai-generate-exercise"
+                          className="rounded-lg bg-purple-600 text-white text-sm font-medium px-6 py-2 hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                        >
+                          {aiGenerating ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                              </svg>
+                              Generiert…
+                            </>
+                          ) : "KI-Generierung"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                <div className="overflow-hidden rounded-lg border border-slate-200">
+                  <table className="w-full text-sm" data-testid="table-exercises">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="text-left px-4 py-3 font-medium text-slate-600">Name</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-600">Typ</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-600">Dauer</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-600">Reihenfolge</th>
+                        <th className="text-right px-4 py-3 font-medium text-slate-600">Aktionen</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {exercises.map((ex) => (
+                        <tr key={ex.id} className="border-b border-slate-100 hover:bg-slate-50/50" data-testid={`row-exercise-${ex.id}`}>
+                          {editingExId === ex.id ? (
+                            <>
+                              <td className="px-4 py-3">
+                                <input
+                                  type="text"
+                                  value={editExName}
+                                  onChange={(e) => setEditExName(e.target.value)}
+                                  data-testid="input-edit-exercise-name"
+                                  className="w-full rounded border border-slate-200 px-2 py-1 text-sm"
+                                />
+                              </td>
+                              <td className="px-4 py-3">
+                                <select
+                                  value={editExType}
+                                  onChange={(e) => setEditExType(e.target.value)}
+                                  data-testid="select-edit-exercise-type"
+                                  className="w-full rounded border border-slate-200 px-2 py-1 text-sm"
+                                >
+                                  {EXERCISE_TYPES.map((t) => (
+                                    <option key={t} value={t}>{EXERCISE_TYPE_LABELS[t]}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="px-4 py-3">
+                                <input
+                                  type="number"
+                                  value={editExDuration}
+                                  onChange={(e) => setEditExDuration(e.target.value)}
+                                  data-testid="input-edit-exercise-duration"
+                                  className="w-20 rounded border border-slate-200 px-2 py-1 text-sm"
+                                />
+                              </td>
+                              <td className="px-4 py-3">
+                                <input
+                                  type="number"
+                                  value={editExSortOrder}
+                                  onChange={(e) => setEditExSortOrder(e.target.value)}
+                                  data-testid="input-edit-exercise-sort-order"
+                                  className="w-20 rounded border border-slate-200 px-2 py-1 text-sm"
+                                />
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => handleUpdateExercise(ex.id)}
+                                    data-testid="button-save-exercise"
+                                    className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
+                                  >
+                                    Speichern
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingExId(null)}
+                                    className="text-xs text-slate-400 hover:text-slate-600"
+                                  >
+                                    Abbrechen
+                                  </button>
+                                </div>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="px-4 py-3 font-medium text-slate-900">{ex.name}</td>
+                              <td className="px-4 py-3 text-slate-500">{EXERCISE_TYPE_LABELS[ex.type] || ex.type}</td>
+                              <td className="px-4 py-3 text-slate-500">{ex.duration ? `${ex.duration} Min.` : "–"}</td>
+                              <td className="px-4 py-3 text-slate-500">{ex.sortOrder}</td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setEditingExId(ex.id);
+                                      setEditExName(ex.name);
+                                      setEditExType(ex.type);
+                                      setEditExInstructions(ex.instructions ?? "");
+                                      setEditExDuration(ex.duration?.toString() ?? "");
+                                      setEditExSortOrder(ex.sortOrder.toString());
+                                    }}
+                                    data-testid={`button-edit-exercise-${ex.id}`}
+                                    className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
+                                  >
+                                    Bearbeiten
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteExercise(ex.id)}
+                                    data-testid={`button-delete-exercise-${ex.id}`}
+                                    className="text-xs text-red-500 hover:text-red-700 font-medium"
+                                  >
+                                    Löschen
+                                  </button>
+                                </div>
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      ))}
+                      {exercises.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                            Keine Übungen vorhanden.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              )}
-
-              <div className="overflow-hidden rounded-lg border border-slate-200">
-                <table className="w-full text-sm" data-testid="table-exercises">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Name</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Typ</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Dauer</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Reihenfolge</th>
-                      <th className="text-right px-4 py-3 font-medium text-slate-600">Aktionen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {exercises.map((ex) => (
-                      <tr key={ex.id} className="border-b border-slate-100 hover:bg-slate-50/50" data-testid={`row-exercise-${ex.id}`}>
-                        {editingExId === ex.id ? (
-                          <>
-                            <td className="px-4 py-3">
-                              <input
-                                type="text"
-                                value={editExName}
-                                onChange={(e) => setEditExName(e.target.value)}
-                                data-testid="input-edit-exercise-name"
-                                className="w-full rounded border border-slate-200 px-2 py-1 text-sm"
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              <select
-                                value={editExType}
-                                onChange={(e) => setEditExType(e.target.value)}
-                                data-testid="select-edit-exercise-type"
-                                className="w-full rounded border border-slate-200 px-2 py-1 text-sm"
-                              >
-                                {EXERCISE_TYPES.map((t) => (
-                                  <option key={t} value={t}>{EXERCISE_TYPE_LABELS[t]}</option>
-                                ))}
-                              </select>
-                            </td>
-                            <td className="px-4 py-3">
-                              <input
-                                type="number"
-                                value={editExDuration}
-                                onChange={(e) => setEditExDuration(e.target.value)}
-                                data-testid="input-edit-exercise-duration"
-                                className="w-20 rounded border border-slate-200 px-2 py-1 text-sm"
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              <input
-                                type="number"
-                                value={editExSortOrder}
-                                onChange={(e) => setEditExSortOrder(e.target.value)}
-                                data-testid="input-edit-exercise-sort-order"
-                                className="w-20 rounded border border-slate-200 px-2 py-1 text-sm"
-                              />
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  onClick={() => handleUpdateExercise(ex.id)}
-                                  data-testid="button-save-exercise"
-                                  className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
-                                >
-                                  Speichern
-                                </button>
-                                <button
-                                  onClick={() => setEditingExId(null)}
-                                  className="text-xs text-slate-400 hover:text-slate-600"
-                                >
-                                  Abbrechen
-                                </button>
-                              </div>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="px-4 py-3 font-medium text-slate-900">{ex.name}</td>
-                            <td className="px-4 py-3 text-slate-500">{EXERCISE_TYPE_LABELS[ex.type] || ex.type}</td>
-                            <td className="px-4 py-3 text-slate-500">{ex.duration ? `${ex.duration} Min.` : "–"}</td>
-                            <td className="px-4 py-3 text-slate-500">{ex.sortOrder}</td>
-                            <td className="px-4 py-3 text-right">
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  onClick={() => {
-                                    setEditingExId(ex.id);
-                                    setEditExName(ex.name);
-                                    setEditExType(ex.type);
-                                    setEditExInstructions(ex.instructions ?? "");
-                                    setEditExDuration(ex.duration?.toString() ?? "");
-                                    setEditExSortOrder(ex.sortOrder.toString());
-                                  }}
-                                  data-testid={`button-edit-exercise-${ex.id}`}
-                                  className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
-                                >
-                                  Bearbeiten
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteExercise(ex.id)}
-                                  data-testid={`button-delete-exercise-${ex.id}`}
-                                  className="text-xs text-red-500 hover:text-red-700 font-medium"
-                                >
-                                  Löschen
-                                </button>
-                              </div>
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                    {exercises.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
-                          Keine Übungen vorhanden.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
               </div>
-            </div>
+            </>
+          )}
 
+          {activeSection === "observation_sheets" && (
             <div id="observation-sheets" className="bg-white border border-slate-200 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-brand-navy">Beobachtungsbögen</h2>
+                <h2 className="text-lg font-semibold text-brand-navy" data-testid="heading-observation-sheets">Beobachtungsbögen</h2>
                 <div className="flex gap-2">
                   <button
                     onClick={handleCreateAISheet}
@@ -1737,11 +1997,13 @@ export default function AssessmentDetailPage() {
                 )}
               </div>
             </div>
+          )}
 
+          {activeSection === "mtmm" && (
             <div id="mtmm-matrix" className="bg-white border border-slate-200 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-brand-navy">MTMM-Matrix</h2>
+                  <h2 className="text-lg font-semibold text-brand-navy" data-testid="heading-mtmm">MTMM-Matrix</h2>
                   <p className="text-xs text-slate-500 mt-0.5">Multi-Trait-Multi-Method — Zuordnung Übungen × Kompetenzen</p>
                 </div>
                 <div className="flex gap-2">
@@ -1780,7 +2042,7 @@ export default function AssessmentDetailPage() {
                   </Link>
                 </div>
               ) : (() => {
-                const uniqueExercises = [...new Map(mtmmMappings.map(m => [m.exercise.id, m.exercise])).values()];
+                const uniqueExercisesTable = [...new Map(mtmmMappings.map(m => [m.exercise.id, m.exercise])).values()];
                 const uniqueNodes = [...new Map(mtmmMappings.map(m => [m.competencyNode.id, m.competencyNode])).values()]
                   .sort((a, b) => a.sortOrder - b.sortOrder);
                 const mappingLookup = new Map(mtmmMappings.map(m => [`${m.exerciseId}:${m.competencyNodeId}`, m.weight]));
@@ -1799,7 +2061,7 @@ export default function AssessmentDetailPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {uniqueExercises.map(ex => (
+                        {uniqueExercisesTable.map(ex => (
                           <tr key={ex.id} className="border-b border-slate-100 hover:bg-slate-50/50">
                             <td className="py-2 px-3 font-medium text-slate-800 sticky left-0 bg-white z-10">{ex.name}</td>
                             {uniqueNodes.map(node => {
@@ -1833,13 +2095,11 @@ export default function AssessmentDetailPage() {
                 );
               })()}
             </div>
-          </>
-        )}
+          )}
 
-        {activeStep === 2 && (
-          <>
+          {activeSection === "validation" && (
             <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-brand-navy mb-6">Validierung & Übersicht</h2>
+              <h2 className="text-lg font-semibold text-brand-navy mb-6" data-testid="heading-validation">Validierung & Übersicht</h2>
 
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 <div className="bg-slate-50 rounded-lg p-4">
@@ -1880,7 +2140,7 @@ export default function AssessmentDetailPage() {
                       { label: "Datum festgelegt", ok: hasDates },
                       { label: "Beschreibung vorhanden", ok: hasDescription },
                     ].map((item) => (
-                      <div key={item.label} className="flex items-center gap-2">
+                      <div key={item.label} className="flex items-center gap-2" data-testid={`validation-item-${item.label.toLowerCase().replace(/\s+/g, '-')}`}>
                         {item.ok ? (
                           <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1964,14 +2224,12 @@ export default function AssessmentDetailPage() {
                 </div>
               )}
             </div>
-          </>
-        )}
+          )}
 
-        {activeStep === 3 && (
-          <>
+          {activeSection === "participants" && (
             <div id="participants" className="bg-white border border-slate-200 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-brand-navy">Teilnehmer</h2>
+                <h2 className="text-lg font-semibold text-brand-navy" data-testid="heading-participants">Teilnehmer</h2>
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/w/${workspaceSlug}/admin/users`}
@@ -2036,10 +2294,12 @@ export default function AssessmentDetailPage() {
                 )}
               </div>
             </div>
+          )}
 
+          {activeSection === "documents" && (
             <div className="bg-white border border-slate-200 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-brand-navy">Dokumente</h2>
+                <h2 className="text-lg font-semibold text-brand-navy" data-testid="heading-documents">Dokumente</h2>
                 <button
                   onClick={() => setShowUpload(!showUpload)}
                   data-testid="button-upload-document"
@@ -2194,155 +2454,237 @@ export default function AssessmentDetailPage() {
                 </table>
               </div>
             </div>
-          </>
-        )}
+          )}
 
-        {activeStep === 4 && (
-          <>
-            {(!hasExercises || !hasDates || !hasDescription) && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                  </svg>
-                  <div>
-                    <h3 className="text-sm font-semibold text-amber-800">Fehlende Elemente</h3>
-                    <ul className="text-sm text-amber-700 mt-1 space-y-0.5">
-                      {!hasExercises && <li>• Keine Übungen definiert</li>}
-                      {!hasDates && <li>• Kein Datum festgelegt</li>}
-                      {!hasDescription && <li>• Keine Beschreibung vorhanden</li>}
-                      {!hasMtmm && <li>• Keine MTMM-Zuordnungen</li>}
-                      {!hasSheets && <li>• Keine Beobachtungsbögen</li>}
-                    </ul>
-                  </div>
+          {activeSection === "workflow" && (
+            <>
+              <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-brand-navy mb-2" data-testid="heading-workflow">Workflow & Zeitplan</h2>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Konfigurieren Sie den Durchführungsworkflow und aktivieren Sie spezielle Features für dieses Assessment.
+                </p>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-brand-navy mb-4">Prozess-Timeline</h3>
+                <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                  {PROCESS_STEPS.map((step, idx) => {
+                    const stepReached = (assessment?.processStep || 0) >= idx;
+                    return (
+                      <div key={idx} className="flex items-center" data-testid={`workflow-step-${idx}`}>
+                        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${
+                          stepReached ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"
+                        }`}>
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            stepReached ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"
+                          }`}>
+                            {stepReached ? (
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                              </svg>
+                            ) : idx + 1}
+                          </span>
+                          <span className="font-medium whitespace-nowrap">{step.label}</span>
+                        </div>
+                        {idx < PROCESS_STEPS.length - 1 && (
+                          <div className={`w-6 h-0.5 ${stepReached ? "bg-emerald-300" : "bg-slate-200"}`} />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            )}
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-brand-navy mb-4">Assessment-Status</h2>
-              <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Aktueller Status</span>
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_BADGES[assessment?.status || "draft"]?.bg} ${STATUS_BADGES[assessment?.status || "draft"]?.text}`}>
-                      {STATUS_BADGES[assessment?.status || "draft"]?.label}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Übungen</span>
-                    <span className="font-medium text-slate-900">{exercises.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Teilnehmer</span>
-                    <span className="font-medium text-slate-900">{candidates.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Dokumente</span>
-                    <span className="font-medium text-slate-900">{documents.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Beobachtungsbögen</span>
-                    <span className="font-medium text-slate-900">{observationSheets.length}</span>
-                  </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-brand-navy mb-4">Feature-Toggles</h3>
+                <div className="space-y-4">
+                  {[
+                    { key: "autoConsolidation", label: "Auto-Konsolidierung", desc: "Bewertungen werden automatisch konsolidiert, sobald alle Beobachter abgegeben haben." },
+                    { key: "competencyAveraging", label: "Kompetenz-Mittelwerte", desc: "Berechnet automatisch Durchschnittswerte über alle Beobachter pro Kompetenz." },
+                    { key: "noteSharing", label: "Notizen teilen", desc: "Beobachter können ihre Notizen mit dem gesamten Beobachter-Team teilen." },
+                    { key: "observerRotation", label: "Beobachter-Rotation", desc: "Automatische Zuordnung der Beobachter zu unterschiedlichen Übungen nach Rotationsplan." },
+                  ].map((toggle) => (
+                    <div key={toggle.key} className="flex items-start justify-between gap-4 py-2" data-testid={`toggle-${toggle.key}`}>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-slate-800">{toggle.label}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{toggle.desc}</p>
+                      </div>
+                      <button
+                        onClick={() => setWorkflowConfig(prev => ({ ...prev, [toggle.key]: !prev[toggle.key] }))}
+                        data-testid={`switch-${toggle.key}`}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
+                          workflowConfig[toggle.key] ? "bg-brand-blue" : "bg-slate-200"
+                        }`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          workflowConfig[toggle.key] ? "translate-x-6" : "translate-x-1"
+                        }`} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Status ändern</label>
-                    <select
-                      value={editStatus}
-                      onChange={(e) => setEditStatus(e.target.value)}
-                      data-testid="select-activation-status"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-brand-navy mb-4">Beobachter-Rollentyp</h3>
+                <div className="grid md:grid-cols-3 gap-3">
+                  {[
+                    { key: "silent", label: "Stiller Beobachter", desc: "Beobachtet und bewertet ohne aktive Teilnahme am Gespräch." },
+                    { key: "active", label: "Aktiver Beobachter", desc: "Kann Fragen stellen und aktiv am Assessment teilnehmen." },
+                    { key: "moderator", label: "Moderator", desc: "Leitet die Übung und moderiert den Ablauf." },
+                  ].map((role) => (
+                    <button
+                      key={role.key}
+                      onClick={() => setObserverRoleType(role.key)}
+                      data-testid={`observer-role-${role.key}`}
+                      className={`text-left p-4 rounded-lg border-2 transition-colors ${
+                        observerRoleType === role.key
+                          ? "border-brand-blue bg-blue-50/50"
+                          : "border-slate-200 hover:border-slate-300"
+                      }`}
                     >
-                      <option value="draft">Entwurf</option>
-                      <option value="active">Aktiv</option>
-                      <option value="completed">Abgeschlossen</option>
-                      <option value="archived">Archiviert</option>
-                    </select>
-                  </div>
-                  <button
-                    onClick={handleActivateAssessment}
-                    disabled={saving || assessment?.status === "active"}
-                    data-testid="button-activate-assessment"
-                    className="w-full rounded-lg bg-emerald-600 text-white text-sm font-semibold px-6 py-3 hover:bg-emerald-700 disabled:opacity-50 transition-colors"
-                  >
-                    {assessment?.status === "active" ? "Assessment ist aktiv" : saving ? "Wird aktiviert…" : "Assessment freischalten"}
-                  </button>
+                      <p className={`text-sm font-medium ${observerRoleType === role.key ? "text-brand-blue" : "text-slate-800"}`}>
+                        {role.label}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">{role.desc}</p>
+                    </button>
+                  ))}
                 </div>
               </div>
-            </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-brand-navy mb-4">Portal-Links</h2>
-              <div className="space-y-3">
-                <Link
-                  href={`/w/${workspaceSlug}/assessment`}
-                  className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3 hover:border-brand-blue/40 hover:bg-blue-50/20 transition-colors"
-                  data-testid="link-candidate-portal"
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleSaveWorkflowConfig}
+                  disabled={saving}
+                  data-testid="button-save-workflow"
+                  className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">Kandidatenportal</p>
-                    <p className="text-xs text-slate-500">Zugang für Kandidaten zum Assessment</p>
+                  {saving ? "Wird gespeichert…" : "Workflow-Konfiguration speichern"}
+                </button>
+                {saveMsg && <span className="text-sm text-slate-500" data-testid="text-save-msg-workflow">{saveMsg}</span>}
+              </div>
+            </>
+          )}
+
+          {activeSection === "activation" && (
+            <>
+              {(!hasExercises || !hasDates || !hasDescription) && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4" data-testid="activation-warnings">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-sm font-semibold text-amber-800">Fehlende Elemente</h3>
+                      <ul className="text-sm text-amber-700 mt-1 space-y-0.5">
+                        {!hasExercises && <li>• Keine Übungen definiert</li>}
+                        {!hasDates && <li>• Kein Datum festgelegt</li>}
+                        {!hasDescription && <li>• Keine Beschreibung vorhanden</li>}
+                        {!hasMtmm && <li>• Keine MTMM-Zuordnungen</li>}
+                        {!hasSheets && <li>• Keine Beobachtungsbögen</li>}
+                      </ul>
+                    </div>
                   </div>
-                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                  </svg>
-                </Link>
-                <div className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3 opacity-60">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">Beobachterportal</p>
-                    <p className="text-xs text-slate-500">Zugang für Beobachter zur Bewertung</p>
+                </div>
+              )}
+
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-brand-navy mb-4" data-testid="heading-activation">Assessment-Status</h2>
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Aktueller Status</span>
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_BADGES[assessment?.status || "draft"]?.bg} ${STATUS_BADGES[assessment?.status || "draft"]?.text}`}>
+                        {STATUS_BADGES[assessment?.status || "draft"]?.label}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Übungen</span>
+                      <span className="font-medium text-slate-900">{exercises.length}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Teilnehmer</span>
+                      <span className="font-medium text-slate-900">{candidates.length}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Dokumente</span>
+                      <span className="font-medium text-slate-900">{documents.length}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Beobachtungsbögen</span>
+                      <span className="font-medium text-slate-900">{observationSheets.length}</span>
+                    </div>
                   </div>
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 font-medium">Bald verfügbar</span>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Status ändern</label>
+                      <select
+                        value={editStatus}
+                        onChange={(e) => setEditStatus(e.target.value)}
+                        data-testid="select-activation-status"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                      >
+                        <option value="draft">Entwurf</option>
+                        <option value="active">Aktiv</option>
+                        <option value="completed">Abgeschlossen</option>
+                        <option value="archived">Archiviert</option>
+                      </select>
+                    </div>
+                    <button
+                      onClick={handleActivateAssessment}
+                      disabled={saving || assessment?.status === "active"}
+                      data-testid="button-activate-assessment"
+                      className="w-full rounded-lg bg-emerald-600 text-white text-sm font-semibold px-6 py-3 hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                    >
+                      {assessment?.status === "active" ? "Assessment ist aktiv" : saving ? "Wird aktiviert…" : "Assessment freischalten"}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex gap-3">
-              <Link
-                href={`/w/${workspaceSlug}/admin/intelligence?assessmentId=${assessmentId}`}
-                className="inline-flex items-center gap-2 rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
-                data-testid="link-intelligence"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                </svg>
-                Advanced Intelligence
-              </Link>
-            </div>
-          </>
-        )}
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-brand-navy mb-4">Portal-Links</h2>
+                <div className="space-y-3">
+                  <Link
+                    href={`/w/${workspaceSlug}/assessment`}
+                    className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3 hover:border-brand-blue/40 hover:bg-blue-50/20 transition-colors"
+                    data-testid="link-candidate-portal"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Kandidatenportal</p>
+                      <p className="text-xs text-slate-500">Zugang für Kandidaten zum Assessment</p>
+                    </div>
+                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                  </Link>
+                  <div className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3 opacity-60">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Beobachterportal</p>
+                      <p className="text-xs text-slate-500">Zugang für Beobachter zur Bewertung</p>
+                    </div>
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 font-medium">Bald verfügbar</span>
+                  </div>
+                </div>
+              </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-          {activeStep > 0 ? (
-            <button
-              onClick={() => handleStepChange(activeStep - 1)}
-              data-testid="button-step-back"
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium px-5 py-2.5 hover:bg-slate-50 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-              </svg>
-              Zurück
-            </button>
-          ) : (
-            <div />
+              <div className="flex gap-3">
+                <Link
+                  href={`/w/${workspaceSlug}/admin/intelligence?assessmentId=${assessmentId}`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-brand-blue text-brand-blue text-sm font-medium px-4 py-2 hover:bg-brand-blue hover:text-white transition-colors"
+                  data-testid="link-intelligence"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                  Advanced Intelligence
+                </Link>
+              </div>
+            </>
           )}
-          {activeStep < STEPS.length - 1 && (
-            <button
-              onClick={() => handleStepChange(activeStep + 1)}
-              data-testid="button-step-next"
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-blue text-white text-sm font-medium px-5 py-2.5 hover:bg-brand-blue-dark transition-colors"
-            >
-              Weiter
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </button>
-          )}
-        </div>
-      </main>
+
+        </main>
+      </div>
 
       <button
         onClick={() => setShowCollab(true)}
