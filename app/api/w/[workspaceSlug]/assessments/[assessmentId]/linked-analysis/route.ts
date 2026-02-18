@@ -15,7 +15,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session && !master && !hasPermission(session.roles, "assessments.view")) {
+  if (session && !master && !hasPermission(session.roles, "assessments.read")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

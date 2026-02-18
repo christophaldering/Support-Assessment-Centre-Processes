@@ -15,7 +15,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session && !master && !hasPermission(session.roles, "assessments.edit")) {
+  if (session && !master && !hasPermission(session.roles, "assessments.update")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -135,6 +135,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const updated = await prisma.assessment.update({
       where: { id: params.assessmentId },
       data: updateData,
+    });
+
+    await prisma.requirementsAnalysis.update({
+      where: { id: analysisId },
+      data: { appliedAssessmentId: params.assessmentId },
     });
 
     return NextResponse.json({
