@@ -157,6 +157,19 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     }
 
     if (synced.length > 0) {
+      const activeSnapshot = await prisma.mtmmSnapshot.findFirst({
+        where: { assessmentId: params.assessmentId, status: "active", lockedAt: null },
+      });
+      if (activeSnapshot) {
+        await prisma.mtmmSnapshot.update({
+          where: { id: activeSnapshot.id },
+          data: {
+            lockedAt: new Date(),
+            lockedReason: `Automatisch gesperrt: ${synced.length} Bewertung(en) synchronisiert`,
+          },
+        });
+      }
+
       await logAudit({
         workspaceId: workspace.id,
         userId: master ? null : session!.userId,

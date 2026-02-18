@@ -135,6 +135,7 @@ model Assessment {
   consolidatedScores ConsolidatedScore[]
   reports            Report[]
   observationSheets  ObservationSheet[]
+  mtmmSnapshots      MtmmSnapshot[]
 
   @@map("assessments")
 }
@@ -258,17 +259,37 @@ model WeightingProfile {
   @@map("weighting_profiles")
 }
 
+model MtmmSnapshot {
+  id             String    @id @default(uuid())
+  assessmentId   String    @map("assessment_id")
+  version        Int       @default(1)
+  label          String?
+  status         String    @default("draft")
+  lockedAt       DateTime? @map("locked_at")
+  lockedReason   String?   @map("locked_reason")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  mappings       ExerciseCompetencyMapping[]
+
+  @@index([assessmentId])
+  @@map("mtmm_snapshots")
+}
+
 model ExerciseCompetencyMapping {
   id               String   @id @default(uuid())
   exerciseId       String   @map("exercise_id")
   competencyNodeId String   @map("competency_node_id")
   weight           Float    @default(1.0)
+  snapshotId       String?  @map("snapshot_id")
   createdAt        DateTime @default(now()) @map("created_at")
 
   exercise         Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
   competencyNode   CompetencyNode @relation(fields: [competencyNodeId], references: [id], onDelete: Cascade)
+  snapshot         MtmmSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
 
-  @@unique([exerciseId, competencyNodeId])
+  @@unique([exerciseId, competencyNodeId, snapshotId])
   @@map("exercise_competency_mappings")
 }
 

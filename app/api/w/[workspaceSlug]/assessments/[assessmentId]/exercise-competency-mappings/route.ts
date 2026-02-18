@@ -7,7 +7,7 @@ interface RouteContext {
   params: { workspaceSlug: string; assessmentId: string };
 }
 
-export async function GET(_req: NextRequest, { params }: RouteContext) {
+export async function GET(req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
   const master = hasMasterAuth();
 
@@ -43,8 +43,26 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 
     const exerciseIds = exercises.map((e) => e.id);
 
+    const snapshotId = req.nextUrl.searchParams.get("snapshotId");
+    const activeOnly = req.nextUrl.searchParams.get("active") === "true";
+
+    let whereClause: any = { exerciseId: { in: exerciseIds } };
+
+    if (snapshotId) {
+      whereClause.snapshotId = snapshotId;
+    } else if (activeOnly) {
+      const activeSnapshot = await prisma.mtmmSnapshot.findFirst({
+        where: { assessmentId: params.assessmentId, status: "active" },
+      });
+      if (activeSnapshot) {
+        whereClause.snapshotId = activeSnapshot.id;
+      } else {
+        whereClause.snapshotId = null;
+      }
+    }
+
     const mappings = await prisma.exerciseCompetencyMapping.findMany({
-      where: { exerciseId: { in: exerciseIds } },
+      where: whereClause,
       include: {
         exercise: { select: { id: true, name: true } },
         competencyNode: { select: { id: true, name: true, description: true, sortOrder: true } },
@@ -87,10 +105,22 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Assessment nicht gefunden" }, { status: 404 });
     }
 
-    const { exerciseId, competencyNodeId, weight } = await req.json();
+    const { exerciseId, competencyNodeId, weight, snapshotId } = await req.json();
 
     if (!exerciseId || !competencyNodeId) {
       return NextResponse.json({ error: "exerciseId und competencyNodeId sind erforderlich" }, { status: 400 });
+    }
+
+    if (snapshotId) {
+      const snapshot = await prisma.mtmmSnapshot.findFirst({
+        where: { id: snapshotId, assessmentId: params.assessmentId },
+      });
+      if (!snapshot) {
+        return NextResponse.json({ error: "Snapshot nicht gefunden" }, { status: 404 });
+      }
+      if (snapshot.lockedAt) {
+        return NextResponse.json({ error: "Diese MTMM-Version ist gesperrt und kann nicht bearbeitet werden." }, { status: 409 });
+      }
     }
 
     const exercise = await prisma.exercise.findFirst({
@@ -114,6 +144,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         exerciseId,
         competencyNodeId,
         weight: weight ?? 1.0,
+        snapshotId: snapshotId || null,
       },
       include: {
         exercise: { select: { id: true, name: true } },
@@ -156,10 +187,22 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Assessment nicht gefunden" }, { status: 404 });
     }
 
-    const { mappings } = await req.json();
+    const { mappings, snapshotId } = await req.json();
 
     if (!Array.isArray(mappings)) {
       return NextResponse.json({ error: "mappings Array ist erforderlich" }, { status: 400 });
+    }
+
+    if (snapshotId) {
+      const snapshot = await prisma.mtmmSnapshot.findFirst({
+        where: { id: snapshotId, assessmentId: params.assessmentId },
+      });
+      if (!snapshot) {
+        return NextResponse.json({ error: "Snapshot nicht gefunden" }, { status: 404 });
+      }
+      if (snapshot.lockedAt) {
+        return NextResponse.json({ error: "Diese MTMM-Version ist gesperrt und kann nicht bearbeitet werden. Erstellen Sie eine neue Version." }, { status: 409 });
+      }
     }
 
     const exercises = await prisma.exercise.findMany({
@@ -180,7 +223,10 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
 
     await prisma.$transaction(async (tx) => {
       await tx.exerciseCompetencyMapping.deleteMany({
-        where: { exerciseId: { in: Array.from(exerciseIds) } },
+        where: {
+          exerciseId: { in: Array.from(exerciseIds) },
+          snapshotId: snapshotId || null,
+        },
       });
 
       if (mappings.length > 0) {
@@ -189,13 +235,17 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
             exerciseId: m.exerciseId,
             competencyNodeId: m.competencyNodeId,
             weight: m.weight ?? 1.0,
+            snapshotId: snapshotId || null,
           })),
         });
       }
     });
 
     const updatedMappings = await prisma.exerciseCompetencyMapping.findMany({
-      where: { exerciseId: { in: Array.from(exerciseIds) } },
+      where: {
+        exerciseId: { in: Array.from(exerciseIds) },
+        snapshotId: snapshotId || null,
+      },
       include: {
         exercise: { select: { id: true, name: true } },
         competencyNode: { select: { id: true, name: true } },

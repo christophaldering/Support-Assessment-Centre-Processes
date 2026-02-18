@@ -1550,11 +1550,103 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
   const [savedMappings, setSavedMappings] = useState<{ id: string; exerciseId: string; competencyNodeId: string; weight: number; exercise: { id: string; name: string }; competencyNode: { id: string; name: string; description: string | null; sortOrder: number } }[]>([]);
   const [savedMappingsLoading, setSavedMappingsLoading] = useState(false);
 
+  interface SnapshotRecord {
+    id: string;
+    assessmentId: string;
+    version: number;
+    label: string | null;
+    status: string;
+    lockedAt: string | null;
+    lockedReason: string | null;
+    createdAt: string;
+    _count: { mappings: number };
+  }
+  const [snapshots, setSnapshots] = useState<SnapshotRecord[]>([]);
+  const [snapshotsLoading, setSnapshotsLoading] = useState(false);
+  const [activeSnapshotId, setActiveSnapshotId] = useState<string | null>(null);
+  const [editingSnapshotId, setEditingSnapshotId] = useState<string | null>(null);
+  const [snapshotAction, setSnapshotAction] = useState("");
+  const [showActivateWarning, setShowActivateWarning] = useState<SnapshotRecord | null>(null);
+
+  const fetchSnapshots = useCallback(async (assessmentId: string) => {
+    if (!assessmentId) { setSnapshots([]); setActiveSnapshotId(null); return; }
+    setSnapshotsLoading(true);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${assessmentId}/mtmm-snapshots`);
+      if (res.ok) {
+        const data: SnapshotRecord[] = await res.json();
+        setSnapshots(data);
+        const active = data.find((s) => s.status === "active");
+        setActiveSnapshotId(active?.id ?? null);
+        setEditingSnapshotId(active?.id ?? (data.length > 0 ? data[0].id : null));
+      } else { setSnapshots([]); setActiveSnapshotId(null); }
+    } catch { setSnapshots([]); }
+    finally { setSnapshotsLoading(false); }
+  }, [workspaceSlug]);
+
+  const handleCreateSnapshot = async (fromSnapshotId?: string) => {
+    if (!selectedAssessmentId) return;
+    setSnapshotAction("creating");
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}/mtmm-snapshots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromSnapshotId }),
+      });
+      if (res.ok) {
+        const newSnap = await res.json();
+        await fetchSnapshots(selectedAssessmentId);
+        setEditingSnapshotId(newSnap.id);
+      }
+    } catch {}
+    finally { setSnapshotAction(""); }
+  };
+
+  const handleSnapshotAction = async (snapshotId: string, action: string) => {
+    if (!selectedAssessmentId) return;
+    setSnapshotAction(action);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}/mtmm-snapshots/${snapshotId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (res.ok) {
+        await fetchSnapshots(selectedAssessmentId);
+        fetchSavedMappings(selectedAssessmentId);
+      } else {
+        const d = await res.json();
+        alert(d.error || "Aktion fehlgeschlagen.");
+      }
+    } catch { alert("Netzwerkfehler"); }
+    finally { setSnapshotAction(""); setShowActivateWarning(null); }
+  };
+
+  const handleDeleteSnapshot = async (snapshotId: string) => {
+    if (!selectedAssessmentId) return;
+    if (!confirm("Diesen Entwurf wirklich löschen?")) return;
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}/mtmm-snapshots/${snapshotId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        await fetchSnapshots(selectedAssessmentId);
+        if (editingSnapshotId === snapshotId) setEditingSnapshotId(null);
+      } else {
+        const d = await res.json();
+        alert(d.error || "Löschen fehlgeschlagen.");
+      }
+    } catch {}
+  };
+
+  const currentSnapshot = snapshots.find((s) => s.id === editingSnapshotId);
+  const isCurrentLocked = currentSnapshot?.lockedAt != null;
+
   const fetchSavedMappings = useCallback(async (assessmentId: string) => {
     if (!assessmentId) { setSavedMappings([]); return; }
     setSavedMappingsLoading(true);
     try {
-      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${assessmentId}/exercise-competency-mappings`);
+      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${assessmentId}/exercise-competency-mappings?active=true`);
       if (res.ok) {
         const data = await res.json();
         setSavedMappings(Array.isArray(data) ? data.filter((m: any) => m.exercise && m.competencyNode) : []);
@@ -1600,9 +1692,10 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
     setLoading(true);
     setError("");
     try {
+      const snapshotParam = editingSnapshotId ? `?snapshotId=${editingSnapshotId}` : "";
       const [detailRes, mapRes] = await Promise.all([
         fetch(`/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}`),
-        fetch(`/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}/exercise-competency-mappings`),
+        fetch(`/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}/exercise-competency-mappings${snapshotParam}`),
       ]);
       if (!detailRes.ok) throw new Error();
       const detail = await detailRes.json();
@@ -1622,9 +1715,9 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
       setMappings(grid);
     } catch { setError("Fehler beim Laden der Zuordnungsdaten."); }
     finally { setLoading(false); }
-  }, [workspaceSlug, selectedAssessmentId, selectedModelId, selectedLevel, getNodesForLevel]);
+  }, [workspaceSlug, selectedAssessmentId, selectedModelId, selectedLevel, editingSnapshotId, getNodesForLevel]);
 
-  useEffect(() => { fetchMappingData(); }, [selectedAssessmentId, selectedModelId, selectedLevel]);
+  useEffect(() => { fetchMappingData(); }, [selectedAssessmentId, selectedModelId, selectedLevel, editingSnapshotId]);
 
   const toggleMapping = (exerciseId: string, nodeId: string) => {
     setMappings((prev) => ({
@@ -1687,6 +1780,10 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
   };
 
   const handleSave = async () => {
+    if (isCurrentLocked) {
+      setSaveMsg("Diese Version ist gesperrt. Bitte erstellen Sie eine neue Version.");
+      return;
+    }
     setSaving(true);
     setSaveMsg("");
     try {
@@ -1702,11 +1799,12 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
       const res = await fetch(`/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}/exercise-competency-mappings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mappings: flatMappings }),
+        body: JSON.stringify({ mappings: flatMappings, snapshotId: editingSnapshotId }),
       });
       if (res.ok) {
         setSaveMsg("MTMM-Matrix gespeichert.");
         fetchSavedMappings(selectedAssessmentId);
+        fetchSnapshots(selectedAssessmentId);
         setTimeout(() => setSaveMsg(""), 3000);
       } else {
         const d = await res.json();
@@ -1727,7 +1825,7 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
         <div className="grid md:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Assessment auswählen</label>
-            <select value={selectedAssessmentId} onChange={(e) => { setSelectedAssessmentId(e.target.value); fetchSavedMappings(e.target.value); }} data-testid="select-mapping-assessment" className={inputClass}>
+            <select value={selectedAssessmentId} onChange={(e) => { setSelectedAssessmentId(e.target.value); fetchSavedMappings(e.target.value); fetchSnapshots(e.target.value); }} data-testid="select-mapping-assessment" className={inputClass}>
               <option value="">– Bitte wählen –</option>
               {assessments.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
@@ -1883,6 +1981,186 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
         </div>
       )}
 
+      {selectedAssessmentId && (
+        <div className="bg-white border border-slate-200 rounded-xl p-6" data-testid="section-mtmm-versions">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-brand-navy">MTMM-Versionen</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Versionsverwaltung und Schutz der MTMM-Matrix</p>
+            </div>
+            <button
+              onClick={() => handleCreateSnapshot(activeSnapshotId || undefined)}
+              disabled={!!snapshotAction}
+              data-testid="button-create-snapshot"
+              className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Neue Version erstellen
+            </button>
+          </div>
+
+          {snapshotsLoading ? (
+            <p className="text-sm text-slate-400 text-center py-4">Laden…</p>
+          ) : snapshots.length === 0 ? (
+            <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg">
+              <svg className="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              <p className="text-sm text-slate-500">Noch keine Versionen vorhanden</p>
+              <p className="text-xs text-slate-400 mt-1">Speichern Sie eine Matrix oder erstellen Sie eine neue Version, um den Schutz zu aktivieren.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {snapshots.map((snap) => {
+                const isActive = snap.status === "active";
+                const isLocked = snap.lockedAt != null;
+                const isEditing = editingSnapshotId === snap.id;
+                return (
+                  <div
+                    key={snap.id}
+                    data-testid={`row-snapshot-${snap.id}`}
+                    className={`border rounded-lg px-4 py-3 transition-all cursor-pointer ${
+                      isEditing
+                        ? "border-brand-blue bg-blue-50/30 ring-1 ring-brand-blue/20"
+                        : "border-slate-200 hover:border-slate-300"
+                    } ${snap.status === "archived" ? "opacity-60" : ""}`}
+                    onClick={() => snap.status !== "archived" && setEditingSnapshotId(snap.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-brand-navy">
+                          {snap.label || `Version ${snap.version}`}
+                        </span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                          isActive
+                            ? "bg-emerald-100 text-emerald-700"
+                            : snap.status === "draft"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-slate-100 text-slate-500"
+                        }`}>
+                          {isActive ? "Aktiv" : snap.status === "draft" ? "Entwurf" : "Archiviert"}
+                        </span>
+                        {isLocked && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-600 font-medium flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                            </svg>
+                            Gesperrt
+                          </span>
+                        )}
+                        <span className="text-xs text-slate-400">
+                          {snap._count.mappings} Zuordnung{snap._count.mappings !== 1 ? "en" : ""}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        {snap.status === "draft" && (
+                          <>
+                            <button
+                              onClick={() => {
+                                const activeSnap = snapshots.find((s) => s.status === "active");
+                                if (activeSnap && activeSnap.lockedAt) {
+                                  setShowActivateWarning(snap);
+                                } else {
+                                  handleSnapshotAction(snap.id, "activate");
+                                }
+                              }}
+                              disabled={!!snapshotAction}
+                              data-testid={`button-activate-${snap.id}`}
+                              className="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors font-medium disabled:opacity-50"
+                            >
+                              Aktivieren
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSnapshot(snap.id)}
+                              disabled={!!snapshotAction}
+                              className="text-xs px-2 py-1 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                              Löschen
+                            </button>
+                          </>
+                        )}
+                        {isActive && !isLocked && (
+                          <button
+                            onClick={() => handleSnapshotAction(snap.id, "archive")}
+                            disabled={!!snapshotAction}
+                            className="text-xs px-2.5 py-1 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+                          >
+                            Archivieren
+                          </button>
+                        )}
+                        {isActive && isLocked && (
+                          <span className="text-[10px] text-red-500 italic">{snap.lockedReason}</span>
+                        )}
+                        {snap.status !== "archived" && (
+                          <button
+                            onClick={() => handleCreateSnapshot(snap.id)}
+                            disabled={!!snapshotAction}
+                            title="Als Basis für neue Version kopieren"
+                            className="text-xs px-2 py-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                          >
+                            Kopieren
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {isLocked && isEditing && (
+                      <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-xs text-amber-700 flex items-center gap-1.5">
+                          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                          </svg>
+                          Diese Version ist gesperrt, da bereits Bewertungen darauf basieren. Änderungen sind nicht möglich. Erstellen Sie eine neue Version, um Anpassungen vorzunehmen.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {showActivateWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowActivateWarning(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-brand-navy">Version aktivieren?</h3>
+                <p className="text-xs text-slate-500">Die aktuell aktive Version ist gesperrt</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-600 mb-4">
+              Die aktuell aktive MTMM-Matrix ist gesperrt, da bereits Bewertungen darauf basieren.
+              Wenn Sie eine neue Version aktivieren, wird die bisherige aktive Version archiviert.
+              Bestehende Bewertungen bleiben erhalten, nutzen aber die neue Matrix-Zuordnung.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowActivateWarning(null)}
+                className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={() => handleSnapshotAction(showActivateWarning.id, "activate")}
+                disabled={!!snapshotAction}
+                className="rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              >
+                Trotzdem aktivieren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && <p className="text-sm text-red-500" data-testid="text-error">{error}</p>}
       {aiError && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700" data-testid="text-ai-error">
@@ -1898,7 +2176,17 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <div>
               <h2 className="text-lg font-semibold text-brand-navy">MTMM-Matrix</h2>
-              <p className="text-xs text-slate-500">Ebene: {MTMM_LEVEL_OPTIONS.find((o) => o.key === selectedLevel)?.label} · {exercises.length} Methoden × {matrixNodes.length} Traits</p>
+              <p className="text-xs text-slate-500">
+                Ebene: {MTMM_LEVEL_OPTIONS.find((o) => o.key === selectedLevel)?.label} · {exercises.length} Methoden × {matrixNodes.length} Traits
+                {currentSnapshot && (
+                  <span className="ml-2">
+                    · Version: <span className="font-medium">{currentSnapshot.label || `V${currentSnapshot.version}`}</span>
+                    {currentSnapshot.status === "active" && <span className="text-emerald-600 ml-1">(Aktiv)</span>}
+                    {currentSnapshot.status === "draft" && <span className="text-amber-600 ml-1">(Entwurf)</span>}
+                    {isCurrentLocked && <span className="text-red-500 ml-1">(Gesperrt)</span>}
+                  </span>
+                )}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -1920,8 +2208,15 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
                 )}
               </button>
               {saveMsg && <span className="text-sm text-slate-500" data-testid="text-save-msg">{saveMsg}</span>}
-              <button onClick={handleSave} disabled={saving} data-testid="button-save-mappings" className={`${btnPrimary} px-6 disabled:opacity-50`}>
-                {saving ? "Wird gespeichert…" : "Matrix speichern"}
+              <button onClick={handleSave} disabled={saving || isCurrentLocked} data-testid="button-save-mappings" className={`${btnPrimary} px-6 disabled:opacity-50`}>
+                {isCurrentLocked ? (
+                  <span className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                    Gesperrt
+                  </span>
+                ) : saving ? "Wird gespeichert…" : "Matrix speichern"}
               </button>
             </div>
           </div>

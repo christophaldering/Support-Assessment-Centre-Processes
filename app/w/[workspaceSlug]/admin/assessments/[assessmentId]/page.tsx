@@ -273,7 +273,7 @@ export default function AssessmentDetailPage() {
   const fetchMtmmMappings = useCallback(async () => {
     setMtmmLoading(true);
     try {
-      const res = await fetch(`${apiBase}/exercise-competency-mappings`);
+      const res = await fetch(`${apiBase}/exercise-competency-mappings?active=true`);
       if (res.ok) setMtmmMappings(await res.json());
     } catch {}
     finally { setMtmmLoading(false); }
