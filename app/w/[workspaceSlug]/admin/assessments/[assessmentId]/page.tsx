@@ -1360,6 +1360,19 @@ export default function AssessmentDetailPage() {
                 const exercises = Array.isArray(p.exercises) ? p.exercises : [];
                 const observers = Array.isArray(p.observers) ? p.observers : [];
                 const timeline = Array.isArray(p.timeline) ? p.timeline : [];
+                const participants = Array.isArray(p.participants) ? p.participants : [];
+                const additionalObservers = Array.isArray(p.additionalObservers) ? p.additionalObservers : [];
+                const candidates = Array.isArray(p.candidates) ? p.candidates : [];
+                const specificQuestions = Array.isArray(p.specificQuestions) ? p.specificQuestions.filter(Boolean) : [];
+                const successCriteria = Array.isArray(p.successCriteria) ? p.successCriteria.filter(Boolean) : [];
+                const assessmentModules = Array.isArray(p.assessmentModules) ? p.assessmentModules.filter((m: any) => m && m.selected !== false) : [];
+                const formatPerson = (person: any) => person ? [person.firstName, person.lastName].filter(Boolean).join(" ") || null : null;
+                const formatPersonDetail = (person: any) => {
+                  if (!person) return null;
+                  const name = [person.firstName, person.lastName].filter(Boolean).join(" ");
+                  const parts = [name, person.role].filter(Boolean);
+                  return parts.length > 0 ? parts : null;
+                };
                 return (
                   <div className="space-y-4" data-testid="section-linked-analysis-results">
                     <div className="grid md:grid-cols-3 gap-4">
@@ -1383,6 +1396,130 @@ export default function AssessmentDetailPage() {
                       )}
                     </div>
 
+                    {(p.analysisDate || p.analysisForm || p.assessmentType || p.assessmentDuration || p.startDate) && (
+                      <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-analysis-metadata">
+                        <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">Analyse-Details</p>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {p.analysisDate && (
+                            <div className="bg-slate-50 rounded-lg p-3" data-testid="text-analysis-date-meta">
+                              <p className="text-[10px] font-medium text-slate-400 uppercase mb-0.5">Analysedatum</p>
+                              <p className="text-sm text-brand-navy font-medium">{p.analysisDate}</p>
+                            </div>
+                          )}
+                          {p.analysisForm && (
+                            <div className="bg-slate-50 rounded-lg p-3" data-testid="text-analysis-form">
+                              <p className="text-[10px] font-medium text-slate-400 uppercase mb-0.5">Analyseformat</p>
+                              <p className="text-sm text-brand-navy font-medium">{p.analysisForm}</p>
+                            </div>
+                          )}
+                          {p.assessmentType && (
+                            <div className="bg-slate-50 rounded-lg p-3" data-testid="text-assessment-type">
+                              <p className="text-[10px] font-medium text-slate-400 uppercase mb-0.5">Assessment-Typ</p>
+                              <p className="text-sm text-brand-navy font-medium">{p.assessmentType}</p>
+                            </div>
+                          )}
+                          {p.assessmentDuration && (
+                            <div className="bg-slate-50 rounded-lg p-3" data-testid="text-assessment-duration">
+                              <p className="text-[10px] font-medium text-slate-400 uppercase mb-0.5">Dauer</p>
+                              <p className="text-sm text-brand-navy font-medium">{p.assessmentDuration}</p>
+                            </div>
+                          )}
+                          {p.startDate && (
+                            <div className="bg-slate-50 rounded-lg p-3" data-testid="text-start-date">
+                              <p className="text-[10px] font-medium text-slate-400 uppercase mb-0.5">Startdatum</p>
+                              <p className="text-sm text-brand-navy font-medium">{p.startDate}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {participants.length > 0 && (
+                      <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-analysis-participants">
+                        <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">Teilnehmer der Analyse ({participants.length})</p>
+                        <div className="flex flex-wrap gap-2">
+                          {participants.map((part: any, i: number) => (
+                            <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5" data-testid={`text-participant-${i}`}>
+                              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                              {typeof part === "string" ? part : (part.name || JSON.stringify(part))}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(p.leadConsultant || p.secondConsultant || additionalObservers.length > 0) && (
+                      <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-analysis-consultants">
+                        <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">Berater & Beobachter</p>
+                        <div className="space-y-2">
+                          {p.leadConsultant && formatPerson(p.leadConsultant) && (
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100" data-testid="card-lead-consultant">
+                              <div className="w-8 h-8 rounded-full bg-brand-blue/10 flex items-center justify-center shrink-0">
+                                <svg className="w-4 h-4 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-brand-navy">{formatPerson(p.leadConsultant)}</p>
+                                <p className="text-xs text-slate-500">{p.leadConsultant.role || "Lead-Berater"}</p>
+                              </div>
+                              <span className="text-[10px] font-medium text-brand-blue bg-brand-blue/10 rounded-full px-2 py-0.5">Lead</span>
+                            </div>
+                          )}
+                          {p.secondConsultant && formatPerson(p.secondConsultant) && (
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100" data-testid="card-second-consultant">
+                              <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-brand-navy">{formatPerson(p.secondConsultant)}</p>
+                                <p className="text-xs text-slate-500">{p.secondConsultant.role || "Zweitberater"}</p>
+                              </div>
+                            </div>
+                          )}
+                          {additionalObservers.map((obs: any, i: number) => {
+                            const detail = formatPersonDetail(obs);
+                            if (!detail) return null;
+                            return (
+                              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100" data-testid={`card-observer-${i}`}>
+                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-slate-700">{formatPerson(obs) || obs.role || "Beobachter"}</p>
+                                  {obs.role && formatPerson(obs) && <p className="text-xs text-slate-500">{obs.role}</p>}
+                                </div>
+                                <span className="text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5">Beobachter</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {candidates.length > 0 && (
+                      <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-analysis-candidates">
+                        <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">Kandidaten ({candidates.length})</p>
+                        <div className="space-y-2">
+                          {candidates.map((cand: any, i: number) => {
+                            const name = [cand.firstName, cand.lastName].filter(Boolean).join(" ");
+                            return (
+                              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100" data-testid={`card-candidate-${i}`}>
+                                <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                                  <span className="text-xs font-bold text-emerald-600">{(cand.firstName?.[0] || "").toUpperCase()}{(cand.lastName?.[0] || "").toUpperCase()}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-brand-navy">{name || "Kandidat"}</p>
+                                  {(cand.currentRole || cand.currentCompany) && (
+                                    <p className="text-xs text-slate-500">{[cand.currentRole, cand.currentCompany].filter(Boolean).join(" · ")}</p>
+                                  )}
+                                </div>
+                                {cand.email && <span className="text-xs text-slate-400">{cand.email}</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {p.context && (
                       <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="text-analysis-context">
                         <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-2">Kontext & Ausgangslage</p>
@@ -1402,6 +1539,59 @@ export default function AssessmentDetailPage() {
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-brand-navy">{c.name}</p>
                                 {c.description && <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{c.description}</p>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {successCriteria.length > 0 && (
+                      <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-analysis-success-criteria">
+                        <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">Erfolgskriterien ({successCriteria.length})</p>
+                        <div className="space-y-1.5">
+                          {successCriteria.map((criterion: string, i: number) => (
+                            <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100" data-testid={`text-criterion-${i}`}>
+                              <svg className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                              <span className="text-sm text-slate-700">{criterion}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {specificQuestions.length > 0 && (
+                      <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-analysis-questions">
+                        <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">Spezifische Fragestellungen ({specificQuestions.length})</p>
+                        <div className="space-y-1.5">
+                          {specificQuestions.map((q: string, i: number) => (
+                            <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100" data-testid={`text-question-${i}`}>
+                              <svg className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" /></svg>
+                              <span className="text-sm text-slate-700">{q}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {assessmentModules.length > 0 && (
+                      <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-analysis-modules">
+                        <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">Assessment-Module ({assessmentModules.length})</p>
+                        <div className="space-y-2">
+                          {assessmentModules.map((mod: any, i: number) => (
+                            <div key={i} className="p-3 rounded-lg bg-slate-50 border border-slate-100" data-testid={`card-module-${i}`}>
+                              <div className="flex items-start gap-3">
+                                <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center shrink-0 mt-0.5">
+                                  <svg className="w-4 h-4 text-purple-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" /></svg>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-brand-navy">{mod.name}</p>
+                                  {mod.type && <span className="inline-block text-[10px] font-medium text-purple-600 bg-purple-50 rounded px-1.5 py-0.5 mt-1">{mod.type}</span>}
+                                  {mod.description && <p className="text-xs text-slate-500 mt-1 leading-relaxed">{mod.description}</p>}
+                                  {mod.adaptationNotes && (
+                                    <p className="text-xs text-amber-600 mt-1"><span className="font-medium">Anpassung:</span> {mod.adaptationNotes}</p>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           ))}
