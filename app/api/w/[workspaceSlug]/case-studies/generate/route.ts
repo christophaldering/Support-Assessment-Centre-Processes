@@ -257,7 +257,45 @@ Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokoll
         max_tokens: 16384,
       });
 
-      const content = response.choices[0]?.message?.content || "{}";
+      let content = response.choices[0]?.message?.content || "{}";
+
+      if (response.choices[0]?.finish_reason === "length") {
+        console.log("First response truncated, requesting continuation...");
+        const continuationResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: CASE_STUDY_SYSTEM_PROMPT },
+            { role: "user", content: userPrompt },
+            { role: "assistant", content: content },
+            { role: "user", content: "Die JSON-Ausgabe wurde abgeschnitten. Bitte setze EXAKT dort fort, wo du aufgehört hast. Gib NUR den fehlenden Rest des JSON aus, ohne Wiederholungen. Beginne direkt mit dem nächsten Zeichen nach dem Abbruch." },
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 16384,
+        });
+        const continuation = continuationResponse.choices[0]?.message?.content || "";
+        if (continuation) {
+          const trimmedContent = content.trimEnd();
+          const trimmedContinuation = continuation.trimStart();
+          if (trimmedContinuation.startsWith("{")) {
+            try {
+              const contParsed = JSON.parse(trimmedContinuation);
+              const baseParsed = JSON.parse(trimmedContent.endsWith("}") ? trimmedContent : trimmedContent + "}}}}");
+              const baseData = baseParsed.data || baseParsed;
+              const contData = contParsed.data || contParsed;
+              if (contData.emails) baseData.emails = [...(baseData.emails || []), ...contData.emails];
+              if (contData.protocols) baseData.protocols = [...(baseData.protocols || []), ...contData.protocols];
+              if (contData.newsArticles) baseData.newsArticles = [...(baseData.newsArticles || []), ...contData.newsArticles];
+              if (contData.organigramm) baseData.organigramm = contData.organigramm;
+              if (contParsed.briefing) baseParsed.briefing = contParsed.briefing;
+              if (contParsed.questions) baseParsed.questions = contParsed.questions;
+              content = JSON.stringify(baseParsed);
+            } catch {
+              console.log("Could not merge continuation, using original content");
+            }
+          }
+        }
+      }
+
       let parsed;
       try {
         parsed = JSON.parse(content);
