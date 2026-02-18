@@ -793,13 +793,14 @@ ${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div cla
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3
-                              className="font-semibold text-slate-900 truncate"
+                            <button
+                              onClick={() => openView(item.id)}
+                              className="font-semibold text-slate-900 truncate hover:underline text-left"
                               style={{ fontFamily: "'Playfair Display', serif" }}
                               data-testid={`text-name-${item.id}`}
                             >
                               {item.name}
-                            </h3>
+                            </button>
                             <span
                               className="shrink-0 text-xs px-2 py-0.5 rounded-full font-medium"
                               style={{ backgroundColor: `${ACCENT}15`, color: ACCENT }}
@@ -847,6 +848,13 @@ ${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div cla
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => openView(item.id)}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                            data-testid={`button-view-${item.id}`}
+                          >
+                            Ansehen
+                          </button>
                           <button
                             onClick={() => openDetail(item.id)}
                             className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -1302,17 +1310,168 @@ ${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div cla
                 Zur Übersicht
               </button>
               {previewTemplateId && (
-                <button
-                  onClick={() => openDetail(previewTemplateId)}
-                  className="px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90"
-                  style={{ backgroundColor: ACCENT }}
-                >
-                  Bearbeiten
-                </button>
+                <>
+                  <button
+                    onClick={() => openView(previewTemplateId)}
+                    className="px-5 py-2.5 rounded-lg text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  >
+                    Ansehen
+                  </button>
+                  <button
+                    onClick={() => openDetail(previewTemplateId)}
+                    className="px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90"
+                    style={{ backgroundColor: ACCENT }}
+                  >
+                    Bearbeiten
+                  </button>
+                </>
               )}
             </div>
           </div>
         )}
+
+        {mode === "view" && detailTemplate && (() => {
+          const viewSections = getSections(detailTemplate);
+          const viewTypeLabel = TEMPLATE_TYPE_LABELS[detailTemplate.type] || detailTemplate.type;
+          const viewHeaderFields = detailTemplate.content?.headerFields;
+          return (
+            <div className="max-w-3xl mx-auto" data-testid="view-content">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h1
+                    className="text-2xl font-bold tracking-tight mb-1"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    {detailTemplate.name}
+                  </h1>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${ACCENT}15`, color: ACCENT }}>
+                      {viewTypeLabel}
+                    </span>
+                    {detailTemplate.ratingScale && (
+                      <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Skala: {detailTemplate.ratingScale}</span>
+                    )}
+                    {detailTemplate.aiGenerated && (
+                      <span className="text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">KI-generiert</span>
+                    )}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${detailTemplate.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-500"}`}>
+                      {detailTemplate.status === "active" ? "Aktiv" : "Archiviert"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {detailTemplate.description && (
+                <p className="text-sm text-slate-600 mb-6">{detailTemplate.description}</p>
+              )}
+
+              {viewHeaderFields && Array.isArray(viewHeaderFields) && viewHeaderFields.length > 0 && (
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Kopffelder</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {viewHeaderFields.map((field: string, i: number) => (
+                      <span key={i} className="text-xs bg-white border border-slate-200 text-slate-600 px-3 py-1 rounded">{field}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewSections.length > 0 ? (
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Inhalte ({viewSections.length} Abschnitte)</h4>
+                  {renderSections(viewSections)}
+                </div>
+              ) : (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-amber-700">Keine strukturierten Inhalte vorhanden.</p>
+                </div>
+              )}
+
+              {detailTemplate.content?.footerNote && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                  <p className="text-xs text-amber-700">{detailTemplate.content.footerNote}</p>
+                </div>
+              )}
+
+              {(detailTemplate.tags.length > 0 || detailTemplate.targetLevels.length > 0 || detailTemplate.competencyNames.length > 0) && (
+                <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 space-y-3">
+                  {detailTemplate.competencyNames.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1.5">Kompetenzen</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {detailTemplate.competencyNames.map((c, i) => (
+                          <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {detailTemplate.targetLevels.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1.5">Zielniveaus</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {detailTemplate.targetLevels.map((l, i) => (
+                          <span key={i} className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">{l}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {detailTemplate.tags.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1.5">Tags</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {detailTemplate.tags.map((t, i) => (
+                          <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {detailTemplate.fileName && (
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <span>Original-Datei: {detailTemplate.fileName}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="text-xs text-slate-400 mb-6">
+                Erstellt am {new Date(detailTemplate.createdAt).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" })}
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                <button
+                  onClick={resetToList}
+                  className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-200 rounded-lg"
+                >
+                  Zurück
+                </button>
+                <button
+                  onClick={() => downloadAsHTML(detailTemplate)}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2"
+                  data-testid="button-download"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  Herunterladen
+                </button>
+                <button
+                  onClick={() => openDetail(detailTemplate.id)}
+                  className="px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90"
+                  style={{ backgroundColor: ACCENT }}
+                  data-testid="button-edit-from-view"
+                >
+                  Bearbeiten
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {mode === "detail" && detailTemplate && (
           <div className="max-w-3xl mx-auto">
@@ -1385,19 +1544,15 @@ ${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div cla
               {renderExerciseMultiSelect(detailExerciseIds, setDetailExerciseIds, "detail")}
               {renderCompModelSelect(detailCompModelId, setDetailCompModelId, "select-competency-model")}
 
-              {detailTemplate.structuredData && Array.isArray(detailTemplate.structuredData) && detailTemplate.structuredData.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Strukturierte Inhalte ({detailTemplate.structuredData.length} Abschnitte)</h4>
-                  {renderSections(detailTemplate.structuredData)}
-                </div>
-              )}
-
-              {detailTemplate.content && typeof detailTemplate.content === "object" && detailTemplate.content.sections && !detailTemplate.structuredData && (
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Generierte Inhalte</h4>
-                  {renderSections(detailTemplate.content.sections)}
-                </div>
-              )}
+              {(() => {
+                const editSections = getSections(detailTemplate);
+                return editSections.length > 0 ? (
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 mb-3">Inhalte ({editSections.length} Abschnitte)</h4>
+                    {renderSections(editSections)}
+                  </div>
+                ) : null;
+              })()}
 
               {detailTemplate.fileName && (
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
@@ -1416,6 +1571,15 @@ ${(Array.isArray(headerFields) ? headerFields : []).map((f: string) => `<div cla
                   className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-200 rounded-lg"
                 >
                   Abbrechen
+                </button>
+                <button
+                  onClick={() => downloadAsHTML(detailTemplate)}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  Herunterladen
                 </button>
                 <button
                   onClick={handleDetailSave}
