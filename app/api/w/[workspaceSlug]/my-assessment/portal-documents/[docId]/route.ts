@@ -32,7 +32,19 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   });
   if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
 
-  if (doc.releaseStatus !== "released") {
+  const now = new Date();
+  let isReleased = false;
+  if (doc.alwaysAvailable) {
+    isReleased = true;
+  } else if (doc.releaseStart || doc.releaseEnd) {
+    const afterStart = !doc.releaseStart || now >= doc.releaseStart;
+    const beforeEnd = !doc.releaseEnd || now <= doc.releaseEnd;
+    isReleased = afterStart && beforeEnd;
+  } else {
+    isReleased = doc.releaseStatus === "released";
+  }
+
+  if (!isReleased) {
     return NextResponse.json({ error: "Dokument ist noch nicht freigegeben" }, { status: 403 });
   }
 

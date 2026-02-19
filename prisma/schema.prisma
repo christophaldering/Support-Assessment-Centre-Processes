@@ -859,21 +859,24 @@ model DemoRequest {
 }
 
 model PortalDocument {
-  id             String   @id @default(uuid())
-  assessmentId   String   @map("assessment_id")
-  exerciseId     String?  @map("exercise_id")
-  category       String   @default("general")
-  title          String
-  description    String?
-  objectPath     String?  @map("object_path")
-  fileName       String?  @map("file_name")
-  fileSize       Int?     @map("file_size")
-  mimeType       String?  @map("mime_type")
-  releaseStatus  String   @default("locked") @map("release_status")
-  releasedAt     DateTime? @map("released_at")
-  sortOrder      Int      @default(0) @map("sort_order")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  assessmentId    String   @map("assessment_id")
+  exerciseId      String?  @map("exercise_id")
+  category        String   @default("general")
+  title           String
+  description     String?
+  objectPath      String?  @map("object_path")
+  fileName        String?  @map("file_name")
+  fileSize        Int?     @map("file_size")
+  mimeType        String?  @map("mime_type")
+  releaseStatus   String   @default("locked") @map("release_status")
+  releasedAt      DateTime? @map("released_at")
+  alwaysAvailable Boolean  @default(false) @map("always_available")
+  releaseStart    DateTime? @map("release_start")
+  releaseEnd      DateTime? @map("release_end")
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
@@ -882,16 +885,19 @@ model PortalDocument {
 }
 
 model SelfAssessment {
-  id             String   @id @default(uuid())
-  assessmentId   String   @map("assessment_id")
-  title          String
-  description    String?
-  schemaJson     Json     @map("schema_json")
-  releaseStatus  String   @default("locked") @map("release_status")
-  releasedAt     DateTime? @map("released_at")
-  sortOrder      Int      @default(0) @map("sort_order")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  assessmentId    String   @map("assessment_id")
+  title           String
+  description     String?
+  schemaJson      Json     @map("schema_json")
+  releaseStatus   String   @default("locked") @map("release_status")
+  releasedAt      DateTime? @map("released_at")
+  alwaysAvailable Boolean  @default(false) @map("always_available")
+  releaseStart    DateTime? @map("release_start")
+  releaseEnd      DateTime? @map("release_end")
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   responses      SelfAssessmentResponse[]

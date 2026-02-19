@@ -27,6 +27,9 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   if (body.title !== undefined) updateData.title = body.title;
   if (body.description !== undefined) updateData.description = body.description;
   if (body.schemaJson !== undefined) updateData.schemaJson = body.schemaJson;
+  if (body.alwaysAvailable !== undefined) updateData.alwaysAvailable = body.alwaysAvailable;
+  if (body.releaseStart !== undefined) updateData.releaseStart = body.releaseStart ? new Date(body.releaseStart) : null;
+  if (body.releaseEnd !== undefined) updateData.releaseEnd = body.releaseEnd ? new Date(body.releaseEnd) : null;
   if (body.releaseStatus !== undefined) {
     updateData.releaseStatus = body.releaseStatus;
     if (body.releaseStatus === "released" && sa.releaseStatus !== "released") {

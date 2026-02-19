@@ -130,11 +130,24 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   const filteredDocuments = executionUnlocked
     ? assessment.documents
     : assessment.documents.filter(d => !d.exerciseId && preparationUnlocked);
+  const now = new Date();
+
+  function isContentAvailable(item: { alwaysAvailable: boolean; releaseStart: Date | null; releaseEnd: Date | null; releaseStatus: string }): boolean {
+    if (item.alwaysAvailable) return true;
+    if (item.releaseStart || item.releaseEnd) {
+      const afterStart = !item.releaseStart || now >= item.releaseStart;
+      const beforeEnd = !item.releaseEnd || now <= item.releaseEnd;
+      return afterStart && beforeEnd;
+    }
+    return item.releaseStatus === "released";
+  }
+
   const filteredPortalDocuments = portalDocuments.filter(d => {
-    if (d.exerciseId) return executionUnlocked;
-    return preparationUnlocked;
+    if (d.exerciseId && !executionUnlocked) return false;
+    if (!d.exerciseId && !preparationUnlocked) return false;
+    return isContentAvailable(d);
   });
-  const filteredSelfAssessments = preparationUnlocked ? selfAssessments : [];
+  const filteredSelfAssessments = preparationUnlocked ? selfAssessments.filter(sa => isContentAvailable(sa)) : [];
   const filteredSaResponses = preparationUnlocked ? selfAssessmentResponses : [];
 
   return NextResponse.json({

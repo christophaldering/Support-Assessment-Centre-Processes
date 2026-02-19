@@ -45,6 +45,9 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   const description = (formData.get("description") as string) || null;
   const exerciseId = (formData.get("exerciseId") as string) || null;
   const releaseStatus = (formData.get("releaseStatus") as string) || "locked";
+  const alwaysAvailable = formData.get("alwaysAvailable") === "true";
+  const releaseStartStr = formData.get("releaseStart") as string | null;
+  const releaseEndStr = formData.get("releaseEnd") as string | null;
   const file = formData.get("file") as File | null;
 
   if (!title) {
@@ -82,6 +85,9 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       mimeType,
       releaseStatus,
       releasedAt: releaseStatus === "released" ? new Date() : null,
+      alwaysAvailable,
+      releaseStart: releaseStartStr ? new Date(releaseStartStr) : null,
+      releaseEnd: releaseEndStr ? new Date(releaseEndStr) : null,
       sortOrder: count,
     },
   });

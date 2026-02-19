@@ -36,6 +36,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
     *   **Observation Sheet Templates:** Builder module for creating observation sheets, supporting both AI analysis of uploaded documents and AI generation based on user inputs.
 *   **Advanced Intelligence Layer:** Includes three AI-powered diagnostic modules: Predictive Success Intelligence, Development Path Generator, and Diagnostic Hypothesis Engine, all with confidence scoring, evidence tracking, and audit logging.
 *   **Collaboration:** Features a real-time (polling-based) collaboration system for observers and assessors with live presence indicators, activity feeds, and shared notes.
+*   **Portal Scheduling:** Time-based content release system for the candidate portal. Documents and self-assessments can be scheduled with start/end dates or set to "always available". Managed from the Enterprise Cockpit's Portal Management section per assessment.
 *   **Versioning & Locking:** MTMM matrices are versioned, with automatic locking upon rating submission to prevent modifications.
 *   **Theming & Branding:** Provides a brand rule set management system for defining and applying corporate identity rules, with AI parsing of style guides (restricted to MASTER_ADMIN role).
 *   **Exercise Matching:** Implements a scoring algorithm to match library exercises to requirements, with planned AI enhancement for contextual fit and adaptation suggestions.
