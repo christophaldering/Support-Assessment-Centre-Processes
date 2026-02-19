@@ -1200,16 +1200,11 @@ export default function CandidatePortal() {
                   const isActive = activeCategory === cat.id;
                   const exercise = allExercises.find(e => e.id === cat.exerciseId);
                   const typeStyle = exercise ? (exerciseTypeIcons[exercise.type] || exerciseTypeIcons.other) : exerciseTypeIcons.other;
-                  const isCaseStudy = exercise?.type === "case_study";
                   return (
                     <button
                       key={cat.id}
                       onClick={() => {
-                        if (isCaseStudy && exercise) {
-                          setCaseStudyModalExercise(exercise.id);
-                        } else {
-                          setActiveCategory(cat.id);
-                        }
+                        setActiveCategory(cat.id);
                       }}
                       data-testid={`sidebar-item-${cat.id}`}
                       className={`w-full text-left px-3 mx-2 py-2 flex items-center justify-between text-sm transition-all rounded-lg ${
@@ -1319,40 +1314,67 @@ export default function CandidatePortal() {
               const activeExercise = getExerciseForCategory(activeCategory);
               if (activeExercise) {
                 const typeStyle = exerciseTypeIcons[activeExercise.type] || exerciseTypeIcons.other;
+                const isCaseStudyEx = activeExercise.type === "case_study";
                 return (
-                  <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6" data-testid={`exercise-detail-${activeExercise.id}`}>
-                    <div className="flex items-start gap-4">
-                      <div className={`w-12 h-12 rounded-xl ${typeStyle.bg} flex items-center justify-center shrink-0`}>
-                        <svg className={`w-6 h-6 ${typeStyle.color}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          {typeStyle.icon}
-                        </svg>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 flex-wrap mb-1">
-                          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${typeStyle.bg} ${typeStyle.color}`} data-testid={`exercise-type-${activeExercise.id}`}>
-                            {exerciseTypeLabels[activeExercise.type] || activeExercise.type}
-                          </span>
-                          {activeExercise.duration && (
-                            <span className="inline-flex items-center gap-1 text-xs text-slate-500" data-testid={`exercise-duration-${activeExercise.id}`}>
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {activeExercise.duration} Min.
-                            </span>
-                          )}
+                  <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden mb-6 shadow-sm" data-testid={`exercise-detail-${activeExercise.id}`}>
+                    <div className={`${typeStyle.bg} px-6 py-5 border-b border-slate-100`}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-white/80 backdrop-blur flex items-center justify-center shrink-0 shadow-sm">
+                          <svg className={`w-7 h-7 ${typeStyle.color}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            {typeStyle.icon}
+                          </svg>
                         </div>
-                        {activeExercise.instructions && (
-                          <p className="text-sm text-slate-600 leading-relaxed mt-3 whitespace-pre-wrap" data-testid={`exercise-instructions-${activeExercise.id}`}>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-bold text-brand-navy" data-testid={`exercise-name-${activeExercise.id}`}>{activeExercise.name}</h3>
+                          <div className="flex items-center gap-3 mt-1 flex-wrap">
+                            <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/60 ${typeStyle.color}`} data-testid={`exercise-type-${activeExercise.id}`}>
+                              {exerciseTypeLabels[activeExercise.type] || activeExercise.type}
+                            </span>
+                            {activeExercise.duration && (
+                              <span className="inline-flex items-center gap-1 text-xs text-slate-600" data-testid={`exercise-duration-${activeExercise.id}`}>
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {activeExercise.duration} Min.
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-6 py-5">
+                      {activeExercise.instructions && (
+                        <div className="mb-4">
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Anweisungen</h4>
+                          <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap" data-testid={`exercise-instructions-${activeExercise.id}`}>
                             {activeExercise.instructions}
                           </p>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                      {isCaseStudyEx && assessment.caseStudyData && (
+                        <button
+                          onClick={() => setCaseStudyModalExercise(activeExercise.id)}
+                          data-testid={`button-open-case-study-${activeExercise.id}`}
+                          className="mt-2 inline-flex items-center gap-2 bg-amber-50 text-amber-700 border border-amber-200 text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-100 hover:border-amber-300 transition-all"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                          </svg>
+                          Fallstudie öffnen
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
               }
               return null;
             })()}
+
+            {activeCategory.startsWith("exercise-") && currentDocs.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Zugehörige Dokumente</h4>
+              </div>
+            )}
 
             {activeCategory === "questionnaires" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1499,27 +1521,24 @@ export default function CandidatePortal() {
         return (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-stretch justify-center" data-testid="case-study-modal">
             <div className="bg-white w-full max-w-5xl my-4 mx-4 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0 bg-slate-50">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl ${typeStyle.bg} flex items-center justify-center`}>
-                    <svg className={`w-5 h-5 ${typeStyle.color}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between shrink-0 bg-amber-50/50">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
+                    <svg className={`w-6 h-6 ${typeStyle.color}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                       {typeStyle.icon}
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-brand-navy" data-testid="text-case-study-title">{csExercise.name}</h2>
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
-                      <span>{exerciseTypeLabels.case_study}</span>
+                    <h2 className="text-xl font-bold text-brand-navy" data-testid="text-case-study-title">{csExercise.name}</h2>
+                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                      <span className="font-medium text-amber-600 bg-amber-100/80 px-2 py-0.5 rounded-full">{exerciseTypeLabels.case_study}</span>
                       {csExercise.duration && (
-                        <>
-                          <span className="text-slate-300">&middot;</span>
-                          <span className="flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {csExercise.duration} Min.
-                          </span>
-                        </>
+                        <span className="flex items-center gap-1 text-slate-500">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {csExercise.duration} Min.
+                        </span>
                       )}
                     </div>
                   </div>
@@ -1527,7 +1546,7 @@ export default function CandidatePortal() {
                 <button
                   onClick={() => { setCaseStudyModalExercise(null); setCaseStudyTab("background"); }}
                   data-testid="button-close-case-study"
-                  className="w-9 h-9 rounded-lg hover:bg-slate-200 flex items-center justify-center transition-colors"
+                  className="w-10 h-10 rounded-xl hover:bg-amber-100 flex items-center justify-center transition-colors"
                 >
                   <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -1535,7 +1554,7 @@ export default function CandidatePortal() {
                 </button>
               </div>
 
-              <div className="px-6 border-b border-slate-200 flex gap-0 shrink-0 bg-white">
+              <div className="px-6 border-b border-slate-200 flex gap-1 shrink-0 bg-white">
                 {[
                   { id: "background" as const, label: "Hintergrund", icon: <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /> },
                   { id: "data" as const, label: "Daten & Material", icon: <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v1.5c0 .621-.504 1.125-1.125 1.125M12 18.375h-7.5" /> },
@@ -1545,11 +1564,11 @@ export default function CandidatePortal() {
                     key={tab.id}
                     onClick={() => setCaseStudyTab(tab.id)}
                     data-testid={`tab-case-study-${tab.id}`}
-                    className={`px-4 py-3 flex items-center gap-2 text-sm font-medium border-b-2 transition-colors ${
+                    className={`px-4 py-3 flex items-center gap-2 text-sm font-medium border-b-2 transition-all ${
                       caseStudyTab === tab.id
-                        ? "border-brand-blue text-brand-blue"
-                        : "border-transparent text-slate-400 hover:text-slate-600"
-                    }`}
+                        ? "border-amber-500 text-amber-700 bg-amber-50/50"
+                        : "border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                    } rounded-t-lg`}
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                       {tab.icon}
@@ -1590,26 +1609,34 @@ export default function CandidatePortal() {
 
                     {(csPortalDocs.length > 0 || csLegacyDocs.length > 0) && (
                       <div className="mt-8 pt-6 border-t border-slate-200">
-                        <h3 className="text-sm font-semibold text-brand-navy mb-3">Zugehörige Dokumente</h3>
-                        <div className="space-y-2">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Zugehörige Dokumente</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {csPortalDocs.filter(d => d.releaseStatus === "released").map(doc => (
                             <button
                               key={doc.id}
                               onClick={() => handleDownloadPortalDoc(doc.id)}
                               disabled={downloadingId === doc.id}
                               data-testid={`button-cs-doc-${doc.id}`}
-                              className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+                              className="text-left flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-sm bg-white transition-all group"
                             >
-                              <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                              </svg>
+                              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 group-hover:bg-amber-50 transition-colors">
+                                <svg className="w-5 h-5 text-slate-400 group-hover:text-amber-500 transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                              </div>
                               <div className="flex-1 min-w-0">
                                 <span className="text-sm font-medium text-slate-700 truncate block">{doc.title}</span>
                                 {doc.fileSize && <span className="text-[10px] text-slate-400">{formatFileSize(doc.fileSize)}</span>}
                               </div>
-                              <svg className="w-4 h-4 text-brand-blue shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                              </svg>
+                              <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center shrink-0 group-hover:bg-brand-blue group-hover:text-white text-brand-blue transition-colors">
+                                {downloadingId === doc.id ? (
+                                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                  </svg>
+                                )}
+                              </div>
                             </button>
                           ))}
                           {csLegacyDocs.map(doc => (
@@ -1618,18 +1645,26 @@ export default function CandidatePortal() {
                               onClick={() => handleDownloadLegacyDoc(doc.id)}
                               disabled={downloadingId === doc.id}
                               data-testid={`button-cs-doc-${doc.id}`}
-                              className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+                              className="text-left flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-sm bg-white transition-all group"
                             >
-                              <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                              </svg>
+                              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 group-hover:bg-amber-50 transition-colors">
+                                <svg className="w-5 h-5 text-slate-400 group-hover:text-amber-500 transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                              </div>
                               <div className="flex-1 min-w-0">
                                 <span className="text-sm font-medium text-slate-700 truncate block">{doc.name}</span>
                                 <span className="text-[10px] text-slate-400">{formatFileSize(doc.fileSize)}</span>
                               </div>
-                              <svg className="w-4 h-4 text-brand-blue shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                              </svg>
+                              <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center shrink-0 group-hover:bg-brand-blue group-hover:text-white text-brand-blue transition-colors">
+                                {downloadingId === doc.id ? (
+                                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                  </svg>
+                                )}
+                              </div>
                             </button>
                           ))}
                         </div>
