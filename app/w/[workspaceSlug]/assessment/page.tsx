@@ -220,19 +220,29 @@ export default function CandidatePortal() {
       .finally(() => setLoading(false));
   }, [router, workspaceSlug]);
 
+  const fetchAssessment = useCallback(async (showLoading = false) => {
+    if (showLoading) setAssessmentLoading(true);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/my-assessment`);
+      if (res.status === 404) { setNoAssessment(true); return; }
+      if (res.ok) setAssessment(await res.json());
+    } catch {
+    } finally {
+      if (showLoading) setAssessmentLoading(false);
+    }
+  }, [workspaceSlug]);
+
   useEffect(() => {
     if (!user) return;
-    setAssessmentLoading(true);
     fetchConsent();
-    fetch(`/api/w/${workspaceSlug}/my-assessment`)
-      .then(async (res) => {
-        if (res.status === 404) { setNoAssessment(true); return; }
-        if (!res.ok) return;
-        setAssessment(await res.json());
-      })
-      .catch(() => {})
-      .finally(() => setAssessmentLoading(false));
-  }, [user, workspaceSlug, fetchConsent]);
+    fetchAssessment(true);
+  }, [user, fetchConsent, fetchAssessment]);
+
+  useEffect(() => {
+    if (!user || noAssessment) return;
+    const interval = setInterval(() => fetchAssessment(false), 30000);
+    return () => clearInterval(interval);
+  }, [user, noAssessment, fetchAssessment]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
