@@ -132,8 +132,14 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
 
   const modules = [
     {
+      title: "Kompetenzmanagement",
+      description: "Kompetenzmodelle, Verhaltensanker und MTMM-Matrix verwalten",
+      href: `${base}/competencies`,
+      icon: "competency",
+    },
+    {
       title: "Anforderungsanalyse",
-      description: "Kompetenzen definieren, Verhaltensanker formulieren, Anforderungsprofil erstellen",
+      description: "Anforderungsprofile erstellen und abgleichen",
       href: `${base}/requirements`,
       icon: "target",
     },
@@ -176,12 +182,6 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       description: "KI-gestützte Diagnostik: Predictive Success, Entwicklungspfade, Hypothesen",
       href: `${base}/intelligence`,
       icon: "brain",
-    },
-    {
-      title: "Benutzer & Rollen",
-      description: "Benutzer anlegen, Rollen zuweisen und Berechtigungen verwalten",
-      href: `${base}/users`,
-      icon: "users",
     },
   ];
 
