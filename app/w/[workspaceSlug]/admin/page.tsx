@@ -152,10 +152,16 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       countLabel: "Bausteine",
     },
     {
-      title: "Baustein-Builder",
+      title: "Modul-Designer",
       description: "Assessment-Bausteine erstellen, aus der Bibliothek übernehmen oder per KI generieren",
       href: `${base}/modules`,
       icon: "builder",
+    },
+    {
+      title: "Case-Studio",
+      description: "Fallstudien erstellen: Upload bestehender Dokumente oder KI-gestützte Generierung",
+      href: `${base}/modules/case-study-builder`,
+      icon: "casestudy",
     },
     {
       title: "Beobachtungsbogen-Tool",

@@ -30,8 +30,8 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 *   **AI Integration:** Leverages OpenAI for competency model generation, behavioral anchor creation, recommendations, and autonomous diagnostics, with RBAC protection, consent verification, and audit logging.
 *   **Reporting & Analytics:** Generates comprehensive reports in DOCX, PDF, and PPTX formats, and provides an analytics dashboard with normalized scores and benchmark views.
 *   **Module & Content Builders:**
-    *   **Baustein-Builder Hub:** Allows manual, library-based, or AI-generated creation of assessment modules (exercises).
-    *   **Case Study Builder:** Supports uploading documents for AI-driven structuring or AI-generated case studies based on specified parameters.
+    *   **Modul-Designer:** Allows manual, library-based, or AI-generated creation of assessment modules (exercises). Formerly "Baustein-Builder Hub".
+    *   **Case-Studio:** Supports uploading documents for AI-driven structuring or AI-generated case studies based on specified parameters. Formerly "Fallstudien-Builder". Now a top-level menu item alongside Modul-Designer.
     *   **Exercise Library:** Provides CRUD operations for reusable exercises, including AI-powered content analysis for automatic categorization and suggestions.
     *   **Observation Sheet Templates:** Builder module for creating observation sheets, supporting both AI analysis of uploaded documents and AI generation based on user inputs.
 *   **Advanced Intelligence Layer:** Includes three AI-powered diagnostic modules: Predictive Success Intelligence, Development Path Generator, and Diagnostic Hypothesis Engine, all with confidence scoring, evidence tracking, and audit logging.

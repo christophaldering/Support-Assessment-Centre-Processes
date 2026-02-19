@@ -425,7 +425,7 @@ Antworte in folgendem JSON-Format:
             <div className="flex items-center gap-4">
               <Link href={base} className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity" data-testid="link-dashboard">Dashboard</Link>
               <span className="text-white/40">/</span>
-              <span className="text-sm text-white/70">Baustein-Builder</span>
+              <span className="text-sm text-white/70">Modul-Designer</span>
             </div>
           </div>
         </header>
@@ -446,11 +446,11 @@ Antworte in folgendem JSON-Format:
             </Link>
             <span className="text-white/40">/</span>
             {view === "hub" ? (
-              <span className="text-sm text-white/70">Baustein-Builder</span>
+              <span className="text-sm text-white/70">Modul-Designer</span>
             ) : (
               <>
                 <button onClick={() => { setView("hub"); setEditBlueprint(null); }} className="text-sm text-white/70 hover:text-white transition-colors" data-testid="link-builder-hub">
-                  Baustein-Builder
+                  Modul-Designer
                 </button>
                 <span className="text-white/40">/</span>
                 <span className="text-sm text-white/70">{viewLabels[view] || view}</span>
@@ -486,7 +486,7 @@ Antworte in folgendem JSON-Format:
           <>
             <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6">
               <h2 className="text-lg font-semibold text-brand-navy mb-2" data-testid="text-page-title">
-                Baustein-Builder
+                Modul-Designer
               </h2>
               <p className="text-sm text-slate-600 leading-relaxed">
                 Assessment-Bausteine erstellen, aus der Bibliothek übernehmen oder per KI generieren.
@@ -638,7 +638,7 @@ Antworte in folgendem JSON-Format:
                   className="text-[11px] font-medium text-brand-blue hover:underline"
                   data-testid="link-case-study-builder"
                 >
-                  Fallstudien-Builder →
+                  Case-Studio →
                 </Link>
               </div>
 
@@ -797,13 +797,13 @@ Antworte in folgendem JSON-Format:
 
               {manualForm.type === "case_study" && (
                 <div className="bg-blue-50/60 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-700 mb-2">Für umfangreiche Fallstudien mit Datenraum nutzen Sie den spezialisierten Fallstudien-Builder:</p>
+                  <p className="text-xs text-blue-700 mb-2">Für umfangreiche Fallstudien mit Datenraum nutzen Sie das spezialisierte Case-Studio:</p>
                   <Link
                     href={`${base}/modules/case-study-builder`}
                     className="text-xs font-medium text-brand-blue hover:underline"
                     data-testid="link-case-study-builder-redirect"
                   >
-                    Zum Fallstudien-Builder →
+                    Zum Case-Studio →
                   </Link>
                 </div>
               )}

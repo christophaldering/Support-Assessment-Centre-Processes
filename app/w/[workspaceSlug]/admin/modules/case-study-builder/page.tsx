@@ -366,14 +366,14 @@ export default function CaseStudyBuilderPage() {
               Modul-Übersicht
             </a>
             <Link
-              href={`${base}/modules`}
+              href={base}
               className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-back-modules"
+              data-testid="link-back-dashboard"
             >
-              ← Module
+              ← Dashboard
             </Link>
             <span className="text-lg font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Fallstudien-Builder
+              Case-Studio
             </span>
           </div>
           {mode !== "list" && (
