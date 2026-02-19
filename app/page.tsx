@@ -13,7 +13,7 @@ export default function LandingPage() {
   const [wsPassword, setWsPassword] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
   const [candidatePassword, setCandidatePassword] = useState("");
-  const [workspaceSlug, setWorkspaceSlug] = useState("aestimamus");
+  const [workspaceSlug, setWorkspaceSlug] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -262,14 +262,15 @@ export default function LandingPage() {
                 {activeMode === "workspace" && (
                   <form onSubmit={handleWorkspaceLogin}>
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">Workspace</label>
-                    <select
+                    <input
+                      type="text"
                       value={workspaceSlug}
-                      onChange={(e) => setWorkspaceSlug(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3 bg-white"
-                      data-testid="select-workspace"
-                    >
-                      <option value="aestimamus">aestimamus</option>
-                    </select>
+                      onChange={(e) => setWorkspaceSlug(e.target.value.toLowerCase().trim())}
+                      placeholder="Workspace-Name eingeben"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3"
+                      autoFocus
+                      data-testid="input-workspace-slug"
+                    />
 
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">E-Mail</label>
                     <input
@@ -293,7 +294,7 @@ export default function LandingPage() {
 
                     <button
                       type="submit"
-                      disabled={loading || !email || !wsPassword}
+                      disabled={loading || !workspaceSlug || !email || !wsPassword}
                       className="w-full mt-4 px-4 py-2.5 bg-blue-700 text-white text-sm font-medium rounded-lg hover:bg-blue-600 disabled:opacity-50 transition"
                       data-testid="button-workspace-login"
                     >
@@ -305,14 +306,15 @@ export default function LandingPage() {
                 {activeMode === "candidate" && (
                   <form onSubmit={handleCandidateLogin}>
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">Workspace</label>
-                    <select
+                    <input
+                      type="text"
                       value={workspaceSlug}
-                      onChange={(e) => setWorkspaceSlug(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 mb-3 bg-white"
-                      data-testid="select-candidate-workspace"
-                    >
-                      <option value="aestimamus">aestimamus</option>
-                    </select>
+                      onChange={(e) => setWorkspaceSlug(e.target.value.toLowerCase().trim())}
+                      placeholder="Workspace-Name eingeben"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 mb-3"
+                      autoFocus
+                      data-testid="input-candidate-workspace"
+                    />
 
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">E-Mail</label>
                     <input
@@ -336,7 +338,7 @@ export default function LandingPage() {
 
                     <button
                       type="submit"
-                      disabled={loading || !candidateEmail || !candidatePassword}
+                      disabled={loading || !workspaceSlug || !candidateEmail || !candidatePassword}
                       className="w-full mt-4 px-4 py-2.5 bg-amber-700 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-50 transition"
                       data-testid="button-candidate-login"
                     >
