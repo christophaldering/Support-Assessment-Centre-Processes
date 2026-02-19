@@ -13,6 +13,7 @@ const t = {
     navCaseStudies: "Fallstudien",
     navCandidates: "Kandidatenportal",
     navFrameworks: "Frameworks",
+    navTour: "Produkt-Tour",
     navLogin: "Anmelden",
     heroBadge: "Diagnostik-Plattform",
     heroTitle1: "Augmented",
@@ -30,7 +31,7 @@ const t = {
     trustAiAct: "EU AI Act konform",
     trustServer: "Server in DE (geplant)",
     trustEnterprise: "Enterprise-Grade",
-    trustOffline: "Offline-f\u00e4hig",
+    trustOffline: "Skalierbar",
     trustMultitenant: "Mandantenf\u00e4hig",
     uspBadge: "Augmented Diagnostics",
     uspTitle: "Diagnostische Expertise, verst\u00e4rkt durch KI.",
@@ -49,7 +50,7 @@ const t = {
     processSub: "Von der Anforderungsanalyse bis zum fertigen Ergebnisbericht \u2014 ein durchg\u00e4ngiger Prozess ohne Medienbr\u00fcche. KI verst\u00e4rkt jeden Schritt. Die fachliche Steuerung bleibt beim Menschen.",
     processStep1: "Kompetenzmodelle aus Stellenprofilen ableiten oder KI-generieren lassen",
     processStep2: "Bibliothek nutzen, KI-gest\u00fctzt anpassen oder komplett neu generieren",
-    processStep3: "Strukturierte Beobachtung, Echtzeit-Kollaboration, offline-f\u00e4hige Erfassung",
+    processStep3: "Strukturierte Beobachtung, Echtzeit-Kollaboration, digitale Erfassung",
     processStep4: "Konsolidierung, MTMM-Matrix, KI-gest\u00fctzte Hypothesen und Empfehlungen",
     processStep5: "Automatisierte Reports in DOCX, PDF und PowerPoint \u2014 fertig in 30 Minuten",
     processStepTitle1: "Anforderungsanalyse",
@@ -169,6 +170,27 @@ const t = {
     compUs: "Unsere Plattform",
     compThem: "Marktstandard",
     compPartial: "Teilweise",
+    outlookBadge: "Ausblick",
+    outlookTitle: "Was kommt — und was kommen könnte.",
+    outlookSub: "KI in der Management-Diagnostik ist ein Feld in voller Entwicklung. Vieles ist technisch bereits machbar — manches davon rechtlich und ethisch noch nicht abschließend geregelt. Wir beobachten, erproben und bauen verantwortungsvoll weiter.",
+    outlookDisclaimer: "Hinweis: Alle hier genannten Ausblicke sind technische Möglichkeiten, keine Versprechen. Die tatsächliche Umsetzung hängt von rechtlichen Rahmenbedingungen, ethischen Standards und dem konkreten Nutzen für die diagnostische Praxis ab.",
+    outlookItems: [
+      { title: "KI-Strukturierungsassistent", desc: "KI hilft Beobachtern in Echtzeit, Beobachtungen zu strukturieren und Kompetenzen zuzuordnen.", status: "in_dev" },
+      { title: "Automatische Hypothesenbildung", desc: "KI generiert auf Basis der Beobachtungsdaten diagnostische Hypothesen zur Diskussion in der Beobachterkonferenz.", status: "in_dev" },
+      { title: "KI als Co-Beobachter", desc: "KI beobachtet parallel (z.B. via Transkription) und liefert ergänzende Eindrücke als Diskussionsgrundlage.", status: "planned" },
+      { title: "Intelligente Debrief-Vorbereitung", desc: "KI bereitet aus allen Datenquellen strukturierte Konferenz-Unterlagen vor — inkl. Auffälligkeiten und offenen Fragen.", status: "planned" },
+      { title: "KI-Avatare als Rollenspieler", desc: "Realistische KI-Avatare als Interaktionspartner in Simulationen — konsistent, skalierbar, mit einstellbarem Schwierigkeitsgrad.", status: "vision" },
+      { title: "Adaptive Assessment-Verfahren", desc: "Übungen, die sich dynamisch an das Leistungsniveau anpassen — analog zum adaptiven Testen in der Psychometrie.", status: "vision" },
+      { title: "KI-generierte Szenarien", desc: "Maßgeschneiderte Business Cases pro Branche, Unternehmen oder Zielposition — jedes Mal einzigartig und aktuell.", status: "planned" },
+      { title: "Echtzeit-Feedback in Development-ACs", desc: "Sofortiges, KI-gestütztes Feedback in entwicklungsorientierten Assessment-Formaten.", status: "planned" },
+      { title: "Benchmark-Generierung", desc: "KI-gestützte Auswertung und Aufbau eigener Vergleichsdaten — Benchmarks als wahres Gold der Diagnostik.", status: "in_dev" },
+      { title: "Digitale Zwillinge von Führungssituationen", desc: "Immersive, KI-gesteuerte Szenarien, die reale Unternehmenskontexte simulieren — für realitätsnahe Diagnostik.", status: "vision" },
+      { title: "Longitudinale Entwicklungsprognosen", desc: "KI verfolgt Entwicklung über mehrere Assessments und prognostiziert individuelle Wachstumspfade.", status: "vision" },
+      { title: "Vollständig digitales Assessment Center", desc: "Alle Übungen KI-moderiert, remote und asynchron möglich — das Assessment Center der Zukunft.", status: "vision" },
+    ],
+    outlookStatusInDev: "In Entwicklung",
+    outlookStatusPlanned: "Geplant",
+    outlookStatusVision: "Vision",
     loginTitle: "Anmelden",
     loginSub: "Zugangsbereich w\u00e4hlen und loslegen.",
     loginMasterTitle: "Master-Administration",
@@ -205,6 +227,7 @@ const t = {
     navCaseStudies: "Case Studies",
     navCandidates: "Candidate Portal",
     navFrameworks: "Frameworks",
+    navTour: "Product Tour",
     navLogin: "Sign In",
     heroBadge: "Diagnostics Platform",
     heroTitle1: "Augmented",
@@ -222,7 +245,7 @@ const t = {
     trustAiAct: "EU AI Act compliant",
     trustServer: "Servers in DE (planned)",
     trustEnterprise: "Enterprise-Grade",
-    trustOffline: "Offline-capable",
+    trustOffline: "Scalable",
     trustMultitenant: "Multi-tenant",
     uspBadge: "Augmented Diagnostics",
     uspTitle: "Diagnostic expertise, enhanced by AI.",
@@ -241,7 +264,7 @@ const t = {
     processSub: "From requirements analysis to the finished assessment report \u2014 a seamless process without media breaks. AI enhances every step. Professional control stays with the people.",
     processStep1: "Derive competency models from job profiles or have AI generate them",
     processStep2: "Use library, adapt with AI support or generate entirely new",
-    processStep3: "Structured observation, real-time collaboration, offline-capable recording",
+    processStep3: "Structured observation, real-time collaboration, digital recording",
     processStep4: "Consolidation, MTMM matrix, AI-supported hypotheses and recommendations",
     processStep5: "Automated reports in DOCX, PDF and PowerPoint \u2014 ready in 30 minutes",
     processStepTitle1: "Requirements Analysis",
@@ -361,6 +384,27 @@ const t = {
     compUs: "Our Platform",
     compThem: "Market Standard",
     compPartial: "Partial",
+    outlookBadge: "Outlook",
+    outlookTitle: "What’s coming — and what could come.",
+    outlookSub: "AI in management diagnostics is a rapidly evolving field. Much is already technically feasible — some aspects are not yet fully regulated legally and ethically. We observe, test and continue to build responsibly.",
+    outlookDisclaimer: "Note: All items listed here are technical possibilities, not promises. Actual implementation depends on legal frameworks, ethical standards and concrete value for diagnostic practice.",
+    outlookItems: [
+      { title: "AI Structuring Assistant", desc: "AI helps observers structure observations in real-time and assign competencies.", status: "in_dev" },
+      { title: "Automatic Hypothesis Generation", desc: "AI generates diagnostic hypotheses based on observation data for discussion in the observer conference.", status: "in_dev" },
+      { title: "AI as Co-Observer", desc: "AI observes in parallel (e.g. via transcription) and provides supplementary impressions as a basis for discussion.", status: "planned" },
+      { title: "Intelligent Debrief Preparation", desc: "AI prepares structured conference documents from all data sources — incl. notable patterns and open questions.", status: "planned" },
+      { title: "AI Avatars as Role Players", desc: "Realistic AI avatars as interaction partners in simulations — consistent, scalable, with adjustable difficulty.", status: "vision" },
+      { title: "Adaptive Assessment Methods", desc: "Exercises that dynamically adapt to performance level — analogous to adaptive testing in psychometrics.", status: "vision" },
+      { title: "AI-Generated Scenarios", desc: "Tailored business cases per industry, company or target position — unique and current every time.", status: "planned" },
+      { title: "Real-Time Feedback in Development ACs", desc: "Immediate, AI-supported feedback in development-oriented assessment formats.", status: "planned" },
+      { title: "Benchmark Generation", desc: "AI-supported evaluation and building of proprietary comparison data — benchmarks as the true gold of diagnostics.", status: "in_dev" },
+      { title: "Digital Twins of Leadership Situations", desc: "Immersive, AI-controlled scenarios simulating real business contexts — for realistic diagnostics.", status: "vision" },
+      { title: "Longitudinal Development Forecasts", desc: "AI tracks development across multiple assessments and forecasts individual growth paths.", status: "vision" },
+      { title: "Fully Digital Assessment Center", desc: "All exercises AI-moderated, remote and asynchronous — the assessment center of the future.", status: "vision" },
+    ],
+    outlookStatusInDev: "In Development",
+    outlookStatusPlanned: "Planned",
+    outlookStatusVision: "Vision",
     loginTitle: "Sign In",
     loginSub: "Choose your access area and get started.",
     loginMasterTitle: "Master Administration",
@@ -400,7 +444,7 @@ const comparisonFeatures = {
     { feature: "Hypothesen-Engine mit Gegen-Evidenz", them: false },
     { feature: "KI-adaptierte Fallstudien", them: false },
     { feature: "MTMM-Matrix-Generierung", them: false },
-    { feature: "Offline-f\u00e4hige Beobachtung", them: "partial" as const },
+    { feature: "Skalierbare Beobachtung", them: "partial" as const },
     { feature: "Multi-Format Reports (DOCX/PDF/PPTX)", them: "partial" as const },
     { feature: "Kandidatenportal mit Zeitsteuerung", them: false },
     { feature: "Echtzeit-Kollaboration", them: false },
@@ -412,7 +456,7 @@ const comparisonFeatures = {
     { feature: "Hypothesis engine with counter-evidence", them: false },
     { feature: "AI-adapted case studies", them: false },
     { feature: "MTMM matrix generation", them: false },
-    { feature: "Offline-capable observation", them: "partial" as const },
+    { feature: "Scalable observation", them: "partial" as const },
     { feature: "Multi-format reports (DOCX/PDF/PPTX)", them: "partial" as const },
     { feature: "Candidate portal with scheduling", them: false },
     { feature: "Real-time collaboration", them: false },
@@ -585,6 +629,7 @@ export default function LandingPage() {
             <a href="#fallstudien" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navCaseStudies}</a>
             <a href="#kandidaten" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navCandidates}</a>
             <a href="#frameworks" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navFrameworks}</a>
+            <a href="/tour" className="text-xs font-medium text-brand-blue hover:text-blue-400 transition-colors">{l.navTour}</a>
           </nav>
           <div className="flex items-center gap-3">
             <button
@@ -1077,6 +1122,41 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── OUTLOOK / AUSBLICK ── */}
+      <section id="ausblick" className="py-24 bg-white border-t border-slate-100">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-4">
+            <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-brand-navy tracking-wider uppercase mb-4">{l.outlookBadge}</span>
+            <h2 className="text-2xl md:text-3xl font-bold text-brand-navy font-serif">{l.outlookTitle}</h2>
+            <p className="text-slate-500 mt-3 text-sm max-w-2xl mx-auto leading-relaxed">{l.outlookSub}</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-12">
+            {(l.outlookItems as Array<{title: string; desc: string; status: string}>).map((item) => (
+              <div key={item.title} className="bg-slate-50 rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h3 className="text-sm font-semibold text-brand-navy">{item.title}</h3>
+                  <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                    item.status === "in_dev" ? "bg-emerald-100 text-emerald-700" :
+                    item.status === "planned" ? "bg-blue-100 text-blue-700" :
+                    "bg-slate-200 text-slate-500"
+                  }`}>
+                    {item.status === "in_dev" ? l.outlookStatusInDev :
+                     item.status === "planned" ? l.outlookStatusPlanned :
+                     l.outlookStatusVision}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-[11px] text-slate-400 italic max-w-2xl mx-auto leading-relaxed">{l.outlookDisclaimer}</p>
           </div>
         </div>
       </section>
