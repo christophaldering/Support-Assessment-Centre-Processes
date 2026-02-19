@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession } from "@/lib/session";
-import { getSignedDownloadUrl } from "@/lib/object-storage";
+import { getSignedDownloadUrl, getSignedDownloadUrlForPath } from "@/lib/object-storage";
 
 interface RouteContext {
   params: { workspaceSlug: string; docId: string };
@@ -57,7 +57,9 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const downloadUrl = await getSignedDownloadUrl(doc.objectPath);
+    const downloadUrl = doc.objectPath.startsWith("/objects/")
+      ? await getSignedDownloadUrl(doc.objectPath)
+      : await getSignedDownloadUrlForPath(doc.objectPath);
     return NextResponse.json({
       id: doc.id,
       title: doc.title,

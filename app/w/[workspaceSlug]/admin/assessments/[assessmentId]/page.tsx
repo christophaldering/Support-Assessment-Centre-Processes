@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, Fragment } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import CollaborationPanel from "./CollaborationPanel";
@@ -30,6 +30,17 @@ interface ExerciseRecord {
   duration: number | null;
   sortOrder: number;
   status: string;
+  documents: ExerciseDocument[];
+}
+
+interface ExerciseDocument {
+  id: string;
+  name: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  objectPath: string;
+  exerciseId: string | null;
 }
 
 interface DocumentRecord {
@@ -221,6 +232,13 @@ export default function AssessmentDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [docUploadSection, setDocUploadSection] = useState<string | null>(null);
+  const [exerciseDocUpload, setExerciseDocUpload] = useState<string | null>(null);
+  const [exerciseDocName, setExerciseDocName] = useState("");
+  const [exerciseDocFile, setExerciseDocFile] = useState<File | null>(null);
+  const [exerciseDocUploading, setExerciseDocUploading] = useState(false);
+  const [exerciseDocError, setExerciseDocError] = useState("");
+  const [pdfViewerUrl, setPdfViewerUrl] = useState<string | null>(null);
+  const [pdfViewerTitle, setPdfViewerTitle] = useState("");
   const [portalDocs, setPortalDocs] = useState<PortalDocRecord[]>([]);
 
   const [candidates, setCandidates] = useState<CandidateRecord[]>([]);
@@ -806,6 +824,64 @@ export default function AssessmentDetailPage() {
     try {
       await fetch(`${apiBase}/exercises/${exId}`, { method: "DELETE" });
       fetchExercises();
+    } catch {}
+  };
+
+  const handleUploadExerciseDoc = async (exerciseId: string) => {
+    if (!exerciseDocFile) return;
+    setExerciseDocUploading(true);
+    setExerciseDocError("");
+    try {
+      const metaRes = await fetch(`${apiBase}/documents`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: exerciseDocName || exerciseDocFile.name,
+          fileName: exerciseDocFile.name,
+          fileSize: exerciseDocFile.size,
+          mimeType: exerciseDocFile.type || "application/octet-stream",
+          exerciseId,
+          visibleTo: [],
+          watermark: false,
+        }),
+      });
+      if (!metaRes.ok) {
+        const data = await metaRes.json();
+        setExerciseDocError(data.error || "Fehler beim Hochladen.");
+        return;
+      }
+      const { uploadURL } = await metaRes.json();
+      await fetch(uploadURL, { method: "PUT", body: exerciseDocFile });
+      setExerciseDocUpload(null);
+      setExerciseDocName("");
+      setExerciseDocFile(null);
+      fetchExercises();
+      fetchDocuments();
+    } catch {
+      setExerciseDocError("Etwas ist schiefgelaufen.");
+    } finally {
+      setExerciseDocUploading(false);
+    }
+  };
+
+  const handleViewDocument = async (docId: string, fileName: string) => {
+    try {
+      const res = await fetch(`${apiBase}/documents/${docId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.downloadUrl) {
+          setPdfViewerUrl(data.downloadUrl);
+          setPdfViewerTitle(fileName);
+        }
+      }
+    } catch {}
+  };
+
+  const handleDeleteExerciseDoc = async (docId: string) => {
+    try {
+      await fetch(`${apiBase}/documents/${docId}`, { method: "DELETE" });
+      fetchExercises();
+      fetchDocuments();
     } catch {}
   };
 
@@ -2491,162 +2567,247 @@ export default function AssessmentDetailPage() {
                   </div>
                 )}
 
-                <div className="overflow-hidden rounded-lg border border-slate-200">
-                  <table className="w-full text-sm" data-testid="table-exercises">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="text-left px-4 py-3 font-medium text-slate-600">Name</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-600">Typ</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-600">Dauer</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-600">Reihenfolge</th>
-                        <th className="text-right px-4 py-3 font-medium text-slate-600">Aktionen</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {exercises.map((ex) => (
-                        <Fragment key={ex.id}>
-                          <tr className={`border-b border-slate-100 hover:bg-slate-50/50 ${editingExId === ex.id ? "bg-blue-50/40" : ""}`} data-testid={`row-exercise-${ex.id}`}>
-                            <td className="px-4 py-3 font-medium text-slate-900">{ex.name}</td>
-                            <td className="px-4 py-3 text-slate-500">{EXERCISE_TYPE_LABELS[ex.type] || ex.type}</td>
-                            <td className="px-4 py-3 text-slate-500">{ex.duration ? `${ex.duration} Min.` : "–"}</td>
-                            <td className="px-4 py-3 text-slate-500">{ex.sortOrder}</td>
-                            <td className="px-4 py-3 text-right">
-                              <div className="flex justify-end gap-2">
-                                {editingExId === ex.id ? (
-                                  <button
-                                    onClick={() => setEditingExId(null)}
-                                    data-testid={`button-close-exercise-${ex.id}`}
-                                    className="text-xs text-slate-400 hover:text-slate-600 font-medium"
-                                  >
-                                    Schließen
-                                  </button>
-                                ) : (
-                                  <>
-                                    <button
-                                      onClick={() => {
-                                        setEditingExId(ex.id);
-                                        setEditExName(ex.name);
-                                        setEditExType(ex.type);
-                                        setEditExInstructions(ex.instructions ?? "");
-                                        setEditExDuration(ex.duration?.toString() ?? "");
-                                        setEditExSortOrder(ex.sortOrder.toString());
-                                      }}
-                                      data-testid={`button-edit-exercise-${ex.id}`}
-                                      className="text-xs text-brand-blue hover:text-brand-blue-dark font-medium"
-                                    >
-                                      Bearbeiten
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteExercise(ex.id)}
-                                      data-testid={`button-delete-exercise-${ex.id}`}
-                                      className="text-xs text-red-500 hover:text-red-700 font-medium"
-                                    >
-                                      Löschen
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                          {editingExId === ex.id && (
-                            <tr>
-                              <td colSpan={5} className="px-0 py-0">
-                                <div className="bg-slate-50 border-t border-b border-blue-100 px-6 py-5">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Name *</label>
-                                      <input
-                                        type="text"
-                                        value={editExName}
-                                        onChange={(e) => setEditExName(e.target.value)}
-                                        data-testid="input-edit-exercise-name"
-                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Typ</label>
-                                      <select
-                                        value={editExType}
-                                        onChange={(e) => setEditExType(e.target.value)}
-                                        data-testid="select-edit-exercise-type"
-                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
+                <div className="space-y-4" data-testid="table-exercises">
+                  {exercises.map((ex) => (
+                    <div key={ex.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden" data-testid={`row-exercise-${ex.id}`}>
+                      <div className="px-5 py-3 flex items-center gap-4 border-b border-slate-100">
+                        <div className="w-10 h-10 rounded-lg bg-brand-blue/10 flex items-center justify-center shrink-0">
+                          <svg className="w-5 h-5 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-900">{ex.name}</p>
+                          <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                            <span>{EXERCISE_TYPE_LABELS[ex.type] || ex.type}</span>
+                            {ex.duration && <span>· {ex.duration} Min.</span>}
+                            <span>· Reihenfolge: {ex.sortOrder}</span>
+                            <span>· {ex.documents.length} Dok.</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              if (editingExId === ex.id) {
+                                setEditingExId(null);
+                              } else {
+                                setEditingExId(ex.id);
+                                setEditExName(ex.name);
+                                setEditExType(ex.type);
+                                setEditExInstructions(ex.instructions ?? "");
+                                setEditExDuration(ex.duration?.toString() ?? "");
+                                setEditExSortOrder(ex.sortOrder.toString());
+                              }
+                            }}
+                            data-testid={`button-edit-exercise-${ex.id}`}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-brand-blue hover:text-brand-navy transition-colors px-2 py-1 rounded hover:bg-brand-blue/5"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                            </svg>
+                            Bearbeiten
+                          </button>
+                          <button
+                            onClick={() => {
+                              setExerciseDocUpload(exerciseDocUpload === ex.id ? null : ex.id);
+                              setExerciseDocName("");
+                              setExerciseDocFile(null);
+                              setExerciseDocError("");
+                            }}
+                            data-testid={`button-upload-doc-${ex.id}`}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors px-2 py-1 rounded hover:bg-emerald-50"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                            </svg>
+                            Dokument
+                          </button>
+                          <button
+                            onClick={() => handleDeleteExercise(ex.id)}
+                            data-testid={`button-delete-exercise-${ex.id}`}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 transition-colors px-2 py-1 rounded hover:bg-red-50"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                            Löschen
+                          </button>
+                        </div>
+                      </div>
+
+                      {ex.documents.length > 0 && (
+                        <div className="px-5 py-2 bg-slate-50/50">
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Dokumente</p>
+                          <div className="space-y-1.5">
+                            {ex.documents.map(doc => {
+                              const isPdf = doc.mimeType === "application/pdf" || doc.fileName?.toLowerCase().endsWith(".pdf");
+                              return (
+                                <div key={doc.id} className="flex items-center gap-3 px-3 py-2 bg-white rounded-lg border border-slate-100 hover:border-slate-200 transition-colors" data-testid={`exercise-doc-${doc.id}`}>
+                                  <div className={`w-7 h-7 rounded flex items-center justify-center shrink-0 ${isPdf ? "bg-red-50" : "bg-slate-100"}`}>
+                                    {isPdf ? (
+                                      <svg className="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v7h6v9H6z"/></svg>
+                                    ) : (
+                                      <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-slate-700 truncate">{doc.name || doc.fileName}</p>
+                                    <p className="text-xs text-slate-400">{doc.fileName} · {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(0)} KB` : ""}</p>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    {isPdf && (
+                                      <button
+                                        onClick={() => handleViewDocument(doc.id, doc.fileName || doc.name)}
+                                        data-testid={`button-view-doc-${doc.id}`}
+                                        className="text-xs text-brand-blue hover:text-brand-navy font-medium px-2 py-1 rounded hover:bg-brand-blue/5 transition-colors"
                                       >
-                                        {EXERCISE_TYPES.map((t) => (
-                                          <option key={t} value={t}>{EXERCISE_TYPE_LABELS[t]}</option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div className="mb-4">
-                                    <label className="block text-xs font-semibold text-slate-600 mb-1">Anweisungen / Inhalt</label>
-                                    <textarea
-                                      value={editExInstructions}
-                                      onChange={(e) => setEditExInstructions(e.target.value)}
-                                      data-testid="textarea-edit-exercise-instructions"
-                                      rows={6}
-                                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none resize-y"
-                                      placeholder="Detaillierte Beschreibung, Ablauf, Bewertungskriterien..."
-                                    />
-                                  </div>
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-                                    <div>
-                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Dauer (Min.)</label>
-                                      <input
-                                        type="number"
-                                        value={editExDuration}
-                                        onChange={(e) => setEditExDuration(e.target.value)}
-                                        data-testid="input-edit-exercise-duration"
-                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
-                                        min={0}
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Reihenfolge</label>
-                                      <input
-                                        type="number"
-                                        value={editExSortOrder}
-                                        onChange={(e) => setEditExSortOrder(e.target.value)}
-                                        data-testid="input-edit-exercise-sort-order"
-                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
-                                        min={0}
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
-                                      <span className="inline-block text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 mt-1">{ex.status || "draft"}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-3 pt-3 border-t border-slate-200">
+                                        Anzeigen
+                                      </button>
+                                    )}
                                     <button
-                                      onClick={() => handleUpdateExercise(ex.id)}
-                                      data-testid="button-save-exercise"
-                                      className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-brand-blue hover:bg-brand-blue-dark transition-colors"
+                                      onClick={() => handleDownloadDocument(doc.id)}
+                                      data-testid={`button-download-doc-${doc.id}`}
+                                      className="text-xs text-slate-500 hover:text-slate-700 font-medium px-2 py-1 rounded hover:bg-slate-100 transition-colors"
                                     >
-                                      Änderungen speichern
+                                      Download
                                     </button>
                                     <button
-                                      onClick={() => setEditingExId(null)}
-                                      data-testid="button-cancel-edit-exercise"
-                                      className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                                      onClick={() => handleDeleteExerciseDoc(doc.id)}
+                                      data-testid={`button-delete-doc-${doc.id}`}
+                                      className="text-xs text-red-400 hover:text-red-600 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors"
                                     >
-                                      Abbrechen
+                                      Entfernen
                                     </button>
                                   </div>
                                 </div>
-                              </td>
-                            </tr>
-                          )}
-                        </Fragment>
-                      ))}
-                      {exercises.length === 0 && (
-                        <tr>
-                          <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
-                            Keine Übungen vorhanden.
-                          </td>
-                        </tr>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
-                    </tbody>
-                  </table>
+
+                      {exerciseDocUpload === ex.id && (
+                        <div className="px-5 py-3 bg-emerald-50/50 border-t border-emerald-100">
+                          <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                              <label className="block text-xs font-medium text-slate-600 mb-1">Name</label>
+                              <input
+                                value={exerciseDocName}
+                                onChange={e => setExerciseDocName(e.target.value)}
+                                placeholder="Optional – Dateiname wird verwendet"
+                                data-testid={`input-exercise-doc-name-${ex.id}`}
+                                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-slate-600 mb-1">Datei *</label>
+                              <input
+                                type="file"
+                                onChange={e => setExerciseDocFile(e.target.files?.[0] || null)}
+                                data-testid={`input-exercise-doc-file-${ex.id}`}
+                                className="w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200"
+                              />
+                            </div>
+                          </div>
+                          {exerciseDocError && <p className="text-sm text-red-500 mb-2">{exerciseDocError}</p>}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleUploadExerciseDoc(ex.id)}
+                              disabled={!exerciseDocFile || exerciseDocUploading}
+                              data-testid={`button-submit-exercise-doc-${ex.id}`}
+                              className="rounded-lg bg-emerald-600 text-white text-sm font-medium px-4 py-2 hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                            >
+                              {exerciseDocUploading ? "Wird hochgeladen…" : "Hochladen"}
+                            </button>
+                            <button
+                              onClick={() => { setExerciseDocUpload(null); setExerciseDocName(""); setExerciseDocFile(null); setExerciseDocError(""); }}
+                              className="text-sm text-slate-500 hover:text-slate-700"
+                            >
+                              Abbrechen
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {editingExId === ex.id && (
+                        <div className="bg-slate-50 border-t border-blue-100 px-6 py-5">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-600 mb-1">Name *</label>
+                              <input
+                                type="text"
+                                value={editExName}
+                                onChange={(e) => setEditExName(e.target.value)}
+                                data-testid="input-edit-exercise-name"
+                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-600 mb-1">Typ</label>
+                              <select
+                                value={editExType}
+                                onChange={(e) => setEditExType(e.target.value)}
+                                data-testid="select-edit-exercise-type"
+                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
+                              >
+                                {EXERCISE_TYPES.map((t) => (
+                                  <option key={t} value={t}>{EXERCISE_TYPE_LABELS[t]}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-600 mb-1">Dauer (Min.)</label>
+                              <input
+                                type="number"
+                                value={editExDuration}
+                                onChange={(e) => setEditExDuration(e.target.value)}
+                                data-testid="input-edit-exercise-duration"
+                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-600 mb-1">Reihenfolge</label>
+                              <input
+                                type="number"
+                                value={editExSortOrder}
+                                onChange={(e) => setEditExSortOrder(e.target.value)}
+                                data-testid="input-edit-exercise-sort-order"
+                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
+                              />
+                            </div>
+                          </div>
+                          <div className="mb-4">
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">Anweisungen</label>
+                            <textarea
+                              value={editExInstructions}
+                              onChange={(e) => setEditExInstructions(e.target.value)}
+                              rows={3}
+                              data-testid="textarea-edit-exercise-instructions"
+                              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleUpdateExercise(ex.id)}
+                              data-testid="button-save-exercise"
+                              className="rounded-lg bg-brand-blue text-white text-sm font-medium px-6 py-2 hover:bg-brand-blue-dark transition-colors"
+                            >
+                              Speichern
+                            </button>
+                            <button
+                              onClick={() => setEditingExId(null)}
+                              data-testid={`button-close-exercise-${ex.id}`}
+                              className="text-sm text-slate-500 hover:text-slate-700"
+                            >
+                              Abbrechen
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </>
@@ -3578,57 +3739,73 @@ export default function AssessmentDetailPage() {
               const title = isPortal ? (doc as PortalDocRecord).title : (doc as DocumentRecord).name;
               const fileName = isPortal ? (doc as PortalDocRecord).fileName : (doc as DocumentRecord).fileName;
               const fileSize = isPortal ? (doc as PortalDocRecord).fileSize : (doc as DocumentRecord).fileSize;
+              const mimeType = isPortal ? (doc as PortalDocRecord).mimeType : (doc as DocumentRecord).mimeType;
               const releaseStatus = isPortal ? (doc as PortalDocRecord).releaseStatus : null;
+              const isPdf = mimeType === "application/pdf" || fileName?.toLowerCase().endsWith(".pdf");
 
               return (
                 <div key={doc.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50/50 transition-colors" data-testid={`doc-item-${doc.id}`}>
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isPdf ? "bg-red-50" : "bg-slate-100"}`}>
+                    {isPdf ? (
+                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v7h6v9H6z"/></svg>
+                    ) : (
+                      <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                      </svg>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900 truncate">{title}</p>
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                       {fileName && <span>{fileName}</span>}
                       {fileSize != null && fileSize > 0 && <span>· {formatFileSize(fileSize)}</span>}
+                      {isPdf && <span className="text-red-400 font-medium">PDF</span>}
                     </div>
                   </div>
-                  {isPortal && (
+                  <div className="flex items-center gap-1.5">
+                    {isPdf && !isPortal && (
+                      <button
+                        onClick={() => handleViewDocument(doc.id, fileName || title || "Dokument")}
+                        data-testid={`button-view-${doc.id}`}
+                        className="text-xs text-brand-blue hover:text-brand-navy font-medium px-2 py-1 rounded hover:bg-brand-blue/5 transition-colors"
+                      >
+                        Anzeigen
+                      </button>
+                    )}
+                    {isPortal && (
+                      <button
+                        onClick={() => handleTogglePortalDocRelease(doc as PortalDocRecord)}
+                        data-testid={`toggle-release-${doc.id}`}
+                        className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                          releaseStatus === "released"
+                            ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                            : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                        }`}
+                      >
+                        {releaseStatus === "released" ? (
+                          <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>Freigegeben</>
+                        ) : (
+                          <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>Gesperrt</>
+                        )}
+                      </button>
+                    )}
                     <button
-                      onClick={() => handleTogglePortalDocRelease(doc as PortalDocRecord)}
-                      data-testid={`toggle-release-${doc.id}`}
-                      className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
-                        releaseStatus === "released"
-                          ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                          : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                      }`}
-                    >
-                      {releaseStatus === "released" ? (
-                        <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>Freigegeben</>
-                      ) : (
-                        <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>Gesperrt</>
-                      )}
-                    </button>
-                  )}
-                  {!isPortal && (
-                    <button
-                      onClick={() => handleDownloadDocument(doc.id)}
+                      onClick={() => isPortal ? handleDownloadDocument(doc.id) : handleDownloadDocument(doc.id)}
                       data-testid={`button-download-${doc.id}`}
-                      className="text-xs text-brand-blue hover:text-brand-blue/80 font-medium"
+                      className="text-xs text-slate-500 hover:text-slate-700 font-medium px-2 py-1 rounded hover:bg-slate-100 transition-colors"
                     >
-                      Herunterladen
+                      Download
                     </button>
-                  )}
-                  <button
-                    onClick={() => isPortal ? handleDeletePortalDoc(doc.id) : handleDeleteDocument(doc.id)}
-                    data-testid={`button-delete-${doc.id}`}
-                    className="text-slate-400 hover:text-red-500 transition-colors p-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                  </button>
+                    <button
+                      onClick={() => isPortal ? handleDeletePortalDoc(doc.id) : handleDeleteDocument(doc.id)}
+                      data-testid={`button-delete-${doc.id}`}
+                      className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               );
             };
@@ -4041,6 +4218,37 @@ export default function AssessmentDetailPage() {
         isOpen={showCollab}
         onClose={() => setShowCollab(false)}
       />
+
+      {pdfViewerUrl && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { setPdfViewerUrl(null); setPdfViewerTitle(""); }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h3 className="text-lg font-bold text-brand-navy">{pdfViewerTitle}</h3>
+              <div className="flex items-center gap-2">
+                <a
+                  href={pdfViewerUrl}
+                  download
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-blue hover:text-brand-navy transition-colors"
+                  data-testid="button-download-pdf-viewer"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                  Download
+                </a>
+                <button
+                  onClick={() => { setPdfViewerUrl(null); setPdfViewerTitle(""); }}
+                  className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
+                  data-testid="button-close-pdf-viewer"
+                >
+                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <iframe src={pdfViewerUrl} className="w-full h-full border-0" title={pdfViewerTitle} />
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="border-t py-6 border-slate-200">
         <p className="text-center text-xs text-slate-400">

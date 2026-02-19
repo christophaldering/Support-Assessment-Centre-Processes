@@ -94,7 +94,19 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
     const { uploadURL, objectPath } = await getUploadUrl();
 
-    const uploadedById = session?.userId ?? "master";
+    let uploadedById = session?.userId ?? null;
+    if (!uploadedById) {
+      const systemUser = await prisma.user.findFirst({
+        where: { email: { contains: "admin" } },
+        select: { id: true },
+      });
+      if (systemUser) {
+        uploadedById = systemUser.id;
+      } else {
+        const firstUser = await prisma.user.findFirst({ select: { id: true } });
+        uploadedById = firstUser?.id ?? "system";
+      }
+    }
 
     const document = await prisma.document.create({
       data: {

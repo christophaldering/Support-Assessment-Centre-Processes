@@ -32,7 +32,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   if (!master && (!session || session.workspaceSlug !== params.workspaceSlug)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (session && !master && !hasPermission(session.roles, "assessments.write")) {
+  if (session && !master && !hasPermission(session.roles, "assessments.update")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

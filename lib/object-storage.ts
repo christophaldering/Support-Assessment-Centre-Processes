@@ -58,6 +58,38 @@ export async function getUploadUrl(): Promise<{ uploadURL: string; objectPath: s
   return { uploadURL, objectPath: normalizedObjectPath };
 }
 
+export async function uploadToObjectStorage(objectPath: string, buffer: Buffer, contentType: string): Promise<void> {
+  const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+  if (!bucketId) {
+    throw new Error("DEFAULT_OBJECT_STORAGE_BUCKET_ID not set");
+  }
+
+  const fullPath = `/${bucketId}/${objectPath}`;
+  const { bucketName, objectName } = parseObjectPath(fullPath);
+  const uploadURL = await signUrl(bucketName, objectName, "PUT", 900);
+
+  const res = await fetch(uploadURL, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: buffer,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to upload to object storage: ${res.status}`);
+  }
+}
+
+export async function getSignedDownloadUrlForPath(objectPath: string): Promise<string> {
+  const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+  if (!bucketId) {
+    throw new Error("DEFAULT_OBJECT_STORAGE_BUCKET_ID not set");
+  }
+
+  const fullPath = `/${bucketId}/${objectPath}`;
+  const { bucketName, objectName } = parseObjectPath(fullPath);
+  return signUrl(bucketName, objectName, "GET", 3600);
+}
+
 export async function getSignedDownloadUrl(objectPath: string): Promise<string> {
   if (!objectPath.startsWith("/objects/")) {
     throw new Error("Invalid object path");

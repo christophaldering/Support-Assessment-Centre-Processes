@@ -68,6 +68,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 
     const exercises = await prisma.exercise.findMany({
       where: { assessmentId: params.assessmentId },
+      include: { documents: true },
       orderBy: { sortOrder: "asc" },
     });
 
