@@ -106,6 +106,27 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   const portalDocuments = await prisma.portalDocument.findMany({
     where: { assessmentId: assessment.id },
     orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
+    select: {
+      id: true,
+      assessmentId: true,
+      exerciseId: true,
+      category: true,
+      title: true,
+      description: true,
+      objectPath: true,
+      fileName: true,
+      fileSize: true,
+      mimeType: true,
+      releaseStatus: true,
+      releasedAt: true,
+      alwaysAvailable: true,
+      releaseStart: true,
+      releaseEnd: true,
+      downloadAllowed: true,
+      sortOrder: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 
   const selfAssessments = await prisma.selfAssessment.findMany({

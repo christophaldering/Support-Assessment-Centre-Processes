@@ -3,9 +3,16 @@ import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission, hasAnyPermission } from "@/lib/rbac";
 import { sanitizeRichText } from "@/lib/sanitize";
+import { Client } from "@replit/object-storage";
 
 interface RouteContext {
   params: { workspaceSlug: string; itemId: string };
+}
+
+function getStorageClient() {
+  const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || process.env.REPLIT_DEFAULT_BUCKET_ID;
+  if (!bucketId) throw new Error("Object storage bucket not configured");
+  return new Client({ bucketId });
 }
 
 export async function GET(_req: NextRequest, { params }: RouteContext) {
@@ -75,7 +82,29 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Übungselement nicht gefunden" }, { status: 404 });
     }
 
-    const { title, description, tags, exerciseType, targetLevels, languagesAvailable, metadataJson, qualityStatus, sourceContext } = await req.json();
+    const body = await req.json();
+    const { title, description, tags, exerciseType, targetLevels, languagesAvailable, metadataJson, qualityStatus, sourceContext, downloadAllowed, archive } = body;
+
+    if (archive === true && !existing.archivedAt) {
+      const item = await prisma.exerciseLibraryItem.update({
+        where: { id: params.itemId },
+        data: { archivedAt: new Date() },
+        include: { variants: { orderBy: { createdAt: "desc" } } },
+      });
+      return NextResponse.json(item);
+    }
+
+    if (archive === false && existing.archivedAt) {
+      if (!master) {
+        return NextResponse.json({ error: "Nur Master-Admin kann Übungen wiederherstellen" }, { status: 403 });
+      }
+      const item = await prisma.exerciseLibraryItem.update({
+        where: { id: params.itemId },
+        data: { archivedAt: null },
+        include: { variants: { orderBy: { createdAt: "desc" } } },
+      });
+      return NextResponse.json(item);
+    }
 
     const item = await prisma.exerciseLibraryItem.update({
       where: { id: params.itemId },
@@ -89,6 +118,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         ...(metadataJson !== undefined && { metadataJson }),
         ...(qualityStatus !== undefined && { qualityStatus }),
         ...(sourceContext !== undefined && { sourceContext }),
+        ...(downloadAllowed !== undefined && { downloadAllowed: !!downloadAllowed }),
       },
       include: {
         variants: { orderBy: { createdAt: "desc" } },
@@ -124,15 +154,37 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
 
     const existing = await prisma.exerciseLibraryItem.findFirst({
       where: { id: params.itemId, workspaceId: workspace.id },
+      include: { variants: true },
     });
 
     if (!existing) {
       return NextResponse.json({ error: "Übungselement nicht gefunden" }, { status: 404 });
     }
 
+    const filesToDelete: string[] = [];
+    if (existing.originalFileKey) {
+      filesToDelete.push(existing.originalFileKey);
+    }
+    for (const v of existing.variants) {
+      if (v.fileObjectPath) {
+        filesToDelete.push(v.fileObjectPath);
+      }
+    }
+
     await prisma.exerciseLibraryItem.delete({
       where: { id: params.itemId },
     });
+
+    if (filesToDelete.length > 0) {
+      try {
+        const storageClient = getStorageClient();
+        for (const key of filesToDelete) {
+          await storageClient.delete(key).catch(() => {});
+        }
+      } catch (e) {
+        console.error("Object storage cleanup error (non-fatal):", e);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch {

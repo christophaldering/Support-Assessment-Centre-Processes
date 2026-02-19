@@ -24,6 +24,7 @@ interface PortalDoc {
   alwaysAvailable: boolean;
   releaseStart: string | null;
   releaseEnd: string | null;
+  downloadAllowed: boolean;
   sortOrder: number;
   createdAt: string;
 }
@@ -86,7 +87,7 @@ export default function PortalManagementSection({
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<string | null>(null);
-  const [scheduleForm, setScheduleForm] = useState({ alwaysAvailable: false, releaseStart: "", releaseEnd: "", releaseStatus: "locked" });
+  const [scheduleForm, setScheduleForm] = useState({ alwaysAvailable: false, releaseStart: "", releaseEnd: "", releaseStatus: "locked", downloadAllowed: true });
 
   const [showCreateSA, setShowCreateSA] = useState(false);
   const [saTitle, setSaTitle] = useState("");
@@ -156,6 +157,7 @@ export default function PortalManagementSection({
       releaseStart: doc.releaseStart ? doc.releaseStart.slice(0, 16) : "",
       releaseEnd: doc.releaseEnd ? doc.releaseEnd.slice(0, 16) : "",
       releaseStatus: doc.releaseStatus,
+      downloadAllowed: doc.downloadAllowed !== false,
     });
   };
 
@@ -171,6 +173,7 @@ export default function PortalManagementSection({
         releaseStatus,
         releaseStart: scheduleForm.releaseStart || null,
         releaseEnd: scheduleForm.releaseEnd || null,
+        downloadAllowed: scheduleForm.downloadAllowed,
       }),
     });
     setEditingSchedule(null);
@@ -545,6 +548,9 @@ export default function PortalManagementSection({
                         {doc.exerciseId && (
                           <span>· {exercises.find(e => e.id === doc.exerciseId)?.name || "Übung"}</span>
                         )}
+                        {doc.downloadAllowed === false && (
+                          <span className="text-amber-500">· Nur Ansicht</span>
+                        )}
                       </div>
                     </div>
                     <button
@@ -585,6 +591,19 @@ export default function PortalManagementSection({
                             className="w-4 h-4 rounded border-slate-300 text-brand-blue focus:ring-brand-blue/30"
                           />
                           <span className="text-sm text-slate-700">Immer zugänglich</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={scheduleForm.downloadAllowed}
+                            onChange={e => setScheduleForm(f => ({ ...f, downloadAllowed: e.target.checked }))}
+                            data-testid={`checkbox-download-${doc.id}`}
+                            className="w-4 h-4 rounded border-slate-300 text-brand-blue focus:ring-brand-blue/30"
+                          />
+                          <span className="text-sm text-slate-700">Download erlaubt</span>
+                          {!scheduleForm.downloadAllowed && (
+                            <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Nur Ansicht</span>
+                          )}
                         </label>
                         {!scheduleForm.alwaysAvailable && (
                           <div className="grid grid-cols-2 gap-3">

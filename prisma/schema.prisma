@@ -601,6 +601,8 @@ model ExerciseLibraryItem {
   originalFileName   String?  @map("original_file_name")
   originalFileSize   Int?     @map("original_file_size")
   originalMimeType   String?  @map("original_mime_type")
+  downloadAllowed    Boolean  @default(true) @map("download_allowed")
+  archivedAt         DateTime? @map("archived_at")
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
@@ -874,6 +876,7 @@ model PortalDocument {
   alwaysAvailable Boolean  @default(false) @map("always_available")
   releaseStart    DateTime? @map("release_start")
   releaseEnd      DateTime? @map("release_end")
+  downloadAllowed Boolean  @default(true) @map("download_allowed")
   sortOrder       Int      @default(0) @map("sort_order")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")

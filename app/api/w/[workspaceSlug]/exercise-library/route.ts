@@ -37,8 +37,18 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   const tag = url.searchParams.get("tag");
   const clientId = url.searchParams.get("clientId");
   const clientFilter = url.searchParams.get("client");
+  const showArchived = url.searchParams.get("archived") === "true";
 
   const where: any = { workspaceId: workspace.id };
+
+  if (showArchived) {
+    if (!master) {
+      return NextResponse.json({ error: "Nur Master-Admin kann archivierte Übungen sehen" }, { status: 403 });
+    }
+    where.archivedAt = { not: null };
+  } else {
+    where.archivedAt = null;
+  }
 
   if (search) {
     where.OR = [

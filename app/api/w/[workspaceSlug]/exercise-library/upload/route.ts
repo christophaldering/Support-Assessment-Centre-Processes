@@ -48,6 +48,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const metadataJsonRaw = formData.get("metadataJson") as string | null;
     const clientNameRaw = formData.get("clientName") as string | null;
     const projectNameRaw = formData.get("projectName") as string | null;
+    const downloadAllowedRaw = formData.get("downloadAllowed") as string | null;
 
     let metadataJson: any = null;
     if (metadataJsonRaw) {
@@ -141,6 +142,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         clientId: resolvedClientId,
         clientName,
         projectName,
+        downloadAllowed: downloadAllowedRaw !== "false",
       },
       include: {
         _count: { select: { variants: true } },

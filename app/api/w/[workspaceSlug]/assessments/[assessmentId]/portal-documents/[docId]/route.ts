@@ -18,7 +18,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   }
 
   const body = await req.json();
-  const { title, description, category, releaseStatus, sortOrder, exerciseId, alwaysAvailable, releaseStart, releaseEnd } = body;
+  const { title, description, category, releaseStatus, sortOrder, exerciseId, alwaysAvailable, releaseStart, releaseEnd, downloadAllowed } = body;
 
   const doc = await prisma.portalDocument.findFirst({
     where: { id: params.docId, assessmentId: params.assessmentId },
@@ -34,6 +34,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   if (alwaysAvailable !== undefined) updateData.alwaysAvailable = alwaysAvailable;
   if (releaseStart !== undefined) updateData.releaseStart = releaseStart ? new Date(releaseStart) : null;
   if (releaseEnd !== undefined) updateData.releaseEnd = releaseEnd ? new Date(releaseEnd) : null;
+  if (downloadAllowed !== undefined) updateData.downloadAllowed = downloadAllowed;
   if (releaseStatus !== undefined) {
     updateData.releaseStatus = releaseStatus;
     if (releaseStatus === "released" && doc.releaseStatus !== "released") {

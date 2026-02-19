@@ -25,6 +25,8 @@ interface ExerciseLibraryItem {
   clientId?: string;
   clientName?: string;
   projectName?: string;
+  downloadAllowed?: boolean;
+  archived?: boolean;
 }
 
 interface PendingFile {
@@ -373,6 +375,7 @@ function DetailModal({
 }) {
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -380,6 +383,7 @@ function DetailModal({
   const [editTitle, setEditTitle] = useState(item.title);
   const [editDescription, setEditDescription] = useState(item.description || "");
   const [editSourceContext, setEditSourceContext] = useState(item.sourceContext || item.metadataJson?.sourceContext || "");
+  const [editDownloadAllowed, setEditDownloadAllowed] = useState(item.downloadAllowed !== false);
 
   useEffect(() => {
     setEditTitle(item.title);
@@ -418,7 +422,7 @@ function DetailModal({
   };
 
   const handleDelete = async () => {
-    if (!confirm("Diesen Baustein wirklich löschen?")) return;
+    if (!confirm("Diese Übung wirklich löschen?")) return;
     setDeleting(true);
     try {
       await fetch(`/api/w/${slug}/exercise-library/${item.id}`, { method: "DELETE" });
@@ -427,6 +431,52 @@ function DetailModal({
       setError("Fehler beim Löschen");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    setArchiving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/w/${slug}/exercise-library/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archive: true }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || "Fehler beim Archivieren");
+        return;
+      }
+      onUpdated?.();
+      onClose();
+    } catch {
+      setError("Fehler beim Archivieren");
+    } finally {
+      setArchiving(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setArchiving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/w/${slug}/exercise-library/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archive: false }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || "Fehler beim Wiederherstellen");
+        return;
+      }
+      onUpdated?.();
+      onClose();
+    } catch {
+      setError("Fehler beim Wiederherstellen");
+    } finally {
+      setArchiving(false);
     }
   };
 
@@ -442,6 +492,7 @@ function DetailModal({
           title: editTitle,
           description: editDescription,
           sourceContext: editSourceContext,
+          downloadAllowed: editDownloadAllowed,
         }),
       });
       if (!res.ok) {
@@ -640,6 +691,37 @@ function DetailModal({
             </div>
           )}
 
+          {editing && (
+            <div>
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                Download für Kandidaten erlauben
+              </span>
+              <div className="mt-1.5 flex items-center gap-3">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={editDownloadAllowed}
+                  onClick={() => setEditDownloadAllowed(!editDownloadAllowed)}
+                  className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  style={{
+                    backgroundColor: editDownloadAllowed ? ACCENT : "#cbd5e1",
+                    focusRingColor: ACCENT,
+                  }}
+                  data-testid="toggle-download-allowed"
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      editDownloadAllowed ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+                <span className="text-sm text-slate-700">
+                  {editDownloadAllowed ? "Erlaubt" : "Nicht erlaubt"}
+                </span>
+              </div>
+            </div>
+          )}
+
           {item.tags.length > 0 && (
             <div>
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tags</span>
@@ -729,6 +811,28 @@ function DetailModal({
 
               <div className="flex-1" />
 
+              {item.archived ? (
+                <button
+                  onClick={handleRestore}
+                  disabled={archiving}
+                  className="flex items-center gap-1.5 px-3 py-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg text-sm transition"
+                  data-testid="button-restore"
+                >
+                  {archiving ? <SpinnerIcon /> : null}
+                  Wiederherstellen
+                </button>
+              ) : (
+                <button
+                  onClick={handleArchive}
+                  disabled={archiving}
+                  className="flex items-center gap-1.5 px-3 py-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg text-sm transition"
+                  data-testid="button-archive"
+                >
+                  {archiving ? <SpinnerIcon /> : null}
+                  Archivieren
+                </button>
+              )}
+
               <button
                 onClick={handleDelete}
                 disabled={deleting}
@@ -769,32 +873,40 @@ export default function ExerciseLibraryPage() {
 
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [autoAnalyzeTrigger, setAutoAnalyzeTrigger] = useState(0);
 
   const [clients, setClients] = useState<{id: string; name: string; _count?: {exerciseLibraryItems: number}}[]>([]);
   const [activeClientFilter, setActiveClientFilter] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const fetchItems = useCallback(async () => {
     try {
       let url = `/api/w/${slug}/exercise-library`;
-      if (activeClientFilter === "neutral") {
-        url += `?client=neutral`;
-      } else if (activeClientFilter) {
-        url += `?clientId=${activeClientFilter}`;
+      const params = new URLSearchParams();
+      if (showArchived) {
+        params.set("archived", "true");
       }
+      if (activeClientFilter === "neutral") {
+        params.set("client", "neutral");
+      } else if (activeClientFilter) {
+        params.set("clientId", activeClientFilter);
+      }
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
       const res = await fetch(url);
       if (res.status === 401) return;
       if (res.status === 403) {
-        setError("Keine Berechtigung für die Baustein-Bibliothek.");
+        setError("Keine Berechtigung für die Übungsbibliothek.");
         return;
       }
       if (!res.ok) throw new Error();
       setAllItems(await res.json());
     } catch {
-      setError("Fehler beim Laden der Bausteine.");
+      setError("Fehler beim Laden der Übungen.");
     } finally {
       setLoading(false);
     }
-  }, [slug, activeClientFilter]);
+  }, [slug, activeClientFilter, showArchived]);
 
   const fetchClients = useCallback(async () => {
     try {
@@ -844,6 +956,7 @@ export default function ExerciseLibraryPage() {
     setPendingFiles((prev) => [...prev, ...newPending]);
     setUploadError("");
     setUploadSuccess("");
+    setAutoAnalyzeTrigger((t) => t + 1);
   }, []);
 
   const handleDrop = useCallback(
@@ -974,6 +1087,12 @@ export default function ExerciseLibraryPage() {
     setAnalyzing(false);
   }, [pendingFiles, slug]);
 
+  useEffect(() => {
+    if (autoAnalyzeTrigger > 0 && pendingFiles.length > 0 && !analyzing && analysisResults.length === 0) {
+      handleAnalyzeAll();
+    }
+  }, [autoAnalyzeTrigger]);
+
   const updateAnalysisResult = useCallback((index: number, updates: Partial<AnalysisResult>) => {
     setAnalysisResults((prev) =>
       prev.map((r, i) => (i === index ? { ...r, ...updates } : r))
@@ -1086,7 +1205,7 @@ export default function ExerciseLibraryPage() {
               {slug}
             </Link>
             <span className="text-white/40">/</span>
-            <span className="text-sm text-white/70" data-testid="text-page-title">Baustein-Bibliothek</span>
+            <span className="text-sm text-white/70" data-testid="text-page-title">Übungsbibliothek</span>
           </div>
           <Link
             href={`/w/${slug}/admin`}
@@ -1149,7 +1268,7 @@ export default function ExerciseLibraryPage() {
                 style={{ fontFamily: "Playfair Display, serif", color: ACCENT }}
                 data-testid="text-upload-label"
               >
-                Bausteine hochladen
+                Übungen hochladen
               </h3>
               <p className="text-xs text-slate-500 max-w-md">
                 Ziehen Sie Dateien hierher oder klicken Sie zum Auswählen.
@@ -1361,7 +1480,7 @@ export default function ExerciseLibraryPage() {
                         <div className="mb-3">
                           <label className="block text-xs font-medium text-slate-600 mb-1">
                             KI-Kurzbeschreibung
-                            <span className="ml-1 text-xs text-emerald-600 font-normal">(wird mit Baustein gespeichert)</span>
+                            <span className="ml-1 text-xs text-emerald-600 font-normal">(wird mit Übung gespeichert)</span>
                           </label>
                           <textarea
                             value={ar.description}
@@ -1475,7 +1594,7 @@ export default function ExerciseLibraryPage() {
                   style={activeCategory === null ? { backgroundColor: ACCENT } : undefined}
                   data-testid="button-category-all"
                 >
-                  <span>Alle Bausteine</span>
+                  <span>Alle Übungen</span>
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                       activeCategory === null
@@ -1560,6 +1679,19 @@ export default function ExerciseLibraryPage() {
                   ))}
                 </div>
               </div>
+
+              <div className="mt-6">
+                <button
+                  onClick={() => setShowArchived(!showArchived)}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                    showArchived ? "text-white font-medium" : "text-slate-700 hover:bg-slate-50"
+                  }`}
+                  style={showArchived ? { backgroundColor: ACCENT } : undefined}
+                  data-testid="button-show-archived"
+                >
+                  <span>Archiv</span>
+                </button>
+              </div>
             </aside>
 
             <div className="flex-1 min-w-0" data-testid="document-list">
@@ -1569,9 +1701,11 @@ export default function ExerciseLibraryPage() {
                   style={{ fontFamily: "Playfair Display, serif" }}
                   data-testid="text-category-title"
                 >
-                  {activeCategory
-                    ? CATEGORY_LABELS[activeCategory]
-                    : "Alle Bausteine"}
+                  {showArchived
+                    ? "Archiv"
+                    : activeCategory
+                      ? CATEGORY_LABELS[activeCategory]
+                      : "Alle Übungen"}
                   {" "}
                   <span className="text-slate-400 font-normal">
                     ({filteredItems.length})
@@ -1586,9 +1720,11 @@ export default function ExerciseLibraryPage() {
                 >
                   <FileIcon className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                   <p className="text-slate-400 text-sm">
-                    {activeCategory
-                      ? "Keine Bausteine in dieser Kategorie vorhanden."
-                      : "Noch keine Bausteine vorhanden. Laden Sie Dateien hoch, um zu starten."}
+                    {showArchived
+                      ? "Keine archivierten Übungen vorhanden."
+                      : activeCategory
+                        ? "Keine Übungen in dieser Kategorie vorhanden."
+                        : "Noch keine Übungen vorhanden. Laden Sie Dateien hoch, um zu starten."}
                   </p>
                 </div>
               ) : (
@@ -1602,19 +1738,30 @@ export default function ExerciseLibraryPage() {
                       <div
                         key={item.id}
                         onClick={() => setSelectedItem(item)}
-                        className="border border-slate-200 rounded-xl p-4 bg-white hover:shadow-md hover:border-slate-300 transition cursor-pointer"
+                        className={`border rounded-xl p-4 hover:shadow-md transition cursor-pointer ${
+                          item.archived
+                            ? "border-amber-200 bg-amber-50/30 opacity-70"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                        }`}
                         data-testid={`card-item-${item.id}`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <h4
-                            className="text-sm font-semibold text-slate-800"
+                            className={`text-sm font-semibold ${item.archived ? "text-slate-500 line-through" : "text-slate-800"}`}
                             data-testid={`text-item-title-${item.id}`}
                           >
                             {item.title}
                           </h4>
-                          <span className="text-xs text-slate-400 shrink-0 ml-2">
-                            {new Date(item.createdAt).toLocaleDateString("de-DE")}
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0 ml-2">
+                            {item.archived && (
+                              <span className="text-[10px] font-medium text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded" data-testid={`badge-archived-${item.id}`}>
+                                Archiviert
+                              </span>
+                            )}
+                            <span className="text-xs text-slate-400">
+                              {new Date(item.createdAt).toLocaleDateString("de-DE")}
+                            </span>
+                          </div>
                         </div>
 
                         {item.targetLevels.length > 0 && (

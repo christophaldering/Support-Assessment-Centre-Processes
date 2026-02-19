@@ -52,6 +52,10 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "No file attached" }, { status: 404 });
   }
 
+  if (!doc.downloadAllowed) {
+    return NextResponse.json({ error: "Download für dieses Dokument ist nicht erlaubt" }, { status: 403 });
+  }
+
   try {
     const downloadUrl = await getSignedDownloadUrl(doc.objectPath);
     return NextResponse.json({
