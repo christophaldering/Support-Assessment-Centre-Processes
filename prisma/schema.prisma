@@ -206,12 +206,12 @@ model Document {
   version        Int      @default(1)
   visibleTo      String[] @map("visible_to")
   watermark      Boolean  @default(false)
-  uploadedById   String   @map("uploaded_by_id")
+  uploadedById   String?  @map("uploaded_by_id")
   createdAt      DateTime @default(now()) @map("created_at")
 
   assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   exercise       Exercise?  @relation(fields: [exerciseId], references: [id], onDelete: SetNull)
-  uploadedBy     User       @relation(fields: [uploadedById], references: [id])
+  uploadedBy     User?      @relation(fields: [uploadedById], references: [id])
 
   @@map("documents")
 }
