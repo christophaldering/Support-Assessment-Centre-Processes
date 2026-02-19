@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
@@ -131,7 +132,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteContext) {
+export async function DELETE(req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
   const master = hasMasterAuth();
 
@@ -144,6 +145,40 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
   }
 
   try {
+    let body: { password?: string; action?: string } = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Ungültige Anfrage" }, { status: 400 });
+    }
+
+    const { password, action } = body;
+
+    if (!password) {
+      return NextResponse.json({ error: "Passwort ist erforderlich" }, { status: 400 });
+    }
+
+    if (action !== "archive" && action !== "delete") {
+      return NextResponse.json({ error: "Ungültige Aktion" }, { status: 400 });
+    }
+
+    let passwordValid = false;
+    if (master) {
+      const hash = process.env.MASTER_ADMIN_PASSWORD_HASH;
+      if (hash) {
+        passwordValid = await bcrypt.compare(password, hash);
+      }
+    } else if (session?.userId) {
+      const user = await prisma.user.findUnique({ where: { id: session.userId } });
+      if (user) {
+        passwordValid = await bcrypt.compare(password, user.passwordHash);
+      }
+    }
+
+    if (!passwordValid) {
+      return NextResponse.json({ error: "Falsches Passwort" }, { status: 401 });
+    }
+
     const workspace = await prisma.workspace.findUnique({
       where: { slug: params.workspaceSlug },
     });
@@ -160,11 +195,19 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Assessment nicht gefunden" }, { status: 404 });
     }
 
+    if (action === "archive") {
+      await prisma.assessment.update({
+        where: { id: params.assessmentId },
+        data: { status: "archived" },
+      });
+      return NextResponse.json({ success: true, action: "archived" });
+    }
+
     await prisma.assessment.delete({
       where: { id: params.assessmentId },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, action: "deleted" });
   } catch {
     return NextResponse.json({ error: "Ungültige Anfrage" }, { status: 400 });
   }

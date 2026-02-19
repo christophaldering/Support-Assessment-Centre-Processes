@@ -135,6 +135,9 @@ export default function DashboardClient({
   const [localAssessments, setLocalAssessments] = useState<AssessmentItem[]>(assessments);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleteAction, setDeleteAction] = useState<"delete" | "archive">("archive");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [collapsedClients, setCollapsedClients] = useState<Set<string>>(new Set());
   const [collapsedRoles, setCollapsedRoles] = useState<Set<string>>(new Set());
   const [activeSection, setActiveSection] = useState<"dashboard" | "assessments">("dashboard");
@@ -237,17 +240,31 @@ export default function DashboardClient({
     }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDeleteOrArchive(id: string) {
+    if (!deletePassword) {
+      setDeleteError("Bitte Passwort eingeben");
+      return;
+    }
     setDeletingId(id);
+    setDeleteError("");
     try {
       const res = await fetch(`/api/w/${workspaceSlug}/assessments/${id}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: deletePassword, action: deleteAction }),
       });
       if (res.ok) {
         setLocalAssessments((prev) => prev.filter((a) => a.id !== id));
         setConfirmDelete(null);
+        setDeletePassword("");
+        setDeleteError("");
+        setDeleteAction("archive");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setDeleteError(data.error || "Aktion fehlgeschlagen");
       }
     } catch {
+      setDeleteError("Netzwerkfehler");
     } finally {
       setDeletingId(null);
     }
@@ -401,22 +418,86 @@ export default function DashboardClient({
     const project = localAssessments.find((a) => a.id === confirmDelete);
     if (!project) return null;
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmDelete(null)}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setConfirmDelete(null); setDeletePassword(""); setDeleteError(""); setDeleteAction("archive"); }}>
         <div
           className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-md p-8"
           onClick={(e) => e.stopPropagation()}
           data-testid="dialog-confirm-delete"
         >
-          <h3 className="text-lg font-semibold text-red-600 mb-4">Assessment löschen</h3>
-          <p className="text-sm text-slate-600 mb-6">
-            Möchten Sie &laquo;{project.name}&raquo; wirklich löschen? Alle zugehörigen Daten werden unwiderruflich entfernt.
+          <h3 className="text-lg font-semibold text-slate-800 mb-2">Assessment verwalten</h3>
+          <p className="text-sm text-slate-500 mb-5">
+            &laquo;{project.name}&raquo;
           </p>
+
+          <div className="space-y-2 mb-5">
+            <label
+              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${deleteAction === "archive" ? "border-blue-400 bg-blue-50/50" : "border-slate-200 hover:bg-slate-50"}`}
+              data-testid="radio-archive"
+            >
+              <input
+                type="radio"
+                name="deleteAction"
+                checked={deleteAction === "archive"}
+                onChange={() => setDeleteAction("archive")}
+                className="mt-0.5 accent-blue-600"
+              />
+              <div>
+                <span className="text-sm font-medium text-slate-800">Archivieren</span>
+                <p className="text-xs text-slate-400 mt-0.5">Assessment wird in den Archiv-Container verschoben. Nur Master-Administratoren können darauf zugreifen.</p>
+              </div>
+            </label>
+            <label
+              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${deleteAction === "delete" ? "border-red-400 bg-red-50/50" : "border-slate-200 hover:bg-slate-50"}`}
+              data-testid="radio-delete"
+            >
+              <input
+                type="radio"
+                name="deleteAction"
+                checked={deleteAction === "delete"}
+                onChange={() => setDeleteAction("delete")}
+                className="mt-0.5 accent-red-600"
+              />
+              <div>
+                <span className="text-sm font-medium text-red-700">Endgültig löschen</span>
+                <p className="text-xs text-slate-400 mt-0.5">Alle zugehörigen Daten werden unwiderruflich entfernt.</p>
+              </div>
+            </label>
+          </div>
+
+          <div className="mb-5">
+            <label className="text-xs font-medium text-slate-600 block mb-1.5">Passwort zur Bestätigung</label>
+            <input
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Ihr Passwort eingeben"
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              data-testid="input-delete-password"
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleDeleteOrArchive(confirmDelete); } }}
+            />
+          </div>
+
+          {deleteError && (
+            <div className="mb-4 p-2.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs" data-testid="text-delete-error">
+              {deleteError}
+            </div>
+          )}
+
           <div className="flex justify-end gap-3">
-            <button type="button" onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50" data-testid="button-cancel-delete">
+            <button type="button" onClick={() => { setConfirmDelete(null); setDeletePassword(""); setDeleteError(""); setDeleteAction("archive"); }} className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50" data-testid="button-cancel-delete">
               Abbrechen
             </button>
-            <button type="button" onClick={() => handleDelete(confirmDelete)} disabled={deletingId === confirmDelete} className="px-5 py-2 text-sm font-medium text-white rounded-lg bg-red-600 hover:opacity-90 disabled:opacity-50" data-testid="button-confirm-delete">
-              {deletingId === confirmDelete ? "Wird gelöscht..." : "Endgültig löschen"}
+            <button
+              type="button"
+              onClick={() => handleDeleteOrArchive(confirmDelete)}
+              disabled={deletingId === confirmDelete || !deletePassword}
+              className={`px-5 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 transition ${deleteAction === "delete" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}
+              data-testid="button-confirm-delete"
+            >
+              {deletingId === confirmDelete
+                ? (deleteAction === "archive" ? "Wird archiviert..." : "Wird gelöscht...")
+                : (deleteAction === "archive" ? "Archivieren" : "Endgültig löschen")
+              }
             </button>
           </div>
         </div>
@@ -467,10 +548,10 @@ export default function DashboardClient({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={(e) => { e.stopPropagation(); setConfirmDelete(a.id); }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-red-50 text-red-500"
-            data-testid={`button-delete-assessment-${a.id}`}
-            title="Löschen"
+            onClick={(e) => { e.stopPropagation(); setConfirmDelete(a.id); setDeletePassword(""); setDeleteError(""); setDeleteAction("archive"); }}
+            className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-slate-100 text-slate-500"
+            data-testid={`button-manage-assessment-${a.id}`}
+            title="Archivieren / Löschen"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />

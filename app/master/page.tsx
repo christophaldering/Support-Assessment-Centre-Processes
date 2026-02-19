@@ -8,6 +8,15 @@ const WS = "aestimamus";
 
 const modules = [
   {
+    id: "archive",
+    title: "Archiv-Container",
+    desc: "Archivierte Assessments einsehen und wiederherstellen",
+    href: "/master/archive",
+    icon: "M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z",
+    color: "from-gray-600 to-gray-800",
+    border: "hover:border-gray-300",
+  },
+  {
     id: "cockpit",
     title: "Enterprise Cockpit",
     desc: "Projekt-Übersicht, KPIs, Assessment-Verwaltung",

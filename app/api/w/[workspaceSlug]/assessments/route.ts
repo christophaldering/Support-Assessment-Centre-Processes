@@ -30,7 +30,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   const url = new URL(_req.url);
   const clientIdFilter = url.searchParams.get("clientId");
 
-  const assessmentWhere: any = { workspaceId: workspace.id };
+  const assessmentWhere: any = { workspaceId: workspace.id, status: { not: "archived" } };
   if (clientIdFilter) {
     assessmentWhere.clientId = clientIdFilter;
   }
