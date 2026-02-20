@@ -6,6 +6,8 @@ import { getModuleFlags, type FeatureFlags } from "@/lib/feature-flags";
 import Link from "next/link";
 import DashboardClient from "./DashboardClient";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: { workspaceSlug: string };
 }

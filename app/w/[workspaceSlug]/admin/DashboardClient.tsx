@@ -901,14 +901,15 @@ export default function DashboardClient({
             </div>
             {modules.map((mod) => {
               const released = featureFlags[mod.moduleKey] ?? false;
+              const accessible = released || canSeeAll;
               if (!released && !canSeeAll) return null;
               return (
                 <Link
                   key={mod.title}
-                  href={released ? mod.href : "#"}
-                  className={`${sidebarNavItemClass(false)} no-underline ${!released ? "opacity-40 pointer-events-none" : ""}`}
+                  href={accessible ? mod.href : "#"}
+                  className={`${sidebarNavItemClass(false)} no-underline ${!accessible ? "opacity-40 pointer-events-none" : ""}`}
                   onClick={(e) => {
-                    if (!released) { e.preventDefault(); return; }
+                    if (!accessible) { e.preventDefault(); return; }
                     setSidebarOpen(false);
                   }}
                   data-testid={`nav-module-${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
@@ -917,12 +918,7 @@ export default function DashboardClient({
                     <ModuleIcon icon={mod.icon} color="currentColor" />
                   </div>
                   <span className="truncate">{mod.title}</span>
-                  {!released && canSeeAll && (
-                    <span className="ml-auto text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 shrink-0 whitespace-nowrap">
-                      Kommt bald
-                    </span>
-                  )}
-                  {released && mod.count !== undefined && (
+                  {mod.count !== undefined && (
                     <span className="ml-auto text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 shrink-0">
                       {mod.count}
                     </span>
@@ -1156,7 +1152,7 @@ export default function DashboardClient({
                 <h3 className="text-sm font-semibold text-blue-800 mb-2">Hinweis zur Modul-Freigabe</h3>
                 <ul className="text-xs text-blue-700 space-y-1.5 list-disc list-inside">
                   <li>Nur freigegebene Module sind für reguläre Benutzer sichtbar und nutzbar.</li>
-                  <li>Als Administrator sehen Sie weiterhin alle Module — auch nicht freigegebene (markiert mit &ldquo;Kommt bald&rdquo;).</li>
+                  <li>Als Administrator haben Sie Zugriff auf alle Module — unabhängig vom Freigabestatus.</li>
                   <li>Die Seite muss nach dem Speichern neu geladen werden, damit die Sidebar-Änderungen sichtbar werden.</li>
                 </ul>
               </div>
