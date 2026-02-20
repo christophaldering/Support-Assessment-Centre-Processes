@@ -37,6 +37,8 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   const tag = url.searchParams.get("tag");
   const clientId = url.searchParams.get("clientId");
   const clientFilter = url.searchParams.get("client");
+  const scopeFilter = url.searchParams.get("scope");
+  const scenarioIdFilter = url.searchParams.get("scenarioId");
   const showArchived = url.searchParams.get("archived") === "true";
 
   const where: any = { workspaceId: workspace.id };
@@ -75,6 +77,14 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
   if (tag) {
     where.tags = { has: tag };
+  }
+
+  if (scopeFilter) {
+    where.scope = scopeFilter;
+  }
+
+  if (scenarioIdFilter) {
+    where.scenarioId = scenarioIdFilter;
   }
 
   if (clientId) {
@@ -146,7 +156,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const { title, description, exerciseType, tags, targetLevels, languagesAvailable, metadataJson, sourceProjectId, sourceContext, basedOnId, clientName, projectName } = await req.json();
+    const { title, description, exerciseType, tags, targetLevels, languagesAvailable, metadataJson, sourceProjectId, sourceContext, basedOnId, clientName, projectName, scope, scenarioId } = await req.json();
 
     if (!title) {
       return NextResponse.json({ error: "Titel ist erforderlich" }, { status: 400 });
@@ -195,6 +205,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         clientId,
         clientName: clientName?.trim() || null,
         projectName: projectName?.trim() || null,
+        scope: scope || "general",
+        scenarioId: scenarioId || null,
       },
       include: {
         _count: { select: { variants: true } },

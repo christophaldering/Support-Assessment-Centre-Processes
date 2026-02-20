@@ -114,6 +114,8 @@ function ModuleIcon({ icon, color }: { icon: string; color: string }) {
       return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>;
     case "casestudy":
       return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>;
+    case "report":
+      return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11.25l-3-3m0 0l-3 3m3-3v7.5" /></svg>;
     default:
       return <svg {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6z" /></svg>;
   }
@@ -587,9 +589,10 @@ export default function DashboardClient({
   const sidebarNavItemClass = (active: boolean) =>
     `w-full flex items-center gap-3 px-4 py-2 text-sm transition-all text-left border-l-[3px] ${
       active
-        ? "text-brand-blue bg-blue-50/60 font-medium border-brand-blue"
+        ? "font-medium border-[#A6473B]"
         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-transparent"
     }`;
+  const activeItemStyle = { color: "#A6473B", backgroundColor: "rgba(166, 71, 59, 0.06)" };
 
   function renderAssessmentList() {
     return (
@@ -802,7 +805,7 @@ export default function DashboardClient({
       {renderCreateModal()}
       {renderDeleteConfirmation()}
 
-      <header className="bg-brand-navy text-white sticky top-0 z-40">
+      <header className="text-white sticky top-0 z-40" style={{ background: "linear-gradient(135deg, #5F1A11 0%, #A6473B 60%, #297587 100%)" }}>
         <div className="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -816,7 +819,8 @@ export default function DashboardClient({
             </button>
             <Link
               href={`/w/${workspaceSlug}/admin`}
-              className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity"
+              className="text-lg font-bold tracking-tight hover:opacity-80 transition-opacity"
+              style={{ fontFamily: "'Satoshi', 'Inter', sans-serif" }}
             >
               {workspaceName}
             </Link>
@@ -854,7 +858,7 @@ export default function DashboardClient({
           }`}
         >
           <div className="px-5 pt-5 pb-3 border-b border-slate-100">
-            <h2 className="text-sm font-bold text-brand-navy truncate">{workspaceName}</h2>
+            <h2 className="text-sm font-bold truncate" style={{ color: "#A6473B", fontFamily: "'Satoshi', 'Inter', sans-serif" }}>{workspaceName}</h2>
             <p className="text-[10px] text-slate-400 mt-0.5">Enterprise Cockpit</p>
           </div>
 
@@ -985,33 +989,34 @@ export default function DashboardClient({
             <>
               <div className="grid md:grid-cols-5 gap-4" data-testid="kpi-grid">
                 <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-assessments">
-                  <p className="text-2xl font-bold text-brand-navy">{localAssessments.length}</p>
+                  <p className="text-2xl font-bold" style={{ color: "#A6473B" }}>{localAssessments.length}</p>
                   <p className="text-xs text-slate-500 mt-1">Assessments</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-active">
-                  <p className="text-2xl font-bold text-emerald-600">{activeCount}</p>
+                  <p className="text-2xl font-bold" style={{ color: "#297587" }}>{activeCount}</p>
                   <p className="text-xs text-slate-500 mt-1">Aktiv</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-teilnehmer">
-                  <p className="text-2xl font-bold text-purple-700">{totalCandidates}</p>
+                  <p className="text-2xl font-bold" style={{ color: "#5F1A11" }}>{totalCandidates}</p>
                   <p className="text-xs text-slate-500 mt-1">Teilnehmer</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-übungen">
-                  <p className="text-2xl font-bold text-emerald-700">{totalExercises}</p>
+                  <p className="text-2xl font-bold" style={{ color: "#115560" }}>{totalExercises}</p>
                   <p className="text-xs text-slate-500 mt-1">Übungen</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-team">
-                  <p className="text-2xl font-bold text-blue-700">{teamUsers.length}</p>
+                  <p className="text-2xl font-bold" style={{ color: "#297587" }}>{teamUsers.length}</p>
                   <p className="text-xs text-slate-500 mt-1">Team</p>
                 </div>
               </div>
 
               <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-schnellzugriff">
-                <h3 className="text-sm font-semibold text-brand-navy mb-3">Schnellzugriff</h3>
+                <h3 className="text-sm font-semibold mb-3" style={{ color: "#A6473B" }}>Schnellzugriff</h3>
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => setShowCreate(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-white rounded-lg bg-brand-navy hover:opacity-90 transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-all"
+                    style={{ backgroundColor: "#A6473B" }}
                     data-testid="quick-action-new-assessment"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -1029,10 +1034,48 @@ export default function DashboardClient({
                     </svg>
                     Benutzer anlegen
                   </Link>
+                  <Link
+                    href={`${base}/gutachten`}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-all"
+                    style={{ backgroundColor: "#297587" }}
+                    data-testid="quick-action-gutachten"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    Gutachten erstellen
+                  </Link>
                 </div>
               </div>
 
               {renderAssessmentList()}
+
+              <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-activity-feed">
+                <h3 className="text-sm font-semibold mb-4" style={{ color: "#A6473B" }}>Letzte Aktivitäten</h3>
+                <div className="space-y-3">
+                  {localAssessments.slice(0, 5).map((a, i) => {
+                    const actions = [
+                      { icon: "📋", text: `Assessment "${a.name}" erstellt`, time: formatDate(a.createdAt), accent: "#A6473B" },
+                      ...(a.candidateCount > 0 ? [{ icon: "👤", text: `${a.candidateCount} Kandidat${a.candidateCount > 1 ? "en" : ""} zugewiesen`, time: formatDate(a.createdAt), accent: "#297587" }] : []),
+                      ...(a.exerciseCount > 0 ? [{ icon: "📝", text: `${a.exerciseCount} Übung${a.exerciseCount > 1 ? "en" : ""} verknüpft`, time: formatDate(a.createdAt), accent: "#115560" }] : []),
+                      ...(a.ratingCount > 0 ? [{ icon: "⭐", text: `${a.ratingCount} Bewertung${a.ratingCount > 1 ? "en" : ""} erfasst`, time: formatDate(a.createdAt), accent: "#5F1A11" }] : []),
+                    ];
+                    return actions.map((act, j) => (
+                      <div key={`${i}-${j}`} className="flex items-start gap-3 py-2 border-b border-slate-50 last:border-0">
+                        <span className="text-sm mt-0.5">{act.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-slate-700 truncate">{act.text}</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">{act.time}</p>
+                        </div>
+                        <div className="w-1.5 h-1.5 rounded-full mt-2 shrink-0" style={{ backgroundColor: act.accent }} />
+                      </div>
+                    ));
+                  }).flat()}
+                  {localAssessments.length === 0 && (
+                    <p className="text-sm text-slate-400 text-center py-4">Noch keine Aktivitäten vorhanden</p>
+                  )}
+                </div>
+              </div>
 
               {renderTimeline()}
 
@@ -1049,7 +1092,7 @@ export default function DashboardClient({
           {activeSection === "module-settings" && canSeeAll && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-brand-navy">Modul-Freigabe</h2>
+                <h2 className="text-xl font-bold" style={{ color: "#A6473B" }}>Modul-Freigabe</h2>
                 <p className="text-sm text-slate-500 mt-1">
                   Steuern Sie, welche Module für Ihre Kollegen sichtbar und nutzbar sind.
                   Nicht freigegebene Module sind nur für Administratoren zugänglich.

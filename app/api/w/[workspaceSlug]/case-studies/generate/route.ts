@@ -220,7 +220,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   try {
     const body = await req.json();
-    const { mode, params: genParams } = body;
+    const { mode, params: genParams, isOverarchingScenario } = body;
 
     if (mode === "generate") {
       const {
@@ -395,6 +395,7 @@ Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokoll
           aiGenerated: true,
           status: "draft",
           referenceDate: referenceDate || null,
+          isOverarchingScenario: isOverarchingScenario === true,
           createdById: session?.userId || null,
         },
       });
@@ -452,6 +453,7 @@ Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokoll
           sourceFileName: fileName || null,
           aiGenerated: true,
           status: "draft",
+          isOverarchingScenario: isOverarchingScenario === true,
           createdById: session?.userId || null,
         },
       });

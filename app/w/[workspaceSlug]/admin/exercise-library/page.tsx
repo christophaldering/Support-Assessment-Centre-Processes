@@ -27,6 +27,8 @@ interface ExerciseLibraryItem {
   projectName?: string;
   downloadAllowed?: boolean;
   archived?: boolean;
+  scope?: string;
+  scenarioId?: string;
 }
 
 interface PendingFile {
@@ -55,6 +57,24 @@ interface AnalysisResult {
 }
 
 const ACCENT = "hsl(14, 48%, 44%)";
+
+const SCOPE_OPTIONS: { key: string; label: string; filterLabel: string }[] = [
+  { key: "general", label: "Allgemein", filterLabel: "Allgemein" },
+  { key: "client", label: "Kundenspezifisch", filterLabel: "Kunde" },
+  { key: "project", label: "Projektspezifisch", filterLabel: "Projekt" },
+  { key: "candidate", label: "Kandidatenspezifisch", filterLabel: "Kandidat" },
+];
+
+const SCOPE_LABELS: Record<string, string> = Object.fromEntries(
+  SCOPE_OPTIONS.map((s) => [s.key, s.label])
+);
+
+const SCOPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  general: { bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200" },
+  client: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  project: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
+  candidate: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+};
 
 const EXERCISE_CATEGORIES: { key: string; label: string }[] = [
   { key: "interview_guide", label: "Interview-Leitfäden" },
@@ -384,12 +404,14 @@ function DetailModal({
   const [editDescription, setEditDescription] = useState(item.description || "");
   const [editSourceContext, setEditSourceContext] = useState(item.sourceContext || item.metadataJson?.sourceContext || "");
   const [editDownloadAllowed, setEditDownloadAllowed] = useState(item.downloadAllowed !== false);
+  const [editScope, setEditScope] = useState(item.scope || "general");
 
   useEffect(() => {
     setEditTitle(item.title);
     setEditDescription(item.description || "");
     setEditSourceContext(item.sourceContext || item.metadataJson?.sourceContext || "");
-  }, [item.id, item.title, item.description, item.sourceContext, item.metadataJson]);
+    setEditScope(item.scope || "general");
+  }, [item.id, item.title, item.description, item.sourceContext, item.metadataJson, item.scope]);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -493,6 +515,7 @@ function DetailModal({
           description: editDescription,
           sourceContext: editSourceContext,
           downloadAllowed: editDownloadAllowed,
+          scope: editScope,
         }),
       });
       if (!res.ok) {
@@ -592,6 +615,33 @@ function DetailModal({
               <p className="text-slate-800 mt-0.5" data-testid="text-modal-created">
                 {new Date(item.createdAt).toLocaleDateString("de-DE")}
               </p>
+            </div>
+            <div>
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Bereich</span>
+              {editing ? (
+                <select
+                  value={editScope}
+                  onChange={(e) => setEditScope(e.target.value)}
+                  className="mt-0.5 w-full text-sm text-slate-800 rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                  data-testid="select-edit-scope"
+                >
+                  {SCOPE_OPTIONS.map((s) => (
+                    <option key={s.key} value={s.key}>{s.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <p className="text-slate-800 mt-0.5" data-testid="text-modal-scope">
+                  {(() => {
+                    const scopeKey = item.scope || "general";
+                    const colors = SCOPE_COLORS[scopeKey] || SCOPE_COLORS.general;
+                    return (
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded border ${colors.bg} ${colors.text} ${colors.border}`}>
+                        {SCOPE_LABELS[scopeKey] || scopeKey}
+                      </span>
+                    );
+                  })()}
+                </p>
+              )}
             </div>
             {(author || editing) && (
               <div>
@@ -758,6 +808,7 @@ function DetailModal({
                   setEditTitle(item.title);
                   setEditDescription(item.description || "");
                   setEditSourceContext(item.sourceContext || item.metadataJson?.sourceContext || "");
+                  setEditScope(item.scope || "general");
                 }}
                 className="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-sm hover:bg-slate-50 transition"
                 data-testid="button-cancel-edit"
@@ -877,6 +928,7 @@ export default function ExerciseLibraryPage() {
 
   const [clients, setClients] = useState<{id: string; name: string; _count?: {exerciseLibraryItems: number}}[]>([]);
   const [activeClientFilter, setActiveClientFilter] = useState<string | null>(null);
+  const [activeScopeFilter, setActiveScopeFilter] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
 
   const fetchItems = useCallback(async () => {
@@ -890,6 +942,9 @@ export default function ExerciseLibraryPage() {
         params.set("client", "neutral");
       } else if (activeClientFilter) {
         params.set("clientId", activeClientFilter);
+      }
+      if (activeScopeFilter) {
+        params.set("scope", activeScopeFilter);
       }
       const qs = params.toString();
       if (qs) url += `?${qs}`;
@@ -906,7 +961,7 @@ export default function ExerciseLibraryPage() {
     } finally {
       setLoading(false);
     }
-  }, [slug, activeClientFilter, showArchived]);
+  }, [slug, activeClientFilter, activeScopeFilter, showArchived]);
 
   const fetchClients = useCallback(async () => {
     try {
@@ -1570,6 +1625,40 @@ export default function ExerciseLibraryPage() {
           )}
         </section>
 
+        <div className="flex items-center gap-2 mb-6" data-testid="scope-filter-bar">
+          <span className="text-xs font-medium text-slate-500 mr-1">Bereich:</span>
+          <button
+            onClick={() => setActiveScopeFilter(null)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              activeScopeFilter === null
+                ? "text-white"
+                : "text-slate-600 bg-slate-100 hover:bg-slate-200"
+            }`}
+            style={activeScopeFilter === null ? { backgroundColor: ACCENT } : undefined}
+            data-testid="button-scope-all"
+          >
+            Alle
+          </button>
+          {SCOPE_OPTIONS.map((scope) => {
+            const colors = SCOPE_COLORS[scope.key];
+            return (
+              <button
+                key={scope.key}
+                onClick={() => setActiveScopeFilter(scope.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  activeScopeFilter === scope.key
+                    ? "text-white"
+                    : `${colors.bg} ${colors.text} hover:opacity-80`
+                }`}
+                style={activeScopeFilter === scope.key ? { backgroundColor: ACCENT } : undefined}
+                data-testid={`button-scope-${scope.key}`}
+              >
+                {scope.filterLabel}
+              </button>
+            );
+          })}
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <SpinnerIcon className="h-6 w-6 text-slate-400" />
@@ -1753,6 +1842,28 @@ export default function ExerciseLibraryPage() {
                             {item.title}
                           </h4>
                           <div className="flex items-center gap-2 shrink-0 ml-2">
+                            {(() => {
+                              const scopeKey = item.scope || "general";
+                              const colors = SCOPE_COLORS[scopeKey] || SCOPE_COLORS.general;
+                              return (
+                                <span
+                                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${colors.bg} ${colors.text} ${colors.border}`}
+                                  data-testid={`badge-scope-${item.id}`}
+                                >
+                                  {SCOPE_LABELS[scopeKey] || scopeKey}
+                                </span>
+                              );
+                            })()}
+                            {item.scenarioId && (
+                              <Link
+                                href={`/w/${slug}/admin/modules/case-study/${item.scenarioId}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-[10px] font-medium text-[#297587] bg-[#297587]/10 border border-[#297587]/20 px-1.5 py-0.5 rounded hover:bg-[#297587]/20 transition-colors"
+                                data-testid={`badge-scenario-${item.id}`}
+                              >
+                                Szenario-verknüpft
+                              </Link>
+                            )}
                             {item.archived && (
                               <span className="text-[10px] font-medium text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded" data-testid={`badge-archived-${item.id}`}>
                                 Archiviert

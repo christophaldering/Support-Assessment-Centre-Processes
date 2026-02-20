@@ -17,7 +17,16 @@ interface CaseStudySummary {
   aiGenerated: boolean;
   logoUrl: string | null;
   referenceDate: string | null;
+  isOverarchingScenario?: boolean;
   createdAt: string;
+  _count?: { derivedExercises: number };
+}
+
+interface DerivedExercise {
+  id: string;
+  title: string;
+  exerciseType: string;
+  scope: string;
 }
 
 type Mode = "list" | "choose" | "upload" | "generate" | "plan" | "preview";
@@ -85,6 +94,9 @@ export default function CaseStudyBuilderPage() {
   const [previewData, setPreviewData] = useState<any>(null);
   const [documentPlan, setDocumentPlan] = useState<DocumentPlan | null>(null);
   const [planning, setPlanning] = useState(false);
+  const [isOverarchingScenario, setIsOverarchingScenario] = useState(false);
+  const [expandedScenarioId, setExpandedScenarioId] = useState<string | null>(null);
+  const [derivedExercises, setDerivedExercises] = useState<Record<string, DerivedExercise[]>>({});
 
   useEffect(() => {
     fetchCaseStudies();
@@ -100,6 +112,27 @@ export default function CaseStudyBuilderPage() {
     } catch {
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchDerivedExercises(scenarioId: string) {
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/exercise-library?scenarioId=${scenarioId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDerivedExercises((prev) => ({ ...prev, [scenarioId]: data }));
+      }
+    } catch {}
+  }
+
+  function toggleScenarioExpand(scenarioId: string) {
+    if (expandedScenarioId === scenarioId) {
+      setExpandedScenarioId(null);
+    } else {
+      setExpandedScenarioId(scenarioId);
+      if (!derivedExercises[scenarioId]) {
+        fetchDerivedExercises(scenarioId);
+      }
     }
   }
 
@@ -150,6 +183,7 @@ export default function CaseStudyBuilderPage() {
             textContent: uploadText,
             fileName: uploadFile?.name,
           },
+          isOverarchingScenario,
         }),
       });
 
@@ -243,6 +277,7 @@ export default function CaseStudyBuilderPage() {
         body: JSON.stringify({
           mode: "generate",
           params: { ...genParams, documentPlan },
+          isOverarchingScenario,
         }),
       });
 
@@ -281,6 +316,7 @@ export default function CaseStudyBuilderPage() {
         body: JSON.stringify({
           mode: "generate",
           params: genParams,
+          isOverarchingScenario,
         }),
       });
 
@@ -464,9 +500,26 @@ export default function CaseStudyBuilderPage() {
                               {cs.companyName}
                             </h3>
                             {statusBadge(cs.status)}
+                            {cs.isOverarchingScenario && (
+                              <span
+                                className="text-[10px] font-medium text-[#297587] bg-[#297587]/10 border border-[#297587]/20 rounded-full px-2 py-0.5"
+                                data-testid={`badge-overarching-${cs.id}`}
+                              >
+                                Rahmenszenario
+                              </span>
+                            )}
                             {cs.aiGenerated && (
                               <span className="text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
                                 KI
+                              </span>
+                            )}
+                            {cs._count && cs._count.derivedExercises > 0 && (
+                              <span
+                                className="text-[10px] font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5 cursor-pointer hover:bg-purple-100 transition-colors"
+                                onClick={() => toggleScenarioExpand(cs.id)}
+                                data-testid={`badge-derived-count-${cs.id}`}
+                              >
+                                {cs._count.derivedExercises} Übung{cs._count.derivedExercises !== 1 ? "en" : ""} verknüpft
                               </span>
                             )}
                           </div>
@@ -533,6 +586,34 @@ export default function CaseStudyBuilderPage() {
                         </button>
                       </div>
                     </div>
+                    {expandedScenarioId === cs.id && (
+                      <div className="mt-4 pt-4 border-t border-slate-100" data-testid={`section-derived-exercises-${cs.id}`}>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
+                          Verknüpfte Übungen
+                        </h4>
+                        {!derivedExercises[cs.id] ? (
+                          <p className="text-xs text-slate-400">Laden...</p>
+                        ) : derivedExercises[cs.id].length === 0 ? (
+                          <p className="text-xs text-slate-400">Keine verknüpften Übungen gefunden.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {derivedExercises[cs.id].map((ex) => (
+                              <Link
+                                key={ex.id}
+                                href={`/w/${workspaceSlug}/admin/exercise-library`}
+                                className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                                data-testid={`link-derived-exercise-${ex.id}`}
+                              >
+                                <span className="text-sm text-slate-700 font-medium">{ex.title}</span>
+                                <span className="text-[10px] font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded">
+                                  {ex.exerciseType}
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -545,9 +626,28 @@ export default function CaseStudyBuilderPage() {
             <h1 className="text-2xl font-bold tracking-tight mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
               Neue Fallstudie erstellen
             </h1>
-            <p className="text-sm text-slate-400 mb-10">
+            <p className="text-sm text-slate-400 mb-6">
               Wählen Sie, wie Sie die Fallstudie erstellen möchten
             </p>
+
+            <label
+              className="flex items-center gap-3 p-4 mb-6 rounded-lg border border-slate-200 hover:border-[#297587] cursor-pointer transition-colors"
+              data-testid="toggle-overarching-scenario"
+            >
+              <input
+                type="checkbox"
+                checked={isOverarchingScenario}
+                onChange={(e) => setIsOverarchingScenario(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-[#297587] focus:ring-[#297587]"
+                data-testid="checkbox-overarching-scenario"
+              />
+              <div>
+                <span className="text-sm font-medium text-slate-700">Als Rahmenszenario verwenden</span>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Rahmenszenarios können mit mehreren Übungen aus der Bibliothek verknüpft werden
+                </p>
+              </div>
+            </label>
 
             <div className="grid md:grid-cols-2 gap-6">
               <button

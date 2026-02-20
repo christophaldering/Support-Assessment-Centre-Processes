@@ -190,6 +190,13 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       moduleKey: "analytics",
     },
     {
+      title: "Gutachten-Generator",
+      description: "Ergebnisberichte erstellen: One-Pager, Gutachten, Gesamtauswertungen — KI-gestützt",
+      href: `${base}/gutachten`,
+      icon: "report",
+      moduleKey: "reports",
+    },
+    {
       title: "Corporate Design",
       description: "Branding-Regeln definieren, Style Guides hochladen und per KI analysieren",
       href: `${base}/brand-rules`,

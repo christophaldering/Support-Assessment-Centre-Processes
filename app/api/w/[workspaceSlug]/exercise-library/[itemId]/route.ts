@@ -83,7 +83,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
     }
 
     const body = await req.json();
-    const { title, description, tags, exerciseType, targetLevels, languagesAvailable, metadataJson, qualityStatus, sourceContext, downloadAllowed, archive } = body;
+    const { title, description, tags, exerciseType, targetLevels, languagesAvailable, metadataJson, qualityStatus, sourceContext, downloadAllowed, archive, scope, scenarioId } = body;
 
     if (archive === true && !existing.archivedAt) {
       const item = await prisma.exerciseLibraryItem.update({
@@ -119,6 +119,8 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         ...(qualityStatus !== undefined && { qualityStatus }),
         ...(sourceContext !== undefined && { sourceContext }),
         ...(downloadAllowed !== undefined && { downloadAllowed: !!downloadAllowed }),
+        ...(scope !== undefined && { scope }),
+        ...(scenarioId !== undefined && { scenarioId: scenarioId || null }),
       },
       include: {
         variants: { orderBy: { createdAt: "desc" } },

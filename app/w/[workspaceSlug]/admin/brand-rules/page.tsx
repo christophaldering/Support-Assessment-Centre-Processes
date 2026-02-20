@@ -127,6 +127,222 @@ export default function BrandRulesPage() {
   );
 }
 
+interface StyleGuide {
+  id: string;
+  title: string;
+  sourceType: string;
+  fileObjectPath: string | null;
+  analysisJson: Record<string, unknown> | null;
+  status: string;
+  version: string;
+  createdAt: string;
+}
+
+const STYLE_GUIDE_STATUS: Record<string, { bg: string; text: string; label: string }> = {
+  uploaded: { bg: "bg-amber-50", text: "text-amber-600", label: "Hochgeladen" },
+  analyzed: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Analysiert" },
+};
+
+function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; router: ReturnType<typeof useRouter> }) {
+  const [styleGuides, setStyleGuides] = useState<StyleGuide[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
+  const fetchStyleGuides = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/brand-rules/style-guides`);
+      if (res.status === 401) { router.push(`/w/${workspaceSlug}/login`); return; }
+      if (!res.ok) throw new Error();
+      setStyleGuides(await res.json());
+    } catch { /* ignore */ }
+    finally { setLoading(false); }
+  }, [workspaceSlug, router]);
+
+  useEffect(() => { fetchStyleGuides(); }, [fetchStyleGuides]);
+
+  const handleUpload = async () => {
+    if (!uploadFile || !uploadTitle.trim()) return;
+    setUploading(true);
+    setUploadError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", uploadFile);
+      formData.append("title", uploadTitle.trim());
+      const res = await fetch(`/api/w/${workspaceSlug}/brand-rules/style-guides`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Upload fehlgeschlagen");
+      }
+      setUploadFile(null);
+      setUploadTitle("");
+      setShowUpload(false);
+      fetchStyleGuides();
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : "Upload fehlgeschlagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const parseAnalysis = (analysis: Record<string, unknown> | null) => {
+    if (!analysis) return null;
+    const colors = analysis.colors as Record<string, string> | undefined;
+    const fonts = analysis.typography as Record<string, string> | undefined;
+    const principles = analysis.principles as string[] | undefined;
+    return { colors, fonts, principles };
+  };
+
+  return (
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-[#1a1a2e]" style={{ fontFamily: "Satoshi, sans-serif" }} data-testid="heading-style-guides">
+            Style Guides
+          </h2>
+          <p className="text-sm text-slate-500">Hochgeladene Marken-Styleguides für diesen Workspace</p>
+        </div>
+        <button
+          onClick={() => setShowUpload(!showUpload)}
+          data-testid="button-toggle-upload"
+          className="rounded-lg text-white text-sm font-medium px-4 py-2 transition-colors"
+          style={{ backgroundColor: showUpload ? "#94a3b8" : "#A6473B" }}
+        >
+          {showUpload ? "Abbrechen" : "+ Style Guide hochladen"}
+        </button>
+      </div>
+
+      {showUpload && (
+        <div className="bg-[#EFF4F5] border border-slate-200 rounded-xl p-6 mb-4" data-testid="section-upload-form">
+          <h3 className="text-sm font-semibold text-[#1a1a2e] mb-4" style={{ fontFamily: "Satoshi, sans-serif" }}>
+            Neuen Style Guide hochladen
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Titel *</label>
+              <input
+                type="text"
+                value={uploadTitle}
+                onChange={(e) => setUploadTitle(e.target.value)}
+                data-testid="input-upload-title"
+                className={inputClass}
+                placeholder="z.B. Corporate Design Styleguide 2026"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">PDF-Datei *</label>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                data-testid="input-upload-file"
+                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#A6473B] file:text-white hover:file:opacity-90 file:cursor-pointer"
+              />
+            </div>
+            {uploadError && <p className="text-sm text-red-500" data-testid="text-upload-error">{uploadError}</p>}
+            <button
+              onClick={handleUpload}
+              disabled={!uploadFile || !uploadTitle.trim() || uploading}
+              data-testid="button-upload-styleguide"
+              className="rounded-lg text-white text-sm font-medium px-6 py-2.5 transition-colors disabled:opacity-50"
+              style={{ backgroundColor: "#A6473B" }}
+            >
+              {uploading ? "Wird hochgeladen…" : "Hochladen"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {loading && <p className="text-sm text-slate-400">Laden…</p>}
+
+      {!loading && styleGuides.length === 0 && !showUpload && (
+        <div className="bg-white border border-dashed border-slate-300 rounded-xl p-6 text-center text-slate-400 text-sm" data-testid="text-no-style-guides">
+          Noch keine Style Guides hochgeladen.
+        </div>
+      )}
+
+      {styleGuides.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {styleGuides.map((sg) => {
+            const badge = STYLE_GUIDE_STATUS[sg.status] || STYLE_GUIDE_STATUS.uploaded;
+            const analysis = parseAnalysis(sg.analysisJson);
+            return (
+              <div
+                key={sg.id}
+                className="bg-white border border-slate-200 rounded-xl p-5"
+                data-testid={`card-style-guide-${sg.id}`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] text-sm" data-testid={`text-sg-title-${sg.id}`}>
+                      {sg.title}
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {sg.sourceType === "pdf_upload" ? "PDF Upload" : sg.sourceType} · {formatDate(sg.createdAt)}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge.bg} ${badge.text}`}
+                    data-testid={`badge-sg-status-${sg.id}`}
+                  >
+                    {badge.label}
+                  </span>
+                </div>
+
+                {analysis && (
+                  <div className="mt-3 pt-3 border-t border-slate-100 space-y-2" data-testid={`section-sg-analysis-${sg.id}`}>
+                    {analysis.colors && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-600 mb-1">Farben</p>
+                        <div className="flex gap-1.5">
+                          {Object.entries(analysis.colors).map(([key, val]) => (
+                            <div key={key} className="flex items-center gap-1">
+                              <div
+                                className="w-5 h-5 rounded border border-slate-200"
+                                style={{ backgroundColor: val }}
+                                title={`${key}: ${val}`}
+                              />
+                              <span className="text-[10px] text-slate-400 font-mono">{val}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {analysis.fonts && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-600 mb-1">Schriften</p>
+                        <p className="text-xs text-slate-500">
+                          {Object.entries(analysis.fonts).map(([k, v]) => `${k}: ${v}`).join(", ")}
+                        </p>
+                      </div>
+                    )}
+                    {analysis.principles && analysis.principles.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-600 mb-1">Gestaltungsprinzipien</p>
+                        <ul className="text-xs text-slate-500 list-disc list-inside">
+                          {analysis.principles.slice(0, 3).map((p, i) => (
+                            <li key={i}>{p}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router: ReturnType<typeof useRouter> }) {
   const [ruleSets, setRuleSets] = useState<BrandRuleSet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,6 +397,8 @@ function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router:
 
   return (
     <div className="space-y-6">
+      <StyleGuidesSection workspaceSlug={workspaceSlug} router={router} />
+
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500" data-testid="text-ruleset-count">{ruleSets.length} Regelwerke</p>
         <button

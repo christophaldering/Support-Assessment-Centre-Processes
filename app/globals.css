@@ -3,16 +3,36 @@
 @tailwind utilities;
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
+@import url("https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,300i,400i,500i,700i&display=swap");
 
 @layer base {
   :root {
     --color-navy: 15 23 42;
     --color-blue: 59 130 246;
+    --ae-primary: #A6473B;
+    --ae-primary-dark: #5F1A11;
+    --ae-accent: #297587;
+    --ae-accent-dark: #115560;
+    --ae-accent-medium: #B5D6DE;
+    --ae-accent-light: #EFF4F5;
+    --ae-ziegel: #C28579;
+    --ae-beere: #CD4145;
+    --ae-flamme: #990000;
+    --ae-aprikose: #BF4B1B;
+    --ae-minze: #0C9086;
+    --ae-nacht: #154570;
+    --ae-eis: #B5D6DF;
+    --ae-gletscher: #3EC0CA;
   }
 
   body {
     @apply bg-white text-slate-900 antialiased;
     font-family: "Inter", system-ui, sans-serif;
+  }
+
+  .workspace-aestimamus body,
+  .workspace-aestimamus {
+    font-family: "Satoshi", "Inter", system-ui, sans-serif;
   }
 
   h1,

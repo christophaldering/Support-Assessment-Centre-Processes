@@ -59,8 +59,10 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       status: true,
       aiGenerated: true,
       logoUrl: true,
+      isOverarchingScenario: true,
       createdAt: true,
       updatedAt: true,
+      _count: { select: { derivedExercises: true } },
     },
   });
 
@@ -89,7 +91,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   try {
     const body = await req.json();
-    const { title, subtitle, companyName, description, type, difficulty, dataJson, questionsJson } = body;
+    const { title, subtitle, companyName, description, type, difficulty, dataJson, questionsJson, isOverarchingScenario } = body;
 
     if (!title || !companyName || !dataJson) {
       return NextResponse.json({ error: "Titel, Unternehmensname und Daten sind erforderlich" }, { status: 400 });
@@ -109,6 +111,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         sourceType: "manual",
         status: "draft",
         aiGenerated: false,
+        isOverarchingScenario: isOverarchingScenario === true,
         createdById: session?.userId || null,
       },
     });

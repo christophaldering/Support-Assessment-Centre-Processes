@@ -39,6 +39,7 @@ model Workspace {
   consentRecords     ConsentRecord[]
   audioRecordings    AudioRecording[]
   reports            Report[]
+  reportTemplates    ReportTemplate[]
   usageEvents        UsageEvent[]
 
   accessRequests     AccessRequest[]
@@ -522,6 +523,30 @@ model Report {
   @@map("reports")
 }
 
+model ReportTemplate {
+  id                  String   @id @default(uuid())
+  workspaceId         String   @map("workspace_id")
+  name                String
+  reportType          String   @map("report_type")
+  sourceFilePath      String?  @map("source_file_path")
+  sourceFileName      String?  @map("source_file_name")
+  sourceFileSize      Int?     @map("source_file_size")
+  anonymizedFilePath  String?  @map("anonymized_file_path")
+  isAnonymized        Boolean  @default(false) @map("is_anonymized")
+  structureJson       Json?    @map("structure_json")
+  styleRulesJson      Json?    @map("style_rules_json")
+  analysisStatus      String   @default("pending") @map("analysis_status")
+  status              String   @default("draft")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  workspace           Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@index([workspaceId, reportType])
+  @@map("report_templates")
+}
+
 model UsageEvent {
   id           String   @id @default(uuid())
   workspaceId  String   @map("workspace_id")
@@ -590,6 +615,8 @@ model ExerciseLibraryItem {
   description        String?
   tags               String[]
   exerciseType       String   @map("exercise_type")
+  scope              String   @default("general")
+  scenarioId         String?  @map("scenario_id")
   targetLevels       String[] @map("target_levels")
   languagesAvailable String[] @map("languages_available")
   metadataJson       Json?    @map("metadata_json")
@@ -608,11 +635,14 @@ model ExerciseLibraryItem {
 
   workspace          Workspace @relation(fields: [workspaceId], references: [id])
   client             Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  scenario           CaseStudy? @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
   variants           ExerciseLibraryVariant[]
 
   @@index([workspaceId])
   @@index([workspaceId, exerciseType])
   @@index([workspaceId, clientId])
+  @@index([workspaceId, scope])
+  @@index([scenarioId])
   @@map("exercise_library_items")
 }
 
@@ -821,28 +851,30 @@ model SharedObserverNote {
 }
 
 model CaseStudy {
-  id                String   @id @default(uuid())
-  workspaceId       String   @map("workspace_id")
-  title             String
-  subtitle          String?
-  description       String?
-  companyName       String   @map("company_name")
-  type              String   @default("turnaround")
-  difficulty        String   @default("medium")
-  dataJson          Json     @map("data_json")
-  questionsJson     Json?    @map("questions_json")
-  sourceType        String   @default("manual") @map("source_type")
-  sourceFilePath    String?  @map("source_file_path")
-  sourceFileName    String?  @map("source_file_name")
-  status            String   @default("draft")
-  aiGenerated       Boolean  @default(false) @map("ai_generated")
-  createdById       String?  @map("created_by_id")
-  referenceDate String?  @map("reference_date")
-  logoUrl       String?  @map("logo_url")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id                    String   @id @default(uuid())
+  workspaceId           String   @map("workspace_id")
+  title                 String
+  subtitle              String?
+  description           String?
+  companyName           String   @map("company_name")
+  type                  String   @default("turnaround")
+  difficulty            String   @default("medium")
+  isOverarchingScenario Boolean  @default(false) @map("is_overarching_scenario")
+  dataJson              Json     @map("data_json")
+  questionsJson         Json?    @map("questions_json")
+  sourceType            String   @default("manual") @map("source_type")
+  sourceFilePath        String?  @map("source_file_path")
+  sourceFileName        String?  @map("source_file_name")
+  status                String   @default("draft")
+  aiGenerated           Boolean  @default(false) @map("ai_generated")
+  createdById           String?  @map("created_by_id")
+  referenceDate         String?  @map("reference_date")
+  logoUrl               String?  @map("logo_url")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
-  workspace         Workspace @relation(fields: [workspaceId], references: [id])
+  workspace             Workspace @relation(fields: [workspaceId], references: [id])
+  derivedExercises      ExerciseLibraryItem[]
 
   @@index([workspaceId])
   @@map("case_studies")
