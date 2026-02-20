@@ -46,6 +46,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 ## Recent Changes (Feb 2026)
 
 *   Feature flag system implemented for phased module releases
+*   All R1–R6 modules released: Users, Assessments, Requirements, Competencies, Exercise Library, Modul-Designer, Case-Studio, Observation Sheets, Analytics, Reports, Audio, Consents, Theme, Brand Rules, Intelligence
 *   Login error messages improved (German, specific per error type)
 *   Role-based routing fixed (CANDIDATE → portal, OBSERVER → observer view, others → cockpit)
 *   Cross-tenant authorization hardened for feature-flags API
