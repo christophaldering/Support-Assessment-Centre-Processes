@@ -40,6 +40,16 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 *   **Versioning & Locking:** MTMM matrices are versioned, with automatic locking upon rating submission to prevent modifications.
 *   **Theming & Branding:** Provides a brand rule set management system for defining and applying corporate identity rules, with AI parsing of style guides (restricted to MASTER_ADMIN role).
 *   **Exercise Matching:** Implements a scoring algorithm to match library exercises to requirements, with planned AI enhancement for contextual fit and adaptation suggestions.
+*   **Feature Flag System:** Module-level release management (`lib/feature-flags.ts`). Each workspace stores `featureFlags` (JSON) controlling which modules are visible to regular users. Admins see all modules with "Kommt bald" badges on unreleased ones. Managed via "Modul-Freigabe" section in dashboard and API at `/api/w/[slug]/feature-flags`. Workspace-scoped authorization enforced.
+*   **Release Strategy:** Phased rollout approach — R1 (Login, Users, Assessments), R2 (Requirements, Competencies, Scales), R3 (Exercise Library, Observation Sheets, Observer Rating), R4 (Consolidation, Reports, Analytics), R5 (Portal, Consent, Audio, Collaboration), R6 (Intelligence modules).
+
+## Recent Changes (Feb 2026)
+
+*   Feature flag system implemented for phased module releases
+*   Login error messages improved (German, specific per error type)
+*   Role-based routing fixed (CANDIDATE → portal, OBSERVER → observer view, others → cockpit)
+*   Cross-tenant authorization hardened for feature-flags API
+*   All user passwords reset to "Christoph", googlemail account given ADMIN role
 
 ## External Dependencies
 

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { getWorkspaceAuth, hasMasterAuth, getUserSession } from "@/lib/session";
 import { ensureHex } from "@/lib/color-utils";
+import { getModuleFlags, type FeatureFlags } from "@/lib/feature-flags";
 import Link from "next/link";
 import DashboardClient from "./DashboardClient";
 
@@ -14,10 +15,11 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   const masterAuth = hasMasterAuth();
   const userSession = getUserSession();
 
+  const cockpitRoles = ["ADMIN", "WORKSPACE_ADMIN", "MASTER_ADMIN", "MODERATOR", "PROJECT_OFFICE", "PROJECT_ASSISTANT", "HR_CLIENT", "CLIENT", "OBSERVER"];
   const hasUserAccess =
     userSession &&
     userSession.workspaceSlug === params.workspaceSlug &&
-    !userSession.roles.includes("CANDIDATE");
+    userSession.roles.some(r => cockpitRoles.includes(r));
 
   if (!masterAuth && wsAuth !== params.workspaceSlug && !hasUserAccess) {
     redirect(`/w/${params.workspaceSlug}/login`);
@@ -128,6 +130,9 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
     status: u.status,
   }));
 
+  const isAdmin = !!masterAuth || userSession?.roles?.some(r => ["ADMIN", "WORKSPACE_ADMIN", "MASTER_ADMIN"].includes(r));
+  const featureFlags = getModuleFlags(workspace.featureFlags as Record<string, boolean> | null);
+
   const base = `/w/${params.workspaceSlug}/admin`;
 
   const modules = [
@@ -136,12 +141,14 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       description: "Kompetenzmodelle, Verhaltensanker und MTMM-Matrix verwalten",
       href: `${base}/competencies`,
       icon: "competency",
+      moduleKey: "competencies",
     },
     {
       title: "Anforderungsanalyse",
       description: "Anforderungsprofile erstellen und abgleichen",
       href: `${base}/requirements`,
       icon: "target",
+      moduleKey: "requirements",
     },
     {
       title: "Baustein-Bibliothek",
@@ -150,18 +157,21 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       icon: "library",
       count: exerciseLibCount,
       countLabel: "Bausteine",
+      moduleKey: "exercise_library",
     },
     {
       title: "Modul-Designer",
       description: "Assessment-Bausteine erstellen, aus der Bibliothek übernehmen oder per KI generieren",
       href: `${base}/modules`,
       icon: "builder",
+      moduleKey: "modules",
     },
     {
       title: "Case-Studio",
       description: "Fallstudien erstellen: Upload bestehender Dokumente oder KI-gestützte Generierung",
       href: `${base}/modules/case-study-builder`,
       icon: "casestudy",
+      moduleKey: "case_studio",
     },
     {
       title: "Beobachtungsbogen-Tool",
@@ -170,24 +180,28 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       icon: "clipboard",
       count: observationTemplateCount,
       countLabel: "Vorlagen",
+      moduleKey: "observation_sheets",
     },
     {
       title: "Analytics & Berichte",
       description: "Normwerte, Benchmarks, Kompetenzprofile und Berichtsgenerierung",
       href: `${base}/analytics`,
       icon: "chart",
+      moduleKey: "analytics",
     },
     {
       title: "Corporate Design",
       description: "Branding-Regeln definieren, Style Guides hochladen und per KI analysieren",
       href: `${base}/brand-rules`,
       icon: "palette",
+      moduleKey: "brand_rules",
     },
     {
       title: "Advanced Intelligence",
       description: "KI-gestützte Diagnostik: Predictive Success, Entwicklungspfade, Hypothesen",
       href: `${base}/intelligence`,
       icon: "brain",
+      moduleKey: "intelligence",
     },
   ];
 
@@ -203,7 +217,9 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
       bgColor={bgColor}
       headingFont={headingFont}
       isMaster={!!masterAuth}
+      isAdmin={!!isAdmin}
       userRoles={userSession?.roles ?? []}
+      featureFlags={featureFlags}
     />
   );
 }

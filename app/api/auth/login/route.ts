@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const { email, password, workspaceSlug } = await req.json();
 
     if (!email || !password || !workspaceSlug) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+      return NextResponse.json({ error: "Bitte alle Felder ausfüllen." }, { status: 400 });
     }
 
     const workspace = await prisma.workspace.findUnique({
@@ -16,20 +16,24 @@ export async function POST(req: NextRequest) {
     });
 
     if (!workspace) {
-      return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+      return NextResponse.json({ error: "Workspace nicht gefunden. Bitte den Workspace-Namen prüfen." }, { status: 404 });
     }
 
     const user = await prisma.user.findUnique({
       where: { email_workspaceId: { email: email.toLowerCase().trim(), workspaceId: workspace.id } },
     });
 
-    if (!user || user.status !== "active") {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: "Kein Konto mit dieser E-Mail-Adresse in diesem Workspace gefunden." }, { status: 401 });
+    }
+
+    if (user.status !== "active") {
+      return NextResponse.json({ error: "Dieses Konto ist derzeit deaktiviert. Bitte den Workspace-Administrator kontaktieren." }, { status: 401 });
     }
 
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json({ error: "Falsches Passwort. Bitte erneut versuchen." }, { status: 401 });
     }
 
     setUserSession({
@@ -51,6 +55,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ error: "Anfrage konnte nicht verarbeitet werden." }, { status: 400 });
   }
 }

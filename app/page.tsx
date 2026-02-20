@@ -517,6 +517,10 @@ export default function LandingPage() {
         const data = await res.json();
         if (data.user.forcePasswordChange) {
           router.push(`/w/${workspaceSlug}/change-password`);
+        } else if (data.user.roles.includes("CANDIDATE")) {
+          router.push(`/w/${workspaceSlug}/assessment`);
+        } else if (data.user.roles.length === 1 && data.user.roles[0] === "OBSERVER") {
+          router.push(`/w/${workspaceSlug}/observer`);
         } else {
           router.push(`/w/${workspaceSlug}/admin`);
         }

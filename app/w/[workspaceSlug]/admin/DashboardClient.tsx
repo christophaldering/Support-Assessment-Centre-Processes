@@ -39,6 +39,7 @@ interface ModuleItem {
   icon: string;
   count?: number;
   countLabel?: string;
+  moduleKey: string;
 }
 
 const designModeLabels: Record<string, { de: string; icon: string }> = {
@@ -72,7 +73,9 @@ interface Props {
   bgColor: string;
   headingFont: string;
   isMaster: boolean;
+  isAdmin: boolean;
   userRoles: string[];
+  featureFlags: Record<string, boolean>;
 }
 
 const statusLabels: Record<string, { de: string; color: string; bg: string }> = {
@@ -118,8 +121,9 @@ function ModuleIcon({ icon, color }: { icon: string; color: string }) {
 
 export default function DashboardClient({
   assessments, users, modules, workspaceSlug, workspaceName,
-  primary, textColor, bgColor, headingFont, isMaster, userRoles,
+  primary, textColor, bgColor, headingFont, isMaster, isAdmin, userRoles, featureFlags,
 }: Props) {
+  const canSeeAll = isMaster || isAdmin;
   const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -142,8 +146,11 @@ export default function DashboardClient({
   const [deleteError, setDeleteError] = useState("");
   const [collapsedClients, setCollapsedClients] = useState<Set<string>>(new Set());
   const [collapsedRoles, setCollapsedRoles] = useState<Set<string>>(new Set());
-  const [activeSection, setActiveSection] = useState<"dashboard" | "assessments">("dashboard");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "assessments" | "module-settings">("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [localFlags, setLocalFlags] = useState<Record<string, boolean>>({ ...featureFlags });
+  const [savingFlags, setSavingFlags] = useState(false);
+  const [flagSaved, setFlagSaved] = useState(false);
 
   const base = `/w/${workspaceSlug}/admin`;
 
@@ -888,25 +895,37 @@ export default function DashboardClient({
             <div className="px-4 mt-4 mb-1">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Werkzeuge</p>
             </div>
-            {modules.map((mod) => (
-              <Link
-                key={mod.title}
-                href={mod.href}
-                className={`${sidebarNavItemClass(false)} no-underline`}
-                onClick={() => setSidebarOpen(false)}
-                data-testid={`nav-module-${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-              >
-                <div className="w-4 h-4 shrink-0 flex items-center justify-center">
-                  <ModuleIcon icon={mod.icon} color="currentColor" />
-                </div>
-                <span className="truncate">{mod.title}</span>
-                {mod.count !== undefined && (
-                  <span className="ml-auto text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 shrink-0">
-                    {mod.count}
-                  </span>
-                )}
-              </Link>
-            ))}
+            {modules.map((mod) => {
+              const released = featureFlags[mod.moduleKey] ?? false;
+              if (!released && !canSeeAll) return null;
+              return (
+                <Link
+                  key={mod.title}
+                  href={released ? mod.href : "#"}
+                  className={`${sidebarNavItemClass(false)} no-underline ${!released ? "opacity-40 pointer-events-none" : ""}`}
+                  onClick={(e) => {
+                    if (!released) { e.preventDefault(); return; }
+                    setSidebarOpen(false);
+                  }}
+                  data-testid={`nav-module-${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                >
+                  <div className="w-4 h-4 shrink-0 flex items-center justify-center">
+                    <ModuleIcon icon={mod.icon} color="currentColor" />
+                  </div>
+                  <span className="truncate">{mod.title}</span>
+                  {!released && canSeeAll && (
+                    <span className="ml-auto text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 shrink-0 whitespace-nowrap">
+                      Kommt bald
+                    </span>
+                  )}
+                  {released && mod.count !== undefined && (
+                    <span className="ml-auto text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 shrink-0">
+                      {mod.count}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
 
             <div className="px-4 mt-4 mb-1">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Verwaltung</p>
@@ -922,6 +941,18 @@ export default function DashboardClient({
               </svg>
               <span>Benutzer & Rollen</span>
             </Link>
+            {canSeeAll && (
+              <button
+                onClick={() => { setActiveSection("module-settings"); setSidebarOpen(false); }}
+                className={sidebarNavItemClass(activeSection === "module-settings")}
+                data-testid="nav-module-settings"
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                </svg>
+                <span>Modul-Freigabe</span>
+              </button>
+            )}
           </nav>
 
           <div className="border-t border-slate-200 px-4 py-3 space-y-2 mt-auto">
@@ -1013,6 +1044,80 @@ export default function DashboardClient({
             <>
               {renderAssessmentList()}
             </>
+          )}
+
+          {activeSection === "module-settings" && canSeeAll && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-bold text-brand-navy">Modul-Freigabe</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Steuern Sie, welche Module für Ihre Kollegen sichtbar und nutzbar sind.
+                  Nicht freigegebene Module sind nur für Administratoren zugänglich.
+                </p>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
+                {modules.map((mod) => {
+                  const isOn = localFlags[mod.moduleKey] ?? false;
+                  return (
+                    <div key={mod.moduleKey} className="flex items-center justify-between px-6 py-4" data-testid={`flag-row-${mod.moduleKey}`}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                          <ModuleIcon icon={mod.icon} color={isOn ? "#3b82f6" : "#94a3b8"} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">{mod.title}</p>
+                          <p className="text-xs text-slate-400">{mod.description}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setLocalFlags(prev => ({ ...prev, [mod.moduleKey]: !prev[mod.moduleKey] }))}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isOn ? "bg-blue-600" : "bg-slate-300"}`}
+                        data-testid={`toggle-${mod.moduleKey}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${isOn ? "translate-x-6" : "translate-x-1"}`} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={async () => {
+                    setSavingFlags(true);
+                    setFlagSaved(false);
+                    try {
+                      await fetch(`/api/w/${workspaceSlug}/feature-flags`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ featureFlags: localFlags }),
+                      });
+                      setFlagSaved(true);
+                      setTimeout(() => setFlagSaved(false), 3000);
+                    } catch { /* ignore */ }
+                    setSavingFlags(false);
+                  }}
+                  disabled={savingFlags}
+                  className="px-5 py-2.5 text-sm font-medium text-white rounded-lg bg-brand-navy hover:opacity-90 disabled:opacity-50 transition"
+                  data-testid="button-save-flags"
+                >
+                  {savingFlags ? "Wird gespeichert..." : "Änderungen speichern"}
+                </button>
+                {flagSaved && (
+                  <span className="text-sm text-emerald-600 font-medium">Gespeichert</span>
+                )}
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+                <h3 className="text-sm font-semibold text-blue-800 mb-2">Hinweis zur Modul-Freigabe</h3>
+                <ul className="text-xs text-blue-700 space-y-1.5 list-disc list-inside">
+                  <li>Nur freigegebene Module sind für reguläre Benutzer sichtbar und nutzbar.</li>
+                  <li>Als Administrator sehen Sie weiterhin alle Module — auch nicht freigegebene (markiert mit &ldquo;Kommt bald&rdquo;).</li>
+                  <li>Die Seite muss nach dem Speichern neu geladen werden, damit die Sidebar-Änderungen sichtbar werden.</li>
+                </ul>
+              </div>
+            </div>
           )}
         </main>
       </div>
