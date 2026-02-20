@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
 import { varexiaData, assessmentQuestions } from "@/lib/case-studies/varexia";
 
 const ACCENT = "hsl(14, 48%, 44%)";
@@ -21,9 +19,6 @@ function formatCurrency(value: number): string {
 }
 
 export default function VarexiaDataRoomPage() {
-  const params = useParams();
-  const slug = params.workspaceSlug as string;
-
   const [dataRoomTab, setDataRoomTab] = useState<string>("overview");
   const [selectedEmailId, setSelectedEmailId] = useState<string>("e1");
 
@@ -32,24 +27,7 @@ export default function VarexiaDataRoomPage() {
   const selectedEmail = data.emails?.find((e: any) => e.id === selectedEmailId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-slate-900" data-testid="varexia-dataroom">
-      <header className="bg-slate-900 text-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <a href="/" className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="link-module-overview">Modul-Übersicht</a>
-            <Link
-              href={`/w/${slug}/admin/modules/case-study-dataroom`}
-              className="text-xs font-medium text-white/70 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-back-dataroom-admin"
-            >
-              ← Zurück
-            </Link>
-            <span className="text-sm font-bold tracking-tight font-serif">Varexia SE — Datenraum</span>
-            <span className="text-[10px] text-white/40 uppercase tracking-widest">Referenz-Fallstudie</span>
-          </div>
-        </div>
-      </header>
-
+    <div className="py-8 px-6 lg:px-10 space-y-6" data-testid="varexia-dataroom">
       <nav className="bg-slate-50 border-b border-slate-200 sticky top-14 z-40">
         <div className="max-w-7xl mx-auto px-6 flex overflow-x-auto">
           {dataRoomTabList.map((tab) => (
@@ -511,11 +489,6 @@ export default function VarexiaDataRoomPage() {
         )}
       </main>
 
-      <footer className="border-t border-slate-100 py-6">
-        <p className="text-center text-xs text-slate-300">
-          &copy; Christoph Aldering &middot; Private initiative / concept
-        </p>
-      </footer>
     </div>
   );
 }

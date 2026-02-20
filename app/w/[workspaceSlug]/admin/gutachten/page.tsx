@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
+
 
 interface ReportTemplate {
   id: string;
@@ -111,31 +111,7 @@ export default function GutachtenGeneratorPage() {
   const filteredTemplates = templates.filter((t) => t.reportType === activeTab);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#EFF4F5", fontFamily: "'Satoshi', 'Inter', system-ui, sans-serif" }}>
-      <header style={{ backgroundColor: "#A6473B" }} className="text-white">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href={`/w/${workspaceSlug}/admin`}
-              className="font-bold text-lg tracking-tight hover:opacity-80 transition-opacity"
-              data-testid="link-workspace"
-            >
-              {workspaceSlug}
-            </Link>
-            <span className="text-white/40">/</span>
-            <span className="text-sm text-white/80">Gutachten-Generator</span>
-          </div>
-          <Link
-            href={`/w/${workspaceSlug}/admin`}
-            className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-            data-testid="link-back"
-          >
-            Zurück
-          </Link>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
+    <div className="py-8 px-6 lg:px-10 space-y-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold" style={{ color: "#A6473B" }} data-testid="heading-title">
             Gutachten-Generator
@@ -177,13 +153,6 @@ export default function GutachtenGeneratorPage() {
           loading={loading}
           onRefresh={fetchTemplates}
         />
-      </main>
-
-      <footer className="border-t py-6" style={{ borderColor: "#B5D6DE" }}>
-        <p className="text-center text-xs text-slate-400">
-          &copy; Christoph Aldering &middot; Private initiative / concept
-        </p>
-      </footer>
     </div>
   );
 }

@@ -1,9 +1,8 @@
 import { prisma } from "@/lib/db";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getWorkspaceAuth, hasMasterAuth, getUserSession } from "@/lib/session";
 import { ensureHex } from "@/lib/color-utils";
-import { getModuleFlags, type FeatureFlags } from "@/lib/feature-flags";
-import Link from "next/link";
+import { getModuleFlags } from "@/lib/feature-flags";
 import DashboardClient from "./DashboardClient";
 
 export const dynamic = "force-dynamic";
@@ -13,19 +12,8 @@ interface Props {
 }
 
 export default async function WorkspaceAdminDashboard({ params }: Props) {
-  const wsAuth = getWorkspaceAuth();
   const masterAuth = hasMasterAuth();
   const userSession = getUserSession();
-
-  const cockpitRoles = ["ADMIN", "WORKSPACE_ADMIN", "MASTER_ADMIN", "MODERATOR", "PROJECT_OFFICE", "PROJECT_ASSISTANT", "HR_CLIENT", "CLIENT", "OBSERVER"];
-  const hasUserAccess =
-    userSession &&
-    userSession.workspaceSlug === params.workspaceSlug &&
-    userSession.roles.some(r => cockpitRoles.includes(r));
-
-  if (!masterAuth && wsAuth !== params.workspaceSlug && !hasUserAccess) {
-    redirect(`/w/${params.workspaceSlug}/login`);
-  }
 
   const workspace = await prisma.workspace.findUnique({
     where: { slug: params.workspaceSlug },
@@ -37,10 +25,10 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   }
 
   const t = workspace.theme;
-  const primary = ensureHex(t?.primaryColor ?? "#3b82f6");
+  const primary = ensureHex(t?.primaryColor ?? "#A6473B");
   const textColor = ensureHex(t?.textColor ?? "#1a1a1a");
   const bgColor = ensureHex(t?.backgroundColor ?? "#ffffff");
-  const headingFont = t?.fontFamilyHeading ?? "Playfair Display";
+  const headingFont = t?.fontFamilyHeading ?? "Satoshi";
 
   const [
     assessments, users,
@@ -138,80 +126,16 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   const base = `/w/${params.workspaceSlug}/admin`;
 
   const modules = [
-    {
-      title: "Kompetenzmanagement",
-      description: "Kompetenzmodelle, Verhaltensanker und MTMM-Matrix verwalten",
-      href: `${base}/competencies`,
-      icon: "competency",
-      moduleKey: "competencies",
-    },
-    {
-      title: "Anforderungsanalyse",
-      description: "Anforderungsprofile erstellen und abgleichen",
-      href: `${base}/requirements`,
-      icon: "target",
-      moduleKey: "requirements",
-    },
-    {
-      title: "Baustein-Bibliothek",
-      description: "Wiederverwendbare Übungen, Fallstudien und Instrumente verwalten",
-      href: `${base}/exercise-library`,
-      icon: "library",
-      count: exerciseLibCount,
-      countLabel: "Bausteine",
-      moduleKey: "exercise_library",
-    },
-    {
-      title: "Modul-Designer",
-      description: "Assessment-Bausteine erstellen, aus der Bibliothek übernehmen oder per KI generieren",
-      href: `${base}/modules`,
-      icon: "builder",
-      moduleKey: "modules",
-    },
-    {
-      title: "Case-Studio",
-      description: "Fallstudien erstellen: Upload bestehender Dokumente oder KI-gestützte Generierung",
-      href: `${base}/modules/case-study-builder`,
-      icon: "casestudy",
-      moduleKey: "case_studio",
-    },
-    {
-      title: "Beobachtungsbogen-Tool",
-      description: "Beobachtungsbögen erstellen, KI-generieren und Übungen zuordnen",
-      href: `${base}/observation-sheets`,
-      icon: "clipboard",
-      count: observationTemplateCount,
-      countLabel: "Vorlagen",
-      moduleKey: "observation_sheets",
-    },
-    {
-      title: "Analytics & Berichte",
-      description: "Normwerte, Benchmarks, Kompetenzprofile und Berichtsgenerierung",
-      href: `${base}/analytics`,
-      icon: "chart",
-      moduleKey: "analytics",
-    },
-    {
-      title: "Gutachten-Generator",
-      description: "Ergebnisberichte erstellen: One-Pager, Gutachten, Gesamtauswertungen — KI-gestützt",
-      href: `${base}/gutachten`,
-      icon: "report",
-      moduleKey: "reports",
-    },
-    {
-      title: "Corporate Design",
-      description: "Branding-Regeln definieren, Style Guides hochladen und per KI analysieren",
-      href: `${base}/brand-rules`,
-      icon: "palette",
-      moduleKey: "brand_rules",
-    },
-    {
-      title: "Advanced Intelligence",
-      description: "KI-gestützte Diagnostik: Predictive Success, Entwicklungspfade, Hypothesen",
-      href: `${base}/intelligence`,
-      icon: "brain",
-      moduleKey: "intelligence",
-    },
+    { title: "Kompetenzmanagement", description: "Kompetenzmodelle, Verhaltensanker und MTMM-Matrix verwalten", href: `${base}/competencies`, icon: "competency", moduleKey: "competencies" },
+    { title: "Anforderungsanalyse", description: "Anforderungsprofile erstellen und abgleichen", href: `${base}/requirements`, icon: "target", moduleKey: "requirements" },
+    { title: "Baustein-Bibliothek", description: "Wiederverwendbare Übungen, Fallstudien und Instrumente verwalten", href: `${base}/exercise-library`, icon: "library", count: exerciseLibCount, countLabel: "Bausteine", moduleKey: "exercise_library" },
+    { title: "Modul-Designer", description: "Assessment-Bausteine erstellen, aus der Bibliothek übernehmen oder per KI generieren", href: `${base}/modules`, icon: "builder", moduleKey: "modules" },
+    { title: "Case-Studio", description: "Fallstudien erstellen: Upload bestehender Dokumente oder KI-gestützte Generierung", href: `${base}/modules/case-study-builder`, icon: "casestudy", moduleKey: "case_studio" },
+    { title: "Beobachtungsbogen-Tool", description: "Beobachtungsbögen erstellen, KI-generieren und Übungen zuordnen", href: `${base}/observation-sheets`, icon: "clipboard", count: observationTemplateCount, countLabel: "Vorlagen", moduleKey: "observation_sheets" },
+    { title: "Analytics & Berichte", description: "Normwerte, Benchmarks, Kompetenzprofile und Berichtsgenerierung", href: `${base}/analytics`, icon: "chart", moduleKey: "analytics" },
+    { title: "Gutachten-Generator", description: "Ergebnisberichte erstellen: One-Pager, Gutachten, Gesamtauswertungen — KI-gestützt", href: `${base}/gutachten`, icon: "report", moduleKey: "reports" },
+    { title: "Corporate Design", description: "Branding-Regeln definieren, Style Guides hochladen und per KI analysieren", href: `${base}/brand-rules`, icon: "palette", moduleKey: "brand_rules" },
+    { title: "Advanced Intelligence", description: "KI-gestützte Diagnostik: Predictive Success, Entwicklungspfade, Hypothesen", href: `${base}/intelligence`, icon: "brain", moduleKey: "intelligence" },
   ];
 
   return (

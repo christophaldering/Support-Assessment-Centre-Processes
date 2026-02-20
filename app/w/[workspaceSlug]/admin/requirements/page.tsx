@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
+
 
 interface Person {
   firstName: string;
@@ -563,23 +563,7 @@ export default function RequirementsAnalysisPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="bg-brand-navy text-white sticky top-0 z-50">
-        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href={`/w/${slug}/admin`} className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity" data-testid="link-back-dashboard">
-              {slug}
-            </Link>
-            <span className="text-white/40">/</span>
-            <span className="text-sm text-white/70" data-testid="text-page-title">Anforderungsanalyse</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {saving && <span className="text-xs text-white/60 animate-pulse">Speichern...</span>}
-            {!saving && lastSaved && <span className="text-xs text-white/60">Gespeichert {lastSaved}</span>}
-          </div>
-        </div>
-      </header>
-
+    <div className="py-8 px-6 lg:px-10 space-y-6">
       {assessmentId && (
         <div className="border-b bg-brand-navy/5 border-brand-navy/10">
           <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between">
@@ -1313,9 +1297,6 @@ export default function RequirementsAnalysisPage() {
         </main>
       </div>
 
-      <footer className="border-t border-slate-200 py-4 mt-8">
-        <p className="text-center text-xs text-slate-400">&copy; Christoph Aldering &middot; Private initiative / concept</p>
-      </footer>
     </div>
   );
 }

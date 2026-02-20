@@ -419,57 +419,14 @@ Antworte in folgendem JSON-Format:
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-50">
-        <header className="bg-brand-navy text-white">
-          <div className="max-w-full mx-auto px-6 h-16 flex items-center">
-            <div className="flex items-center gap-4">
-              <Link href={base} className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity" data-testid="link-dashboard">Dashboard</Link>
-              <span className="text-white/40">/</span>
-              <span className="text-sm text-white/70">Modul-Designer</span>
-            </div>
-          </div>
-        </header>
-        <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8 flex justify-center">
-          <p className="text-sm text-slate-400">Laden...</p>
-        </main>
+      <div className="py-8 px-6 lg:px-10 flex items-center justify-center">
+        <p className="text-sm text-slate-400">Laden...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="bg-brand-navy text-white">
-        <div className="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href={base} className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity" data-testid="link-dashboard">
-              Dashboard
-            </Link>
-            <span className="text-white/40">/</span>
-            {view === "hub" ? (
-              <span className="text-sm text-white/70">Modul-Designer</span>
-            ) : (
-              <>
-                <button onClick={() => { setView("hub"); setEditBlueprint(null); }} className="text-sm text-white/70 hover:text-white transition-colors" data-testid="link-builder-hub">
-                  Modul-Designer
-                </button>
-                <span className="text-white/40">/</span>
-                <span className="text-sm text-white/70">{viewLabels[view] || view}</span>
-              </>
-            )}
-          </div>
-          {view !== "hub" && (
-            <button
-              onClick={() => { setView("hub"); setEditBlueprint(null); }}
-              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="button-back-hub"
-            >
-              ← Zurück
-            </button>
-          )}
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8 space-y-6">
+    <div className="py-8 px-6 lg:px-10 space-y-6">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl flex items-center justify-between" data-testid="text-error">
             <span>{error}</span>
@@ -1288,13 +1245,6 @@ Antworte in folgendem JSON-Format:
             </div>
           </div>
         )}
-      </main>
-
-      <footer className="border-t border-slate-200 py-5 bg-white">
-        <p className="text-center text-[11px] text-slate-400">
-          &copy; Christoph Aldering &middot; Private initiative / concept
-        </p>
-      </footer>
     </div>
   );
 }

@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 
-const ACCENT = "hsl(14, 48%, 44%)";
+const ACCENT = "#A6473B";
 
 interface Assessment {
   id: string;
@@ -94,31 +93,7 @@ export default function AnalyticsDashboardPage() {
       : 100;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="bg-brand-navy text-white">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href={`/w/${workspaceSlug}/admin`}
-              className="font-serif text-lg font-bold hover:opacity-80 transition-opacity"
-              data-testid="link-workspace"
-            >
-              {workspaceSlug}
-            </Link>
-            <span className="text-white/40">/</span>
-            <span className="text-sm text-white/70">Analysen</span>
-          </div>
-          <Link
-            href={`/w/${workspaceSlug}/admin`}
-            className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-            data-testid="link-back"
-          >
-            Zurück
-          </Link>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
+    <div className="py-8 px-6 lg:px-10 space-y-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1
@@ -291,13 +266,6 @@ export default function AnalyticsDashboardPage() {
             )}
           </div>
         )}
-      </main>
-
-      <footer className="border-t border-slate-100 py-6">
-        <p className="text-center text-xs text-slate-400">
-          &copy; Christoph Aldering &middot; Private initiative / concept
-        </p>
-      </footer>
     </div>
   );
 }

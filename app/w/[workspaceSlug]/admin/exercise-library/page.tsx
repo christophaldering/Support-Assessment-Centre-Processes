@@ -1248,31 +1248,7 @@ export default function ExerciseLibraryPage() {
   const counts = categoryCounts();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="bg-brand-navy text-white sticky top-0 z-40">
-        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href={`/w/${slug}/admin`}
-              className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity"
-              data-testid="link-back-dashboard"
-            >
-              {slug}
-            </Link>
-            <span className="text-white/40">/</span>
-            <span className="text-sm text-white/70" data-testid="text-page-title">Übungsbibliothek</span>
-          </div>
-          <Link
-            href={`/w/${slug}/admin`}
-            className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-            data-testid="link-back"
-          >
-            Zurück
-          </Link>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-[1400px] mx-auto w-full px-6 py-8">
+    <div className="py-8 px-6 lg:px-10 space-y-6">
         {error && (
           <div
             className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between"
@@ -1932,14 +1908,6 @@ export default function ExerciseLibraryPage() {
             </div>
           </div>
         )}
-      </main>
-
-      <footer className="border-t border-slate-100 py-4 text-center">
-        <p className="text-xs text-slate-400" data-testid="text-footer">
-          © Christoph Aldering · Private initiative / concept
-        </p>
-      </footer>
-
       {selectedItem && (
         <DetailModal item={selectedItem} slug={slug} onClose={handleModalClose} onUpdated={fetchItems} onItemUpdated={setSelectedItem} />
       )}

@@ -77,29 +77,7 @@ export default function CaseStudyDataroomPage() {
   const activeStudy = caseStudies.find((cs) => cs.status === "active");
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="sticky top-0 z-50 text-white" style={{ backgroundColor: ACCENT }}>
-        <div className="max-w-[1400px] mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <a href="/" className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="link-module-overview">Modul-Übersicht</a>
-            <Link href={`/w/${slug}/admin`} className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors" data-testid="link-back-dashboard">Dashboard</Link>
-            <h1 className="text-lg font-bold tracking-tight" style={{ fontFamily: "Playfair Display, serif" }} data-testid="text-page-title">
-              Fallstudien-Datenraum
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/w/${slug}/admin/modules/case-study-builder`}
-              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-case-study-builder"
-            >
-              Case-Studio
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-[1400px] mx-auto px-6 py-8">
+    <div className="py-8 px-6 lg:px-10 space-y-6">
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between" data-testid="text-error">
             {error}
@@ -238,11 +216,6 @@ export default function CaseStudyDataroomPage() {
             </div>
           )}
         </div>
-      </main>
-
-      <footer className="border-t border-slate-200 py-4 mt-8">
-        <p className="text-center text-xs text-slate-400">&copy; Christoph Aldering &middot; Private initiative / concept</p>
-      </footer>
     </div>
   );
 }

@@ -390,41 +390,21 @@ export default function CaseStudyBuilderPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <header className="text-white sticky top-0 z-50 bg-[hsl(14,48%,44%)]">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <a
-              href="/"
-              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-module-overview"
-            >
-              Modul-Übersicht
-            </a>
-            <Link
-              href={base}
-              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-back-dashboard"
-            >
-              ← Dashboard
-            </Link>
-            <span className="text-lg font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Case-Studio
-            </span>
-          </div>
-          {mode !== "list" && (
-            <button
-              onClick={() => { setMode("list"); setError(""); setSuccess(""); }}
-              className="text-xs text-white/80 hover:text-white transition-colors"
-              data-testid="button-back-list"
-            >
-              ← Zur Übersicht
-            </button>
-          )}
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10">
+    <div className="py-8 px-6 lg:px-10 space-y-6">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-lg font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+          Case-Studio
+        </h1>
+        {mode !== "list" && (
+          <button
+            onClick={() => { setMode("list"); setError(""); setSuccess(""); }}
+            className="text-xs text-slate-500 hover:text-slate-800 transition-colors"
+            data-testid="button-back-list"
+          >
+            ← Zur Übersicht
+          </button>
+        )}
+      </div>
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-4 mb-6" data-testid="text-error">
             {error}
@@ -1272,13 +1252,6 @@ export default function CaseStudyBuilderPage() {
             })()}
           </div>
         )}
-      </main>
-
-      <footer className="border-t border-slate-100 py-6">
-        <p className="text-center text-xs text-slate-300">
-          &copy; Christoph Aldering · Private initiative / concept
-        </p>
-      </footer>
     </div>
   );
 }

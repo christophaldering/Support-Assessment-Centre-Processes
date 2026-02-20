@@ -165,47 +165,27 @@ export default async function ProjectDetailPage({ params }: Props) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: bgColor, color: textColor }}>
-      <header
-        className="text-white sticky top-0 z-50"
-        style={{ backgroundColor: primary }}
-      >
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href={base}
-              className="text-xs font-medium text-white/70 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-back-dashboard"
-            >
-              ← Cockpit
-            </Link>
-            <span
-              className="text-lg font-bold tracking-tight"
-              style={{ fontFamily: `'${headingFont}', serif` }}
-            >
-              {assessment.name}
-            </span>
-            <span
-              className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
-              style={{ backgroundColor: `${st.color}40`, color: "white" }}
-            >
-              {st.de}
-            </span>
-            <span
-              className="text-[10px] font-medium px-2.5 py-0.5 rounded-full"
-              style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
-              data-testid="badge-design-mode"
-            >
-              {dm.icon} {dm.de}
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-white/70">{workspace.name}</span>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
+    <div className="py-8 px-6 lg:px-10 space-y-6" style={{ color: textColor }}>
+      <div className="flex items-center gap-4 mb-4">
+        <span
+          className="text-lg font-bold tracking-tight"
+          style={{ fontFamily: `'${headingFont}', serif` }}
+        >
+          {assessment.name}
+        </span>
+        <span
+          className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
+          style={{ backgroundColor: `${st.color}40`, color: st.color }}
+        >
+          {st.de}
+        </span>
+        <span
+          className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600"
+          data-testid="badge-design-mode"
+        >
+          {dm.icon} {dm.de}
+        </span>
+      </div>
 
         {assessment.description && (
           <p className="text-sm opacity-50 mb-6 max-w-3xl">{assessment.description}</p>
@@ -332,13 +312,6 @@ export default async function ProjectDetailPage({ params }: Props) {
             </div>
           </section>
         ))}
-      </main>
-
-      <footer className="border-t py-6" style={{ borderColor: `${primary}10` }}>
-        <p className="text-center text-xs opacity-40">
-          &copy; Christoph Aldering &middot; Private initiative / concept
-        </p>
-      </footer>
     </div>
   );
 }

@@ -1245,8 +1245,8 @@ export default function AssessmentDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-50">
-        <div className="flex-1 flex items-center justify-center">
+      <div className="py-8 px-6 lg:px-10 space-y-6">
+        <div className="flex items-center justify-center py-20">
           <p className="text-sm text-slate-400">Laden…</p>
         </div>
       </div>
@@ -1255,8 +1255,8 @@ export default function AssessmentDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-50">
-        <div className="flex-1 flex items-center justify-center">
+      <div className="py-8 px-6 lg:px-10 space-y-6">
+        <div className="flex items-center justify-center py-20">
           <p className="text-sm text-red-500" data-testid="text-error">{error}</p>
         </div>
       </div>
@@ -1413,47 +1413,7 @@ export default function AssessmentDetailPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="bg-brand-navy text-white">
-        <div className="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href={`/w/${workspaceSlug}/admin`}
-              className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity"
-            >
-              {workspaceSlug}
-            </Link>
-            <span className="text-white/40">/</span>
-            <Link
-              href={`/w/${workspaceSlug}/admin/assessments`}
-              className="text-sm text-white/70 hover:text-white transition-colors"
-            >
-              Assessments
-            </Link>
-            <span className="text-white/40">/</span>
-            <span className="text-sm text-white/70">{assessment?.name}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              data-testid="button-toggle-sidebar"
-              className="md:hidden text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-              </svg>
-            </button>
-            <Link
-              href={`/w/${workspaceSlug}/admin/assessments`}
-              className="text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-back"
-            >
-              Zurück
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <div className="py-8 px-6 lg:px-10 space-y-6">
       <div className="flex flex-1">
         {sidebarOpen && (
           <div
@@ -4283,11 +4243,6 @@ export default function AssessmentDetailPage() {
         </div>
       )}
 
-      <footer className="border-t py-6 border-slate-200">
-        <p className="text-center text-xs text-slate-400">
-          &copy; Christoph Aldering &middot; Private initiative / concept
-        </p>
-      </footer>
     </div>
   );
 }
