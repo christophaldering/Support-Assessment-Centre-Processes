@@ -1,0 +1,72 @@
+Create a new module in the SS Suite called:
+
+"AI Governance & Provider Management"
+
+This module must provide a clean abstraction layer between business logic and LLM providers.
+
+GOALS:
+
+1. Provider Abstraction Layer
+   - Implement a unified interface:
+     llm.generateStructuredAssessment(input, schema, context)
+   - Internally support multiple providers:
+     - OpenAI (default innovation mode)
+     - Neuland AI (EU secure mode)
+     - Azure OpenAI EU (optional future mode)
+   - The business logic must not reference any provider directly.
+
+2. Runtime Provider Switching
+   - Add a configuration table in the database:
+     system_settings:
+       - active_llm_provider
+       - ai_master_disabled
+       - ai_features_disabled (array)
+       - compliance_mode (innovation | eu_secure | hybrid)
+   - Switching provider must not require redeployment.
+
+3. AI Kill Switch (B+ Logic)
+   - Master switch disables all AI.
+   - Feature-level switch disables selected AI features.
+   - If disabled:
+       - Return safe structured fallback response.
+       - Log event with timestamp and actor.
+
+4. Compliance Mode Logic
+   - Innovation Mode → OpenAI latest model.
+   - EU Secure Mode → Neuland or EU-hosted provider only.
+   - Hybrid Mode → Route sensitive tasks to EU provider, creative tasks to OpenAI.
+
+5. Admin UI
+   - Create an admin configuration page:
+       - Select provider
+       - Toggle master switch
+       - Toggle feature switches
+       - Select compliance mode
+   - Access restricted to admin users only.
+
+6. Audit Logging
+   - Every change to AI configuration must be logged in:
+       ai_audit_log:
+         - action
+         - previous_value
+         - new_value
+         - actor
+         - timestamp
+
+7. Future-Proofing
+   - All OpenAI initializations must use:
+       process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+       process.env.AI_INTEGRATIONS_OPENAI_BASE_URL
+   - No hardcoded keys.
+   - No direct provider logic in feature modules.
+
+Architecture requirement:
+   Keep the LLM adapter isolated in:
+   server/llm/
+   with:
+     - providers/
+     - adapter.ts
+     - governance.ts
+     - featureGuard.ts
+
+Return a short architecture overview after implementation.
