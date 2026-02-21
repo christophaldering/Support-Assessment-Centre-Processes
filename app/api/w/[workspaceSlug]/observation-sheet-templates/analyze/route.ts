@@ -5,18 +5,13 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { execFile } from "child_process";
-import OpenAI from "openai";
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 export const maxDuration = 120;
 
 interface RouteContext {
   params: { workspaceSlug: string };
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
 
 const TEMPLATE_TYPES = [
   "verhaltensanker-bogen",
@@ -35,6 +30,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   if (session && !master && !hasAnyPermission(session.roles, ["exerciselibrary.upload", "exerciselibrary.manage"])) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isAIDisabled("observation_analysis")) {
+    const err = create503Response("observation_analysis");
+    return NextResponse.json(err.body, { status: err.status });
   }
 
   let tmpFile: string | null = null;
@@ -62,12 +62,13 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const extractedText = await extractTextFromFile(fileName, buffer, tmpFile);
     const truncatedText = extractedText.slice(0, 12000);
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5-nano",
-      messages: [
-        {
-          role: "system",
-          content: `Du bist ein Experte für Assessment Center und Beobachtungsbögen. Analysiere den hochgeladenen Beobachtungsbogen und extrahiere strukturierte Informationen.
+    const llmResult = await generateLLMOutput({
+      featureName: "observation_analysis",
+      taskName: "analyze_template",
+      route: "/api/w/[workspaceSlug]/observation-sheet-templates/analyze",
+      input: `Dateiname: ${file.name}\n\nInhalt des Beobachtungsbogens:\n\n${truncatedText}`,
+      options: {
+        systemPrompt: `Du bist ein Experte für Assessment Center und Beobachtungsbögen. Analysiere den hochgeladenen Beobachtungsbogen und extrahiere strukturierte Informationen.
 
 Antworte ausschließlich in validem JSON mit genau diesen Feldern:
 
@@ -103,18 +104,17 @@ Regeln:
 - Kompetenzen möglichst genau extrahieren
 - Verhaltensanker und Bewertungsskala genau identifizieren
 - Bei Unsicherheit: Beste Schätzung basierend auf dem Inhalt`,
-        },
-        {
-          role: "user",
-          content: `Dateiname: ${file.name}\n\nInhalt des Beobachtungsbogens:\n\n${truncatedText}`,
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: 4096,
+        responseFormat: "json",
+        maxTokens: 4096,
+      },
     });
 
-    const content = response.choices[0]?.message?.content || "{}";
-    const parsed = JSON.parse(content);
+    if ("aiDisabled" in llmResult) {
+      const err = create503Response("observation_analysis");
+      return NextResponse.json(err.body, { status: err.status });
+    }
+
+    const parsed = typeof llmResult.data === "string" ? JSON.parse(llmResult.data) : llmResult.data;
 
     const result = {
       suggestedType: TEMPLATE_TYPES.includes(parsed.suggestedType) ? parsed.suggestedType : "kombinierter-bogen",

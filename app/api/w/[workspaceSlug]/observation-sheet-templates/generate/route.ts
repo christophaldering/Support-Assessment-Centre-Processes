@@ -2,18 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
-import OpenAI from "openai";
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 export const maxDuration = 120;
 
 interface RouteContext {
   params: { workspaceSlug: string };
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
 
 const TEMPLATE_TYPES: Record<string, string> = {
   "verhaltensanker-bogen": "Verhaltensanker-Bogen (behavioral anchors with rating scale per competency)",
@@ -40,6 +35,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   if (session && !master && !hasPermission(session.roles, "exerciselibrary.manage")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isAIDisabled("observation_analysis")) {
+    const err = create503Response("observation_analysis");
+    return NextResponse.json(err.body, { status: err.status });
   }
 
   try {
@@ -122,25 +122,28 @@ Regeln:
 - Bei kombiniertem Bogen: Mix aus Ankern, Ratings und Freitext
 - Sprache muss professionell und für erfahrene Beobachter geeignet sein`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "Du bist ein Experte für Assessment Center Diagnostik und Beobachtungsbogen-Design. Du erstellst professionelle, praxistaugliche Beobachtungsbögen. Antworte ausschließlich in validem JSON.",
-        },
-        { role: "user", content: prompt },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: 8192,
+    const llmResult = await generateLLMOutput({
+      featureName: "observation_analysis",
+      taskName: "generate_template",
+      route: "/api/w/[workspaceSlug]/observation-sheet-templates/generate",
+      input: prompt,
+      options: {
+        systemPrompt: "Du bist ein Experte für Assessment Center Diagnostik und Beobachtungsbogen-Design. Du erstellst professionelle, praxistaugliche Beobachtungsbögen. Antworte ausschließlich in validem JSON.",
+        responseFormat: "json",
+        maxTokens: 8192,
+      },
     });
 
-    const content = response.choices[0]?.message?.content || "{}";
+    if ("aiDisabled" in llmResult) {
+      const err = create503Response("observation_analysis");
+      return NextResponse.json(err.body, { status: err.status });
+    }
+
     let parsed: any;
     try {
-      parsed = JSON.parse(content);
+      parsed = typeof llmResult.data === "string" ? JSON.parse(llmResult.data) : llmResult.data;
     } catch {
-      console.error("Failed to parse AI response:", content.substring(0, 500));
+      console.error("Failed to parse AI response:", String(llmResult.data).substring(0, 500));
       return NextResponse.json({ error: "KI-Antwort konnte nicht verarbeitet werden." }, { status: 500 });
     }
 

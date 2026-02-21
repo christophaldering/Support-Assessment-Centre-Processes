@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 interface RouteContext {
   params: { workspaceSlug: string; assessmentId: string };
@@ -23,6 +18,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   if (session && !master && !hasPermission(session.roles, "assessments.update")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isAIDisabled("mtmm_suggestions")) {
+    const err = create503Response("mtmm_suggestions");
+    return NextResponse.json(err.body, { status: err.status });
   }
 
   try {
@@ -124,16 +124,23 @@ Antworte ausschließlich als JSON-Array mit folgendem Format:
 WICHTIG: Verwende als exerciseId und nodeId exakt die ID-Werte (nicht die Namen!). Vergib Gewichte zwischen 0.5 und 2.0.
 Gib NUR das JSON-Array zurück, keinen weiteren Text.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      max_completion_tokens: 4000,
+    const llmResult = await generateLLMOutput({
+      featureName: "mtmm_suggestions",
+      taskName: "suggest_mtmm",
+      route: "/api/w/[workspaceSlug]/assessments/[assessmentId]/mtmm-suggest",
+      input: userPrompt,
+      options: {
+        systemPrompt,
+        maxTokens: 4000,
+      },
     });
 
-    const raw = response.choices[0]?.message?.content?.trim() || "[]";
+    if ("aiDisabled" in llmResult) {
+      const err = create503Response("mtmm_suggestions");
+      return NextResponse.json(err.body, { status: err.status });
+    }
+
+    const raw = (typeof llmResult.data === "string" ? llmResult.data : JSON.stringify(llmResult.data)).trim() || "[]";
 
     let suggestions: { exerciseId: string; nodeId: string; weight: number; rationale?: string }[];
     try {

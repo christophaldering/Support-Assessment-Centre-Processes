@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasAnyPermission } from "@/lib/rbac";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -33,6 +28,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   if (session && !master && !hasAnyPermission(session.roles, ["exerciselibrary.upload", "exerciselibrary.manage"])) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isAIDisabled("exercise_generation")) {
+    const err = create503Response("exercise_generation");
+    return NextResponse.json(err.body, { status: err.status });
   }
 
   try {
@@ -112,22 +112,32 @@ Antworte in validem JSON:
   "designNotes": "Hinweise zur visuellen Gestaltung"
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Erstelle die Assessment-Übung "${exerciseSpec.name}" in der Sprache: ${language}` },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 4096,
+    const result = await generateLLMOutput({
+      featureName: "exercise_generation",
+      taskName: "generate_exercise",
+      route: "/api/w/[workspaceSlug]/automation/generate-exercise",
+      input: `Erstelle die Assessment-Übung "${exerciseSpec.name}" in der Sprache: ${language}`,
+      options: {
+        systemPrompt,
+        responseFormat: "json",
+        maxTokens: 4096,
+      },
     });
 
-    const aiContent = response.choices[0]?.message?.content || "{}";
-    let parsedContent;
-    try {
-      parsedContent = JSON.parse(aiContent);
-    } catch {
-      return NextResponse.json({ error: "KI-Antwort konnte nicht verarbeitet werden. Bitte erneut versuchen." }, { status: 502 });
+    if ('aiDisabled' in result) {
+      const err = create503Response("exercise_generation");
+      return NextResponse.json(err.body, { status: err.status });
+    }
+
+    let parsedContent: any;
+    if (typeof result.data === "string") {
+      try {
+        parsedContent = JSON.parse(result.data);
+      } catch {
+        return NextResponse.json({ error: "KI-Antwort konnte nicht verarbeitet werden. Bitte erneut versuchen." }, { status: 502 });
+      }
+    } else {
+      parsedContent = result.data;
     }
 
     const item = await prisma.exerciseLibraryItem.create({
@@ -152,7 +162,7 @@ Antworte in validem JSON:
         contentJson: parsedContent,
         analysisJson: {
           generatedFrom: "automation",
-          model: "gpt-4o",
+          model: result.model,
           spec: exerciseSpec as any,
         } as any,
       },

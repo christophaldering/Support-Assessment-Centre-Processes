@@ -1,9 +1,5 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+import { generateLLMOutput, transcribeAudio as adapterTranscribe } from "@/server/llm/adapter";
+import type { LlmDisabledOutput } from "@/server/llm/types";
 
 export interface AIProposal {
   targetRole: {
@@ -107,29 +103,37 @@ Wichtig:
 - Berücksichtige die Schwierigkeitsstufe der Übungen
 - Alle Texte auf Deutsch`;
 
+function isDisabled(result: unknown): result is LlmDisabledOutput {
+  return typeof result === "object" && result !== null && "aiDisabled" in result;
+}
+
 export async function transcribeAudio(audioBuffer: Buffer, fileName: string): Promise<string> {
-  const file = new File([audioBuffer], fileName, { type: "audio/wav" });
-  const response = await openai.audio.transcriptions.create({
-    file,
-    model: "gpt-4o-mini-transcribe",
-    response_format: "json",
+  const result = await adapterTranscribe(audioBuffer, fileName, {
+    featureName: "audio_transcription",
+    route: "/lib/ai/transcribeAudio",
   });
-  return response.text;
+  if (isDisabled(result)) {
+    throw new Error("AI ist deaktiviert: Audio-Transkription nicht verfügbar.");
+  }
+  return result;
 }
 
 export async function extractProposal(transcript: string): Promise<AIProposal> {
-  const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    messages: [
-      { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
-      { role: "user", content: transcript },
-    ],
-    response_format: { type: "json_object" },
-    max_completion_tokens: 8192,
+  const result = await generateLLMOutput<AIProposal>({
+    taskName: "extract_proposal",
+    featureName: "competency_generation",
+    route: "/lib/ai/extractProposal",
+    input: transcript,
+    options: {
+      systemPrompt: EXTRACTION_SYSTEM_PROMPT,
+      responseFormat: "json",
+      maxTokens: 8192,
+    },
   });
-
-  const content = response.choices[0]?.message?.content || "{}";
-  return JSON.parse(content) as AIProposal;
+  if (isDisabled(result)) {
+    throw new Error("AI ist deaktiviert: Proposal-Extraktion nicht verfügbar.");
+  }
+  return result.data;
 }
 
 export async function coCreationQuestion(
@@ -142,16 +146,24 @@ Stelle gezielte Fragen, um die nötigen Informationen zu sammeln.
 Antworte auf Deutsch, professionell und prägnant.
 Wenn du genügend Informationen hast, fasse zusammen und frage nach Bestätigung.`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    messages: [
-      { role: "system", content: systemPrompt },
-      ...conversationHistory,
-    ],
-    max_completion_tokens: 2048,
-  });
+  const conversationText = conversationHistory
+    .map((m) => `${m.role === "user" ? "Benutzer" : "Berater"}: ${m.content}`)
+    .join("\n\n");
 
-  return response.choices[0]?.message?.content || "";
+  const result = await generateLLMOutput<string>({
+    taskName: "co_creation_question",
+    featureName: "competency_generation",
+    route: "/lib/ai/coCreationQuestion",
+    input: conversationText || "Starte die Beratung.",
+    options: {
+      systemPrompt,
+      maxTokens: 2048,
+    },
+  });
+  if (isDisabled(result)) {
+    return "AI ist derzeit deaktiviert. Bitte versuchen Sie es später erneut.";
+  }
+  return String(result.data) || "";
 }
 
 export async function generateTagsAndTitle(params: {
@@ -163,12 +175,13 @@ export async function generateTagsAndTitle(params: {
   author?: string | null;
 }): Promise<{ tags: string[]; suggestedTitle: string }> {
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-5-nano",
-      messages: [
-        {
-          role: "system",
-          content: `Du bist ein Experte für Assessment Center und Kompetenzdiagnostik. Analysiere die folgenden Informationen über einen Assessment-Baustein und generiere:
+    const result = await generateLLMOutput<{ tags: string[]; suggestedTitle: string }>({
+      taskName: "generate_tags_title",
+      featureName: "exercise_analysis",
+      route: "/lib/ai/generateTagsAndTitle",
+      input: `Titel: ${params.title}\nTyp: ${params.type}${params.description ? `\nBeschreibung: ${params.description}` : ""}${params.fileName ? `\nDateiname: ${params.fileName}` : ""}${params.sourceContext ? `\nUrsprünglich konzipiert für: ${params.sourceContext}` : ""}${params.author ? `\nAutor: ${params.author}` : ""}`,
+      options: {
+        systemPrompt: `Du bist ein Experte für Assessment Center und Kompetenzdiagnostik. Analysiere die folgenden Informationen über einen Assessment-Baustein und generiere:
 1. Einen spezifischen, beschreibenden Titel (suggestedTitle) basierend auf dem Inhalt. Format: "[Übungstyp] – [Kontext/Unternehmen] – [Kurzbeschreibung]" z.B. "Interview-Leitfaden – Varexia SE – CFO-Nachfolge Strategiegespräch"
 2. 5-10 relevante Tags auf Deutsch, die UNBEDINGT enthalten sollen (wenn aus den Informationen ableitbar):
    - Name des simulierten Unternehmens (z.B. "Varexia SE", "TechCorp GmbH")
@@ -178,23 +191,20 @@ export async function generateTagsAndTitle(params: {
    - Methode/Format (z.B. "Einzelinterview", "Gruppendiskussion", "Rollenspiel")
 
 Antworte ausschließlich in validem JSON: {"suggestedTitle": "...", "tags": ["Tag1", "Tag2", ...]}`,
-        },
-        {
-          role: "user",
-          content: `Titel: ${params.title}\nTyp: ${params.type}${params.description ? `\nBeschreibung: ${params.description}` : ""}${params.fileName ? `\nDateiname: ${params.fileName}` : ""}${params.sourceContext ? `\nUrsprünglich konzipiert für: ${params.sourceContext}` : ""}${params.author ? `\nAutor: ${params.author}` : ""}`,
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: 512,
+        responseFormat: "json",
+        maxTokens: 512,
+        model: "gpt-4o",
+      },
     });
-
-    const content = response.choices[0]?.message?.content || "{}";
-    const parsed = JSON.parse(content);
-    const tags = Array.isArray(parsed.tags)
-      ? parsed.tags.filter((t: unknown) => typeof t === "string" && t.trim().length > 0)
+    if (isDisabled(result)) {
+      return { tags: [], suggestedTitle: params.title };
+    }
+    const data = result.data;
+    const tags = Array.isArray(data.tags)
+      ? data.tags.filter((t: unknown) => typeof t === "string" && (t as string).trim().length > 0)
       : [];
-    const suggestedTitle = typeof parsed.suggestedTitle === "string" && parsed.suggestedTitle.trim()
-      ? parsed.suggestedTitle.trim()
+    const suggestedTitle = typeof data.suggestedTitle === "string" && data.suggestedTitle.trim()
+      ? data.suggestedTitle.trim()
       : params.title;
     return { tags, suggestedTitle };
   } catch (error) {
@@ -333,16 +343,19 @@ Wichtige Regeln:
 - Alle Texte auf Deutsch`;
 
 export async function extractRequirementsAnalysis(text: string): Promise<RequirementsExtraction> {
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: REQUIREMENTS_EXTRACTION_PROMPT },
-      { role: "user", content: text },
-    ],
-    response_format: { type: "json_object" },
-    max_completion_tokens: 8192,
+  const result = await generateLLMOutput<RequirementsExtraction>({
+    taskName: "extract_requirements",
+    featureName: "competency_generation",
+    route: "/lib/ai/extractRequirementsAnalysis",
+    input: text,
+    options: {
+      systemPrompt: REQUIREMENTS_EXTRACTION_PROMPT,
+      responseFormat: "json",
+      maxTokens: 8192,
+    },
   });
-
-  const content = response.choices[0]?.message?.content || "{}";
-  return JSON.parse(content) as RequirementsExtraction;
+  if (isDisabled(result)) {
+    throw new Error("AI ist deaktiviert: Anforderungsanalyse-Extraktion nicht verfügbar.");
+  }
+  return result.data;
 }

@@ -2,17 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
-import OpenAI from "openai";
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 import { inflateRawSync } from "zlib";
 
 interface RouteContext {
   params: { workspaceSlug: string };
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
 
 const STYLEGUIDE_SYSTEM_PROMPT = `Du bist ein Experte für Corporate Identity und Markenrichtlinien. Analysiere das folgende Dokument (ein Style Guide / Brand Manual / Corporate Design Handbuch) und extrahiere daraus strukturierte Markenregeln.
 
@@ -227,6 +222,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Style-Guide-Upload ist nur für den Master-Administrator verfügbar." }, { status: 403 });
   }
 
+  if (isAIDisabled("brand_parsing")) {
+    const err = create503Response("brand_parsing");
+    return NextResponse.json(err.body, { status: err.status });
+  }
+
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -267,20 +267,26 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
     const truncatedText = extractedText.slice(0, 15000);
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: STYLEGUIDE_SYSTEM_PROMPT },
-        { role: "user", content: truncatedText },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 4096,
+    const llmResult = await generateLLMOutput({
+      featureName: "brand_parsing",
+      taskName: "parse_styleguide",
+      route: "/api/w/[workspaceSlug]/brand-rules/parse-styleguide",
+      input: truncatedText,
+      options: {
+        systemPrompt: STYLEGUIDE_SYSTEM_PROMPT,
+        responseFormat: "json",
+        maxTokens: 4096,
+      },
     });
 
-    const aiContent = response.choices[0]?.message?.content || "{}";
+    if ("aiDisabled" in llmResult) {
+      const err = create503Response("brand_parsing");
+      return NextResponse.json(err.body, { status: err.status });
+    }
+
     let parsedAi: Record<string, any>;
     try {
-      parsedAi = JSON.parse(aiContent);
+      parsedAi = typeof llmResult.data === "string" ? JSON.parse(llmResult.data) : llmResult.data;
     } catch {
       return NextResponse.json({ error: "KI-Antwort konnte nicht verarbeitet werden." }, { status: 500 });
     }

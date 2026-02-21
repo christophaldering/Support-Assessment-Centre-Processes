@@ -2,18 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
-import OpenAI from "openai";
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 export const maxDuration = 120;
 
 interface RouteContext {
   params: { workspaceSlug: string; assessmentId: string };
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
 
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
@@ -242,26 +237,37 @@ Antworte ausschließlich in validem JSON:
   "ratingScale": "${ratingScale}"
 }`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      {
-        role: "system",
-        content: "Du bist ein Senior Assessment Center Diagnostiker mit 20 Jahren Erfahrung. Du erstellst wissenschaftlich fundierte, praxistaugliche Beobachtungsbögen. Dein Fokus liegt auf beobachtbaren Verhaltensindikatoren (behavioral anchors), die präzise, fair und kompetenzbasiert sind. Antworte ausschließlich in validem JSON.",
-      },
-      { role: "user", content: prompt },
-    ],
-    response_format: { type: "json_object" },
-    max_completion_tokens: 8192,
+  if (isAIDisabled("observation_analysis")) {
+    throw new Error("AI temporarily disabled for observation_analysis");
+  }
+
+  const result = await generateLLMOutput<any>({
+    taskName: "generate_observation_sheet",
+    featureName: "observation_analysis",
+    route: "/api/w/[slug]/assessments/[id]/observation-sheets",
+    input: prompt,
+    options: {
+      systemPrompt: "Du bist ein Senior Assessment Center Diagnostiker mit 20 Jahren Erfahrung. Du erstellst wissenschaftlich fundierte, praxistaugliche Beobachtungsbögen. Dein Fokus liegt auf beobachtbaren Verhaltensindikatoren (behavioral anchors), die präzise, fair und kompetenzbasiert sind. Antworte ausschließlich in validem JSON.",
+      responseFormat: "json",
+      maxTokens: 8192,
+      model: "gpt-4o",
+    },
   });
 
-  const raw = response.choices[0]?.message?.content || "{}";
+  if ("aiDisabled" in result && result.aiDisabled) {
+    throw new Error("AI temporarily disabled for observation_analysis");
+  }
+
   let parsed: any;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    console.error("Failed to parse AI observation sheet response:", raw.substring(0, 500));
-    throw new Error("KI-Antwort konnte nicht verarbeitet werden.");
+  if (typeof result.data === "string") {
+    try {
+      parsed = JSON.parse(result.data);
+    } catch {
+      console.error("Failed to parse AI observation sheet response:", String(result.data).substring(0, 500));
+      throw new Error("KI-Antwort konnte nicht verarbeitet werden.");
+    }
+  } else {
+    parsed = result.data;
   }
 
   if (!parsed.sections || !Array.isArray(parsed.sections) || parsed.sections.length === 0) {

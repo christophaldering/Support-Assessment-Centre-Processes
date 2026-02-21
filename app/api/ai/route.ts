@@ -5,12 +5,7 @@ import { checkConsent, checkFeatureEnabled } from "@/lib/consent";
 import { logUsageEvent } from "@/lib/telemetry";
 import { logAudit } from "@/lib/audit";
 import { prisma } from "@/lib/db";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 const MODEL = "gpt-4o";
 
@@ -94,6 +89,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Kontext ist erforderlich" }, { status: 400 });
       }
 
+      if (isAIDisabled("competency_generation")) {
+        const err = create503Response("competency_generation");
+        return NextResponse.json(err.body, { status: err.status });
+      }
+
       await logAudit({
         workspaceId,
         userId,
@@ -102,12 +102,13 @@ export async function POST(req: NextRequest) {
         details: { inputSummary: context.substring(0, 200), model: MODEL },
       });
 
-      const response = await openai.chat.completions.create({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: `Du bist ein Experte für Kompetenzmodelle im Executive Assessment.
+      const result = await generateLLMOutput<{ domains: unknown[] }>({
+        taskName: "generate_model",
+        featureName: "competency_generation",
+        route: "/api/ai",
+        input: context,
+        options: {
+          systemPrompt: `Du bist ein Experte für Kompetenzmodelle im Executive Assessment.
 Erstelle ein strukturiertes Kompetenzmodell basierend auf dem gegebenen Kontext.
 Antworte ausschließlich in validem JSON mit folgender Struktur:
 {
@@ -132,15 +133,16 @@ Antworte ausschließlich in validem JSON mit folgender Struktur:
   ]
 }
 Erstelle 2-4 Domänen mit je 2-4 Kompetenzen. Alle Texte auf Deutsch.`,
-          },
-          { role: "user", content: context },
-        ],
-        response_format: { type: "json_object" },
-        max_completion_tokens: 4096,
+          responseFormat: "json",
+          maxTokens: 4096,
+        },
       });
 
-      const content = response.choices[0]?.message?.content || "{}";
-      const data = JSON.parse(content);
+      if ("aiDisabled" in result) {
+        return NextResponse.json({ error: "AI temporarily disabled", feature: "competency_generation" }, { status: 503 });
+      }
+
+      const data = result.data;
 
       await logAudit({
         workspaceId,
@@ -175,6 +177,11 @@ Erstelle 2-4 Domänen mit je 2-4 Kompetenzen. Alle Texte auf Deutsch.`,
         return NextResponse.json({ error: "competencyName ist erforderlich" }, { status: 400 });
       }
 
+      if (isAIDisabled("competency_generation")) {
+        const err = create503Response("competency_generation");
+        return NextResponse.json(err.body, { status: err.status });
+      }
+
       await logAudit({
         workspaceId,
         userId,
@@ -184,12 +191,13 @@ Erstelle 2-4 Domänen mit je 2-4 Kompetenzen. Alle Texte auf Deutsch.`,
       });
 
       const pointsCount = scalePoints || 5;
-      const response = await openai.chat.completions.create({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: `Du bist ein Experte für Kompetenzdiagnostik und Verhaltensanker.
+      const result = await generateLLMOutput<{ anchors: unknown[] }>({
+        taskName: "write_anchors",
+        featureName: "competency_generation",
+        route: "/api/ai",
+        input: `Kompetenz: ${competencyName}\n${description ? `Beschreibung: ${description}` : ""}`,
+        options: {
+          systemPrompt: `Du bist ein Experte für Kompetenzdiagnostik und Verhaltensanker.
 Erstelle Verhaltensanker für die gegebene Kompetenz für ${pointsCount} Skalenpunkte.
 Antworte in validem JSON mit folgender Struktur:
 {
@@ -200,18 +208,16 @@ Antworte in validem JSON mit folgender Struktur:
   ]
 }
 Die Verhaltensanker sollen konkret, beobachtbar und verhaltensorientiert sein. Alle Texte auf Deutsch.`,
-          },
-          {
-            role: "user",
-            content: `Kompetenz: ${competencyName}\n${description ? `Beschreibung: ${description}` : ""}`,
-          },
-        ],
-        response_format: { type: "json_object" },
-        max_completion_tokens: 2048,
+          responseFormat: "json",
+          maxTokens: 2048,
+        },
       });
 
-      const content = response.choices[0]?.message?.content || "{}";
-      const data = JSON.parse(content);
+      if ("aiDisabled" in result) {
+        return NextResponse.json({ error: "AI temporarily disabled", feature: "competency_generation" }, { status: 503 });
+      }
+
+      const data = result.data;
 
       await logAudit({
         workspaceId,
@@ -246,6 +252,11 @@ Die Verhaltensanker sollen konkret, beobachtbar und verhaltensorientiert sein. A
         return NextResponse.json({ error: "competencies-Array ist erforderlich" }, { status: 400 });
       }
 
+      if (isAIDisabled("competency_generation")) {
+        const err = create503Response("competency_generation");
+        return NextResponse.json(err.body, { status: err.status });
+      }
+
       await logAudit({
         workspaceId,
         userId,
@@ -254,12 +265,13 @@ Die Verhaltensanker sollen konkret, beobachtbar und verhaltensorientiert sein. A
         details: { competencyCount: competencies.length, targetRole, model: MODEL },
       });
 
-      const response = await openai.chat.completions.create({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: `Du bist ein Experte für Assessment-Center-Gewichtungsprofile.
+      const result = await generateLLMOutput<{ weights: unknown[] }>({
+        taskName: "suggest_weights",
+        featureName: "competency_generation",
+        route: "/api/ai",
+        input: `Kompetenzen: ${competencies.join(", ")}${targetRole ? `\nZielrolle: ${targetRole}` : ""}`,
+        options: {
+          systemPrompt: `Du bist ein Experte für Assessment-Center-Gewichtungsprofile.
 Schlage Gewichtungen für die gegebenen Kompetenzen vor.
 Die Gewichtungen sollten sich auf 1.0 summieren.
 Antworte in validem JSON mit folgender Struktur:
@@ -269,18 +281,16 @@ Antworte in validem JSON mit folgender Struktur:
   ]
 }
 Alle Texte auf Deutsch.`,
-          },
-          {
-            role: "user",
-            content: `Kompetenzen: ${competencies.join(", ")}${targetRole ? `\nZielrolle: ${targetRole}` : ""}`,
-          },
-        ],
-        response_format: { type: "json_object" },
-        max_completion_tokens: 2048,
+          responseFormat: "json",
+          maxTokens: 2048,
+        },
       });
 
-      const content = response.choices[0]?.message?.content || "{}";
-      const data = JSON.parse(content);
+      if ("aiDisabled" in result) {
+        return NextResponse.json({ error: "AI temporarily disabled", feature: "competency_generation" }, { status: 503 });
+      }
+
+      const data = result.data;
 
       await logAudit({
         workspaceId,
@@ -322,6 +332,11 @@ Alle Texte auf Deutsch.`,
         }
       }
 
+      if (isAIDisabled("report_generation")) {
+        const err = create503Response("report_generation");
+        return NextResponse.json(err.body, { status: err.status });
+      }
+
       await logAudit({
         workspaceId,
         userId,
@@ -336,22 +351,22 @@ Alle Texte auf Deutsch.`,
         )
         .join("\n");
 
-      const response = await openai.chat.completions.create({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: `Du bist ein erfahrener Executive-Assessment-Berater. Erstelle basierend auf den folgenden Kompetenzwerten konkrete Entwicklungsempfehlungen für den Kandidaten. Antworte auf Deutsch, professionell und prägnant. Strukturiere die Empfehlungen in: 1. Stärken, 2. Entwicklungsfelder, 3. Kurzfristige Maßnahmen, 4. Mittelfristige Maßnahmen.`,
-          },
-          {
-            role: "user",
-            content: `Kandidat: ${candidateName}\n\nKompetenzwerte:\n${scoresText}\n\nBitte erstelle konkrete Entwicklungsempfehlungen.`,
-          },
-        ],
-        max_completion_tokens: 2048,
+      const result = await generateLLMOutput<string>({
+        taskName: "generate_recommendations",
+        featureName: "report_generation",
+        route: "/api/ai",
+        input: `Kandidat: ${candidateName}\n\nKompetenzwerte:\n${scoresText}\n\nBitte erstelle konkrete Entwicklungsempfehlungen.`,
+        options: {
+          systemPrompt: `Du bist ein erfahrener Executive-Assessment-Berater. Erstelle basierend auf den folgenden Kompetenzwerten konkrete Entwicklungsempfehlungen für den Kandidaten. Antworte auf Deutsch, professionell und prägnant. Strukturiere die Empfehlungen in: 1. Stärken, 2. Entwicklungsfelder, 3. Kurzfristige Maßnahmen, 4. Mittelfristige Maßnahmen.`,
+          maxTokens: 2048,
+        },
       });
 
-      const recommendations = response.choices[0]?.message?.content || "";
+      if ("aiDisabled" in result) {
+        return NextResponse.json({ error: "AI temporarily disabled", feature: "report_generation" }, { status: 503 });
+      }
+
+      const recommendations = String(result.data) || "";
 
       await logAudit({
         workspaceId,
@@ -419,6 +434,11 @@ Alle Texte auf Deutsch.`,
         }
       }
 
+      if (isAIDisabled("exercise_generation")) {
+        const err = create503Response("exercise_generation");
+        return NextResponse.json(err.body, { status: err.status });
+      }
+
       await logAudit({
         workspaceId,
         userId,
@@ -427,25 +447,29 @@ Alle Texte auf Deutsch.`,
         details: { promptLength: prompt.length, model: MODEL },
       });
 
-      const response = await openai.chat.completions.create({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt || "Du bist ein Experte für Executive Assessment Center Design. Erstelle professionelle, praxistaugliche Assessment-Bausteine auf Deutsch. Antworte ausschließlich in gültigem JSON.",
-          },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-        max_completion_tokens: 4096,
+      const result = await generateLLMOutput<Record<string, unknown>>({
+        taskName: "generate_module",
+        featureName: "exercise_generation",
+        route: "/api/ai",
+        input: prompt,
+        options: {
+          systemPrompt: systemPrompt || "Du bist ein Experte für Executive Assessment Center Design. Erstelle professionelle, praxistaugliche Assessment-Bausteine auf Deutsch. Antworte ausschließlich in gültigem JSON.",
+          responseFormat: "json",
+          maxTokens: 4096,
+        },
       });
 
-      const rawContent = response.choices[0]?.message?.content || "{}";
-      let parsed: any;
-      try {
-        parsed = JSON.parse(rawContent);
-      } catch {
-        parsed = { name: "KI-Baustein", description: rawContent, instructions: "", duration: 45, scenarioContext: "" };
+      if ("aiDisabled" in result) {
+        return NextResponse.json({ error: "AI temporarily disabled", feature: "exercise_generation" }, { status: 503 });
+      }
+
+      let parsed = result.data;
+      if (typeof parsed === "string") {
+        try {
+          parsed = JSON.parse(parsed);
+        } catch {
+          parsed = { name: "KI-Baustein", description: parsed, instructions: "", duration: 45, scenarioContext: "" };
+        }
       }
 
       await logUsageEvent({

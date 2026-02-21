@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -31,6 +26,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   if (session && !master && !hasPermission(session.roles, "exerciselibrary.manage")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isAIDisabled("exercise_generation")) {
+    const err = create503Response("exercise_generation");
+    return NextResponse.json(err.body, { status: err.status });
   }
 
   try {
@@ -126,23 +126,33 @@ Erstelle eine CD-angepasste Version mit folgendem JSON-Format:
 
 Antworte ausschließlich in validem JSON.`;
 
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Bitte passe die Übung "${item.title}" an das Corporate Design an. Sprache: ${language}` },
-          ],
-          response_format: { type: "json_object" },
-          max_tokens: 4096,
+        const result = await generateLLMOutput({
+          featureName: "exercise_generation",
+          taskName: "adapt_batch",
+          route: "/api/w/[workspaceSlug]/automation/adapt-batch",
+          input: `Bitte passe die Übung "${item.title}" an das Corporate Design an. Sprache: ${language}`,
+          options: {
+            systemPrompt,
+            responseFormat: "json",
+            maxTokens: 4096,
+          },
         });
 
-        const aiContent = response.choices[0]?.message?.content || "{}";
-        let parsedContent;
-        try {
-          parsedContent = JSON.parse(aiContent);
-        } catch {
-          results.push({ itemId, status: "error", error: "KI-Antwort konnte nicht verarbeitet werden" });
+        if ('aiDisabled' in result) {
+          results.push({ itemId, status: "error", error: "AI temporarily disabled" });
           continue;
+        }
+
+        let parsedContent: any;
+        if (typeof result.data === "string") {
+          try {
+            parsedContent = JSON.parse(result.data);
+          } catch {
+            results.push({ itemId, status: "error", error: "KI-Antwort konnte nicht verarbeitet werden" });
+            continue;
+          }
+        } else {
+          parsedContent = result.data;
         }
 
         const existingVariantCount = await prisma.exerciseLibraryVariant.count({
@@ -160,7 +170,7 @@ Antworte ausschließlich in validem JSON.`;
             analysisJson: {
               brandRuleSetId: brandRuleSet.id,
               generatedAt: new Date().toISOString(),
-              model: "gpt-4o",
+              model: result.model,
               batchGenerated: true,
             },
           },

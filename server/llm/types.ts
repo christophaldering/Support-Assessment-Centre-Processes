@@ -4,6 +4,7 @@ export interface GenerateLLMInput {
   taskName: string;
   featureName: string;
   input: string;
+  route?: string;
   schema?: Record<string, unknown>;
   options?: {
     systemPrompt?: string;
@@ -11,6 +12,7 @@ export interface GenerateLLMInput {
     maxTokens?: number;
     context?: Record<string, unknown>;
     responseFormat?: "text" | "json";
+    model?: string;
   };
 }
 

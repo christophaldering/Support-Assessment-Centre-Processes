@@ -2,18 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
-import OpenAI from "openai";
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { execFile } from "child_process";
 
 export const maxDuration = 120;
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -96,6 +91,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  if (isAIDisabled("competency_generation")) {
+    const err = create503Response("competency_generation");
+    return NextResponse.json(err.body, { status: err.status });
+  }
+
   const workspace = await prisma.workspace.findUnique({
     where: { slug: params.workspaceSlug },
   });
@@ -138,20 +138,26 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Zu wenig Text extrahiert. Bitte prüfen Sie die Datei." }, { status: 400 });
     }
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: COMPETENCY_PARSE_PROMPT },
-        { role: "user", content: `Datei: ${file.name}\n\nInhalt:\n${text.slice(0, 30000)}` },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 8192,
+    const llmResult = await generateLLMOutput({
+      featureName: "competency_generation",
+      taskName: "parse_competency_upload",
+      route: "/api/w/[workspaceSlug]/competency-models/upload",
+      input: `Datei: ${file.name}\n\nInhalt:\n${text.slice(0, 30000)}`,
+      options: {
+        systemPrompt: COMPETENCY_PARSE_PROMPT,
+        responseFormat: "json",
+        maxTokens: 8192,
+      },
     });
 
-    const content = response.choices[0]?.message?.content || "{}";
+    if ("aiDisabled" in llmResult) {
+      const err = create503Response("competency_generation");
+      return NextResponse.json(err.body, { status: err.status });
+    }
+
     let parsed;
     try {
-      parsed = JSON.parse(content);
+      parsed = typeof llmResult.data === "string" ? JSON.parse(llmResult.data) : llmResult.data;
     } catch {
       return NextResponse.json({ error: "KI-Antwort konnte nicht verarbeitet werden" }, { status: 500 });
     }

@@ -7,12 +7,7 @@ import { logUsageEvent } from "@/lib/telemetry";
 import { getUploadUrl } from "@/lib/object-storage";
 import { generateDocx, generatePdf, generatePptx } from "@/lib/report-generator";
 import type { ReportData } from "@/lib/report-generator";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 interface RouteContext {
   params: { workspaceSlug: string; assessmentId: string };
@@ -168,6 +163,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     let aiRecommendations: string | undefined;
 
     if (includeAiRecommendations && consolidatedScores.length > 0) {
+      if (isAIDisabled("report_generation")) {
+        const err = create503Response("report_generation");
+        return NextResponse.json(err.body, { status: err.status });
+      }
+
       try {
         const scoresText = consolidatedScores
           .map(
@@ -176,24 +176,22 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
           )
           .join("\n");
 
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: `Du bist ein erfahrener Executive-Assessment-Berater. Erstelle basierend auf den folgenden Kompetenzwerten konkrete Entwicklungsempfehlungen für den Kandidaten. Antworte auf Deutsch, professionell und prägnant. Strukturiere die Empfehlungen in kurz- und mittelfristige Maßnahmen.`,
-            },
-            {
-              role: "user",
-              content: `Kandidat: ${candidate.name}\nAssessment: ${assessment.name}\n\nKompetenzwerte:\n${scoresText}\n\nBitte erstelle konkrete Entwicklungsempfehlungen.`,
-            },
-          ],
-          max_completion_tokens: 2048,
+        const llmResult = await generateLLMOutput({
+          featureName: "report_generation",
+          taskName: "generate_report",
+          route: "/api/w/[workspaceSlug]/assessments/[assessmentId]/reports",
+          input: `Kandidat: ${candidate.name}\nAssessment: ${assessment.name}\n\nKompetenzwerte:\n${scoresText}\n\nBitte erstelle konkrete Entwicklungsempfehlungen.`,
+          options: {
+            systemPrompt: `Du bist ein erfahrener Executive-Assessment-Berater. Erstelle basierend auf den folgenden Kompetenzwerten konkrete Entwicklungsempfehlungen für den Kandidaten. Antworte auf Deutsch, professionell und prägnant. Strukturiere die Empfehlungen in kurz- und mittelfristige Maßnahmen.`,
+            maxTokens: 2048,
+          },
         });
 
-        aiRecommendations = response.choices[0]?.message?.content || undefined;
-        if (aiRecommendations) {
-          aiSections.push("recommendations");
+        if (!("aiDisabled" in llmResult)) {
+          aiRecommendations = typeof llmResult.data === "string" ? llmResult.data : JSON.stringify(llmResult.data);
+          if (aiRecommendations) {
+            aiSections.push("recommendations");
+          }
         }
       } catch (err) {
         console.error("AI recommendations generation failed:", err);

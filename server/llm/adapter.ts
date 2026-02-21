@@ -69,6 +69,7 @@ function logRequest(
   provider: string,
   featureName: string,
   taskName: string,
+  route: string,
   durationMs: number,
   success: boolean,
   error?: string
@@ -78,15 +79,16 @@ function logRequest(
     provider,
     feature: featureName,
     task: taskName,
+    route,
     durationMs,
     success,
     ...(error ? { error } : {}),
   };
   // PHASE 2: Write to ai_audit_log DB table instead of console
   if (success) {
-    console.log(`[LLM] ✓ ${provider}/${featureName} (${taskName}) ${durationMs}ms`);
+    console.log(`[LLM] ✓ ${provider}/${featureName} (${taskName}) [${route}] ${durationMs}ms`);
   } else {
-    console.error(`[LLM] ✗ ${provider}/${featureName} (${taskName}) ${durationMs}ms — ${error}`);
+    console.error(`[LLM] ✗ ${provider}/${featureName} (${taskName}) [${route}] ${durationMs}ms — ${error}`);
   }
   return entry;
 }
@@ -94,10 +96,10 @@ function logRequest(
 export async function generateLLMOutput<T = unknown>(
   params: GenerateLLMInput
 ): Promise<LlmOutput<T> | LlmDisabledOutput> {
-  const { taskName, featureName } = params;
+  const { taskName, featureName, route = "unknown" } = params;
 
   if (isAIDisabled(featureName)) {
-    console.log(`[LLM] BLOCKED: ${featureName} (${taskName}) — AI disabled`);
+    console.log(`[LLM] BLOCKED: ${featureName} (${taskName}) [${route}] — AI disabled`);
     // PHASE 2: Log to audit table
     return createDisabledResponse(featureName);
   }
@@ -114,12 +116,44 @@ export async function generateLLMOutput<T = unknown>(
       result = (await provider.chat(params)) as LlmOutput<T>;
     }
 
-    logRequest(provider.key, featureName, taskName, Date.now() - start, true);
+    logRequest(provider.key, featureName, taskName, route, Date.now() - start, true);
     return result;
   } catch (err) {
     const duration = Date.now() - start;
     const errorMsg = err instanceof Error ? err.message : String(err);
-    logRequest(provider.key, featureName, taskName, duration, false, errorMsg);
+    logRequest(provider.key, featureName, taskName, route, duration, false, errorMsg);
+    throw err;
+  }
+}
+
+export async function transcribeAudio(
+  audioBuffer: Buffer,
+  fileName: string,
+  options?: { featureName?: string; route?: string; model?: string }
+): Promise<string | LlmDisabledOutput> {
+  const featureName = options?.featureName || "audio_transcription";
+  const route = options?.route || "unknown";
+
+  if (isAIDisabled(featureName)) {
+    console.log(`[LLM] BLOCKED: ${featureName} (transcribe) [${route}] — AI disabled`);
+    return createDisabledResponse(featureName);
+  }
+
+  const provider = getActiveProvider();
+  if (provider.key !== "openai") {
+    throw new Error("Audio transcription is only supported by the OpenAI provider.");
+  }
+
+  const start = Date.now();
+  try {
+    const openaiProvider = provider as import("./providers/openai").OpenAIProvider;
+    const text = await openaiProvider.transcribeAudio(audioBuffer, fileName, options?.model);
+    logRequest(provider.key, featureName, "transcribe", route, Date.now() - start, true);
+    return text;
+  } catch (err) {
+    const duration = Date.now() - start;
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    logRequest(provider.key, featureName, "transcribe", route, duration, false, errorMsg);
     throw err;
   }
 }

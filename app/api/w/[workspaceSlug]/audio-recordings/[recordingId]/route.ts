@@ -5,16 +5,11 @@ import { hasPermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { getSignedDownloadUrl } from "@/lib/object-storage";
 import { transcribeAudio } from "@/lib/ai";
-import OpenAI from "openai";
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 interface RouteContext {
   params: { workspaceSlug: string; recordingId: string };
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
 
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
@@ -118,6 +113,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     }
 
     if (action === "summarize") {
+      if (isAIDisabled("audio_transcription")) {
+        const resp = create503Response("audio_transcription");
+        return NextResponse.json(resp.body, { status: resp.status });
+      }
+
       if (!recording.transcript) {
         return NextResponse.json(
           { error: "Transkript ist erforderlich. Bitte zuerst transkribieren." },
@@ -125,24 +125,25 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         );
       }
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "Du bist ein Experte für die Zusammenfassung von Assessment-Center-Aufnahmen. Erstelle eine strukturierte Zusammenfassung auf Deutsch mit den folgenden Abschnitten: Hauptthemen, Schlüsselaussagen, Bewertungsrelevante Beobachtungen, Gesamteindruck.",
-          },
-          {
-            role: "user",
-            content: recording.transcript,
-          },
-        ],
-        max_tokens: 2048,
+      const result = await generateLLMOutput<string>({
+        taskName: "summarize_recording",
+        featureName: "audio_transcription",
+        route: "/api/w/[slug]/audio-recordings/[id]",
+        input: recording.transcript,
+        options: {
+          systemPrompt:
+            "Du bist ein Experte für die Zusammenfassung von Assessment-Center-Aufnahmen. Erstelle eine strukturierte Zusammenfassung auf Deutsch mit den folgenden Abschnitten: Hauptthemen, Schlüsselaussagen, Bewertungsrelevante Beobachtungen, Gesamteindruck.",
+          maxTokens: 2048,
+          model: "gpt-4o-mini",
+        },
       });
 
-      const summary = response.choices[0]?.message?.content || "";
-      const modelUsed = "gpt-4o-mini";
+      if ("aiDisabled" in result && result.aiDisabled) {
+        return NextResponse.json({ error: "AI temporarily disabled", feature: "audio_transcription" }, { status: 503 });
+      }
+
+      const summary = typeof result.data === "string" ? result.data : String(result.data ?? "");
+      const modelUsed = result.model || "gpt-4o-mini";
 
       const updated = await prisma.audioRecording.update({
         where: { id: params.recordingId },

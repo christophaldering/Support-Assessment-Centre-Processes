@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -59,6 +54,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  if (isAIDisabled("case_study_generation")) {
+    const err = create503Response("case_study_generation");
+    return NextResponse.json(err.body, { status: err.status });
+  }
+
   try {
     const body = await req.json();
     const {
@@ -90,25 +90,24 @@ Zielgruppe/Level: ${targetLevel || "SE-Level/Vorstand"}
 Schwierigkeitsgrad: ${difficulty || "Hoch"}
 Anzahl der zu erstellenden Vorgänge/Dokumente insgesamt: ${parseInt(documentCount) || 15}. Erstelle EXAKT diese Anzahl an Dokumenten.${referenceDate ? `\nReferenzdatum (Stichtag): ${referenceDate}` : ""}`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: PLAN_SYSTEM_PROMPT },
-        { role: "user", content: userPrompt },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 4096,
+    const result = await generateLLMOutput({
+      taskName: "plan_case_study",
+      featureName: "case_study_generation",
+      input: userPrompt,
+      route: `/api/w/${params.workspaceSlug}/case-studies/plan`,
+      options: {
+        systemPrompt: PLAN_SYSTEM_PROMPT,
+        responseFormat: "json",
+        maxTokens: 4096,
+      },
     });
 
-    const content = response.choices[0]?.message?.content || "{}";
-    let parsed;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      return NextResponse.json({ error: "KI-Antwort konnte nicht verarbeitet werden" }, { status: 500 });
+    if ('aiDisabled' in result) {
+      const err = create503Response("case_study_generation");
+      return NextResponse.json(err.body, { status: err.status });
     }
 
-    return NextResponse.json(parsed);
+    return NextResponse.json(result.data);
   } catch (err) {
     console.error("Error planning case study:", err);
     return NextResponse.json({ error: "Fehler bei der Dokumentenplanung" }, { status: 500 });

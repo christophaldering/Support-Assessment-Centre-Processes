@@ -3,12 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -75,6 +70,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   if (session && !master && !hasPermission(session.roles, "advanced_intelligence.generate")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isAIDisabled("intelligence_predictive")) {
+    const err = create503Response("intelligence_predictive");
+    return NextResponse.json(err.body, { status: err.status });
   }
 
   try {
@@ -185,18 +185,23 @@ Wichtig:
 - Alle Texte auf Deutsch
 - Referenziere nur interne Daten, keine externen Quellen`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: "Du bist ein KI-Assistent für Executive-Diagnostik. Antworte nur in validem JSON." },
-        { role: "user", content: aiPrompt },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 4096,
+    const result = await generateLLMOutput({
+      featureName: "intelligence_predictive",
+      taskName: "predictive_profile_generation",
+      route: "/api/w/[slug]/intelligence/predictive",
+      input: aiPrompt,
+      options: {
+        systemPrompt: "Du bist ein KI-Assistent für Executive-Diagnostik. Antworte nur in validem JSON.",
+        responseFormat: "json",
+        maxTokens: 4096,
+      },
     });
 
-    const content = response.choices[0]?.message?.content || "{}";
-    const parsed = JSON.parse(content);
+    if ('aiDisabled' in result) {
+      return NextResponse.json({ error: "AI temporarily disabled", feature: "intelligence_predictive" }, { status: 503 });
+    }
+
+    const parsed = typeof result.data === "string" ? JSON.parse(result.data) : result.data;
 
     const riskIndicators: RiskIndicator[] = (parsed.riskIndicators || []).map((r: any) => ({
       category: r.category || "unknown",

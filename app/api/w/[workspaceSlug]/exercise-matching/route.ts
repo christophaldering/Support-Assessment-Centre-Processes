@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -108,6 +103,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     !hasPermission(session.roles, "requirements.match_exercises")
   ) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isAIDisabled("exercise_matching")) {
+    const err = create503Response("exercise_matching");
+    return NextResponse.json(err.body, { status: err.status });
   }
 
   try {
@@ -322,66 +322,69 @@ Antworte in validem JSON:
   ]
 }`;
 
-        const aiResponse = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            { role: "system", content: prompt },
-            { role: "user", content: "Bitte erstelle die detaillierte Analyse." },
-          ],
-          response_format: { type: "json_object" },
-          max_tokens: 4096,
+        const aiResult = await generateLLMOutput({
+          featureName: "exercise_matching",
+          taskName: "match_exercises",
+          route: "/api/w/[workspaceSlug]/exercise-matching",
+          input: "Bitte erstelle die detaillierte Analyse.",
+          options: {
+            systemPrompt: prompt,
+            responseFormat: "json",
+            maxTokens: 4096,
+          },
         });
 
-        const aiContent = aiResponse.choices[0]?.message?.content || "{}";
-        const aiData = JSON.parse(aiContent) as {
-          enhanced?: {
-            libraryItemId: string;
-            aiRationale?: string;
-            aiSuggestedChanges?: string;
-            contextualFitNotes?: string;
-          }[];
-          newExerciseSpecs?: {
-            name: string;
-            type: string;
-            duration?: number;
-            description?: string;
-            instructions?: string;
-            competencyMappings?: string[];
-            rationale?: string;
-          }[];
-        };
+        if (!('aiDisabled' in aiResult)) {
+          const aiData = (typeof aiResult.data === "string" ? JSON.parse(aiResult.data) : aiResult.data) as {
+            enhanced?: {
+              libraryItemId: string;
+              aiRationale?: string;
+              aiSuggestedChanges?: string;
+              contextualFitNotes?: string;
+            }[];
+            newExerciseSpecs?: {
+              name: string;
+              type: string;
+              duration?: number;
+              description?: string;
+              instructions?: string;
+              competencyMappings?: string[];
+              rationale?: string;
+            }[];
+          };
 
-        if (aiData.enhanced) {
-          const enhancedMap = new Map(
-            aiData.enhanced.map((e) => [e.libraryItemId, e]),
-          );
+          if (aiData.enhanced) {
+            const enhancedMap = new Map(
+              aiData.enhanced.map((e) => [e.libraryItemId, e]),
+            );
 
-          for (const item of useAsIs) {
-            const enhancement = enhancedMap.get(item.libraryItemId);
-            if (enhancement) {
-              (item as any).aiRationale = enhancement.aiRationale || "";
-              (item as any).contextualFitNotes = enhancement.contextualFitNotes || "";
+            for (const item of useAsIs) {
+              const enhancement = enhancedMap.get(item.libraryItemId);
+              if (enhancement) {
+                (item as any).aiRationale = enhancement.aiRationale || "";
+                (item as any).contextualFitNotes = enhancement.contextualFitNotes || "";
+              }
+            }
+
+            for (const item of adapt) {
+              const enhancement = enhancedMap.get(item.libraryItemId);
+              if (enhancement) {
+                (item as any).aiRationale = enhancement.aiRationale || "";
+                (item as any).aiSuggestedChanges = enhancement.aiSuggestedChanges || "";
+                (item as any).contextualFitNotes = enhancement.contextualFitNotes || "";
+              }
             }
           }
 
-          for (const item of adapt) {
-            const enhancement = enhancedMap.get(item.libraryItemId);
-            if (enhancement) {
-              (item as any).aiRationale = enhancement.aiRationale || "";
-              (item as any).aiSuggestedChanges = enhancement.aiSuggestedChanges || "";
-              (item as any).contextualFitNotes = enhancement.contextualFitNotes || "";
+          if (aiData.newExerciseSpecs && aiData.newExerciseSpecs.length > 0) {
+            for (let i = 0; i < createNew.length && i < aiData.newExerciseSpecs.length; i++) {
+              const spec = aiData.newExerciseSpecs[i];
+              (createNew[i] as any).aiSpec = spec;
             }
           }
-        }
 
-        if (aiData.newExerciseSpecs && aiData.newExerciseSpecs.length > 0) {
-          for (let i = 0; i < createNew.length && i < aiData.newExerciseSpecs.length; i++) {
-            const spec = aiData.newExerciseSpecs[i];
-            (createNew[i] as any).aiSpec = spec;
-          }
+          aiEnhanced = true;
         }
-
-        aiEnhanced = true;
       } catch (aiError) {
         console.error("AI enhancement failed, falling back to basic recommendations:", aiError);
       }

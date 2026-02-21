@@ -2,17 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
-import OpenAI from "openai";
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 function getStorageClient() {
   const { Client } = require("@replit/object-storage");
   return new Client();
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
 
 interface RouteContext {
   params: { workspaceSlug: string; caseStudyId: string };
@@ -28,6 +23,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   if (session && !master && !hasPermission(session.roles, "exerciselibrary.manage")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isAIDisabled("case_study_generation")) {
+    const err = create503Response("case_study_generation");
+    return NextResponse.json(err.body, { status: err.status });
   }
 
   const workspace = await prisma.workspace.findUnique({
@@ -52,23 +52,24 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const industry = caseStudy.subtitle || "";
     const description = dataJson?.description || "";
 
-    const svgResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a professional graphic designer. Generate clean, minimal SVG logos for corporate companies. Return ONLY valid SVG code, nothing else. The SVG should be 200x200 pixels, use a professional color palette, and contain only geometric shapes/paths — no text elements. Keep it simple and elegant.",
-        },
-        {
-          role: "user",
-          content: `Create a professional corporate logo SVG for "${companyName}". ${industry ? `Industry: ${industry}.` : ""} ${description ? `Description: ${description.substring(0, 150)}.` : ""} Return only the SVG code.`,
-        },
-      ],
-      max_tokens: 2000,
-      temperature: 0.7,
+    const result = await generateLLMOutput<string>({
+      taskName: "generate_logo",
+      featureName: "case_study_generation",
+      input: `Create a professional corporate logo SVG for "${companyName}". ${industry ? `Industry: ${industry}.` : ""} ${description ? `Description: ${description.substring(0, 150)}.` : ""} Return only the SVG code.`,
+      route: `/api/w/${params.workspaceSlug}/case-studies/${params.caseStudyId}/generate-logo`,
+      options: {
+        systemPrompt: "You are a professional graphic designer. Generate clean, minimal SVG logos for corporate companies. Return ONLY valid SVG code, nothing else. The SVG should be 200x200 pixels, use a professional color palette, and contain only geometric shapes/paths — no text elements. Keep it simple and elegant.",
+        maxTokens: 2000,
+        temperature: 0.7,
+      },
     });
 
-    let svgContent = svgResponse.choices[0]?.message?.content || "";
+    if ('aiDisabled' in result) {
+      const err = create503Response("case_study_generation");
+      return NextResponse.json(err.body, { status: err.status });
+    }
+
+    let svgContent = String(result.data);
     svgContent = svgContent.replace(/```svg\n?/g, "").replace(/```\n?/g, "").trim();
 
     if (!svgContent.includes("<svg") || !svgContent.includes("</svg>")) {

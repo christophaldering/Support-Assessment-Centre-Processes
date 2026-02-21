@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -198,6 +193,8 @@ Wichtige Regeln:
 - Eine individuelle Briefing-Sektion mit Rollenbeschreibung, Situationsbeschreibung und Aufgabenstellung, die exakt auf das generierte Unternehmen zugeschnitten ist (NICHT generisch)
 - Antworte AUSSCHLIESSLICH mit validem JSON`;
 
+const ROUTE_PATH = "/api/w/{workspaceSlug}/case-studies/generate";
+
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
   const master = hasMasterAuth();
@@ -208,6 +205,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   if (session && !master && !hasPermission(session.roles, "exerciselibrary.manage")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isAIDisabled("case_study_generation")) {
+    const err = create503Response("case_study_generation");
+    return NextResponse.json(err.body, { status: err.status });
   }
 
   const workspace = await prisma.workspace.findUnique({
@@ -273,101 +275,91 @@ Sprache der Inhalte: ${language || "Englisch"}
 Bearbeitungszeit für den Kandidaten: ${candidateTime || 60} Minuten
 Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokolle, Nachrichtenartikel, etc. zusammen)${referenceDate ? `\nReferenzdatum (Stichtag): ${referenceDate}` : ""}${documentPlanInstructions}`;
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: CASE_STUDY_SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 16384,
+      const routePath = `/api/w/${params.workspaceSlug}/case-studies/generate`;
+
+      const result = await generateLLMOutput({
+        taskName: "generate_case_study",
+        featureName: "case_study_generation",
+        input: userPrompt,
+        route: routePath,
+        options: {
+          systemPrompt: CASE_STUDY_SYSTEM_PROMPT,
+          responseFormat: "json",
+          maxTokens: 16384,
+        },
       });
 
-      let content = response.choices[0]?.message?.content || "{}";
+      if ('aiDisabled' in result) {
+        const err = create503Response("case_study_generation");
+        return NextResponse.json(err.body, { status: err.status });
+      }
 
-      if (response.choices[0]?.finish_reason === "length") {
-        console.log("First response truncated, requesting continuation with complete missing sections...");
+      let parsed: any = result.data;
+
+      const needsContinuation = (() => {
+        const d = parsed.data || parsed;
+        const targetDocCount = parseInt(documentCount) || 15;
+        const currentDocs = (d.emails?.length || 0) + (d.protocols?.length || 0) + (d.newsArticles?.length || 0);
+        return currentDocs < targetDocCount * 0.7 || !d.organigramm?.length || !parsed.briefing && !d.briefing || !parsed.questions || !d.detailedBalanceSheet;
+      })();
+
+      if (needsContinuation) {
+        console.log("First response may be incomplete, requesting continuation with missing sections...");
         try {
-          let partialData: any = {};
-          let parseSucceeded = false;
-          try {
-            partialData = JSON.parse(content);
-            parseSucceeded = true;
-          } catch {
-            console.log("Truncated JSON could not be parsed, requesting full regeneration with fewer documents");
-          }
-
-          const pd = parseSucceeded ? (partialData.data || partialData) : {};
+          const pd = parsed.data || parsed;
           const existingEmailIds = (pd.emails || []).map((e: any) => e.id || e.subject).filter(Boolean);
           const existingProtocolIds = (pd.protocols || []).map((p: any) => p.id || p.title).filter(Boolean);
           const existingNewsIds = (pd.newsArticles || []).map((n: any) => n.id || n.headline).filter(Boolean);
 
-          const existingInfo = parseSucceeded
-            ? `Bereits vorhanden: ${pd.emails?.length || 0} E-Mails (IDs: ${existingEmailIds.join(", ")}), ${pd.protocols?.length || 0} Protokolle (IDs: ${existingProtocolIds.join(", ")}), ${pd.newsArticles?.length || 0} Nachrichtenartikel (IDs: ${existingNewsIds.join(", ")}), organigramm: ${pd.organigramm?.length ? "ja" : "nein"}, briefing: ${partialData.briefing || pd.briefing ? "ja" : "nein"}, questions: ${partialData.questions ? "ja" : "nein"}, detailedBalanceSheet: ${pd.detailedBalanceSheet ? "ja" : "nein"}`
-            : "Die vorherige Antwort konnte nicht verarbeitet werden.";
+          const existingInfo = `Bereits vorhanden: ${pd.emails?.length || 0} E-Mails (IDs: ${existingEmailIds.join(", ")}), ${pd.protocols?.length || 0} Protokolle (IDs: ${existingProtocolIds.join(", ")}), ${pd.newsArticles?.length || 0} Nachrichtenartikel (IDs: ${existingNewsIds.join(", ")}), organigramm: ${pd.organigramm?.length ? "ja" : "nein"}, briefing: ${parsed.briefing || pd.briefing ? "ja" : "nein"}, questions: ${parsed.questions ? "ja" : "nein"}, detailedBalanceSheet: ${pd.detailedBalanceSheet ? "ja" : "nein"}`;
 
           const targetDocCount = parseInt(documentCount) || 15;
           const remainingEmails = Math.max(0, Math.round(targetDocCount * 0.7) - (pd.emails?.length || 0));
           const remainingProtocols = Math.max(0, Math.round(targetDocCount * 0.15) - (pd.protocols?.length || 0));
           const remainingNews = Math.max(0, Math.round(targetDocCount * 0.15) - (pd.newsArticles?.length || 0));
 
-          const contPrompt = parseSucceeded
-            ? `${existingInfo}\n\nErstelle ein JSON-Objekt mit den FEHLENDEN Abschnitten:\n- ${remainingEmails} weitere E-Mails (NICHT diese IDs wiederholen: ${existingEmailIds.join(", ")})\n- ${remainingProtocols} weitere Protokolle\n- ${remainingNews} weitere Nachrichtenartikel\n${!pd.organigramm?.length ? "- organigramm (mindestens 8 Personen)" : ""}\n${!partialData.briefing && !pd.briefing ? "- briefing" : ""}\n${!partialData.questions ? "- questions" : ""}\n${!pd.detailedBalanceSheet ? "- detailedBalanceSheet" : ""}\n\nAntworte NUR mit validem JSON.`
-            : `Erstelle die vollst\u00e4ndige Fallstudie erneut, aber mit WENIGER Dokumenten (maximal 10 E-Mails, 2 Protokolle, 2 Nachrichtenartikel), damit die Antwort nicht abgeschnitten wird. Behalte alle anderen Abschnitte bei (organigramm, briefing, questions, detailedBalanceSheet, balanceSheet, metrics, businessUnits).\n\nAntworte NUR mit validem JSON.`;
+          const contPrompt = `${existingInfo}\n\nErstelle ein JSON-Objekt mit den FEHLENDEN Abschnitten:\n- ${remainingEmails} weitere E-Mails (NICHT diese IDs wiederholen: ${existingEmailIds.join(", ")})\n- ${remainingProtocols} weitere Protokolle\n- ${remainingNews} weitere Nachrichtenartikel\n${!pd.organigramm?.length ? "- organigramm (mindestens 8 Personen)" : ""}\n${!parsed.briefing && !pd.briefing ? "- briefing" : ""}\n${!parsed.questions ? "- questions" : ""}\n${!pd.detailedBalanceSheet ? "- detailedBalanceSheet" : ""}\n\nAntworte NUR mit validem JSON.`;
 
-          const continuationResponse = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-              { role: "system", content: CASE_STUDY_SYSTEM_PROMPT },
-              { role: "user", content: userPrompt },
-              { role: "user", content: contPrompt },
-            ],
-            response_format: { type: "json_object" },
-            max_tokens: 16384,
+          const continuationResult = await generateLLMOutput({
+            taskName: "continue_generation",
+            featureName: "case_study_generation",
+            input: `${userPrompt}\n\n${contPrompt}`,
+            route: routePath,
+            options: {
+              systemPrompt: CASE_STUDY_SYSTEM_PROMPT,
+              responseFormat: "json",
+              maxTokens: 16384,
+            },
           });
 
-          const contContent = continuationResponse.choices[0]?.message?.content;
-          if (contContent) {
-            const contParsed = JSON.parse(contContent);
+          if (!('aiDisabled' in continuationResult)) {
+            const contParsed: any = continuationResult.data;
             const contData = contParsed.data || contParsed;
 
-            if (!parseSucceeded) {
-              content = contContent;
-              console.log("Full regeneration used as fallback");
-            } else {
-              const dedup = (existing: any[], incoming: any[]) => {
-                const existIds = new Set(existing.map((e: any) => e.id));
-                const existSubjects = new Set(existing.map((e: any) => e.subject || e.title || e.headline));
-                return incoming.filter((item: any) => !existIds.has(item.id) && !existSubjects.has(item.subject || item.title || item.headline));
-              };
+            const dedup = (existing: any[], incoming: any[]) => {
+              const existIds = new Set(existing.map((e: any) => e.id));
+              const existSubjects = new Set(existing.map((e: any) => e.subject || e.title || e.headline));
+              return incoming.filter((item: any) => !existIds.has(item.id) && !existSubjects.has(item.subject || item.title || item.headline));
+            };
 
-              if (contData.emails?.length) pd.emails = [...(pd.emails || []), ...dedup(pd.emails || [], contData.emails)];
-              if (contData.protocols?.length) pd.protocols = [...(pd.protocols || []), ...dedup(pd.protocols || [], contData.protocols)];
-              if (contData.newsArticles?.length) pd.newsArticles = [...(pd.newsArticles || []), ...dedup(pd.newsArticles || [], contData.newsArticles)];
-              if (contData.organigramm?.length && !pd.organigramm?.length) pd.organigramm = contData.organigramm;
-              if (contData.detailedBalanceSheet && !pd.detailedBalanceSheet) pd.detailedBalanceSheet = contData.detailedBalanceSheet;
-              if (contData.balanceSheet?.length && !pd.balanceSheet?.length) pd.balanceSheet = contData.balanceSheet;
-              if (contData.businessUnits?.length && !pd.businessUnits?.length) pd.businessUnits = contData.businessUnits;
-              if (contData.metrics?.length && !pd.metrics?.length) pd.metrics = contData.metrics;
-              if ((contParsed.briefing || contData.briefing) && !partialData.briefing && !pd.briefing) {
-                partialData.briefing = contParsed.briefing || contData.briefing;
-              }
-              if (contParsed.questions && !partialData.questions) partialData.questions = contParsed.questions;
-
-              content = JSON.stringify(partialData);
-              console.log(`Merged continuation: total emails=${pd.emails?.length}, protocols=${pd.protocols?.length}, news=${pd.newsArticles?.length}`);
+            if (contData.emails?.length) pd.emails = [...(pd.emails || []), ...dedup(pd.emails || [], contData.emails)];
+            if (contData.protocols?.length) pd.protocols = [...(pd.protocols || []), ...dedup(pd.protocols || [], contData.protocols)];
+            if (contData.newsArticles?.length) pd.newsArticles = [...(pd.newsArticles || []), ...dedup(pd.newsArticles || [], contData.newsArticles)];
+            if (contData.organigramm?.length && !pd.organigramm?.length) pd.organigramm = contData.organigramm;
+            if (contData.detailedBalanceSheet && !pd.detailedBalanceSheet) pd.detailedBalanceSheet = contData.detailedBalanceSheet;
+            if (contData.balanceSheet?.length && !pd.balanceSheet?.length) pd.balanceSheet = contData.balanceSheet;
+            if (contData.businessUnits?.length && !pd.businessUnits?.length) pd.businessUnits = contData.businessUnits;
+            if (contData.metrics?.length && !pd.metrics?.length) pd.metrics = contData.metrics;
+            if ((contParsed.briefing || contData.briefing) && !parsed.briefing && !pd.briefing) {
+              parsed.briefing = contParsed.briefing || contData.briefing;
             }
+            if (contParsed.questions && !parsed.questions) parsed.questions = contParsed.questions;
+
+            console.log(`Merged continuation: total emails=${pd.emails?.length}, protocols=${pd.protocols?.length}, news=${pd.newsArticles?.length}`);
           }
         } catch (contErr) {
           console.log("Continuation merge failed, using available content:", contErr);
         }
-      }
-
-      let parsed;
-      try {
-        parsed = JSON.parse(content);
-      } catch {
-        return NextResponse.json({ error: "KI-Antwort konnte nicht verarbeitet werden" }, { status: 500 });
       }
 
       const dataJson = parsed.data || parsed;
@@ -410,24 +402,24 @@ Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokoll
         return NextResponse.json({ error: "Textinhalt ist erforderlich" }, { status: 400 });
       }
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: UPLOAD_PARSE_PROMPT },
-          { role: "user", content: `Dokument: ${fileName || "Fallstudie"}\n\nInhalt:\n${textContent}` },
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 16384,
+      const result = await generateLLMOutput({
+        taskName: "parse_uploaded_case_study",
+        featureName: "case_study_generation",
+        input: `Dokument: ${fileName || "Fallstudie"}\n\nInhalt:\n${textContent}`,
+        route: `/api/w/${params.workspaceSlug}/case-studies/generate`,
+        options: {
+          systemPrompt: UPLOAD_PARSE_PROMPT,
+          responseFormat: "json",
+          maxTokens: 16384,
+        },
       });
 
-      const content = response.choices[0]?.message?.content || "{}";
-      let parsed;
-      try {
-        parsed = JSON.parse(content);
-      } catch {
-        return NextResponse.json({ error: "KI-Antwort konnte nicht verarbeitet werden" }, { status: 500 });
+      if ('aiDisabled' in result) {
+        const err = create503Response("case_study_generation");
+        return NextResponse.json(err.body, { status: err.status });
       }
 
+      const parsed: any = result.data;
       const dataJson = parsed.data || parsed;
       if (parsed.briefing && !dataJson.briefing) {
         dataJson.briefing = parsed.briefing;

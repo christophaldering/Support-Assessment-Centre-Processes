@@ -5,18 +5,13 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { execFile } from "child_process";
-import OpenAI from "openai";
+import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
 
 export const maxDuration = 120;
 
 interface RouteContext {
   params: { workspaceSlug: string };
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
 
 const EXERCISE_TYPES = [
   "interview_guide",
@@ -50,6 +45,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  if (isAIDisabled("exercise_analysis")) {
+    const err = create503Response("exercise_analysis");
+    return NextResponse.json(err.body, { status: err.status });
+  }
+
   let tmpFile: string | null = null;
 
   try {
@@ -76,12 +76,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
     const truncatedText = extractedText.slice(0, 12000);
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5-nano",
-      messages: [
-        {
-          role: "system",
-          content: `Du bist ein Experte für Assessment Center und Kompetenzdiagnostik. Analysiere den Inhalt eines Assessment-Bausteins (Übungsdokument) und klassifiziere ihn vollständig.
+    const systemPrompt = `Du bist ein Experte für Assessment Center und Kompetenzdiagnostik. Analysiere den Inhalt eines Assessment-Bausteins (Übungsdokument) und klassifiziere ihn vollständig.
 
 Antworte ausschließlich in validem JSON mit genau diesen Feldern:
 
@@ -104,21 +99,28 @@ Regeln:
 - projectName: Konkreter Projektname falls vorhanden (z.B. aus Header, Fußzeile, Titelseite)
 - Die description soll informativ und entscheidungsrelevant sein – nicht zu lang, aber aussagekräftig
 - Tags sollen das Matching mit Anforderungsprofilen unterstützen
-- Bei Unsicherheit: Bestes Schätzung basierend auf dem Inhalt`,
-        },
-        {
-          role: "user",
-          content: `Dateiname: ${file.name}\n\nInhalt des Dokuments:\n\n${truncatedText}`,
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: 1024,
+- Bei Unsicherheit: Bestes Schätzung basierend auf dem Inhalt`;
+
+    const result = await generateLLMOutput({
+      featureName: "exercise_analysis",
+      taskName: "analyze_content",
+      route: "/api/w/[workspaceSlug]/exercise-library/analyze-content",
+      input: `Dateiname: ${file.name}\n\nInhalt des Dokuments:\n\n${truncatedText}`,
+      options: {
+        systemPrompt,
+        responseFormat: "json",
+        maxTokens: 1024,
+      },
     });
 
-    const content = response.choices[0]?.message?.content || "{}";
-    const parsed = JSON.parse(content);
+    if ('aiDisabled' in result) {
+      const err = create503Response("exercise_analysis");
+      return NextResponse.json(err.body, { status: err.status });
+    }
 
-    const result = {
+    const parsed = typeof result.data === "string" ? JSON.parse(result.data) : result.data as any;
+
+    const analysisResult = {
       exerciseType: EXERCISE_TYPES.includes(parsed.exerciseType) ? parsed.exerciseType : "other",
       targetLevels: Array.isArray(parsed.targetLevels)
         ? parsed.targetLevels.filter((l: string) => TARGET_LEVELS.includes(l))
@@ -134,7 +136,7 @@ Regeln:
       description: typeof parsed.description === "string" ? parsed.description.trim() : "",
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(analysisResult);
   } catch (error) {
     console.error("Content analysis error:", error);
     return NextResponse.json({ error: "Inhaltsanalyse fehlgeschlagen" }, { status: 500 });
