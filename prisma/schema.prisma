@@ -53,6 +53,8 @@ model Workspace {
   diagnosticHypotheses DiagnosticHypothesis[]
   observationSheetTemplates ObservationSheetTemplate[]
   caseStudies        CaseStudy[]
+  aiSystemSettings   AiSystemSettings?
+  aiAuditLogs        AiAuditLog[]
 
   @@map("workspaces")
 }
@@ -956,4 +958,34 @@ model SelfAssessmentResponse {
   @@unique([selfAssessmentId, candidateId])
   @@index([candidateId])
   @@map("self_assessment_responses")
+}
+
+model AiSystemSettings {
+  id                  String   @id @default(uuid())
+  workspaceId         String   @unique @map("workspace_id")
+  activeLlmProvider   String   @default("openai") @map("active_llm_provider")
+  aiMasterDisabled    Boolean  @default(false) @map("ai_master_disabled")
+  aiFeaturesDisabled  Json     @default("[]") @map("ai_features_disabled")
+  complianceMode      String   @default("innovation") @map("compliance_mode")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  workspace           Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("ai_system_settings")
+}
+
+model AiAuditLog {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  action          String
+  previousValue   Json?    @map("previous_value")
+  newValue        Json?    @map("new_value")
+  actor           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@map("ai_audit_log")
 }

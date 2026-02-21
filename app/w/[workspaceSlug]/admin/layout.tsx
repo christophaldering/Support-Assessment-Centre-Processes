@@ -69,6 +69,7 @@ export default async function AdminLayout({ children, params }: Props) {
     { title: "Corporate Design", href: `${base}/brand-rules`, icon: "palette", moduleKey: "brand_rules" },
     { title: "Advanced Intelligence", href: `${base}/intelligence`, icon: "brain", moduleKey: "intelligence" },
     { title: "Einwilligungen", href: `${base}/consents`, icon: "consent", moduleKey: "consents" },
+    { title: "AI Governance", href: `${base}/ai-governance`, icon: "governance", moduleKey: "ai_governance" },
   ];
 
   return (
