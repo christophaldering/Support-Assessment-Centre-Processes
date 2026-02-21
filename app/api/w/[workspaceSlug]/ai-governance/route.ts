@@ -56,7 +56,7 @@ export async function PUT(req: NextRequest, { params }: { params: { workspaceSlu
 
   const body = await req.json();
 
-  const validProviders = ["openai", "neuland", "azure_openai_eu"];
+  const validProviders = ["openai", "neuland", "azure_eu"];
   const validModes = ["innovation", "eu_secure", "hybrid"];
 
   const updates: Record<string, unknown> = {};

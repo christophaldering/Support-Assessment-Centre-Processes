@@ -57,7 +57,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 *   Role-based routing fixed (CANDIDATE → portal, OBSERVER → observer view, others → cockpit)
 *   Cross-tenant authorization hardened for feature-flags API
 *   All user passwords reset to "Christoph", googlemail account given ADMIN role
-*   **AI Governance & Provider Management**: New module (`lib/llm/`) providing provider abstraction layer, runtime provider switching, AI kill switch (master + per-feature), compliance mode routing (Innovation/EU Secure/Hybrid), audit logging. Admin UI at `/admin/ai-governance`. Database tables: `ai_system_settings`, `ai_audit_log`. Business logic uses `llm.chat()` / `llm.generateStructuredAssessment()` without referencing providers directly.
+*   **AI Governance (Phase 1 – Lite, Enterprise-Ready)**: Core LLM adapter in `server/llm/` with single entry point `generateLLMOutput()`. ENV-based kill switch (`AI_DISABLED`, `AI_FEATURES_DISABLED`), provider routing via `ACTIVE_LLM_PROVIDER` (openai active, neuland stub, azure_eu placeholder). Strict OpenAI ENV usage (`AI_INTEGRATIONS_OPENAI_API_KEY` + `AI_INTEGRATIONS_OPENAI_BASE_URL`). Console logging for all AI requests. `lib/llm/` retained as re-export bridge for Phase 2 features (DB-backed config, Admin UI at `/admin/ai-governance`, audit logging via `ai_system_settings`/`ai_audit_log` tables). Architecture designed for Phase 2 extension without refactoring.
 *   Shared admin layout: All admin pages use consistent sidebar + terracotta gradient header via `layout.tsx` + `AdminSidebar.tsx`
 
 ## External Dependencies
