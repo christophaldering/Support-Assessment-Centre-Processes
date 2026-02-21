@@ -1,0 +1,58 @@
+Run a “Phase 1 AI Governance Verification” on this codebase WITHOUT making any code changes.
+
+Deliver a concise report with the following sections:
+
+1) Build/Runtime Health
+- Does the project start successfully?
+- Any new errors or warnings introduced by the AI Governance (Phase 1) changes?
+
+2) OpenAI Usage Inventory (must be isolated)
+- Search the entire repo for any direct OpenAI usage:
+  - `new OpenAI(`, `OpenAI(`, `openai.`, `chat.completions`, `responses`, `https://api.openai.com`
+- List every occurrence with:
+  - file path
+  - line number
+  - short context (1–2 lines)
+- Confirm that ALL OpenAI usage is ONLY inside `server/llm/**`.
+- If any usage appears outside `server/llm/**`, flag it as NON-COMPLIANT and name the file(s) to fix.
+
+3) Key Handling & Integration Correctness
+- Confirm OpenAI initialization uses ONLY:
+  - `process.env.AI_INTEGRATIONS_OPENAI_API_KEY`
+  - `process.env.AI_INTEGRATIONS_OPENAI_BASE_URL`
+- Confirm there is:
+  - NO usage of `OPENAI_API_KEY`
+  - NO hardcoded secrets (`sk-...`) anywhere in the repo
+- If found, list file/line and classify severity.
+
+4) Kill Switch Presence & Wiring
+- Locate the kill switch logic:
+  - `AI_DISABLED`
+  - `AI_FEATURES_DISABLED`
+  - `isAIDisabled(featureName)`
+- List where it is enforced (which functions/routes call the guard).
+- Confirm the guard runs BEFORE any OpenAI request is made.
+
+5) Fallback Behavior (when disabled)
+- Describe what the system returns when AI is disabled:
+  - API endpoints: expected status code + JSON shape
+  - Internal calls: expected fallback object
+- Confirm the fallback is “safe” (no OpenAI call, no crash).
+
+6) Logging Verification
+- Identify the log line(s) emitted for each AI request.
+- Confirm logs include at least:
+  - provider
+  - featureName
+  - route
+  - duration
+  - success/failure
+- Identify the log line for kill-switch triggers.
+
+7) Phase 2 Readiness Comment
+- Confirm `server/llm/adapter.ts` contains a clear comment describing Phase 2 (DB-backed runtime settings, admin UI, compliance modes, audit logging, budget monitoring).
+- Quote up to 3 lines of that comment (max 25 words total).
+
+Output format:
+- Provide the report as bullet points under each numbered heading.
+- Add a final “Go/No-Go” recommendation for proceeding with Phase 1 deployment, and list any must-fix items first.
