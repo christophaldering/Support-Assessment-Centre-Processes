@@ -1,0 +1,107 @@
+Create a new SS Suite module called:
+
+"AI Governance (Phase 1 – Lite, Enterprise-Ready)"
+
+Objective:
+Implement a minimal LLM abstraction layer with kill switch and basic provider structure, but architect it in a way that it can later be extended into a full Enterprise Governance module (Phase 2) without refactoring core logic.
+
+IMPORTANT:
+This is Phase 1 only. Do NOT implement Admin UI, DB-backed runtime configuration, or audit logging yet. However, the architecture must explicitly anticipate these extensions.
+
+-----------------------------------------
+PHASE 1 SCOPE
+-----------------------------------------
+
+1) LLM Adapter Layer
+
+Create:
+server/llm/
+  - adapter.ts
+  - featureGuard.ts
+  - providers/
+      - openai.ts
+      - neuland.ts (stub)
+
+The rest of the SS Suite must call ONLY:
+  generateLLMOutput({ taskName, featureName, input, schema?, options? })
+
+No direct OpenAI calls allowed outside this module.
+
+2) Provider Abstraction (Future-Proof)
+
+Implement internal provider routing based on:
+
+  process.env.ACTIVE_LLM_PROVIDER
+
+Supported values:
+  "openai" (default)
+  "neuland" (stub for future)
+  "azure_eu" (placeholder only, not implemented)
+
+Even if only OpenAI is active now, structure code so additional providers can be added without changing business logic.
+
+3) OpenAI Integration Rules
+
+All OpenAI usage must strictly use:
+  process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+  process.env.AI_INTEGRATIONS_OPENAI_BASE_URL
+
+No OPENAI_API_KEY fallback.
+No hardcoded keys.
+No provider logic outside server/llm/.
+
+4) AI Kill Switch (B+ via ENV only)
+
+Implement ENV-based toggles:
+
+  AI_DISABLED (boolean, default false)
+  AI_FEATURES_DISABLED (comma-separated feature names)
+
+Implement:
+  isAIDisabled(featureName: string): boolean
+
+Behavior:
+- If AI_DISABLED = true → all AI calls blocked
+- If featureName is listed → only that feature blocked
+- Return safe fallback object:
+    { aiDisabled: true, content: null }
+
+For API routes:
+  Return HTTP 503 JSON with:
+    { error: "AI temporarily disabled", feature: featureName }
+
+5) Logging
+
+For every AI request:
+Log:
+  provider
+  featureName
+  route
+  duration
+  success/failure
+
+-----------------------------------------
+ARCHITECTURAL REQUIREMENT (IMPORTANT)
+-----------------------------------------
+
+Add a clear comment block at the top of adapter.ts:
+
+"This module is intentionally structured for future extension into Phase 2 (Enterprise AI Governance & Provider Management), which will include:
+
+- DB-backed runtime provider switching
+- Compliance modes (innovation / eu_secure / hybrid)
+- Admin UI controls
+- Audit logging
+- Budget and usage monitoring
+- Per-customer provider routing
+
+Do not implement these yet, but ensure no structural decisions here would prevent adding them later."
+
+-----------------------------------------
+
+Deliver:
+- Clean adapter architecture
+- No direct provider references in business modules
+- Short architecture overview explaining:
+    - How provider switching will work later
+    - Where Phase 2 will plug in
