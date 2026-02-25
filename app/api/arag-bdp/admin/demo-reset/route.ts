@@ -55,6 +55,18 @@ async function seedDemo() {
     criteria = await prisma.bdpCriterion.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } });
   }
 
+  const avatarMap: Record<string, string> = {
+    "D-V1": "/demo-avatars/curie.svg",
+    "D-V2": "/demo-avatars/turing.svg",
+    "D-V3": "/demo-avatars/arendt.svg",
+    "D-V4": "/demo-avatars/lovelace.svg",
+    "D-V5": "/demo-avatars/tesla.svg",
+    "D-V6": "/demo-avatars/beauvoir.svg",
+    "D-MD1": "/demo-avatars/woolf.svg",
+    "D-E1": "/demo-avatars/drucker.svg",
+    "D-V7": "/demo-avatars/aurelius.svg",
+  };
+
   const observerDefs = [
     { code: "D-V1", role: "BOARD", displayName: "Marie Curie (V1)", realName: "Marie Curie", email: "curie@arag-demo.eu", isAdmin: false, pw: "Demo", demoLock: false },
     { code: "D-V2", role: "BOARD", displayName: "Alan Turing (V2)", realName: "Alan Turing", email: "turing@arag-demo.eu", isAdmin: false, pw: "Demo", demoLock: false },
@@ -80,6 +92,7 @@ async function seedDemo() {
         demoLock: def.demoLock,
         username: def.code,
         passwordHash: def.pw,
+        photoUrl: avatarMap[def.code] || null,
       },
     });
     users[def.code] = u;
@@ -113,6 +126,7 @@ async function seedDemo() {
         displayName: def.displayName,
         environment: ENV,
         feedback: teamFeedback[i] || null,
+        businessCaseType: "demo-generated",
       },
     });
     teams.push(t);

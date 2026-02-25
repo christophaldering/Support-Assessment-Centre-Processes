@@ -292,13 +292,35 @@ export default function BdpAdminPage() {
             <button data-testid="bdp-admin-save" onClick={addTeam} className="bg-[#FFD700] px-4 py-2 rounded-lg text-sm font-bold">+ Team</button>
           </div>
           {teams.map(t => (
-            <div key={t.id} data-testid={`admin-team-row-${t.id}`} className="p-3 border border-gray-100 rounded-xl flex items-center justify-between">
-              <div>
-                <span className="font-bold">{t.code}</span>
-                <span className="text-xs text-gray-400 ml-2">{t.displayName || ""}</span>
-                <span className="text-xs text-gray-400 ml-2">({t.teamParticipants?.length || 0} TN)</span>
+            <div key={t.id} data-testid={`admin-team-row-${t.id}`} className="p-3 border border-gray-100 rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <span className="font-bold">{t.code}</span>
+                  <span className="text-xs text-gray-400 ml-2">{t.displayName || ""}</span>
+                  <span className="text-xs text-gray-400 ml-2">({t.teamParticipants?.length || 0} TN)</span>
+                  {t.businessCaseType && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-2">{t.businessCaseType === "pdf" ? "PDF" : "Demo"} Case</span>}
+                </div>
+                <button data-testid="bdp-admin-delete" onClick={() => deleteTeam(t.id)} className="text-xs text-red-400 hover:text-red-600">Löschen</button>
               </div>
-              <button data-testid="bdp-admin-delete" onClick={() => deleteTeam(t.id)} className="text-xs text-red-400 hover:text-red-600">Löschen</button>
+              <div className="flex items-center gap-2">
+                <input
+                  data-testid={`bdp-team-upload-case-${t.id}`}
+                  type="file"
+                  accept="application/pdf"
+                  className="text-xs flex-1"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const fd = new FormData();
+                    fd.append("file", file);
+                    fd.append("teamId", t.id);
+                    const res = await fetch("/api/arag-bdp/business-case/upload", { method: "POST", body: fd });
+                    if (res.ok) { flash("Business Case hochgeladen"); refresh(); }
+                    else { const d = await res.json(); flash(d.error || "Fehler"); }
+                  }}
+                />
+                <span className="text-[10px] text-gray-400 whitespace-nowrap">PDF hochladen</span>
+              </div>
             </div>
           ))}
         </div>

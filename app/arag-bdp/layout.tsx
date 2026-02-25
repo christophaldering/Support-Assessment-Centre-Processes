@@ -19,6 +19,7 @@ import {
 import { BdpContext, BdpUser } from "./bdp-context";
 import NotificationBell from "./notification-bell";
 import TourOverlay from "./components/TourOverlay";
+import AvatarCircle from "./components/AvatarCircle";
 import { getTourSteps } from "@/lib/arag-bdp-tour";
 
 const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login", "/anmeldung"];
@@ -77,6 +78,12 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
       router.push("/anmeldung");
     }
   }, [loading, user, pathname, router]);
+
+  useEffect(() => {
+    const handleTourRestart = () => setTourRunning(true);
+    window.addEventListener("bdp-tour-restart", handleTourRestart);
+    return () => window.removeEventListener("bdp-tour-restart", handleTourRestart);
+  }, []);
 
   useEffect(() => {
     if (!loading && user && !tourAutoChecked && user.environment === "demo") {
@@ -285,9 +292,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
 
           <div className="p-4 border-t border-white/5">
             <div className="flex items-center gap-3 px-2">
-              <div className="w-8 h-8 rounded-full bg-[#FFD700] flex items-center justify-center text-black font-bold text-xs shrink-0">
-                {user.photoUrl ? <img src={user.photoUrl} className="w-8 h-8 rounded-full object-cover" alt="" /> : user.code[0]}
-              </div>
+              <AvatarCircle avatarUrl={user.photoUrl} code={user.code} size="sm" />
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-semibold text-[#FFFBF0] truncate">{user.code}</div>
                 <div className="text-[10px] text-[#FFFBF0]/40">{user.role}</div>
@@ -359,8 +364,8 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell variant="mobile" />
-            <Link href="/arag-bdp/profile" data-testid="link-profile" className="w-8 h-8 rounded-full bg-[#FFD700] flex items-center justify-center text-black font-bold text-sm">
-              {user.photoUrl ? <img src={user.photoUrl} className="w-8 h-8 rounded-full object-cover" alt="" /> : user.code[0]}
+            <Link href="/arag-bdp/profile" data-testid="link-profile">
+              <AvatarCircle avatarUrl={user.photoUrl} code={user.code} size="sm" />
             </Link>
             <button data-testid="bdp-menu-hamburger" onClick={() => setMenuOpen(!menuOpen)} className="text-2xl">☰</button>
           </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useBdp } from "../../bdp-context";
+import CaseModal from "../../components/CaseModal";
 
 export default function BdpScoringPage() {
   const params = useParams();
@@ -22,6 +23,8 @@ export default function BdpScoringPage() {
   const [error, setError] = useState("");
   const [sponsorFlags, setSponsorFlags] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"scoring" | "individual">("scoring");
+  const [caseModal, setCaseModal] = useState<{ type: "slides" | "pdf" | "none"; teamName: string; slides?: any[]; pdfUrl?: string } | null>(null);
+  const [loadingCase, setLoadingCase] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -130,11 +133,31 @@ export default function BdpScoringPage() {
 
   if (!session) return <div className="text-center py-8 text-gray-400">Laden...</div>;
 
+  const openBusinessCase = async (teamId: string) => {
+    setLoadingCase(teamId);
+    try {
+      const res = await fetch(`/api/arag-bdp/business-case?teamId=${teamId}`);
+      const data = await res.json();
+      setCaseModal({ type: data.type, teamName: data.teamName, slides: data.slides, pdfUrl: data.url });
+    } catch {}
+    setLoadingCase(null);
+  };
+
   const teamParticipants = (teamId: string) =>
     participants.filter(p => p.teamParticipants?.some((tp: any) => tp.team.id === teamId));
 
   return (
     <div className="space-y-4">
+      {caseModal && (
+        <CaseModal
+          onClose={() => setCaseModal(null)}
+          type={caseModal.type}
+          teamName={caseModal.teamName}
+          slides={caseModal.slides}
+          pdfUrl={caseModal.pdfUrl}
+        />
+      )}
+
       <Link href="/arag-bdp/bewertung" className="text-gray-400 hover:text-black text-sm">← Zurück</Link>
 
       <div className="bg-white rounded-2xl p-5 shadow-sm">
@@ -169,7 +192,19 @@ export default function BdpScoringPage() {
                 <div className="space-y-3">
                   {teams.map(team => (
                     <div key={team.id} className="flex items-center gap-3">
-                      <div className="w-16 text-sm font-medium">{team.displayName || team.code}</div>
+                      <div className="w-16 text-sm font-medium">
+                        {team.displayName || team.code}
+                        {criterion === criteria[0] && (
+                          <button
+                            data-testid={`bdp-open-case-${team.id}`}
+                            onClick={() => openBusinessCase(team.id)}
+                            disabled={loadingCase === team.id}
+                            className="block text-[10px] text-[#b8960a] hover:text-[#FFD700] mt-0.5 font-normal"
+                          >
+                            {loadingCase === team.id ? "..." : "Case"}
+                          </button>
+                        )}
+                      </div>
                       <input
                         data-testid={`input-score-${criterion.id}-${team.id}`}
                         type="number"

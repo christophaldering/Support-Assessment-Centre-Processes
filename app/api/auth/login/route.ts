@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { setUserSession } from "@/lib/session";
+import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,6 +10,11 @@ export async function POST(req: NextRequest) {
 
     if (!email || !password || !workspaceSlug) {
       return NextResponse.json({ error: "Bitte alle Felder ausfüllen." }, { status: 400 });
+    }
+
+    if (workspaceSlug.toLowerCase() === "arag") {
+      const bdpResult = await tryBdpLogin(email.toLowerCase().trim(), password);
+      if (bdpResult) return bdpResult;
     }
 
     const workspace = await prisma.workspace.findUnique({
@@ -56,5 +62,58 @@ export async function POST(req: NextRequest) {
     });
   } catch {
     return NextResponse.json({ error: "Anfrage konnte nicht verarbeitet werden." }, { status: 400 });
+  }
+}
+
+async function tryBdpLogin(email: string, password: string): Promise<NextResponse | null> {
+  try {
+    const emailMapping = await prisma.bdpNameMapping.findFirst({
+      where: { entityType: "email", realName: email },
+    });
+
+    if (!emailMapping) return null;
+
+    const bdpUser = await prisma.bdpUser.findUnique({
+      where: { id: emailMapping.entityId },
+    });
+
+    if (!bdpUser) return null;
+
+    if (bdpUser.passwordHash !== password) return null;
+
+    const sessionData = JSON.stringify({
+      userId: bdpUser.id,
+      code: bdpUser.code,
+      role: bdpUser.role,
+      isAdmin: bdpUser.isAdmin,
+      environment: bdpUser.environment,
+    });
+
+    cookies().set("bdp_session", sessionData, {
+      httpOnly: true,
+      path: "/",
+      maxAge: 60 * 60 * 24,
+      sameSite: "lax",
+    });
+
+    cookies().set("bdp_environment", bdpUser.environment, {
+      path: "/",
+      maxAge: 60 * 60 * 24,
+      sameSite: "lax",
+    });
+
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: bdpUser.id,
+        email,
+        name: bdpUser.displayName || bdpUser.code,
+        roles: [bdpUser.role],
+        forcePasswordChange: false,
+        workspaceSlug: "arag",
+      },
+    });
+  } catch {
+    return null;
   }
 }
