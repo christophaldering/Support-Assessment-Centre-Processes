@@ -646,13 +646,13 @@ export default function LandingPage() {
             >
               {lang === "de" ? "EN" : "DE"}
             </button>
-            <a
-              href="#signin"
+            <button
+              onClick={() => { setActiveMode("workspace"); setError(""); setTimeout(() => loginRef.current?.scrollIntoView({ behavior: "smooth" }), 50); }}
               className="text-xs font-medium text-white bg-brand-blue hover:bg-brand-blue-dark rounded-full px-5 py-1.5 transition-colors"
               data-testid="nav-login"
             >
               {l.navLogin}
-            </a>
+            </button>
           </div>
         </div>
       </header>
@@ -682,13 +682,13 @@ export default function LandingPage() {
                 >
                   {l.heroCta1}
                 </a>
-                <a
-                  href="#signin"
+                <button
+                  onClick={() => { setActiveMode("workspace"); setError(""); setTimeout(() => loginRef.current?.scrollIntoView({ behavior: "smooth" }), 50); }}
                   className="rounded-lg border border-white/20 text-white font-medium px-8 py-3.5 text-sm hover:bg-white/5 transition-colors"
                   data-testid="button-hero-login"
                 >
                   {l.heroCta2}
-                </a>
+                </button>
               </div>
             </div>
 
