@@ -121,7 +121,8 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
 
   const isActive = (href: string) => {
     if (href === "/arag-bdp") return pathname === "/arag-bdp";
-    return pathname.startsWith(href);
+    if (href === "/arag-bdp/admin" || href.startsWith("/arag-bdp/admin?")) return pathname === "/arag-bdp/admin";
+    return pathname === href || pathname.startsWith(href + "/");
   };
 
   return (
