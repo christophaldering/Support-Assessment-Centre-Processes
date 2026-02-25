@@ -1,0 +1,110 @@
+SPRINT L6 – STRATEGISCHER VORSTANDS-KONTEXT IN ARAG LANDING INTEGRIEREN
+
+ZIEL:
+Ergänze die ARAG Landing Page unter /w/arag um eine strategische Kontext-Sektion oberhalb der bestehenden Kacheln.
+
+Diese Sektion soll:
+
+- das Mandat des Vorstands sichtbar machen
+- die strategische Ausgangssituation beschreiben
+- die inhärente Ambivalenz des Formats transparent machen
+- den konzeptionellen Lösungsansatz darstellen
+- notwendige Voraussetzungen klar benennen
+- board-level formuliert sein
+- chancenorientiert, nicht defensiv
+- visuell eigenständig hervorgehoben sein
+
+POSITION:
+Direkt unter der Hero-Section.
+Vor den drei bestehenden Strategie-Kacheln.
+
+DESIGN:
+- Hintergrund: Weiß (#FFFFFF)
+- Max Width reduziert (Board-Paper-Charakter)
+- Serif-Headline
+- Subtiler gelber Akzentbalken links (4px)
+- Großzügiger Weißraum
+- Keine Icons
+- Keine Bullet-Overkill
+
+STRUKTUR:
+
+1) ÜBERSCHRIFT
+
+"Mandat und strategischer Kontext"
+
+2) ABSCHNITT 1 – VORSTANDSMANDAT
+
+Text (Board-Level, knapp, präzise):
+
+Der Vorstand hat den Auftrag formuliert, strategisches Zukunftsdenken unter realitätsnahen Bedingungen sichtbar zu machen und Potenziale differenzierter zu identifizieren.
+
+Der Business Development Pitch dient damit nicht nur der Auswahlentscheidung, sondern der strukturierten Beobachtung strategischer Handlungslogik.
+
+3) ABSCHNITT 2 – HERAUSFORDERUNG
+
+Überschrift:
+"Herausforderung"
+
+Text:
+
+Die Zusammenstellung der Teams beeinflusst potenziell die Vergleichbarkeit individueller Leistungen. 
+
+Gleichzeitig soll unter realitätsnahen Wettbewerbsbedingungen eine Entscheidung vorbereitet werden.
+
+Diese Konstellation erzeugt eine produktive Spannung zwischen Auswahl- und Diagnoseperspektive.
+
+4) ABSCHNITT 3 – LÖSUNGSANSATZ
+
+Überschrift:
+"Konzeptioneller Lösungsansatz"
+
+Text:
+
+- Standardisierte Bewertungsarchitektur
+- Vollständige Punktverteilung (100 Punkte)
+- Strukturierte Aggregation
+- Ergänzende diagnostische Einordnung
+- Integration in nachgelagerte Development Dialogues
+
+Ziel ist es, Vergleichbarkeit herzustellen, ohne die Realitätsnähe zu verlieren.
+
+5) ABSCHNITT 4 – VORAUSSETZUNGEN
+
+Überschrift:
+"Voraussetzungen (to be discussed)"
+
+Liste mit klarer Kennzeichnung "to be discussed":
+
+- Transparente Kommunikation der Bewertungslogik (to be discussed)
+- Klarheit über Gewichtung von Team- vs. Individualleistung (to be discussed)
+- Gemeinsames Verständnis zur Rolle des Vorstands als Beobachter und Sponsor (to be discussed)
+- Verbindliche Einbettung der Ergebnisse in die Development Dialogues (to be discussed)
+
+DESIGN-ANFORDERUNG:
+
+Die Sektion muss wirken wie ein Vorstandsmemo, nicht wie Marketing.
+
+Keine Icons.
+Keine Diagramme.
+Keine Gamification.
+Seriös.
+Reduziert.
+Strukturiert.
+
+TECHNISCHE ANFORDERUNG:
+
+Komponente anlegen:
+components/arag/BoardContextSection.tsx
+
+Sauber in /w/arag/page.tsx einbinden.
+Keine Breaking Changes.
+Keine Performance-Einbußen.
+
+QA:
+
+- Textabstände großzügig
+- Keine Layoutverschiebung
+- Mobile gut lesbar
+- Serif-Headline konsistent
+- Keine Farbübersättigung

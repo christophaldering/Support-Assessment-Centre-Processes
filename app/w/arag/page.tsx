@@ -6,6 +6,7 @@ import LandingHero from "@/app/components/arag/LandingHero";
 import LandingCards from "@/app/components/arag/LandingCards";
 import LandingCharts from "@/app/components/arag/LandingCharts";
 import JourneyTimeline from "@/app/components/arag/JourneyTimeline";
+import BoardContextSection from "@/app/components/arag/BoardContextSection";
 
 type DemoRole = {
   code: string;
@@ -137,6 +138,7 @@ export default function AragLobbyPage() {
       {!lobbyEnv ? (
         <>
           <LandingHero />
+          <BoardContextSection />
           <LandingCards />
           <LandingCharts />
           <JourneyTimeline />
