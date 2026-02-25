@@ -1,0 +1,360 @@
+YOU ARE REPLIT. IMPLEMENT EXACTLY WHAT IS SPECIFIED. NO SIMPLIFYING, NO “ALTERNATIVES”, NO OMITTING FEATURES.
+NO FOLLOW-UP QUESTIONS. MAKE REASONABLE DEFAULTS WHERE NECESSARY, DOCUMENT THEM IN A CHANGELOG, AND STILL SHIP A WORKING SOLUTION.
+YOU MUST DELIVER A FULLY WORKING FEATURE SET, READY-TO-USE WITH PRELOADED DATA, SO WE CAN START IMMEDIATELY.
+
+PROJECT CONTEXT
+Existing app:
+https://assessment-Suite.replit.app
+We will ADD a complete module: “ARAG Business Development Pitch (BDP) Evaluation Tool”.
+This module must run inside the existing app, reachable from the start bar via a new switch.
+Goal: professional, innovative, mobile-first evaluation tool (WhatsApp / Spiegel Online feel), forced-point scoring, admin governance, anonymized identities by default, “Powered by aestimamus”.
+
+SCOPE SUMMARY (ALL REQUIREMENTS MUST BE IMPLEMENTED)
+1) Entry switch + project-gate
+2) Minimal login (Demo/Demo) producing DEMO environment data
+3) Anonymous codes for ALL persons by default (Vx/MDx/Ex/TNx/Teamx)
+4) Admin console with configurable sessions/teams/participants/observers/criteria/weights/transparency/locks/releases/exports
+5) Scoring: 100 points per criterion, must sum to 100; 50/50 allowed; ranking ONLY within session; results ONLY after admin release
+6) Tie-breaker: Board decides; admin records tie-break decision
+7) Individual candidate evaluation (accordion) separate from team ranking: per-criterion prose notes + general prose
+8) Flexibility: observers can change; observers may score more than 2 teams; architecture must support exceptions
+9) Export (admin-only): CSV + JSON + printable report view; demo excluded from live exports; “Powered by aestimamus” + logo in module footer and prints
+10) UI: bottom nav with 4 tabs + hamburger menu + profile with optional photo upload; view-mode setting (mobile/tablet/desktop) + UI preset framework (WhatsApp/Spiegel default)
+11) Quality assurance: internal admin-only QA page + automated checks; must not break existing app
+
+ABSOLUTE NON-NEGOTIABLE REQUIREMENTS (MUST)
+
+A) Entry Point / Project Gate
+A1) On the existing start bar / start screen of https://assessment-Suite.replit.app add a NEW switch/button:
+    Label: “Direkte Anmeldung im Projekt”
+A2) Clicking it opens a project gate for ARAG BDP.
+A3) Gate shows:
+    - Project Key field prefilled or selectable: “ARAG_BDP”
+    - Password field (visible)
+    IMPORTANT: For now, DO NOT enforce any password logic. Accept any input (including empty).
+    BUT implement the gate so later a single config/env var can enforce exact password check without code rewrite.
+
+B) Login (Phase 1 minimal; no real registration)
+B1) After gate, show ARAG BDP login:
+    - Username
+    - Password
+B2) For now, accept ONLY:
+    username: Demo
+    password: Demo
+B3) This creates a user session in environment=demo.
+B4) DO NOT implement email registration or password hashing now. Keep architecture ready for future real auth.
+
+C) Anonymity & Code System (Default Everywhere)
+C1) By default show ONLY codes, never real names in observer UI:
+    - Board observers: V1..Vx
+    - Management Diagnostics: MD1..MDx
+    - Experts: E1..Ex
+    - Participants: TN1..TNx
+    - Teams: Team1..Teamx
+C2) Admin must be able to optionally map each code to a real name later (for printing/export).
+C3) Exports/prints must support two modes:
+    - Anonymous mode (codes only)
+    - Named mode (codes + real names) for admin use only
+C4) Sponsor-Flag: Observers can indicate if they are sponsor of a team. This is ONLY for transparency, no weighting changes.
+
+D) Sessions / Teams / Observers (Flexible, Not Hardcoded)
+D1) Primary scenario: 3 parallel sessions, each session has 2 teams.
+D2) MUST support exceptions:
+    - observer drops out / new observer appears
+    - observer can be assigned to >2 teams
+    - observer can score multiple sessions
+    - any role can be added/removed by admin
+D3) Admin can modify assignments without code changes.
+
+E) Scoring Model (ONLY points; within-session ONLY)
+E1) Winners are determined ONLY by points.
+E2) Ranking is computed ONLY within each session. NO cross-session “global winner”.
+E3) Points are forced budget:
+    - 100 points per criterion per observer
+    - Must be fully allocated (sum=100)
+    - With two teams 50/50 is allowed
+    - With >2 teams still must sum to 100 across all teams the observer is scoring (for that session’s evaluated team set).
+E4) Validation must be SERVER-SIDE (not only client).
+E5) Scoring can happen anytime (during pitch or after) until Admin closes scoring.
+E6) No results are visible to observers before Admin release.
+E7) Tie-break: if total points equal, decision is made by the Board (V-role) and recorded by Admin.
+    Implement a “Tie-break decision” UI (admin-only) to capture winner when tie occurs.
+
+F) Criteria Architecture (Extensible; Weights Optional)
+F1) Start with these 5 criteria (admin-configurable, stored in DB; NOT hardcoded constants):
+    1. Strategische Kohärenz
+    2. Ökonomische Stringenz & Business-Logik
+    3. Umsetzungsfähigkeit & Operationalisierung
+    4. Kollektive Führungsfähigkeit
+    5. Souveränität im Defense / Q&A
+F2) Admin can add/remove/reorder criteria later.
+F3) Optional: role-specific weighting:
+    - Implement per-role weights as config data and a toggle “Use weighting for analytics”
+    - IMPORTANT: Winners still determined by raw points unless Admin explicitly enables “weighted analytics view”.
+    - Default: OFF for winner logic; ON/OFF only affects analytics panels.
+
+G) Individual Participant Evaluation (Separate; Not Affecting Winner)
+G1) Each team view shows roster (TNx) with accordion/collapsible UI.
+G2) For each TN:
+    - per-criterion prose note fields (free text)
+    - general prose note field
+    - OPTIONAL lightweight structured markers (present but not required): “Contribution”, “Executive Presence” as simple 1–5 slider or tags; must NOT affect ranking.
+G3) Individual evaluation never changes team points or winner.
+
+H) Admin Features (Must; multi-admin support)
+H1) Admin role can be assigned to multiple users (for now: allow toggling in config; future-ready).
+H2) Admin console must allow:
+    - Create/edit/delete sessions
+    - Create/edit teams
+    - Create/edit participants (TN codes) and assign to teams
+    - Create/edit observers (V/MD/E codes) and assign to sessions and teams
+    - Define sponsor flag per observer-team (or allow observers to self-declare)
+    - Maintain mapping tables: Code -> Real name (optional)
+    - Define criteria list (add/remove/reorder)
+    - Define role-specific weighting (optional)
+    - Open scoring window / Close scoring window (lock edits)
+    - Release results (after close)
+    - Configure transparency: aggregates only vs per-observer breakdown (admin-only)
+    - Export results (admin-only)
+    - Delete demo data
+H3) Governance states:
+    - DRAFT (setup)
+    - OPEN (scoring allowed)
+    - CLOSED (locked; no edits)
+    - RELEASED (results visible; exports enabled)
+    Admin transitions states.
+
+I) Results & Reporting (Admin-only; released only)
+I1) After RELEASE:
+    Provide:
+    - totals per team
+    - per-criterion totals per team
+    - identify winner & runner-up within session
+    - if tie: show tie + tie-break recorded decision
+I2) Transparency:
+    Admin can view per-observer distributions if enabled.
+    Observers do NOT see other observers’ allocations.
+I3) Export (Admin-only):
+    - CSV: session summary, per-criterion totals
+    - JSON: full dataset (sessions, teams, criteria, scores, individual notes, mappings)
+    - Printable report view (browser print-friendly) with “Powered by aestimamus” and aestimamus logo in footer.
+I4) Demo data must be excluded from “live exports/analytics” by default.
+    Provide explicit export toggles: “Export DEMO” separate.
+
+J) UI/UX Requirements
+J1) Look & feel: WhatsApp / Spiegel Online: clean, list-based, fast, minimal.
+J2) Bottom navigation with 4 tabs + icons + optional text labels:
+    Tab1: Home
+    Tab2: Sessions
+    Tab3: Bewertung
+    Tab4: Auswertung (locked until RELEASE)
+J3) Hamburger menu for secondary:
+    - Settings
+    - Help
+    - Admin (if admin)
+    - Logout
+J4) Profile area:
+    - optional profile photo upload
+    - shows user code (e.g., V1/MD1/E1)
+    - view mode setting (mobile/tablet/desktop)
+    - UI preset setting (WhatsApp/Spiegel default)
+J5) Provide framework for alternative UI presets (enum + CSS variables). Implement only default preset styling now.
+
+K) Branding
+K1) Keep ARAG feel: yellow accents, black text, warm light background.
+K2) Add subtle aestimamus branding:
+    - Footer: “Powered by aestimamus” + logo
+    - On printable exports
+    Must not overpower ARAG.
+K3) Use ARAG-like color tokens (yellow accent + warm background + black text). Do not introduce loud colors.
+
+L) Must Not Break Existing App
+L1) Integrate module without disrupting other routes.
+L2) Add tests or at least internal QA verifications and protect existing functionality.
+
+PRELOADED “READY-TO-USE” DATA (MUST LOAD AUTOMATICALLY ON FIRST RUN)
+You MUST seed the database (or create a migration/seed script that runs once) so the tool is immediately usable without manual setup.
+
+Seed must include:
+
+1) Roles (codes):
+- Board codes: V1, V2, V3, V4, V5, V6
+- Management Diagnostics codes: MD1
+- Expert codes: E1
+(Architecture supports more; these are initial.)
+
+2) Observers:
+- Create observer records for V1..V6, MD1, E1 (all anonymous by default).
+- Mark MD1 as Admin by default.
+- Allow Admin to add more admins later.
+
+3) Sessions:
+Create 3 sessions (parallel):
+- Session1: “BDP Session 1”
+- Session2: “BDP Session 2”
+- Session3: “BDP Session 3”
+Initial state: DRAFT (admin can open later)
+
+4) Teams:
+Create 6 teams:
+- Team1..Team6
+
+5) Participants:
+Create 21 participants:
+- TN1..TN21
+
+6) Team assignment (default distribution; can be changed by Admin):
+- Team1: TN1, TN2, TN3, TN4
+- Team2: TN5, TN6, TN7
+- Team3: TN8, TN9, TN10, TN11
+- Team4: TN12, TN13, TN14
+- Team5: TN15, TN16, TN17, TN18
+- Team6: TN19, TN20, TN21
+
+7) Session-team mapping (default: 2 teams per session):
+- Session1 evaluates Team1 and Team2
+- Session2 evaluates Team3 and Team4
+- Session3 evaluates Team5 and Team6
+Admin can change.
+
+8) Observer assignment (default observer group per session):
+- Session1: V1 + MD1 + E1
+- Session2: V2 + MD1 + E1
+- Session3: V3 + MD1 + E1
+(Yes, this repeats MD1/E1; this is acceptable as default. Admin can adjust to match reality.)
+
+9) Criteria:
+Seed the 5 criteria listed above, order 1..5, active=true.
+
+10) Demo environment seeding:
+- Demo user session exists (Demo/Demo).
+- All interactions in demo are stored with environment=demo.
+- Provide a “Reset Demo Data” admin button.
+
+DATA MODEL REQUIREMENTS (MUST)
+Implement database tables/entities that support:
+- environments: demo/live (start with demo)
+- users (code, role, is_admin, environment)
+- sessions (state DRAFT/OPEN/CLOSED/RELEASED, start/end timestamps optional)
+- teams
+- participants
+- team_participants mapping
+- session_teams mapping
+- observers assignments (session_id, user_code, role, can_score_teams list)
+- criteria (configurable)
+- scores:
+   score entry must store:
+   - session_id
+   - criterion_id
+   - observer_code
+   - team_id
+   - points (integer)
+   - environment
+   - created_at, updated_at
+- sponsor flags:
+   - observer_code, team_id, session_id, environment, is_sponsor
+- individual notes:
+   - session_id
+   - participant_id
+   - observer_code
+   - per-criterion note fields (or normalized table)
+   - general note
+   - optional markers (contribution, presence)
+   - environment
+- name mappings:
+   - code -> real_name (optional)
+   - participant_id -> real_name (optional)
+   - team_id -> real_name (optional)
+
+SERVER-SIDE VALIDATION (MUST)
+- Prevent submission of criterion scoring for an observer unless sum(points)=100 across all teams the observer is assigned to score for that session for that criterion.
+- Lock state CLOSED/RELEASED prevents score edits and note edits (configurable: by default lock both).
+- Results visible only when state=RELEASED (observers see only aggregates for their session if allowed; admin sees all).
+
+TIE-BREAK (MUST)
+If session totals for top teams are equal:
+- Mark session as “TIE”
+- Provide admin-only UI:
+   - select winner team
+   - enter short rationale note (optional)
+   - record which Board code made the decision (choose among assigned V codes)
+- Winner displayed as “Winner (Tie-break by Board)”.
+
+TRANSPARENCY CONTROL (MUST)
+Admin setting per session:
+- transparency_mode:
+  1) aggregates_only (default)
+  2) show_per_observer_breakdown (admin-only)
+Observers never see other observers’ breakdown.
+
+RESULTS VISIBILITY (MUST)
+- Observers can see:
+  - their own submitted allocations
+  - but NOT totals before release
+- After release:
+  - optionally allow observers to see session aggregate results (admin setting)
+  - but exports remain admin-only
+
+EXPORTS (MUST)
+- CSV export: session aggregate table
+- JSON export: full schema
+- Print view: clean report with ARAG styling and footer “Powered by aestimamus” + logo
+- Demo exclusion: default export excludes demo; provide separate “Export DEMO” button.
+
+UI DETAILS (MUST)
+- Bottom nav with icons and labels
+- Hamburger menu
+- Home: shows next steps + current session state + quick links
+- Sessions: list sessions; per session show state and teams
+- Bewertung: if session OPEN, show scoring UI; if CLOSED/RELEASED, show read-only
+- Auswertung: locked until RELEASE; then show charts/tables (simple bar/stacked style allowed)
+- Profile: upload photo, set view mode, set UI preset, logout
+- Add “DEMO” banner when environment=demo so users do not confuse it with live.
+
+DEVICE VIEW MODES (MUST)
+Implement a setting:
+- mobile / tablet / desktop
+Store it and apply basic layout tweaks (spacing, list density, card width).
+Also implement UI Preset framework:
+- preset enum with CSS variables
+- default: whatsapp_spiegel
+Add at least a second placeholder preset entry (e.g., “classic”) but it can reuse same styling now.
+
+AESTIMAMUS LOGO (MUST)
+If the repo already has aestimamus logo asset, use it.
+If not, create a simple placeholder SVG text logo “aestimamus”.
+Place in footer and print view.
+Always include text: “Powered by aestimamus”.
+
+QUALITY ASSURANCE (MUST)
+Create an admin-only QA page that runs checks and displays PASS/FAIL:
+- Entry switch exists
+- Gate present and configurable
+- Demo login works
+- Demo env flagged
+- Session setup seeded
+- Criteria seeded
+- Points validation server-side
+- Lock prevents edits
+- Results hidden before release
+- Exports admin-only
+- Demo excluded from live exports
+- Tie-break workflow present
+- Participant notes present and excluded from ranking
+- UI bottom nav present
+- Profile photo upload present (optional allowed)
+Also output a final QA summary in console/log.
+
+NO REGRESSIONS
+- Keep existing routes and features intact.
+- Add routes under /arag-bdp (or similar) and integrate switch in start bar.
+
+FINAL STEP (MANDATORY)
+After implementation, produce:
+1) A REQUIREMENTS CHECKLIST with PASS/FAIL for every MUST item above.
+2) A CHANGELOG of any defaults/assumptions.
+3) Confirmation that seeded data exists and tool is usable immediately.
+4) Confirmation that demo data is excluded from live exports/analytics by default.
+5) Confirmation that scoring sum=100 is enforced server-side.
+
+DO NOT STOP EARLY. SHIP THE FULL WORKING MODULE.
