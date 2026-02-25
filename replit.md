@@ -18,6 +18,9 @@ Footer credit: "© Christoph Aldering · Private initiative / concept"
 
 The platform is built on a modern full-stack architecture using Next.js 14 (App Router) with TypeScript, Prisma ORM, PostgreSQL, and Tailwind CSS.
 
+*   **Dev Server Proxy:** A custom Node.js proxy (`scripts/dev-server.js`) runs on port 5000 and proxies to the Next.js dev server on port 5001. It shows a "loading" page until all key pages are pre-compiled, preventing stale chunk loading errors. The workflow command is `node scripts/dev-server.js`.
+*   **Error Boundaries:** `app/global-error.tsx` and `app/error.tsx` provide auto-recovery for chunk loading failures. `public/chunk-recovery.js` adds JS-level error recovery.
+
 **Key Architectural Decisions:**
 
 *   **UI/UX:** Features a multi-step candidate portal and an enterprise cockpit with detailed project views. It supports per-workspace dual-branding and theming with live preview.
