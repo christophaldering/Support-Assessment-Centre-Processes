@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import LandingHero from "@/app/components/arag/LandingHero";
+import LandingCards from "@/app/components/arag/LandingCards";
+import LandingCharts from "@/app/components/arag/LandingCharts";
+import JourneyTimeline from "@/app/components/arag/JourneyTimeline";
 
 type DemoRole = {
   code: string;
@@ -110,70 +114,98 @@ export default function AragLobbyPage() {
 
   return (
     <div className="min-h-screen bg-[#FFFBF0] flex flex-col">
-      <header className="bg-black text-white">
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+      <header className="bg-black text-white sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-[#FFD700] rounded-lg flex items-center justify-center">
               <span className="text-black font-bold text-sm">A</span>
             </div>
-            <h1 className="font-bold text-lg tracking-tight">ARAG Executive BDP</h1>
+            <span className="font-bold text-lg tracking-tight">ARAG</span>
+            <span className="text-white/40 text-sm hidden sm:inline">Executive Diagnostics</span>
           </div>
           {lobbyEnv && (
-            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-              lobbyEnv === "demo" ? "bg-[#FFD700] text-black" : "bg-green-500 text-white"
-            }`}>
-              {lobbyEnv === "demo" ? "DEMO" : "LIVE"}
-            </span>
+            <button
+              onClick={() => { setLobbyEnv(null); setSelectedRole(null); setPersonError(""); }}
+              className="text-xs text-white/50 hover:text-white transition-colors"
+            >
+              Zurück zur Übersicht
+            </button>
           )}
         </div>
       </header>
 
-      <main className="flex-1 flex items-start justify-center px-4 py-8">
-        <div className="w-full max-w-md space-y-6">
+      {!lobbyEnv ? (
+        <>
+          <LandingHero />
+          <LandingCards />
+          <LandingCharts />
+          <JourneyTimeline />
 
-          {!lobbyEnv && (
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-black">Umgebung wählen</h2>
-                <p className="text-gray-500 text-sm mt-1">Wählen Sie LIVE oder DEMO.</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  data-testid="arag-lobby-live"
-                  disabled
-                  className="p-6 rounded-2xl border-2 border-gray-200 opacity-40 cursor-not-allowed text-center"
-                >
-                  <span className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
-                    <span className="w-3 h-3 rounded-full bg-green-500" />
-                  </span>
-                  <span className="font-bold text-black block">LIVE starten</span>
-                  <span className="text-xs text-gray-400 mt-1 block">Noch nicht verfügbar</span>
-                </button>
-                <button
-                  data-testid="arag-lobby-demo"
-                  onClick={() => handleEnvSelect("demo")}
-                  className="p-6 rounded-2xl border-2 border-[#FFD700] bg-[#FFD700]/5 hover:bg-[#FFD700]/15 transition-all text-center group"
-                >
-                  <span className="w-10 h-10 rounded-full bg-[#FFD700]/20 flex items-center justify-center mx-auto mb-3 group-hover:bg-[#FFD700] transition-colors">
-                    <span className="w-3 h-3 rounded-full bg-[#FFD700] group-hover:bg-black" />
-                  </span>
-                  <span className="font-bold text-black block">DEMO starten</span>
-                  <span className="text-xs text-gray-400 mt-1 block">Testumgebung</span>
-                </button>
-              </div>
-              {envLockedNote && (
-                <p className="text-sm text-amber-700 bg-amber-50 p-3 rounded-xl mt-4 text-center" data-testid="arag-env-locked-note">
-                  Sie befinden sich in der DEMO-Umgebung.
+          <section className="w-full bg-black" data-testid="section-env-select">
+            <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 lg:py-20">
+              <div className="max-w-2xl mx-auto text-center">
+                <p className="text-sm font-semibold tracking-[0.2em] uppercase text-[#FFD700] mb-3">
+                  Zugang
                 </p>
-              )}
-            </div>
-          )}
+                <h2
+                  className="text-2xl md:text-3xl font-bold text-white mb-4"
+                  style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
+                >
+                  Umgebung wählen
+                </h2>
+                <p className="text-gray-400 text-sm mb-10">
+                  Starten Sie die Bewertungsumgebung im LIVE- oder DEMO-Modus.
+                </p>
 
-          {lobbyEnv && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
+                  <button
+                    data-testid="arag-lobby-live"
+                    disabled
+                    className="group relative px-8 py-5 border-2 border-gray-700 rounded-xl text-center opacity-40 cursor-not-allowed"
+                  >
+                    <span className="block font-bold text-white text-lg mb-1">LIVE</span>
+                    <span className="block text-xs text-gray-500">Noch nicht verfügbar</span>
+                  </button>
+                  <button
+                    data-testid="arag-lobby-demo"
+                    onClick={() => handleEnvSelect("demo")}
+                    className="group relative px-8 py-5 border-2 border-[#FFD700] rounded-xl text-center transition-all hover:bg-[#FFD700]"
+                  >
+                    <span className="block font-bold text-white text-lg mb-1 group-hover:text-black transition-colors">DEMO</span>
+                    <span className="block text-xs text-gray-400 group-hover:text-black/60 transition-colors">Testumgebung starten</span>
+                  </button>
+                </div>
+
+                {envLockedNote && (
+                  <p className="text-sm text-amber-400 mt-6" data-testid="arag-env-locked-note">
+                    Sie befinden sich in der DEMO-Umgebung.
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <footer className="bg-black border-t border-white/10 py-6">
+            <div className="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
+              </p>
+              <p className="text-xs text-gray-600">ARAG SE</p>
+            </div>
+          </footer>
+        </>
+      ) : (
+        <main className="flex-1 flex items-start justify-center px-4 py-12">
+          <div className="w-full max-w-md space-y-6">
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-black">Perspektive wählen</h2>
+                  <h2
+                    className="text-xl font-bold text-black"
+                    style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
+                  >
+                    Perspektive wählen
+                  </h2>
                   <p className="text-gray-500 text-sm mt-0.5">
                     {lobbyEnv === "demo" ? "Demo-Umgebung" : "Live-System"}
                   </p>
@@ -252,35 +284,13 @@ export default function AragLobbyPage() {
                 </div>
               )}
             </div>
-          )}
 
-          <div className="bg-white/60 rounded-2xl p-5 space-y-2">
-            <h3 className="font-bold text-sm text-black">Business Development Pitch – Bewertungsumgebung</h3>
-            <ul className="text-xs text-gray-500 space-y-1.5">
-              <li className="flex items-start gap-2">
-                <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                Pro Kriterium stehen 100 Punkte zur Verfügung.
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                Die Punkte müssen vollständig verteilt werden.
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                Die Bewertung kann gespeichert und später abgeschlossen werden.
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                Die Ergebnisse werden nach Abschluss der Bewertung sichtbar.
-              </li>
-            </ul>
+            <p className="text-center text-xs text-gray-400 pb-4">
+              Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
+            </p>
           </div>
-
-          <p className="text-center text-xs text-gray-400 pb-4">
-            Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
-          </p>
-        </div>
-      </main>
+        </main>
+      )}
     </div>
   );
 }
