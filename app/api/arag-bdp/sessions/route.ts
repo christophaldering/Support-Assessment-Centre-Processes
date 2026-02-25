@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getBdpSession } from "@/lib/bdp-auth";
+import { notifyAllObserversInSession, notifyAllAdmins } from "@/lib/bdp-notifications";
 import { z } from "zod";
 
 const prisma = new PrismaClient();
@@ -77,6 +78,42 @@ export async function PUT(req: NextRequest) {
   }
 
   const updated = await prisma.bdpSession.update({ where: { id }, data: updateData });
+
+  if (updateData.state) {
+    const stateLabels: Record<string, string> = {
+      OPEN: "geöffnet",
+      CLOSED: "geschlossen",
+      RELEASED: "freigegeben",
+    };
+    const stateTypes: Record<string, string> = {
+      OPEN: "session_opened",
+      CLOSED: "session_closed",
+      RELEASED: "session_released",
+    };
+    const label = stateLabels[updateData.state];
+    const type = stateTypes[updateData.state];
+    if (label && type) {
+      try {
+        await notifyAllObserversInSession(
+          id,
+          type as any,
+          `Session ${label}`,
+          `Die Session "${updated.name}" wurde ${label}.`,
+          `/arag-bdp/sessions/${id}`,
+          updated.environment,
+        );
+        await notifyAllAdmins(
+          type as any,
+          `Session ${label}`,
+          `Die Session "${updated.name}" wurde ${label}.`,
+          `/arag-bdp/admin`,
+          updated.environment,
+          session.userId,
+        );
+      } catch {}
+    }
+  }
+
   return NextResponse.json(updated);
 }
 

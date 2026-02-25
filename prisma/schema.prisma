@@ -1014,6 +1014,7 @@ model BdpUser {
   sponsorFlags        BdpSponsorFlag[]
   individualNotes     BdpIndividualNote[]
   tieBreakDecisions   BdpTieBreak[]
+  notifications       BdpNotification[]
 
   @@map("bdp_users")
 }
@@ -1230,4 +1231,22 @@ model BdpConfig {
   lockNotesOnClose     Boolean @default(true) @map("lock_notes_on_close")
 
   @@map("bdp_config")
+}
+
+model BdpNotification {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  type        String
+  title       String
+  message     String
+  link        String?
+  read        Boolean  @default(false)
+  environment String   @default("live")
+  metadata    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user BdpUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@map("bdp_notifications")
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getBdpSession } from "@/lib/bdp-auth";
+import { createNotification } from "@/lib/bdp-notifications";
 import { z } from "zod";
 
 const prisma = new PrismaClient();
@@ -44,6 +45,19 @@ export async function POST(req: NextRequest) {
       },
       include: { session: true, user: true },
     });
+
+    try {
+      await createNotification({
+        userId: parsed.data.userId,
+        type: "observer_assigned",
+        title: "Neue Session-Zuordnung",
+        message: `Sie wurden der Session "${assignment.session.name}" als Beobachter zugeordnet.`,
+        link: `/arag-bdp/sessions/${parsed.data.sessionId}`,
+        environment: assignment.session.environment,
+        metadata: { sessionId: parsed.data.sessionId },
+      });
+    } catch {}
+
     return NextResponse.json(assignment);
   } catch (e: any) {
     if (e.code === "P2002") return NextResponse.json({ error: "Beobachter bereits dieser Session zugeordnet" }, { status: 409 });

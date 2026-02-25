@@ -17,6 +17,7 @@ import {
   Play,
 } from "lucide-react";
 import { BdpContext, BdpUser } from "./bdp-context";
+import NotificationBell from "./notification-bell";
 
 const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login", "/anmeldung"];
 
@@ -255,6 +256,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-xs font-mono text-black/50">{user.code}</span>
+              <NotificationBell variant="desktop" />
               <Link
                 href="/arag-bdp/profile"
                 data-testid="link-profile"
@@ -300,6 +302,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
             <span className="text-[#FFD700] text-sm font-mono">{user.code}</span>
           </div>
           <div className="flex items-center gap-3">
+            <NotificationBell variant="mobile" />
             <Link href="/arag-bdp/profile" data-testid="link-profile" className="w-8 h-8 rounded-full bg-[#FFD700] flex items-center justify-center text-black font-bold text-sm">
               {user.photoUrl ? <img src={user.photoUrl} className="w-8 h-8 rounded-full object-cover" alt="" /> : user.code[0]}
             </Link>
