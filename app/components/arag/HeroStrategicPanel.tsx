@@ -1,19 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
-const CONTEXT_LINES = [
-  "AI-native transformation of the core business",
-  "Self-disruption instead of incremental optimization",
-  "Capital allocation under uncertainty",
-  "Leadership readiness for complexity",
-];
-
-const JOURNEY_STEPS = ["Context", "Pitch", "Defense", "Evaluation", "Development Dialogue"];
+const JOURNEY_STEPS_EN = ["Context", "Pitch", "Defense", "Evaluation", "Development Dialogue"];
+const JOURNEY_STEPS_DE = ["Kontext", "Pitch", "Verteidigung", "Bewertung", "Development Dialogue"];
 
 export default function HeroStrategicPanel() {
+  const { t, lang } = useLanguage();
   const [visible, setVisible] = useState(false);
   const [journeyVisible, setJourneyVisible] = useState(false);
+
+  const CONTEXT_LINES = [
+    t("heroContextLine1"),
+    t("heroContextLine2"),
+    t("heroContextLine3"),
+    t("heroContextLine4"),
+  ];
+
+  const JOURNEY_STEPS = lang === "en" ? JOURNEY_STEPS_EN : JOURNEY_STEPS_DE;
 
   useEffect(() => {
     const t1 = setTimeout(() => setVisible(true), 100);
@@ -33,7 +38,7 @@ export default function HeroStrategicPanel() {
       <div className="p-8 md:p-10 lg:p-12 space-y-8">
         <div className="space-y-5">
           <p className="text-xs tracking-[0.25em] uppercase text-white/40 font-medium">
-            Strategic Context
+            {t("strategicContext")}
           </p>
           <div className="space-y-3">
             {CONTEXT_LINES.map((line) => (
@@ -54,7 +59,7 @@ export default function HeroStrategicPanel() {
             className="text-lg md:text-xl font-semibold text-white/90"
             style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
           >
-            From Simulation to Development
+            {t("fromSimToDev")}
           </h3>
 
           <div
@@ -74,7 +79,7 @@ export default function HeroStrategicPanel() {
         </div>
 
         <p className="text-xs text-white/40 leading-relaxed pt-2">
-          Structured potential observation under governance conditions
+          {t("structuredObservation")}
         </p>
       </div>
     </div>

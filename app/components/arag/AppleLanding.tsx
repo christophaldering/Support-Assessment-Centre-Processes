@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/app/providers/LanguageProvider";
 import HeroStrategicPanel from "@/app/components/arag/HeroStrategicPanel";
 
 interface Props {
@@ -16,15 +17,23 @@ const DIMENSIONS = [
   { label: "Leadership Alignment", pct: 90 },
 ];
 
-const JOURNEY = [
-  { title: "WHU Learning", sub: "Strategische Grundlagen" },
-  { title: "Business Development Pitch", sub: "Geschäftsmodellentwicklung" },
-  { title: "Board Evaluation", sub: "Strukturierte Bewertung" },
-  { title: "Development Dialogue", sub: "Individuelle Rückmeldung" },
-  { title: "Development Path", sub: "Maßgeschneiderter Plan" },
-];
-
 export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
+  const { t } = useLanguage();
+
+  const JOURNEY = [
+    { title: "WHU Learning", sub: t("appleJourney1Sub") },
+    { title: "Business Development Pitch", sub: t("appleJourney2Sub") },
+    { title: "Board Evaluation", sub: t("appleJourney3Sub") },
+    { title: "Development Dialogue", sub: t("appleJourney4Sub") },
+    { title: "Development Path", sub: t("appleJourney5Sub") },
+  ];
+
+  const CARDS = [
+    { num: "01", title: t("storyboard01Title"), items: [t("storyboard01Item1"), t("storyboard01Item2"), t("storyboard01Item3")] },
+    { num: "02", title: t("storyboard02Title"), items: [t("storyboard02Item1"), t("storyboard02Item2"), t("storyboard02Item3")] },
+    { num: "03", title: t("storyboard03Title"), items: [t("storyboard03Item1"), t("storyboard03Item2"), t("storyboard03Item3")] },
+  ];
+
   return (
     <>
       <section className="relative min-h-[90vh] flex items-center bg-black text-white overflow-hidden">
@@ -46,9 +55,9 @@ export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
                 </span>
               </h1>
               <p className="text-[18px] md:text-[24px] lg:text-[28px] text-white/70 font-light max-w-[800px] leading-relaxed">
-                Strategische Entscheidungssimulation.
+                {t("appleHeroDesc1")}
                 <br className="hidden md:block" />
-                Strukturierte Potenzialbeobachtung.
+                {t("appleHeroDesc2")}
               </p>
             </div>
             <HeroStrategicPanel />
@@ -65,19 +74,15 @@ export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
             className="text-[30px] md:text-[48px] lg:text-[56px] font-semibold text-center mb-16 md:mb-20 tracking-tight leading-tight"
             style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
           >
-            Drei Perspektiven.
+            {t("cardsTitle")}.
             <br />
-            <span className="text-white/40">Ein Framework.</span>
+            <span className="text-white/40">{t("frameworkLabel")}.</span>
           </h2>
         </div>
 
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/10 rounded-2xl overflow-hidden">
-            {[
-              { num: "01", title: "Vorstandsmotivation", items: ["Zukunftsfähigkeit sichtbar machen", "Strategisches Denken unter Realbedingungen", "Potenziale differenzieren"] },
-              { num: "02", title: "Spannung im Format", items: ["Teamkonstellation beeinflusst Vergleichbarkeit", "Wettbewerbsrealität bleibt gewollt", "Auswahl & Diagnose nebeneinander"] },
-              { num: "03", title: "Lösungsansatz", items: ["Standardisierte Bewertungsarchitektur", "100-Punkte-System", "Einbettung in Development Dialogues"] },
-            ].map((card) => (
+            {CARDS.map((card) => (
               <div key={card.num} className="bg-[#111] p-8 lg:p-12">
                 <span className="text-[#FFD700] text-base font-mono tracking-wider">{card.num}</span>
                 <h3
@@ -103,13 +108,13 @@ export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
       <section className="bg-black text-white py-20 md:py-32">
         <div className="max-w-[900px] mx-auto px-6">
           <p className="text-[#FFD700] text-base font-medium tracking-[0.3em] uppercase mb-6 text-center">
-            Struktur
+            {t("chartsStructure")}
           </p>
           <h2
             className="text-[30px] md:text-[48px] lg:text-[56px] font-semibold text-center mb-16 tracking-tight leading-tight"
             style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
           >
-            Bewertungs&shy;dimensionen
+            {t("chartsDimensions")}
           </h2>
           <div className="space-y-8">
             {DIMENSIONS.map((dim) => (
@@ -127,7 +132,7 @@ export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
             ))}
           </div>
           <p className="text-base text-white/30 mt-10 text-center italic">
-            Darstellung der Bewertungsstruktur — keine echten Punktwerte.
+            {t("chartHint")}
           </p>
         </div>
       </section>
@@ -135,13 +140,13 @@ export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
       <section className="bg-black text-white py-20 md:py-32">
         <div className="max-w-[900px] mx-auto px-6">
           <p className="text-[#FFD700] text-base font-medium tracking-[0.3em] uppercase mb-6 text-center">
-            Programm
+            {t("journeyLabel")}
           </p>
           <h2
             className="text-[30px] md:text-[48px] lg:text-[56px] font-semibold text-center mb-16 md:mb-20 tracking-tight leading-tight"
             style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
           >
-            Executive Potential Journey
+            {t("journeyTitle")}
           </h2>
           <div className="flex flex-col md:flex-row items-start gap-8 md:gap-2">
             {JOURNEY.map((step, i) => (
@@ -171,10 +176,10 @@ export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
             className="text-[30px] md:text-[48px] lg:text-[56px] font-semibold mb-6 tracking-tight leading-tight"
             style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
           >
-            Bereit?
+            {t("ready")}
           </h2>
           <p className="text-white/70 text-[18px] md:text-[20px] mb-14 leading-relaxed">
-            Starten Sie die Bewertungsumgebung.
+            {t("startRatingEnv")}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
@@ -183,22 +188,22 @@ export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
               disabled
               className="px-10 py-4 border border-white/10 rounded-2xl text-center opacity-30 cursor-not-allowed"
             >
-              <span className="block font-bold text-white text-[18px] mb-1">LIVE</span>
-              <span className="block text-base text-white/30">Noch nicht verfügbar</span>
+              <span className="block font-bold text-white text-[18px] mb-1">{t("live")}</span>
+              <span className="block text-base text-white/30">{t("notAvailable")}</span>
             </button>
             <button
               data-testid="arag-lobby-demo"
               onClick={() => onSelectEnv("demo")}
               className="group px-10 py-4 border border-[#FFD700] rounded-2xl text-center transition-all hover:bg-[#FFD700]"
             >
-              <span className="block font-bold text-white text-[18px] mb-1 group-hover:text-black transition-colors">DEMO</span>
-              <span className="block text-base text-white/40 group-hover:text-black/60 transition-colors">Testumgebung starten</span>
+              <span className="block font-bold text-white text-[18px] mb-1 group-hover:text-black transition-colors">{t("demo")}</span>
+              <span className="block text-base text-white/40 group-hover:text-black/60 transition-colors">{t("startTestEnv")}</span>
             </button>
           </div>
 
           {envLockedNote && (
             <p className="text-base text-amber-400 mt-8" data-testid="arag-env-locked-note">
-              Sie befinden sich in der DEMO-Umgebung.
+              {t("inDemoEnv")}
             </p>
           )}
         </div>
@@ -207,7 +212,7 @@ export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
       <footer className="bg-black border-t border-white/5 py-8">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between">
           <p className="text-base text-white/20">
-            Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
+            {t("poweredBy")} <span className="font-semibold text-[#A6473B]">aestimamus</span>
           </p>
           <p className="text-base text-white/15">ARAG SE</p>
         </div>

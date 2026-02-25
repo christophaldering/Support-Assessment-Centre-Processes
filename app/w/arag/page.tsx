@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import StandardLanding from "@/app/components/arag/StandardLanding";
 import PasswordInput from "@/app/components/PasswordInput";
+import { LanguageProvider, useLanguage } from "@/app/providers/LanguageProvider";
+import LanguageToggle from "@/app/components/LanguageToggle";
 
 const AppleLanding = dynamic(() => import("@/app/components/arag/AppleLanding"), { ssr: false });
 
@@ -15,15 +17,26 @@ type DemoRole = {
   description: string;
 };
 
-const DEMO_ROLES: DemoRole[] = [
-  { code: "D-MD1", label: "Admin", personaName: "Virginia Woolf", description: "Zugang zur Admin-Konsole, Session-Steuerung und Auswertung" },
-  { code: "D-V1", label: "Beobachter", personaName: "Marie Curie", description: "Bewertung der Teams und individuelle Teilnehmer-Notizen" },
-];
+function getDemoRoles(t: (key: string, vars?: Record<string, string | number>) => string): DemoRole[] {
+  return [
+    { code: "D-MD1", label: t("adminRole"), personaName: "Virginia Woolf", description: t("adminDescription") },
+    { code: "D-V1", label: t("observerRole"), personaName: "Marie Curie", description: t("observerDescription") },
+  ];
+}
 
 type ViewMode = "standard" | "apple";
 
 export default function AragLobbyPage() {
+  return (
+    <LanguageProvider>
+      <AragLobbyInner />
+    </LanguageProvider>
+  );
+}
+
+function AragLobbyInner() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [authenticated, setAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [isDemoLocked, setIsDemoLocked] = useState(false);
@@ -112,10 +125,10 @@ export default function AragLobbyPage() {
       if (data.ok) {
         window.location.href = data.redirectTo || "/arag-bdp";
       } else {
-        setPersonError(data.error || "Anmeldung fehlgeschlagen.");
+        setPersonError(data.error || t("loginFailed"));
       }
     } catch {
-      setPersonError("Verbindungsfehler.");
+      setPersonError(t("connectionErrorShort"));
     } finally {
       setPersonLoading(false);
     }
@@ -124,7 +137,7 @@ export default function AragLobbyPage() {
   if (authLoading || !authenticated) {
     return (
       <div className="min-h-screen bg-[#FFFBF0] flex items-center justify-center">
-        <div className="text-gray-400">Laden...</div>
+        <div className="text-gray-400">{t("loading")}</div>
       </div>
     );
   }
@@ -143,7 +156,7 @@ export default function AragLobbyPage() {
           <div className="flex items-center gap-4">
             {!lobbyEnv && (
               <div className="flex items-center gap-2" data-testid="toggle-view-mode">
-                <span className="text-[10px] text-white/30 uppercase tracking-wider hidden sm:inline">Darstellung</span>
+                <span className="text-[10px] text-white/30 uppercase tracking-wider hidden sm:inline">{t("presentation")}</span>
                 <div className="flex bg-white/10 rounded-full p-0.5">
                   <button
                     onClick={() => toggleView("standard")}
@@ -152,7 +165,7 @@ export default function AragLobbyPage() {
                     }`}
                     data-testid="toggle-standard"
                   >
-                    Standard
+                    {t("standard")}
                   </button>
                   <button
                     onClick={() => toggleView("apple")}
@@ -161,7 +174,7 @@ export default function AragLobbyPage() {
                     }`}
                     data-testid="toggle-apple"
                   >
-                    Apple
+                    {t("apple")}
                   </button>
                 </div>
               </div>
@@ -171,9 +184,10 @@ export default function AragLobbyPage() {
                 onClick={() => { setLobbyEnv(null); setSelectedRole(null); setPersonError(""); }}
                 className="text-xs text-white/50 hover:text-white transition-colors"
               >
-                Zurück zur Übersicht
+                {t("backToOverview")}
               </button>
             )}
+            <LanguageToggle variant="dark" />
           </div>
         </div>
       </header>
@@ -197,10 +211,10 @@ export default function AragLobbyPage() {
                     className={`text-xl font-bold ${viewMode === "apple" ? "text-white" : "text-black"}`}
                     style={{ fontFamily: viewMode === "apple" ? "inherit" : "Georgia, 'Playfair Display', serif" }}
                   >
-                    Perspektive wählen
+                    {t("selectPerspective")}
                   </h2>
                   <p className={`text-sm mt-0.5 ${viewMode === "apple" ? "text-white/40" : "text-gray-500"}`}>
-                    {lobbyEnv === "demo" ? "Demo-Umgebung" : "Live-System"}
+                    {lobbyEnv === "demo" ? t("demoEnvironment") : t("liveSystem")}
                   </p>
                 </div>
                 <button
@@ -208,12 +222,12 @@ export default function AragLobbyPage() {
                   onClick={() => { setLobbyEnv(null); setSelectedRole(null); setPersonError(""); }}
                   className={`text-xs transition-colors ${viewMode === "apple" ? "text-white/30 hover:text-white" : "text-gray-400 hover:text-black"}`}
                 >
-                  Umgebung wechseln
+                  {t("changeEnvironment")}
                 </button>
               </div>
 
               <div className="space-y-3">
-                {DEMO_ROLES.map(role => (
+                {getDemoRoles(t).map(role => (
                   <button
                     key={role.code}
                     type="button"
@@ -257,7 +271,7 @@ export default function AragLobbyPage() {
               {selectedRole && (
                 <div className="mt-4 space-y-3">
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${viewMode === "apple" ? "text-white/50" : "text-gray-700"}`}>Passwort</label>
+                    <label className={`block text-sm font-medium mb-1 ${viewMode === "apple" ? "text-white/50" : "text-gray-700"}`}>{t("password")}</label>
                     <PasswordInput
                       data-testid="arag-person-password"
                       value="****"
@@ -284,14 +298,14 @@ export default function AragLobbyPage() {
                     disabled={personLoading}
                     className="w-full bg-[#FFD700] text-black font-bold py-3 rounded-xl hover:bg-[#E6C200] transition-colors disabled:opacity-50"
                   >
-                    {personLoading ? "Anmeldung..." : `Als ${selectedRole.personaName} anmelden`}
+                    {personLoading ? t("loggingIn") : t("loginAs", { name: selectedRole.personaName })}
                   </button>
                 </div>
               )}
             </div>
 
             <p className={`text-center text-xs pb-4 ${viewMode === "apple" ? "text-white/20" : "text-gray-400"}`}>
-              Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
+              {t("poweredBy")} <span className="font-semibold text-[#A6473B]">aestimamus</span>
             </p>
           </div>
         </main>

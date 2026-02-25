@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
 export default function BdpSessionDetailPage() {
+  const { t } = useLanguage();
   const params = useParams();
   const [session, setSession] = useState<any>(null);
   const [teams, setTeams] = useState<any[]>([]);
@@ -22,15 +24,15 @@ export default function BdpSessionDetailPage() {
       .catch(() => {});
   }, [params.id]);
 
-  const stateLabel: Record<string, string> = { DRAFT: "In Vorbereitung", OPEN: "Bewertung läuft", CLOSED: "Bewertung abgeschlossen", RELEASED: "Abgeschlossen" };
+  const stateLabel: Record<string, string> = { DRAFT: t("stateDraft"), OPEN: t("stateOpen"), CLOSED: t("stateClosed"), RELEASED: t("stateReleased") };
   const stateColor: Record<string, string> = { DRAFT: "bg-gray-200 text-gray-700", OPEN: "bg-green-100 text-green-800", CLOSED: "bg-orange-100 text-orange-800", RELEASED: "bg-blue-100 text-blue-800" };
 
-  if (!session) return <div className="text-center py-8 text-gray-400">Laden...</div>;
+  if (!session) return <div className="text-center py-8 text-gray-400">{t("loading")}</div>;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Link href="/arag-bdp/sessions" className="text-gray-400 hover:text-black">← Zurück</Link>
+        <Link href="/arag-bdp/sessions" className="text-gray-400 hover:text-black">{t("back")}</Link>
       </div>
 
       <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -43,15 +45,15 @@ export default function BdpSessionDetailPage() {
       </div>
 
       <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <h2 className="font-bold text-lg mb-3">Teams</h2>
+        <h2 className="font-bold text-lg mb-3">{t("teams")}</h2>
         {teams.length === 0 ? (
-          <p className="text-gray-400 text-sm">Keine Teams zugeordnet</p>
+          <p className="text-gray-400 text-sm">{t("noTeamsAssigned")}</p>
         ) : (
           <div className="space-y-2">
-            {teams.map((t: any) => (
-              <div key={t.id} data-testid={`text-team-${t.code}`} className="p-3 bg-[#FFFBF0] rounded-xl flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#FFD700] rounded-lg flex items-center justify-center font-bold text-sm">{t.code.replace("Team", "T")}</div>
-                <span className="font-medium">{t.displayName ? `${t.displayName} (${t.code})` : t.code}</span>
+            {teams.map((tm: any) => (
+              <div key={tm.id} data-testid={`text-team-${tm.code}`} className="p-3 bg-[#FFFBF0] rounded-xl flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#FFD700] rounded-lg flex items-center justify-center font-bold text-sm">{tm.code.replace("Team", "T")}</div>
+                <span className="font-medium">{tm.displayName ? `${tm.displayName} (${tm.code})` : tm.code}</span>
               </div>
             ))}
           </div>
@@ -59,7 +61,7 @@ export default function BdpSessionDetailPage() {
       </div>
 
       <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <h2 className="font-bold text-lg mb-3">Beobachter</h2>
+        <h2 className="font-bold text-lg mb-3">{t("observers")}</h2>
         <div className="space-y-2">
           {session.observerAssignments?.map((oa: any) => (
             <div key={oa.id} className="p-3 bg-[#FFFBF0] rounded-xl flex items-center justify-between">
@@ -77,7 +79,7 @@ export default function BdpSessionDetailPage() {
 
       {session.state === "OPEN" && (
         <Link href={`/arag-bdp/bewertung/${session.id}`} data-testid="link-start-bewertung" className="block bg-[#FFD700] text-black font-bold py-4 rounded-2xl text-center hover:bg-[#E6C200] transition-colors">
-          Bewertung starten →
+          {t("startRating")}
         </Link>
       )}
     </div>

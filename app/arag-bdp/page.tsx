@@ -3,10 +3,12 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useBdp } from "./bdp-context";
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
 export default function BdpHomePage() {
   const { user } = useBdp();
   const router = useRouter();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!user) return;
@@ -23,7 +25,7 @@ export default function BdpHomePage() {
 
   return (
     <div className="flex items-center justify-center py-16">
-      <div className="text-gray-400">Weiterleitung...</div>
+      <div className="text-gray-400">{t("redirecting")}</div>
     </div>
   );
 }

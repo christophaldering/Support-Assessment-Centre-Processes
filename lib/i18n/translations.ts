@@ -203,6 +203,13 @@ export const translations = {
     allDataInclDemo: "Alle Daten (inkl. Demo)",
     csvNamed: "CSV (Klarnamen)",
     jsonNamed: "JSON (Klarnamen)",
+    withRealNames: "Mit Klarnamen (Admin)",
+    csvNamedShort: "CSV (benannt)",
+    jsonNamedShort: "JSON (benannt)",
+    includeDemo: "DEMO einschließen",
+    csvWithDemo: "CSV (mit Demo)",
+    jsonWithDemo: "JSON (mit Demo)",
+    participantsTN: "TN",
 
     // Export / Print
     resultReport: "Ergebnisbericht",
@@ -278,16 +285,137 @@ export const translations = {
 
     // Notification
     notifications: "Benachrichtigungen",
-    noNotifications: "Keine neuen Benachrichtigungen",
+    noNotifications: "Keine Benachrichtigungen",
+    markAllRead: "Alle gelesen",
+    showNotification: "Anzeigen",
+    markRead: "Gelesen",
+    timeJustNow: "gerade eben",
+    timeMinutesAgo: "vor {count} Min.",
+    timeHoursAgo: "vor {count} Std.",
+    timeDaysAgo: "vor {count} Tag{suffix}",
 
     // Tour
-    tourHint: "Hinweis: Element aktuell nicht sichtbar.",
+    tourHint: "Hinweis: Element aktuell nicht sichtbar – Schritt wird trotzdem erklärt.",
+    tourEndLabel: "Tour beenden",
+    tourPageLoading: "Seite wird geladen…",
+    tourPrev: "Zurück",
+    tourNext: "Weiter",
+    tourFinish: "Beenden",
+    tourDontShowAgain: "Nicht mehr automatisch anzeigen",
 
     // CaseModal
     noBusinessCase: "Kein Business Case verfügbar.",
 
     // Invitations
     invitationsTitle: "Einladungen",
+
+    // Workspace Login
+    loginTitle: "Anmeldung",
+    firstLogin: "Erstanmeldung",
+    emailPlaceholder: "ihre@email.de",
+    passwordPlaceholder: "Passwort eingeben",
+    somethingWentWrong: "Etwas ist schiefgelaufen.",
+    activationFailed: "Aktivierung fehlgeschlagen.",
+    activationHint: "Geben Sie Ihre E-Mail-Adresse ein, um Ihr Konto zu aktivieren und ein persönliches Passwort festzulegen.",
+    checking: "Wird geprüft…",
+    activateAccount: "Konto aktivieren",
+    pendingApproval: "Ihr Workspace-Administrator wird Sie informieren, sobald Ihr Zugang freigeschaltet ist.",
+    requestAccess: "Zugang anfordern",
+    forgotPassword: "Passwort vergessen?",
+    backToPlatform: "Zurück zur Plattform",
+
+    // Admin tabs
+    tabSessions: "Sessions",
+    tabTeams: "Teams",
+    tabParticipants: "Teilnehmer",
+    tabObservers: "Beobachter",
+    tabSessionTeams: "Session↔Teams",
+    tabTeamTN: "Team↔TN",
+    tabObserverSess: "Observer↔Sess.",
+    tabCriteria: "Kriterien",
+    tabNames: "Namen",
+    tabTieBreak: "Tie-Break",
+    tabSettings: "Einstellungen",
+    tabExport: "Export",
+
+    // Export print
+    printTitle: "ARAG Business Development Pitch",
+    rank: "Platz",
+    total: "Gesamt",
+    chartHint: "Darstellung der Bewertungsstruktur — keine echten Punktwerte.",
+    aggregate: "Aggregate",
+    detail: "Detail",
+
+    // Storyboard content items
+    storyboardMandateTitle: "Mandat und strategischer Kontext",
+    storyboard01Title: "Vorstandsmotivation",
+    storyboard01Item1: "Zukunftsfähigkeit sichtbar machen",
+    storyboard01Item2: "Strategisches Denken unter Realbedingungen",
+    storyboard01Item3: "Potenziale differenzieren",
+    storyboard02Title: "Spannung im Format",
+    storyboard02Item1: "Teamkonstellation beeinflusst Vergleichbarkeit",
+    storyboard02Item2: "Wettbewerbsrealität bleibt gewollt",
+    storyboard02Item3: "Auswahl & Diagnose stehen nebeneinander",
+    storyboard03Title: "Unser Lösungsansatz",
+    storyboard03Item1: "Standardisierte Bewertungsarchitektur",
+    storyboard03Item2: "100-Punkte-System",
+    storyboard03Item3: "Einbettung in Development Dialogues",
+
+    // Ambivalence SVG
+    ambSelectionDecision: "Auswahl-\nentscheidung",
+    ambDiagnosticObservation: "Diagnostische\nBeobachtung",
+    ambStructuredTransparency: "Strukturierte\nTransparenz",
+
+    // Framework steps
+    frameworkStep1: "Realitätsnahe Entscheidungssimulation",
+    frameworkStep2: "Strukturierte Bewertung",
+    frameworkStep3: "Development Dialogue",
+
+    // Cards content
+    cardStrategicContext: "Strategischer Kontext",
+    cardStrategicItem1: "AI-nativer Angriff auf das Kerngeschäft",
+    cardStrategicItem2: "Selbst-Disruptionslogik",
+    cardStrategicItem3: "KPI-basierte Ableitung",
+    cardStrategicItem4: "Marktpositionierung",
+    cardRatingArchitecture: "Bewertungsarchitektur",
+    cardRatingItem1: "100 Punkte pro Team",
+    cardRatingItem2: "Vollständige Verteilung",
+    cardRatingItem3: "Vergleichbarkeit",
+    cardRatingItem4: "Strukturierte Aggregation",
+    cardGovernance: "Governance & Transparenz",
+    cardGovernanceItem1: "Identische Bewertungslogik",
+    cardGovernanceItem2: "Standardisierte Kriterien",
+    cardGovernanceItem3: "Einbettung in Development Dialogues",
+    cardGovernanceItem4: "Diagnostische Kontextualisierung",
+
+    // Charts
+    chartsStructure: "Struktur",
+    chartsDimensions: "Bewertungsdimensionen",
+
+    // Journey
+    journeyStation1Desc: "Intensive strategische Grundlagenarbeit an der WHU.",
+    journeyStation2Desc: "Entwicklung und Präsentation strategischer Geschäftsmodelle.",
+    journeyStation3Desc: "Strukturierte Bewertung durch das Beobachtergremium.",
+    journeyStation4Desc: "Individuelle Rückmeldung und Entwicklungsgespräch.",
+    journeyStation5Desc: "Maßgeschneiderter Entwicklungsplan auf Basis der Ergebnisse.",
+
+    // Apple landing journey items
+    appleJourney1Sub: "Strategische Grundlagen",
+    appleJourney2Sub: "Geschäftsmodellentwicklung",
+    appleJourney3Sub: "Strukturierte Bewertung",
+    appleJourney4Sub: "Individuelle Rückmeldung",
+    appleJourney5Sub: "Maßgeschneiderter Plan",
+    appleHeroDesc1: "Strategische Entscheidungssimulation.",
+    appleHeroDesc2: "Strukturierte Potenzialbeobachtung.",
+
+    // HeroStrategicPanel
+    heroContextLine1: "AI-native transformation of the core business",
+    heroContextLine2: "Self-disruption instead of incremental optimization",
+    heroContextLine3: "Capital allocation under uncertainty",
+    heroContextLine4: "Leadership readiness for complexity",
+
+    // Powered by
+    poweredBy: "Powered by",
   },
   en: {
     loading: "Loading...",
@@ -493,6 +621,13 @@ export const translations = {
     allDataInclDemo: "All data (incl. demo)",
     csvNamed: "CSV (named)",
     jsonNamed: "JSON (named)",
+    withRealNames: "With real names (Admin)",
+    csvNamedShort: "CSV (named)",
+    jsonNamedShort: "JSON (named)",
+    includeDemo: "Include DEMO",
+    csvWithDemo: "CSV (with demo)",
+    jsonWithDemo: "JSON (with demo)",
+    participantsTN: "P",
 
     // Export / Print
     resultReport: "Results Report",
@@ -568,16 +703,137 @@ export const translations = {
 
     // Notification
     notifications: "Notifications",
-    noNotifications: "No new notifications",
+    noNotifications: "No notifications",
+    markAllRead: "Mark all read",
+    showNotification: "View",
+    markRead: "Read",
+    timeJustNow: "just now",
+    timeMinutesAgo: "{count} min ago",
+    timeHoursAgo: "{count} hr ago",
+    timeDaysAgo: "{count} day{suffix} ago",
 
     // Tour
-    tourHint: "Note: Element currently not visible.",
+    tourHint: "Note: Element currently not visible – step is still explained.",
+    tourEndLabel: "End tour",
+    tourPageLoading: "Loading page…",
+    tourPrev: "Back",
+    tourNext: "Next",
+    tourFinish: "Finish",
+    tourDontShowAgain: "Don't show automatically again",
 
     // CaseModal
     noBusinessCase: "No business case available.",
 
     // Invitations
     invitationsTitle: "Invitations",
+
+    // Workspace Login
+    loginTitle: "Sign in",
+    firstLogin: "First sign in",
+    emailPlaceholder: "your@email.com",
+    passwordPlaceholder: "Enter password",
+    somethingWentWrong: "Something went wrong.",
+    activationFailed: "Activation failed.",
+    activationHint: "Enter your email address to activate your account and set a personal password.",
+    checking: "Checking…",
+    activateAccount: "Activate account",
+    pendingApproval: "Your workspace administrator will notify you once your access is activated.",
+    requestAccess: "Request access",
+    forgotPassword: "Forgot password?",
+    backToPlatform: "Back to platform",
+
+    // Admin tabs
+    tabSessions: "Sessions",
+    tabTeams: "Teams",
+    tabParticipants: "Participants",
+    tabObservers: "Observers",
+    tabSessionTeams: "Session↔Teams",
+    tabTeamTN: "Team↔Part.",
+    tabObserverSess: "Observer↔Sess.",
+    tabCriteria: "Criteria",
+    tabNames: "Names",
+    tabTieBreak: "Tie-break",
+    tabSettings: "Settings",
+    tabExport: "Export",
+
+    // Export print
+    printTitle: "ARAG Business Development Pitch",
+    rank: "Rank",
+    total: "Total",
+    chartHint: "Illustration of the rating structure — not actual scores.",
+    aggregate: "Aggregate",
+    detail: "Detail",
+
+    // Storyboard content items
+    storyboardMandateTitle: "Mandate and strategic context",
+    storyboard01Title: "Board Motivation",
+    storyboard01Item1: "Making future readiness visible",
+    storyboard01Item2: "Strategic thinking under real conditions",
+    storyboard01Item3: "Differentiating potential",
+    storyboard02Title: "Format Tension",
+    storyboard02Item1: "Team composition affects comparability",
+    storyboard02Item2: "Competitive reality is intentional",
+    storyboard02Item3: "Selection & diagnostics coexist",
+    storyboard03Title: "Our Solution Approach",
+    storyboard03Item1: "Standardized rating architecture",
+    storyboard03Item2: "100-point system",
+    storyboard03Item3: "Embedding in development dialogues",
+
+    // Ambivalence SVG
+    ambSelectionDecision: "Selection\nDecision",
+    ambDiagnosticObservation: "Diagnostic\nObservation",
+    ambStructuredTransparency: "Structured\nTransparency",
+
+    // Framework steps
+    frameworkStep1: "Realistic decision simulation",
+    frameworkStep2: "Structured evaluation",
+    frameworkStep3: "Development Dialogue",
+
+    // Cards content
+    cardStrategicContext: "Strategic Context",
+    cardStrategicItem1: "AI-native attack on core business",
+    cardStrategicItem2: "Self-disruption logic",
+    cardStrategicItem3: "KPI-based derivation",
+    cardStrategicItem4: "Market positioning",
+    cardRatingArchitecture: "Rating Architecture",
+    cardRatingItem1: "100 points per team",
+    cardRatingItem2: "Full distribution",
+    cardRatingItem3: "Comparability",
+    cardRatingItem4: "Structured aggregation",
+    cardGovernance: "Governance & Transparency",
+    cardGovernanceItem1: "Identical rating logic",
+    cardGovernanceItem2: "Standardized criteria",
+    cardGovernanceItem3: "Embedding in development dialogues",
+    cardGovernanceItem4: "Diagnostic contextualization",
+
+    // Charts
+    chartsStructure: "Structure",
+    chartsDimensions: "Rating Dimensions",
+
+    // Journey
+    journeyStation1Desc: "Intensive strategic groundwork at WHU.",
+    journeyStation2Desc: "Development and presentation of strategic business models.",
+    journeyStation3Desc: "Structured evaluation by the observer panel.",
+    journeyStation4Desc: "Individual feedback and development dialogue.",
+    journeyStation5Desc: "Tailored development plan based on results.",
+
+    // Apple landing journey items
+    appleJourney1Sub: "Strategic Foundations",
+    appleJourney2Sub: "Business Model Development",
+    appleJourney3Sub: "Structured Evaluation",
+    appleJourney4Sub: "Individual Feedback",
+    appleJourney5Sub: "Tailored Plan",
+    appleHeroDesc1: "Strategic decision simulation.",
+    appleHeroDesc2: "Structured potential observation.",
+
+    // HeroStrategicPanel
+    heroContextLine1: "AI-native transformation of the core business",
+    heroContextLine2: "Self-disruption instead of incremental optimization",
+    heroContextLine3: "Capital allocation under uncertainty",
+    heroContextLine4: "Leadership readiness for complexity",
+
+    // Powered by
+    poweredBy: "Powered by",
   },
 } as const;
 

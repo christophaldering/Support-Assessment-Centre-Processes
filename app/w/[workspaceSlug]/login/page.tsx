@@ -4,11 +4,22 @@ import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import PasswordInput from "@/app/components/PasswordInput";
+import { LanguageProvider, useLanguage } from "@/app/providers/LanguageProvider";
+import LanguageToggle from "@/app/components/LanguageToggle";
 
 export default function WorkspaceUserLoginPage() {
+  return (
+    <LanguageProvider>
+      <WorkspaceLoginInner />
+    </LanguageProvider>
+  );
+}
+
+function WorkspaceLoginInner() {
   const router = useRouter();
   const params = useParams();
   const workspaceSlug = params.workspaceSlug as string;
+  const { t } = useLanguage();
 
   const [mode, setMode] = useState<"login" | "activate">("login");
   const [email, setEmail] = useState(workspaceSlug === "arag" ? "demo@demo.de" : "");
@@ -31,7 +42,7 @@ export default function WorkspaceUserLoginPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Anmeldung fehlgeschlagen.");
+        setError(data.error || t("loginFailed"));
         return;
       }
 
@@ -57,7 +68,7 @@ export default function WorkspaceUserLoginPage() {
         router.push(`/w/${workspaceSlug}/admin`);
       }
     } catch {
-      setError("Etwas ist schiefgelaufen.");
+      setError(t("somethingWentWrong"));
     } finally {
       setLoading(false);
     }
@@ -82,13 +93,13 @@ export default function WorkspaceUserLoginPage() {
         if (data.status === "pending" || data.status === "rejected") {
           setStatusInfo(data.status);
         }
-        setError(data.error || "Aktivierung fehlgeschlagen.");
+        setError(data.error || t("activationFailed"));
         return;
       }
 
       router.push(`/w/${workspaceSlug}/change-password`);
     } catch {
-      setError("Etwas ist schiefgelaufen.");
+      setError(t("somethingWentWrong"));
     } finally {
       setLoading(false);
     }
@@ -97,10 +108,11 @@ export default function WorkspaceUserLoginPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-brand-navy text-white">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity">
             Executive Diagnostics Suite
           </Link>
+          <LanguageToggle variant="dark" />
         </div>
       </header>
 
@@ -108,10 +120,10 @@ export default function WorkspaceUserLoginPage() {
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-brand-navy mb-2">
-              {mode === "login" ? "Anmeldung" : "Erstanmeldung"}
+              {mode === "login" ? t("loginTitle") : t("firstLogin")}
             </h1>
             <p className="text-sm text-slate-500">
-              Workspace: <strong>{workspaceSlug}</strong>
+              {t("workspace")}: <strong>{workspaceSlug}</strong>
             </p>
             <div className="h-1 w-10 bg-brand-blue mx-auto rounded-full mt-4" />
           </div>
@@ -127,7 +139,7 @@ export default function WorkspaceUserLoginPage() {
               }`}
               data-testid="tab-login"
             >
-              Anmelden
+              {t("login")}
             </button>
             <button
               type="button"
@@ -139,7 +151,7 @@ export default function WorkspaceUserLoginPage() {
               }`}
               data-testid="tab-activate"
             >
-              Erstanmeldung
+              {t("firstLogin")}
             </button>
           </div>
 
@@ -147,14 +159,14 @@ export default function WorkspaceUserLoginPage() {
             <form onSubmit={handleLogin} className="space-y-4" data-testid="form-login">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                  E-Mail
+                  {t("email")}
                 </label>
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ihre@email.de"
+                  placeholder={t("emailPlaceholder")}
                   required
                   data-testid="input-email"
                   className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue transition-colors"
@@ -163,13 +175,13 @@ export default function WorkspaceUserLoginPage() {
 
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
-                  Passwort
+                  {t("password")}
                 </label>
                 <PasswordInput
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Passwort eingeben"
+                  placeholder={t("passwordPlaceholder")}
                   required
                   data-testid="input-password"
                   className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue transition-colors pr-12"
@@ -184,25 +196,25 @@ export default function WorkspaceUserLoginPage() {
                 data-testid="workspace-login-submit"
                 className="w-full rounded-lg bg-brand-blue text-white font-medium py-2.5 text-sm hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
               >
-                {loading ? "Anmelden…" : "Anmelden"}
+                {loading ? `${t("login")}…` : t("login")}
               </button>
             </form>
           ) : (
             <form onSubmit={handleActivate} className="space-y-4" data-testid="form-activate">
               <p className="text-sm text-slate-500 leading-relaxed">
-                Geben Sie Ihre E-Mail-Adresse ein, um Ihr Konto zu aktivieren und ein persönliches Passwort festzulegen.
+                {t("activationHint")}
               </p>
 
               <div>
                 <label htmlFor="activate-email" className="block text-sm font-medium text-slate-700 mb-1">
-                  E-Mail
+                  {t("email")}
                 </label>
                 <input
                   id="activate-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ihre@email.de"
+                  placeholder={t("emailPlaceholder")}
                   required
                   data-testid="input-activate-email"
                   className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue transition-colors"
@@ -222,7 +234,7 @@ export default function WorkspaceUserLoginPage() {
                 >
                   <p>{error}</p>
                   {statusInfo === "pending" && (
-                    <p className="mt-1 text-xs text-amber-600">Ihr Workspace-Administrator wird Sie informieren, sobald Ihr Zugang freigeschaltet ist.</p>
+                    <p className="mt-1 text-xs text-amber-600">{t("pendingApproval")}</p>
                   )}
                 </div>
               )}
@@ -233,7 +245,7 @@ export default function WorkspaceUserLoginPage() {
                 data-testid="button-activate"
                 className="w-full rounded-lg bg-brand-blue text-white font-medium py-2.5 text-sm hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
               >
-                {loading ? "Wird geprüft…" : "Konto aktivieren"}
+                {loading ? t("checking") : t("activateAccount")}
               </button>
             </form>
           )}
@@ -244,16 +256,16 @@ export default function WorkspaceUserLoginPage() {
               className="block text-sm text-brand-blue hover:text-brand-blue-dark font-medium transition-colors"
               data-testid="link-request-access"
             >
-              Zugang anfordern
+              {t("requestAccess")}
             </Link>
             <Link
               href={`/w/${workspaceSlug}/reset-password`}
               className="block text-sm text-slate-400 hover:text-brand-blue transition-colors"
             >
-              Passwort vergessen?
+              {t("forgotPassword")}
             </Link>
             <Link href="/" className="block text-sm text-slate-400 hover:text-brand-blue transition-colors">
-              Zurück zur Plattform
+              {t("backToPlatform")}
             </Link>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { TourStep } from "@/lib/arag-bdp-tour";
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
 interface TourOverlayProps {
   steps: TourStep[];
@@ -13,6 +14,7 @@ interface TourOverlayProps {
 }
 
 export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, environment }: TourOverlayProps) {
+  const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [visible, setVisible] = useState(false);
@@ -211,7 +213,7 @@ export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, envir
               onClick={handleClose}
               className="text-black/40 hover:text-black text-lg leading-none shrink-0"
               data-testid="tour-close"
-              aria-label="Tour beenden"
+              aria-label={t("tourEndLabel")}
             >
               ✕
             </button>
@@ -223,12 +225,12 @@ export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, envir
 
           {targetNotFound && (
             <p className="text-xs text-black/40 italic mb-3">
-              Hinweis: Element aktuell nicht sichtbar – Schritt wird trotzdem erklärt.
+              {t("tourHint")}
             </p>
           )}
 
           {navigating && (
-            <p className="text-xs text-[#FFD700] font-medium mb-3">Seite wird geladen…</p>
+            <p className="text-xs text-[#FFD700] font-medium mb-3">{t("tourPageLoading")}</p>
           )}
 
           <div className="flex items-center justify-between">
@@ -243,7 +245,7 @@ export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, envir
                   className="px-3 py-1.5 text-sm rounded-lg border border-black/10 text-black/60 hover:bg-black/5 disabled:opacity-50 transition-colors"
                   data-testid="tour-prev"
                 >
-                  Zurück
+                  {t("tourPrev")}
                 </button>
               )}
               <button
@@ -252,7 +254,7 @@ export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, envir
                 className="px-4 py-1.5 text-sm rounded-lg bg-[#FFD700] text-black font-semibold hover:bg-[#e6c200] disabled:opacity-50 transition-colors"
                 data-testid="tour-next"
               >
-                {isLast ? "Beenden" : "Weiter"}
+                {isLast ? t("tourFinish") : t("tourNext")}
               </button>
             </div>
           </div>
@@ -263,7 +265,7 @@ export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, envir
               className="w-full mt-3 text-xs text-black/40 hover:text-black/60 transition-colors"
               data-testid="tour-dont-show"
             >
-              Nicht mehr automatisch anzeigen
+              {t("tourDontShowAgain")}
             </button>
           )}
         </div>

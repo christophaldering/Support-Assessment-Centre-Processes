@@ -7,7 +7,7 @@ The Executive Diagnostics Platform is an enterprise-grade, multi-tenant SaaS sol
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
-Design language: German (all user-facing portal/landing pages in German, with EN/DE toggle planned)
+Design language: German default with full DE/EN internationalization (Sprint I18N-01 complete)
 Dual branding:
 - Neutral platform: dark navy (#0f172a), blue accent (#3b82f6), clean/minimal
 - aestimamus workspace: Terrakotta Rot (#A6473B) primary, Wein Rot (#5F1A11) dark, Lagune Türkis (#297587) accent, Tiefsee Türkis (#115560) accent dark, Lagune Medium (#B5D6DE), Lagune Hell (#EFF4F5) light bg, Satoshi font (Fontshare), pure white backgrounds. Full style guide uploaded and analyzed.
@@ -83,6 +83,13 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
     - Demo auto-reset: on logout from demo environment, demo data is automatically reset to hard-coded defaults. Demo banner informs users: "Experimentieren erlaubt! Änderungen werden beim Abmelden zurückgesetzt."
     - **Demo Environment (first-class)**: Strict LIVE/DEMO separation via `bdp_environment` cookie. All GET routes filter by `environment` scope. Admin-only LIVE/DEMO toggle in sidebar + hamburger menu (`data-testid="bdp-env-toggle"`). Demo seed creates 3 RELEASED sessions, 6 teams, 21 TN, 3 observers, full scores (sum=100), tie-break case, sponsor flags, individual notes. Reset via `/arag-bdp/admin/demo` page (`data-testid="bdp-demo-reset"`). LIVE data never touched during reset. API: `/api/arag-bdp/environment` (GET/POST), `/api/arag-bdp/admin/demo-reset` (POST).
     - **Guided Tour System**: Role-specific tour steps (admin=10, observer=8, participant=6) via `lib/arag-bdp-tour.ts`. `TourOverlay.tsx` with SVG spotlight mask, popover positioning, Escape key. Auto-starts on first demo login. "Tour starten" in sidebar + hamburger. Tour restart from profile page clears localStorage and dispatches custom event.
+    - **Sprint I18N-01 — Full DE/EN Internationalization**:
+      - i18n infrastructure: `lib/i18n/translations.ts` (800+ lines, full DE/EN dictionary), `lib/i18n/language.ts` (cookie+localStorage persistence), `app/providers/LanguageProvider.tsx` (React context + `t()` + `useLanguage()`), `app/components/LanguageToggle.tsx` (DE/EN pill toggle)
+      - LanguageProvider wraps: BDP layout (`app/arag-bdp/layout.tsx`), ARAG lobby (`app/w/arag/page.tsx`), workspace login (`app/w/[workspaceSlug]/login/page.tsx`)
+      - LanguageToggle in: BDP desktop header, BDP mobile header, lobby header, workspace login header
+      - All ~25 files internationalized: sessions, bewertung, auswertung, profile, admin, export/print, login/gate redirects, lobby, StandardLanding, AppleLanding, LandingHero, HeroStrategicPanel, LandingCards, LandingCharts, JourneyTimeline, StrategicStoryboard, AmbivalenceDiagram, FrameworkVisual, NotificationBell, TourOverlay, CaseModal
+      - Language persists across navigation via `lang` cookie + `arag_lang` localStorage key
+      - Brand names (WHU Learning, Board Evaluation, Strategic Relevance, etc.) kept in English as proper nouns
     - **Sprint D4 — Avatar System + Business Case Viewer**:
       - `AvatarCircle.tsx` component: renders user avatar or gold initial circle (sm/md/lg). Used in layout sidebar, mobile header, profile page.
       - Avatar upload API: `/api/arag-bdp/avatar` (POST multipart, GET signed URL). Stores in Object Storage at `.private/avatars/{userId}.{ext}`.

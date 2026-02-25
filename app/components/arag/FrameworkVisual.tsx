@@ -1,12 +1,11 @@
 "use client";
 
-const STEPS = [
-  "Realitätsnahe Entscheidungssimulation",
-  "Strukturierte Bewertung",
-  "Development Dialogue",
-];
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
 export default function FrameworkVisual() {
+  const { t } = useLanguage();
+  const STEPS = [t("frameworkStep1"), t("frameworkStep2"), t("frameworkStep3")];
+
   return (
     <section className="w-full bg-[#FFFBF0]" data-testid="section-framework">
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 lg:py-24">

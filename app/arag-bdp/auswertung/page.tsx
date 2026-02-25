@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useBdp } from "../bdp-context";
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
 export default function BdpAuswertungPage() {
   const { user } = useBdp();
+  const { t } = useLanguage();
   const [sessions, setSessions] = useState<any[]>([]);
   const [selectedSession, setSelectedSession] = useState<string>("");
   const [results, setResults] = useState<any>(null);
@@ -28,7 +30,7 @@ export default function BdpAuswertungPage() {
           setResults(data);
         }
       })
-      .catch(() => setResults({ error: "Verbindungsfehler" }))
+      .catch(() => setResults({ error: t("connectionError") }))
       .finally(() => setLoading(false));
   }, [selectedSession]);
 
@@ -37,35 +39,35 @@ export default function BdpAuswertungPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold" data-testid="text-auswertung-title">Auswertung</h1>
+      <h1 className="text-2xl font-bold" data-testid="text-auswertung-title">{t("resultsTitle")}</h1>
 
       {releasedSessions.length === 0 ? (
         <div className="bg-white rounded-2xl p-8 text-center">
           <span className="text-4xl mb-3 block">📊</span>
           <p className="text-gray-500" data-testid="text-no-results">
             {isDemoEnv
-              ? "Noch keine abgeschlossenen Sessions vorhanden."
-              : "Die Auswertung wird sichtbar, sobald die Bewertung abgeschlossen ist."}
+              ? t("noResultsDemo")
+              : t("noResultsLive")}
           </p>
         </div>
       ) : (
         <>
           <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <label className="text-sm font-medium text-gray-500 mb-2 block">Session auswählen</label>
+            <label className="text-sm font-medium text-gray-500 mb-2 block">{t("selectSession")}</label>
             <select
               data-testid="select-session"
               value={selectedSession}
               onChange={e => setSelectedSession(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50"
             >
-              <option value="">Bitte wählen...</option>
+              <option value="">{t("pleaseSelect")}</option>
               {releasedSessions.map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
           </div>
 
-          {loading && <div className="text-center py-8 text-gray-400">Laden...</div>}
+          {loading && <div className="text-center py-8 text-gray-400">{t("loading")}</div>}
 
           {results?.error && (
             <div className="bg-orange-50 text-orange-700 p-4 rounded-2xl text-sm">{results.error}</div>
@@ -77,7 +79,7 @@ export default function BdpAuswertungPage() {
                 <div className="bg-gradient-to-r from-[#FFFBF0] to-white rounded-2xl p-6 shadow-sm border border-[#FFD700]/30" data-testid="text-session-summary">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">📝</span>
-                    <h2 className="font-bold text-lg">Executive Summary</h2>
+                    <h2 className="font-bold text-lg">{t("executiveSummary")}</h2>
                   </div>
                   <p className="text-gray-700 leading-relaxed italic">{results.session.summary}</p>
                 </div>
@@ -85,9 +87,9 @@ export default function BdpAuswertungPage() {
 
               <div className="flex gap-1 bg-white rounded-2xl p-1.5 shadow-sm">
                 {[
-                  { key: "overview" as const, label: "Gesamtergebnis" },
-                  { key: "teams" as const, label: "Team-Feedback" },
-                  { key: "individuals" as const, label: "Einzelbewertungen" },
+                  { key: "overview" as const, label: t("overallResult") },
+                  { key: "teams" as const, label: t("teamFeedback") },
+                  { key: "individuals" as const, label: t("individualRatings") },
                 ].map(tab => (
                   <button
                     key={tab.key}
@@ -107,7 +109,7 @@ export default function BdpAuswertungPage() {
               {activeTab === "overview" && (
                 <div className="space-y-4">
                   <div className="bg-white rounded-2xl p-6 shadow-sm">
-                    <h2 className="font-bold text-lg mb-4">Gesamtergebnis</h2>
+                    <h2 className="font-bold text-lg mb-4">{t("overallResult")}</h2>
                     <div className="space-y-3">
                       {results.ranked?.map((r: any, idx: number) => {
                         const maxTotal = results.ranked[0]?.total || 1;
@@ -123,8 +125,8 @@ export default function BdpAuswertungPage() {
                                   {idx + 1}
                                 </span>
                                 <span className="font-bold">{r.teamCode}</span>
-                                {isWinner && !isTied && <span className="text-xs bg-[#FFD700] px-2 py-0.5 rounded-full font-bold">Sieger</span>}
-                                {isTied && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">Gleichstand</span>}
+                                {isWinner && !isTied && <span className="text-xs bg-[#FFD700] px-2 py-0.5 rounded-full font-bold">{t("winner")}</span>}
+                                {isTied && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">{t("tie")}</span>}
                               </div>
                               <span className="font-bold text-lg">{r.total} P</span>
                             </div>
@@ -138,23 +140,23 @@ export default function BdpAuswertungPage() {
 
                     {results.isTie && results.tieBreak && (
                       <div className="mt-4 p-4 bg-blue-50 rounded-xl" data-testid="text-tiebreak-result">
-                        <p className="font-bold text-blue-800">Tie-Break Entscheidung</p>
+                        <p className="font-bold text-blue-800">{t("tieBreakDecision")}</p>
                         <p className="text-sm text-blue-700 mt-1">
-                          Sieger (nach Tie-Break): <strong>{results.ranked.find((r: any) => r.teamId === results.tieBreak.winnerTeamId)?.teamCode || "–"}</strong>
+                          {t("tieBreakWinner")}: <strong>{results.ranked.find((r: any) => r.teamId === results.tieBreak.winnerTeamId)?.teamCode || "–"}</strong>
                         </p>
                         {results.tieBreak.rationale && <p className="text-sm text-blue-600 mt-2 italic">{results.tieBreak.rationale}</p>}
                       </div>
                     )}
                     {results.isTie && !results.tieBreak && (
                       <div className="mt-4 p-4 bg-amber-50 rounded-xl" data-testid="text-tie-pending">
-                        <p className="font-bold text-amber-800">Gleichstand</p>
-                        <p className="text-sm text-amber-700 mt-1">Tie-Break Entscheidung steht noch aus.</p>
+                        <p className="font-bold text-amber-800">{t("tie")}</p>
+                        <p className="text-sm text-amber-700 mt-1">{t("tieBreakPending")}</p>
                       </div>
                     )}
                   </div>
 
                   <div className="bg-white rounded-2xl p-6 shadow-sm">
-                    <h2 className="font-bold text-lg mb-4">Kriterien-Detail</h2>
+                    <h2 className="font-bold text-lg mb-4">{t("criteriaDetail")}</h2>
                     {results.criteria?.map((c: any) => (
                       <div key={c.id} className="mb-4">
                         <h3 className="font-medium text-sm text-gray-600 mb-2">{c.name}</h3>
@@ -179,7 +181,7 @@ export default function BdpAuswertungPage() {
 
                   {results.perObserver && user?.isAdmin && (
                     <div className="bg-white rounded-2xl p-6 shadow-sm">
-                      <h2 className="font-bold text-lg mb-4">Beobachter-Aufschlüsselung</h2>
+                      <h2 className="font-bold text-lg mb-4">{t("observerBreakdown")}</h2>
                       {Object.entries(results.perObserver).map(([observerCode, teamData]: [string, any]) => (
                         <div key={observerCode} className="mb-4 p-4 bg-gray-50 rounded-xl">
                           <h3 className="font-bold mb-2 text-sm">{observerCode}</h3>
@@ -208,7 +210,7 @@ export default function BdpAuswertungPage() {
                 <div className="space-y-4">
                   {Object.keys(results.teamFeedbacks || {}).length === 0 ? (
                     <div className="bg-white rounded-2xl p-8 text-center">
-                      <p className="text-gray-400">Noch keine Team-Feedbacks vorhanden.</p>
+                      <p className="text-gray-400">{t("noTeamFeedbacks")}</p>
                     </div>
                   ) : (
                     Object.entries(results.teamFeedbacks).map(([teamName, feedback]: [string, any]) => (
@@ -230,7 +232,7 @@ export default function BdpAuswertungPage() {
                 <div className="space-y-4">
                   {(results.individualNotes || []).length === 0 ? (
                     <div className="bg-white rounded-2xl p-8 text-center">
-                      <p className="text-gray-400">Noch keine Einzelbewertungen vorhanden.</p>
+                      <p className="text-gray-400">{t("noIndividualRatings")}</p>
                     </div>
                   ) : (
                     (results.individualNotes || []).map((note: any, idx: number) => (
@@ -245,30 +247,30 @@ export default function BdpAuswertungPage() {
                           <div className="flex gap-2">
                             {note.contribution > 0 && (
                               <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-lg" data-testid={`badge-contribution-${idx}`}>
-                                Beitrag: {note.contribution}/5
+                                {t("contributionBadge", { val: note.contribution })}
                               </span>
                             )}
                             {note.presence > 0 && (
                               <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg" data-testid={`badge-presence-${idx}`}>
-                                Präsenz: {note.presence}/5
+                                {t("presenceBadge", { val: note.presence })}
                               </span>
                             )}
                           </div>
                         </div>
                         {note.note && (
                           <div className="mb-3">
-                            <p className="text-sm text-gray-500 font-medium mb-1">Beobachtung</p>
+                            <p className="text-sm text-gray-500 font-medium mb-1">{t("observationLabel")}</p>
                             <p className="text-gray-700 text-sm leading-relaxed">{note.note}</p>
                           </div>
                         )}
                         {note.generalNote && (
                           <div className="bg-[#FFFBF0] rounded-xl p-3 mt-2">
-                            <p className="text-sm text-gray-500 font-medium mb-1">Gesamteinschätzung</p>
+                            <p className="text-sm text-gray-500 font-medium mb-1">{t("overallAssessment")}</p>
                             <p className="text-gray-700 text-sm leading-relaxed italic">{note.generalNote}</p>
                           </div>
                         )}
                         <div className="mt-2 text-right">
-                          <span className="text-xs text-gray-400">Beobachter: {note.observerName}</span>
+                          <span className="text-xs text-gray-400">{t("observerLabel")}: {note.observerName}</span>
                         </div>
                       </div>
                     ))

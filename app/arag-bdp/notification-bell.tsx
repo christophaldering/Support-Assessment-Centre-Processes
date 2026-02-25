@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Bell, Check, CheckCheck, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
 interface Notification {
   id: string;
@@ -25,22 +26,24 @@ const typeIcons: Record<string, string> = {
   demo_reset: "🔄",
 };
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "gerade eben";
-  if (mins < 60) return `vor ${mins} Min.`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `vor ${hrs} Std.`;
-  const days = Math.floor(hrs / 24);
-  return `vor ${days} Tag${days > 1 ? "en" : ""}`;
-}
-
 export default function NotificationBell({ variant = "desktop" }: { variant?: "desktop" | "mobile" }) {
+  const { t, lang } = useLanguage();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return t("timeJustNow");
+    if (mins < 60) return t("timeMinutesAgo", { count: mins });
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return t("timeHoursAgo", { count: hrs });
+    const days = Math.floor(hrs / 24);
+    const suffix = lang === "de" ? (days > 1 ? "en" : "") : (days > 1 ? "s" : "");
+    return t("timeDaysAgo", { count: days, suffix });
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -121,7 +124,7 @@ export default function NotificationBell({ variant = "desktop" }: { variant?: "d
           }`}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-black/5">
-            <span className="text-sm font-bold text-black">Benachrichtigungen</span>
+            <span className="text-sm font-bold text-black">{t("notifications")}</span>
             {unreadCount > 0 && (
               <button
                 data-testid="bdp-notification-mark-all"
@@ -129,7 +132,7 @@ export default function NotificationBell({ variant = "desktop" }: { variant?: "d
                 className="text-[11px] text-[#FFD700] hover:text-[#e6c200] font-semibold flex items-center gap-1"
               >
                 <CheckCheck size={12} />
-                Alle gelesen
+                {t("markAllRead")}
               </button>
             )}
           </div>
@@ -137,7 +140,7 @@ export default function NotificationBell({ variant = "desktop" }: { variant?: "d
           <div className="max-h-[400px] overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-black/40">
-                Keine Benachrichtigungen
+                {t("noNotifications")}
               </div>
             ) : (
               notifications.map(n => (
@@ -166,7 +169,7 @@ export default function NotificationBell({ variant = "desktop" }: { variant?: "d
                             onClick={() => { markRead(n.id); setOpen(false); }}
                             className="text-[10px] text-[#FFD700] hover:text-[#e6c200] font-semibold flex items-center gap-0.5"
                           >
-                            Anzeigen <ExternalLink size={9} />
+                            {t("showNotification")} <ExternalLink size={9} />
                           </Link>
                         )}
                         {!n.read && (
@@ -174,7 +177,7 @@ export default function NotificationBell({ variant = "desktop" }: { variant?: "d
                             onClick={() => markRead(n.id)}
                             className="text-[10px] text-black/30 hover:text-black/60 flex items-center gap-0.5"
                           >
-                            <Check size={9} /> Gelesen
+                            <Check size={9} /> {t("markRead")}
                           </button>
                         )}
                       </div>

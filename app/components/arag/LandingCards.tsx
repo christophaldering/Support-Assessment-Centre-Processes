@@ -1,36 +1,25 @@
 "use client";
 
-const CARDS = [
-  {
-    title: "Strategischer Kontext",
-    items: [
-      "AI-nativer Angriff auf das Kerngeschäft",
-      "Selbst-Disruptionslogik",
-      "KPI-basierte Ableitung",
-      "Marktpositionierung",
-    ],
-  },
-  {
-    title: "Bewertungsarchitektur",
-    items: [
-      "100 Punkte pro Team",
-      "Vollständige Verteilung",
-      "Vergleichbarkeit",
-      "Strukturierte Aggregation",
-    ],
-  },
-  {
-    title: "Governance & Transparenz",
-    items: [
-      "Identische Bewertungslogik",
-      "Standardisierte Kriterien",
-      "Einbettung in Development Dialogues",
-      "Diagnostische Kontextualisierung",
-    ],
-  },
-];
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
 export default function LandingCards() {
+  const { t } = useLanguage();
+
+  const CARDS = [
+    {
+      title: t("cardStrategicContext"),
+      items: [t("cardStrategicItem1"), t("cardStrategicItem2"), t("cardStrategicItem3"), t("cardStrategicItem4")],
+    },
+    {
+      title: t("cardRatingArchitecture"),
+      items: [t("cardRatingItem1"), t("cardRatingItem2"), t("cardRatingItem3"), t("cardRatingItem4")],
+    },
+    {
+      title: t("cardGovernance"),
+      items: [t("cardGovernanceItem1"), t("cardGovernanceItem2"), t("cardGovernanceItem3"), t("cardGovernanceItem4")],
+    },
+  ];
+
   return (
     <section className="w-full bg-[#F2F2F2]/40" data-testid="section-cards">
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 lg:py-20">

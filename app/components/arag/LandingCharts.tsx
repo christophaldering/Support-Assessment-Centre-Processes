@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/app/providers/LanguageProvider";
+
 const DIMENSIONS = [
   { label: "Strategic Relevance", width: 88 },
   { label: "Innovation", width: 76 },
@@ -10,18 +12,19 @@ const DIMENSIONS = [
 ];
 
 export default function LandingCharts() {
+  const { t } = useLanguage();
   return (
     <section className="w-full bg-[#FFFBF0]" data-testid="section-charts">
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 lg:py-20">
         <div className="max-w-3xl mx-auto">
           <p className="text-sm font-semibold tracking-[0.2em] uppercase text-[#FFD700] mb-3">
-            Struktur
+            {t("chartsStructure")}
           </p>
           <h2
             className="text-2xl md:text-3xl font-bold text-black mb-10"
             style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
           >
-            Bewertungsdimensionen
+            {t("chartsDimensions")}
           </h2>
 
           <div className="space-y-5">
@@ -45,7 +48,7 @@ export default function LandingCharts() {
           </div>
 
           <p className="text-xs text-gray-400 mt-6 italic">
-            Darstellung der Bewertungsstruktur — keine echten Punktwerte.
+            {t("chartHint")}
           </p>
         </div>
       </div>

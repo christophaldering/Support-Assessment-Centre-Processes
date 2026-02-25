@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import SlideViewer from "./SlideViewer";
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
 interface CaseModalProps {
   onClose: () => void;
@@ -12,6 +13,8 @@ interface CaseModalProps {
 }
 
 export default function CaseModal({ onClose, type, teamName, slides, pdfUrl }: CaseModalProps) {
+  const { t } = useLanguage();
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -46,7 +49,7 @@ export default function CaseModal({ onClose, type, teamName, slides, pdfUrl }: C
           )}
           {type === "none" && (
             <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
-              Kein Business Case verfügbar.
+              {t("noBusinessCase")}
             </div>
           )}
         </div>

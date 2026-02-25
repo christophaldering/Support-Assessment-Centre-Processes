@@ -20,6 +20,8 @@ import NotificationBell from "./notification-bell";
 import TourOverlay from "./components/TourOverlay";
 import AvatarCircle from "./components/AvatarCircle";
 import { getTourSteps } from "@/lib/arag-bdp-tour";
+import { LanguageProvider, useLanguage } from "@/app/providers/LanguageProvider";
+import LanguageToggle from "@/app/components/LanguageToggle";
 
 const PUBLIC_PATHS = ["/arag-bdp/gate"];
 
@@ -32,6 +34,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
 
   const fetchUser = async () => {
     try {
@@ -144,20 +147,20 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
   const tourSteps = getTourSteps({ role: user.role, isAdmin: user.isAdmin, environment: user.environment });
 
   const mobileTabs = [
-    { href: "/arag-bdp/sessions", label: "Sessions", testId: "bdp-tab-sessions", Icon: Calendar, disabled: false },
-    { href: "/arag-bdp/bewertung", label: "Bewertung", testId: "bdp-tab-bewertung", Icon: Scale, disabled: false },
+    { href: "/arag-bdp/sessions", label: t("sessions"), testId: "bdp-tab-sessions", Icon: Calendar, disabled: false },
+    { href: "/arag-bdp/bewertung", label: t("rating"), testId: "bdp-tab-bewertung", Icon: Scale, disabled: false },
   ];
 
   const sidebarMain = [
-    { href: "/arag-bdp/sessions", label: "Sessions", testId: "bdp-side-sessions", Icon: Calendar },
-    { href: "/arag-bdp/bewertung", label: "Bewertung", testId: "bdp-side-bewertung", Icon: Scale },
+    { href: "/arag-bdp/sessions", label: t("sessions"), testId: "bdp-side-sessions", Icon: Calendar },
+    { href: "/arag-bdp/bewertung", label: t("rating"), testId: "bdp-side-bewertung", Icon: Scale },
   ];
 
   const sidebarAdmin = [
-    { href: "/arag-bdp/admin", label: "Admin Konsole", testId: "bdp-side-admin", Icon: Shield },
+    { href: "/arag-bdp/admin", label: t("adminConsole"), testId: "bdp-side-admin", Icon: Shield },
     { href: "/arag-bdp/admin/qa", label: "QA", testId: "bdp-side-qa", Icon: FlaskConical },
-    { href: "/arag-bdp/admin?tab=export", label: "Exporte", testId: "bdp-side-exports", Icon: Download },
-    { href: "/arag-bdp/admin/invitations", label: "Einladungen", testId: "bdp-side-invitations", Icon: Mail },
+    { href: "/arag-bdp/admin?tab=export", label: t("exports"), testId: "bdp-side-exports", Icon: Download },
+    { href: "/arag-bdp/admin/invitations", label: t("invitations"), testId: "bdp-side-invitations", Icon: Mail },
   ];
 
   const isActive = (href: string) => {
@@ -253,7 +256,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 text-[#FFFBF0]/60 hover:text-[#FFFBF0] hover:bg-white/5 w-full"
             >
               <Compass size={18} strokeWidth={1.75} />
-              Tour starten
+              {t("startTour")}
             </button>
           </nav>
 
@@ -271,18 +274,19 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
         <div className="flex-1 ml-[260px] flex flex-col min-h-screen">
           {user.environment === "demo" && (
             <div data-testid="demo-lock-banner" className="bg-[#FFD700] text-black text-center py-1.5 text-xs font-bold tracking-wide">
-              DEMO-MODUS – Sie dürfen mit den Daten experimentieren. Änderungen werden beim Abmelden zurückgesetzt.
+              {t("demoBanner")}
             </div>
           )}
           <header className="sticky top-0 z-40 h-14 bg-[#FFFBF0] border-b border-black/5 flex items-center justify-between px-6">
             <div className="flex items-center gap-3">
               {user.environment === "demo" && (
                 <span className="text-[10px] font-bold uppercase tracking-wider bg-[#FFD700] text-black px-2 py-0.5 rounded">
-                  Demo
+                  {t("demoLabel")}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-4">
+              <LanguageToggle />
               <span className="text-xs text-black/50">{user.displayName || user.code}</span>
               <NotificationBell variant="desktop" />
               <Link
@@ -320,7 +324,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
       <div className="lg:hidden fixed inset-0 bg-[#FFFBF0] text-black flex flex-col" style={{ height: "100dvh", overflow: "hidden" }}>
         {user.environment === "demo" && (
           <div data-testid="demo-banner" className="bg-[#FFD700] text-black text-center py-1 text-[11px] font-bold tracking-wide shrink-0 px-2">
-            DEMO – Experimentieren erlaubt! Änderungen werden beim Abmelden zurückgesetzt.
+            {t("demoBannerShort")}
           </div>
         )}
 
@@ -330,6 +334,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
             <span className="text-[#FFD700] text-sm">{user.displayName || user.code}</span>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageToggle variant="dark" />
             <NotificationBell variant="mobile" />
             <Link href="/arag-bdp/profile" data-testid="link-profile">
               <AvatarCircle avatarUrl={user.photoUrl} code={user.code} size="sm" />
@@ -343,20 +348,20 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
             <div className="absolute right-0 top-0 h-full w-64 bg-white shadow-xl p-6" onClick={e => e.stopPropagation()}>
               <button onClick={() => setMenuOpen(false)} className="absolute top-4 right-4 text-xl">✕</button>
               <nav className="mt-12 space-y-4">
-                <Link href="/arag-bdp/profile" data-testid="bdp-menu-profile" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Profil</Link>
+                <Link href="/arag-bdp/profile" data-testid="bdp-menu-profile" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>{t("profile")}</Link>
                 {user.isAdmin && (
                   <>
                     <Link href="/arag-bdp/admin" data-testid="bdp-menu-admin" className="block py-2 px-4 rounded hover:bg-gray-100 font-bold" onClick={() => setMenuOpen(false)}>Admin</Link>
-                    <Link href="/arag-bdp/admin/invitations" data-testid="bdp-menu-invitations" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Einladungen</Link>
+                    <Link href="/arag-bdp/admin/invitations" data-testid="bdp-menu-invitations" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>{t("invitations")}</Link>
                   </>
                 )}
                 <button data-testid="bdp-menu-tour" onClick={startTour} className="block py-2 px-4 rounded hover:bg-[#FFFBF0] text-black w-full text-left">
                   <span className="flex items-center gap-2">
                     <Compass size={16} strokeWidth={1.75} className="text-[#FFD700]" />
-                    Tour starten
+                    {t("startTour")}
                   </span>
                 </button>
-                <button data-testid="bdp-menu-logout" onClick={handleLogout} className="block py-2 px-4 rounded hover:bg-red-50 text-red-600 w-full text-left">Abmelden</button>
+                <button data-testid="bdp-menu-logout" onClick={handleLogout} className="block py-2 px-4 rounded hover:bg-red-50 text-red-600 w-full text-left">{t("logout")}</button>
               </nav>
             </div>
           </div>
@@ -421,12 +426,14 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
 
 export default function BdpLayout({ children }: { children: ReactNode }) {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-[#FFD700] border-t-transparent rounded-full" />
-      </div>
-    }>
-      <BdpLayoutInner>{children}</BdpLayoutInner>
-    </Suspense>
+    <LanguageProvider>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-4 border-[#FFD700] border-t-transparent rounded-full" />
+        </div>
+      }>
+        <BdpLayoutInner>{children}</BdpLayoutInner>
+      </Suspense>
+    </LanguageProvider>
   );
 }

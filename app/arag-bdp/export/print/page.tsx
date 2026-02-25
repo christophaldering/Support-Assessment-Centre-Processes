@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
 export default function BdpPrintPage() {
   const router = useRouter();
+  const { t, lang } = useLanguage();
   const [sessions, setSessions] = useState<any[]>([]);
   const [allResults, setAllResults] = useState<Record<string, any>>({});
   const [notes, setNotes] = useState<any[]>([]);
@@ -53,8 +55,10 @@ export default function BdpPrintPage() {
     })();
   }, []);
 
-  if (loading) return <div className="p-8 text-center">Laden...</div>;
+  if (loading) return <div className="p-8 text-center">{t("loading")}</div>;
   if (!isAdmin) return null;
+
+  const dateLocale = lang === "de" ? "de-DE" : "en-US";
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white print:p-4" data-testid="print-view">
@@ -67,17 +71,17 @@ export default function BdpPrintPage() {
       `}</style>
 
       <div className="text-center mb-8 border-b border-gray-200 pb-6">
-        <h1 className="text-3xl font-bold text-black">ARAG Business Development Pitch</h1>
-        <p className="text-gray-500 mt-1">Ergebnisbericht</p>
-        <p className="text-gray-400 text-sm mt-1">{new Date().toLocaleDateString("de-DE", { year: "numeric", month: "long", day: "numeric" })}</p>
+        <h1 className="text-3xl font-bold text-black">{t("printTitle")}</h1>
+        <p className="text-gray-500 mt-1">{t("resultReport")}</p>
+        <p className="text-gray-400 text-sm mt-1">{new Date().toLocaleDateString(dateLocale, { year: "numeric", month: "long", day: "numeric" })}</p>
       </div>
 
       <button onClick={() => window.print()} className="no-print mb-6 bg-[#FFD700] text-black px-6 py-2 rounded-lg font-bold" data-testid="button-print">
-        Drucken
+        {t("print")}
       </button>
 
       {sessions.length === 0 ? (
-        <p className="text-gray-400 text-center py-8">Keine abgeschlossenen Sessions.</p>
+        <p className="text-gray-400 text-center py-8">{t("noClosedSessions")}</p>
       ) : (
         sessions.map(s => {
           const result = allResults[s.id];
@@ -92,9 +96,9 @@ export default function BdpPrintPage() {
               <table className="w-full text-sm mb-4">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="text-left p-2">Platz</th>
-                    <th className="text-left p-2">Team</th>
-                    <th className="text-right p-2">Gesamt</th>
+                    <th className="text-left p-2">{t("rank")}</th>
+                    <th className="text-left p-2">{t("teams")}</th>
+                    <th className="text-right p-2">{t("total")}</th>
                     {result.criteria?.map((c: any) => (
                       <th key={c.id} className="text-right p-2 text-xs">{c.name}</th>
                     ))}
@@ -116,21 +120,21 @@ export default function BdpPrintPage() {
 
               {result.isTie && result.tieBreak && (
                 <div className="p-3 bg-blue-50 rounded text-sm mb-4">
-                  <strong>Tie-Break:</strong> Sieger {result.ranked.find((r: any) => r.teamId === result.tieBreak.winnerTeamId)?.teamCode || "–"}
+                  <strong>{t("tieBreak")}:</strong> {t("winner")} {result.ranked.find((r: any) => r.teamId === result.tieBreak.winnerTeamId)?.teamCode || "–"}
                   {result.tieBreak.rationale && ` — ${result.tieBreak.rationale}`}
                 </div>
               )}
 
               {sessionNotes.length > 0 && (
                 <div className="mt-4 page-break">
-                  <h3 className="font-bold text-sm mb-2">Individuelle Notizen</h3>
+                  <h3 className="font-bold text-sm mb-2">{t("individualNotes")}</h3>
                   <table className="w-full text-xs border-collapse">
                     <thead>
                       <tr className="bg-gray-50 border-b">
-                        <th className="text-left p-1.5">TN</th>
-                        <th className="text-left p-1.5">Beobachter</th>
-                        <th className="text-left p-1.5">Kriterium</th>
-                        <th className="text-left p-1.5">Notiz</th>
+                        <th className="text-left p-1.5">{t("participants")}</th>
+                        <th className="text-left p-1.5">{t("observerLabel")}</th>
+                        <th className="text-left p-1.5">{t("criteria")}</th>
+                        <th className="text-left p-1.5">{t("note")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -157,7 +161,7 @@ export default function BdpPrintPage() {
             <text x="0" y="12" fontSize="11" fontWeight="bold" fill="#A6473B" fontFamily="sans-serif">aestimamus</text>
           </svg>
         </div>
-        <p className="mt-1">Powered by aestimamus</p>
+        <p className="mt-1">{t("poweredBy")} aestimamus</p>
       </footer>
     </div>
   );

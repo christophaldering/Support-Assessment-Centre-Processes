@@ -5,11 +5,13 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useBdp } from "../../bdp-context";
 import CaseModal from "../../components/CaseModal";
+import { useLanguage } from "@/app/providers/LanguageProvider";
 
 export default function BdpScoringPage() {
   const params = useParams();
   const sessionId = params.sessionId as string;
   const { user } = useBdp();
+  const { t } = useLanguage();
   const [session, setSession] = useState<any>(null);
   const [criteria, setCriteria] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
@@ -101,11 +103,11 @@ export default function BdpScoringPage() {
       if (!res.ok) {
         setError(data.error);
       } else {
-        setMessage("Bewertung gespeichert!");
+        setMessage(t("ratingSaved"));
         setTimeout(() => setMessage(""), 3000);
       }
     } catch {
-      setError("Fehler beim Speichern");
+      setError(t("ratingError"));
     } finally {
       setSaving(false);
     }
@@ -131,7 +133,7 @@ export default function BdpScoringPage() {
     });
   };
 
-  if (!session) return <div className="text-center py-8 text-gray-400">Laden...</div>;
+  if (!session) return <div className="text-center py-8 text-gray-400">{t("loading")}</div>;
 
   const openBusinessCase = async (teamId: string) => {
     setLoadingCase(teamId);
@@ -158,23 +160,23 @@ export default function BdpScoringPage() {
         />
       )}
 
-      <Link href="/arag-bdp/bewertung" className="text-gray-400 hover:text-black text-sm">← Zurück</Link>
+      <Link href="/arag-bdp/bewertung" className="text-gray-400 hover:text-black text-sm">{t("back")}</Link>
 
       <div className="bg-white rounded-2xl p-5 shadow-sm">
         <h1 className="text-xl font-bold" data-testid="text-scoring-session">{session.name}</h1>
         {isReadOnly && (
           <div className="mt-2 px-3 py-2 bg-orange-50 rounded-lg text-orange-700 text-sm" data-testid="text-scoring-locked">
-            {session.state === "DRAFT" ? "Diese Session ist noch nicht geöffnet. Bewertung nicht möglich." : "Diese Session ist gesperrt. Nur-Lesen-Modus."}
+            {session.state === "DRAFT" ? t("sessionNotOpen") : t("sessionLocked")}
           </div>
         )}
       </div>
 
       <div className="flex gap-2 bg-white rounded-xl p-1 shadow-sm">
         <button data-testid="tab-scoring" onClick={() => setActiveTab("scoring")} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "scoring" ? "bg-[#FFD700] text-black" : "text-gray-500"}`}>
-          Team-Bewertung
+          {t("teamRating")}
         </button>
         <button data-testid="tab-individual" onClick={() => setActiveTab("individual")} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "individual" ? "bg-[#FFD700] text-black" : "text-gray-500"}`}>
-          Einzelbewertung
+          {t("individualRating")}
         </button>
       </div>
 
@@ -187,7 +189,7 @@ export default function BdpScoringPage() {
               <div key={criterion.id} className="bg-white rounded-2xl p-5 shadow-sm" data-testid={`criterion-${criterion.id}`}>
                 <h3 className="font-bold mb-1">{criterion.name}</h3>
                 <div className={`text-xs mb-3 ${isValid ? "text-green-600" : sum > 0 ? "text-orange-600" : "text-gray-400"}`}>
-                  {sum} / 100 Punkte vergeben {isValid && "✓"}
+                  {t("pointsAssigned", { sum: String(sum) })} {isValid && "✓"}
                 </div>
                 <div className="space-y-3">
                   {teams.map(team => (
@@ -228,8 +230,8 @@ export default function BdpScoringPage() {
           })}
 
           <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <h3 className="font-bold mb-3">Sponsor-Kennzeichnung</h3>
-            <p className="text-xs text-gray-400 mb-3">Nur zur Transparenz – beeinflusst nicht die Wertung.</p>
+            <h3 className="font-bold mb-3">{t("sponsorLabel")}</h3>
+            <p className="text-xs text-gray-400 mb-3">{t("sponsorHint")}</p>
             {teams.map(team => (
               <label key={team.id} className="flex items-center gap-3 py-2">
                 <input
@@ -240,7 +242,7 @@ export default function BdpScoringPage() {
                   data-testid={`bdp-sponsor-flag-${team.id}`}
                   className="w-5 h-5 accent-[#FFD700]"
                 />
-                <span className="text-sm">{team.displayName || team.code} — Ich bin Sponsor</span>
+                <span className="text-sm">{team.displayName || team.code} — {t("iAmSponsor")}</span>
               </label>
             ))}
           </div>
@@ -255,7 +257,7 @@ export default function BdpScoringPage() {
               <>
                 {anyScored && !allValid && (
                   <div className="bg-orange-50 text-orange-700 p-3 rounded-xl text-sm" data-testid="text-sum-warning">
-                    Alle Kriterien müssen genau 100 Punkte ergeben, bevor gespeichert werden kann.
+                    {t("sumWarning")}
                   </div>
                 )}
                 <button
@@ -264,7 +266,7 @@ export default function BdpScoringPage() {
                   disabled={saving || !allValid}
                   className="w-full bg-[#FFD700] text-black font-bold py-4 rounded-2xl hover:bg-[#E6C200] transition-colors disabled:opacity-50"
                 >
-                  {saving ? "Speichern..." : "Bewertung speichern"}
+                  {saving ? t("saving") : t("saveRating")}
                 </button>
               </>
             );
@@ -276,7 +278,7 @@ export default function BdpScoringPage() {
         <div className="space-y-4">
           {teams.map(team => (
             <div key={team.id} className="bg-white rounded-2xl p-5 shadow-sm">
-              <h3 className="font-bold mb-3">{team.displayName || team.code} — Teilnehmer</h3>
+              <h3 className="font-bold mb-3">{team.displayName || team.code} — {t("participants")}</h3>
               <div className="space-y-2">
                 {teamParticipants(team.id).map(p => (
                   <div key={p.id} className="border border-gray-100 rounded-xl overflow-hidden">
@@ -302,27 +304,27 @@ export default function BdpScoringPage() {
                                 onBlur={e => handleSaveNote(p.id, c.id, e.target.value, "", existing?.contribution, existing?.presence)}
                                 disabled={isReadOnly}
                                 className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none h-20 disabled:bg-gray-50"
-                                placeholder="Notiz..."
+                                placeholder={t("note")}
                               />
                             </div>
                           );
                         })}
 
                         <div>
-                          <label className="text-xs font-medium text-gray-500">Allgemeine Notiz</label>
+                          <label className="text-xs font-medium text-gray-500">{t("generalNote")}</label>
                           <textarea
                             data-testid={`note-general-${p.id}`}
                             defaultValue={notes[`${p.id}_general`]?.generalNote || ""}
                             onBlur={e => handleSaveNote(p.id, null, "", e.target.value)}
                             disabled={isReadOnly}
                             className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none h-20 disabled:bg-gray-50"
-                            placeholder="Allgemeine Beobachtungen..."
+                            placeholder={t("generalObservations")}
                           />
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="text-xs font-medium text-gray-500">Beitrag (1-5)</label>
+                            <label className="text-xs font-medium text-gray-500">{t("contribution")}</label>
                             <input
                               type="range"
                               min={1}
@@ -334,7 +336,7 @@ export default function BdpScoringPage() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-gray-500">Präsenz (1-5)</label>
+                            <label className="text-xs font-medium text-gray-500">{t("presence")}</label>
                             <input
                               type="range"
                               min={1}
@@ -351,7 +353,7 @@ export default function BdpScoringPage() {
                   </div>
                 ))}
                 {teamParticipants(team.id).length === 0 && (
-                  <p className="text-gray-400 text-sm">Keine Teilnehmer zugeordnet</p>
+                  <p className="text-gray-400 text-sm">{t("noParticipantsAssigned")}</p>
                 )}
               </div>
             </div>
