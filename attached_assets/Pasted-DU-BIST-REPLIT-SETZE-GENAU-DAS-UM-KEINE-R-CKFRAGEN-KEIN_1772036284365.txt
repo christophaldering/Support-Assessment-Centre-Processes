@@ -1,0 +1,162 @@
+DU BIST REPLIT. SETZE GENAU DAS UM. KEINE RÜCKFRAGEN. KEIN REFACTORING.
+ZIEL: Ersetze die bestehende Bottom-Navigation im ARAG BDP Tool durch eine minimalistische, executive Outline-Variante (Option A).
+
+KONTEXT:
+- Next.js 14 App Router
+- Datei: app/arag-bdp/layout.tsx
+- Styling: TailwindCSS
+- Branding ARAG: Schwarz / Gold (#FFD700)
+- Tool ist mobil-first
+
+DESIGN-ZIEL:
+Executive Decision Instrument.
+Ruhig. Hochwertig. Kein App-Charakter. Keine bunten Icons. Kein Background-Badge.
+
+---
+
+====================================
+1️⃣ ICON SYSTEM UMSTELLEN
+====================================
+
+ERSETZE ALLE BOTTOM-NAV ICONS durch:
+
+- Lucide Outline Icons (stroke only)
+- stroke-width: 1.75
+- size: 22px
+- Keine filled icons
+- Kein Kreis / keine Hintergrundfläche
+
+TAB MAPPING:
+
+Home → LayoutGrid
+Sessions → Calendar
+Bewertung → Scale
+Auswertung → BarChart3
+
+IMPORT:
+Nutze lucide-react (falls nicht installiert → installieren)
+
+---
+
+====================================
+2️⃣ VISUAL STYLE
+====================================
+
+INAKTIV:
+- Icon color: text-black/70
+- Label: text-[11px] uppercase tracking-wide
+- opacity 70%
+- keine Hintergrundfläche
+- keine Border
+
+AKTIV:
+- Icon color: #FFD700
+- Label color: #FFD700
+- Underline Indicator:
+    - 2px height
+    - width: 24px
+    - background: #FFD700
+    - margin-top: 4px
+    - rounded-full
+- transition: all 150ms ease-in-out
+
+KEIN:
+- kein Hintergrund-Kreis
+- kein Button-Effekt
+- keine Schatten
+- keine Hover-Farbe außer leichte opacity 100%
+
+---
+
+====================================
+3️⃣ LAYOUT
+====================================
+
+Bottom Nav Container:
+
+- fixed bottom-0
+- w-full
+- bg-[#FFFBF0]
+- border-t border-black/10
+- flex justify-around items-center
+- h-[70px]
+- z-50
+
+Nav Item:
+
+- flex flex-col items-center justify-center
+- gap-1
+- cursor-pointer
+- min-w-[60px]
+
+Spacing bewusst großzügig.
+
+---
+
+====================================
+4️⃣ MICRO-INTERACTION
+====================================
+
+Beim Wechsel:
+- Icon scale 1 → 1.05 (active)
+- duration-150
+- ease-in-out
+
+Keine Bounce-Animation.
+Keine Spring.
+Nur ruhige Bewegung.
+
+---
+
+====================================
+5️⃣ ACCESSIBILITY
+====================================
+
+- aria-current="page" für aktiven Tab
+- role="navigation"
+- data-testid:
+    - bdp-tab-home
+    - bdp-tab-sessions
+    - bdp-tab-bewertung
+    - bdp-tab-auswertung
+
+---
+
+====================================
+6️⃣ MOBILE / TABLET OPTIMIERUNG
+====================================
+
+Wenn screen >= md:
+- max-w-[480px]
+- mx-auto
+- bottom-nav zentriert wie App-Container
+
+Nicht full-width bei Desktop.
+Wirkt sonst billig.
+
+---
+
+====================================
+7️⃣ QUALITÄTSSICHERUNG
+====================================
+
+Nach Implementierung prüfen:
+
+- Keine console errors
+- Keine hydration warnings
+- Aktiver Tab wird korrekt erkannt (usePathname())
+- Kein Layout Shift beim Wechsel
+- Auswertung bleibt disabled wenn gesperrt
+
+Wenn Fehler auftreten:
+Reparieren.
+Nicht zurückbauen.
+Nicht vereinfachen.
+
+---
+
+ZIELBILD:
+Die Navigation soll wirken wie ein hochwertiges internes Vorstandstool.
+Kein Startup-UI.
+Kein Consumer-App-Stil.
+Executive Minimal.

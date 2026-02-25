@@ -3,6 +3,7 @@
 import { useState, useEffect, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { LayoutGrid, Calendar, Scale, BarChart3 } from "lucide-react";
 import { BdpContext, BdpUser } from "./bdp-context";
 
 const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login", "/anmeldung"];
@@ -87,10 +88,10 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
   if (!user) return null;
 
   const tabs = [
-    { href: "/arag-bdp", label: "Home", testId: "bdp-tab-home", icon: "🏠", disabled: false },
-    { href: "/arag-bdp/sessions", label: "Sessions", testId: "bdp-tab-sessions", icon: "📋", disabled: false },
-    { href: "/arag-bdp/bewertung", label: "Bewertung", testId: "bdp-tab-bewertung", icon: "⭐", disabled: false },
-    { href: "/arag-bdp/auswertung", label: "Auswertung", testId: "bdp-tab-auswertung", icon: "📊", disabled: true },
+    { href: "/arag-bdp", label: "Home", testId: "bdp-tab-home", Icon: LayoutGrid, disabled: false },
+    { href: "/arag-bdp/sessions", label: "Sessions", testId: "bdp-tab-sessions", Icon: Calendar, disabled: false },
+    { href: "/arag-bdp/bewertung", label: "Bewertung", testId: "bdp-tab-bewertung", Icon: Scale, disabled: false },
+    { href: "/arag-bdp/auswertung", label: "Auswertung", testId: "bdp-tab-auswertung", Icon: BarChart3, disabled: true },
   ];
 
   const viewModeClass = user.viewMode === "desktop" ? "max-w-6xl" : user.viewMode === "tablet" ? "max-w-2xl" : "max-w-md";
@@ -141,31 +142,49 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
           Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
         </footer>
 
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40" data-testid="bottom-nav">
-          <div className={`${viewModeClass} mx-auto flex justify-around py-2`}>
+        <nav className="fixed bottom-0 left-0 right-0 bg-[#FFFBF0] border-t border-black/10 z-50" role="navigation" data-testid="bottom-nav">
+          <div className="max-w-[480px] mx-auto flex justify-around items-center h-[70px]">
             {tabs.map(tab => {
               const active = pathname === tab.href || (tab.href !== "/arag-bdp" && pathname.startsWith(tab.href));
+
               if (tab.disabled) {
                 return (
                   <span
                     key={tab.href}
                     data-testid={tab.testId}
-                    className="flex flex-col items-center text-xs px-3 py-1 rounded-lg text-gray-300 cursor-not-allowed"
+                    className="flex flex-col items-center justify-center gap-1 min-w-[60px] cursor-not-allowed opacity-30"
                   >
-                    <span className="text-lg">{tab.icon}</span>
-                    <span>{tab.label}</span>
+                    <tab.Icon size={22} strokeWidth={1.75} />
+                    <span className="text-[11px] uppercase tracking-wide">
+                      {tab.label}
+                    </span>
                   </span>
                 );
               }
+
               return (
                 <Link
                   key={tab.href}
                   href={tab.href}
                   data-testid={tab.testId}
-                  className={`flex flex-col items-center text-xs px-3 py-1 rounded-lg transition-colors ${active ? "text-[#FFD700] font-bold" : "text-gray-500 hover:text-black"}`}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex flex-col items-center justify-center gap-1 min-w-[60px] transition-all duration-150 ease-in-out ${
+                    active
+                      ? "text-[#FFD700]"
+                      : "text-black/70 hover:opacity-100 opacity-70"
+                  }`}
                 >
-                  <span className="text-lg">{tab.icon}</span>
-                  <span>{tab.label}</span>
+                  <tab.Icon
+                    size={22}
+                    strokeWidth={1.75}
+                    className={`transition-transform duration-150 ease-in-out ${active ? "scale-105" : "scale-100"}`}
+                  />
+                  <span className="text-[11px] uppercase tracking-wide">
+                    {tab.label}
+                  </span>
+                  {active && (
+                    <div className="w-6 h-0.5 bg-[#FFD700] rounded-full mt-0.5" />
+                  )}
                 </Link>
               );
             })}

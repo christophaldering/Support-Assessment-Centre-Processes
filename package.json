@@ -46,6 +46,7 @@
     "eslint-config-next": "^14.2.21",
     "eslint-config-prettier": "^9.1.0",
     "google-auth-library": "^10.5.0",
+    "lucide-react": "^0.575.0",
     "mammoth": "^1.11.0",
     "next": "^14.2.21",
     "officeparser": "^6.0.4",
