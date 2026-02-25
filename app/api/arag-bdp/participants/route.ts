@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getBdpSession } from "@/lib/bdp-auth";
+import { z } from "zod";
 
 const prisma = new PrismaClient();
+
+const createSchema = z.object({
+  code: z.string().min(1, "Code erforderlich"),
+  displayName: z.string().optional(),
+  environment: z.string().optional().default("live"),
+  teamId: z.string().uuid().optional(),
+});
+
+const updateSchema = z.object({
+  id: z.string().uuid(),
+  code: z.string().min(1).optional(),
+  displayName: z.string().optional(),
+  teamId: z.string().uuid().optional().nullable(),
+});
 
 export async function GET() {
   const session = getBdpSession();
@@ -20,24 +35,36 @@ export async function POST(req: NextRequest) {
   if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
 
   const body = await req.json();
-  const participant = await prisma.bdpParticipant.create({
-    data: { code: body.code, displayName: body.displayName, environment: body.environment || "live" },
-  });
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
 
-  if (body.teamId) {
-    await prisma.bdpTeamParticipant.create({
-      data: { teamId: body.teamId, participantId: participant.id },
+  try {
+    const participant = await prisma.bdpParticipant.create({
+      data: { code: parsed.data.code, displayName: parsed.data.displayName, environment: parsed.data.environment },
     });
-  }
 
-  return NextResponse.json(participant);
+    if (parsed.data.teamId) {
+      await prisma.bdpTeamParticipant.create({
+        data: { teamId: parsed.data.teamId, participantId: participant.id },
+      });
+    }
+
+    return NextResponse.json(participant);
+  } catch (e: any) {
+    if (e.code === "P2002") return NextResponse.json({ error: "Teilnehmer-Code existiert bereits" }, { status: 409 });
+    throw e;
+  }
 }
 
 export async function PUT(req: NextRequest) {
   const session = getBdpSession();
   if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
 
-  const { id, teamId, ...data } = await req.json();
+  const body = await req.json();
+  const parsed = updateSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
+
+  const { id, teamId, ...data } = parsed.data;
   const updated = await prisma.bdpParticipant.update({ where: { id }, data });
 
   if (teamId !== undefined) {

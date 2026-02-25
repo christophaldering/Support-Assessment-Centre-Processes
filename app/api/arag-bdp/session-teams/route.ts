@@ -5,17 +5,24 @@ import { z } from "zod";
 
 const prisma = new PrismaClient();
 
-const createSchema = z.object({
-  entityType: z.enum(["observer", "participant", "team"]),
-  entityId: z.string().min(1),
-  realName: z.string().min(1, "Realname erforderlich"),
+const assignSchema = z.object({
+  sessionId: z.string().uuid(),
+  teamId: z.string().uuid(),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = getBdpSession();
-  if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
 
-  const mappings = await prisma.bdpNameMapping.findMany();
+  const { searchParams } = new URL(req.url);
+  const sessionId = searchParams.get("sessionId");
+
+  const where = sessionId ? { sessionId } : {};
+  const mappings = await prisma.bdpSessionTeam.findMany({
+    where,
+    include: { session: true, team: true },
+    orderBy: { team: { code: "asc" } },
+  });
   return NextResponse.json(mappings);
 }
 
@@ -24,16 +31,19 @@ export async function POST(req: NextRequest) {
   if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
 
   const body = await req.json();
-  const parsed = createSchema.safeParse(body);
+  const parsed = assignSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
 
-  const mapping = await prisma.bdpNameMapping.upsert({
-    where: { entityType_entityId: { entityType: parsed.data.entityType, entityId: parsed.data.entityId } },
-    update: { realName: parsed.data.realName },
-    create: parsed.data,
-  });
-
-  return NextResponse.json(mapping);
+  try {
+    const mapping = await prisma.bdpSessionTeam.create({
+      data: { sessionId: parsed.data.sessionId, teamId: parsed.data.teamId },
+      include: { session: true, team: true },
+    });
+    return NextResponse.json(mapping);
+  } catch (e: any) {
+    if (e.code === "P2002") return NextResponse.json({ error: "Team bereits dieser Session zugeordnet" }, { status: 409 });
+    throw e;
+  }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -44,6 +54,6 @@ export async function DELETE(req: NextRequest) {
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "ID erforderlich" }, { status: 400 });
 
-  await prisma.bdpNameMapping.delete({ where: { id } });
+  await prisma.bdpSessionTeam.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getBdpSession } from "@/lib/bdp-auth";
+import { z } from "zod";
 
 const prisma = new PrismaClient();
+
+const createSchema = z.object({
+  code: z.string().min(1, "Code erforderlich"),
+  role: z.enum(["BOARD", "MANAGEMENT_DIAGNOSTICS", "EXPERT"]),
+  displayName: z.string().optional(),
+  isAdmin: z.boolean().optional().default(false),
+  environment: z.string().optional().default("live"),
+});
 
 export async function GET() {
   const session = getBdpSession();
@@ -21,17 +30,24 @@ export async function POST(req: NextRequest) {
   if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
 
   const body = await req.json();
-  const user = await prisma.bdpUser.create({
-    data: { code: body.code, role: body.role, displayName: body.displayName, isAdmin: body.isAdmin || false, environment: body.environment || "live" },
-  });
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
 
-  if (body.sessionId && body.canScoreTeamIds) {
-    await prisma.bdpObserverAssignment.create({
-      data: { sessionId: body.sessionId, userId: user.id, canScoreTeamIds: body.canScoreTeamIds },
+  try {
+    const user = await prisma.bdpUser.create({
+      data: {
+        code: parsed.data.code,
+        role: parsed.data.role,
+        displayName: parsed.data.displayName,
+        isAdmin: parsed.data.isAdmin,
+        environment: parsed.data.environment,
+      },
     });
+    return NextResponse.json(user);
+  } catch (e: any) {
+    if (e.code === "P2002") return NextResponse.json({ error: "Beobachter-Code existiert bereits" }, { status: 409 });
+    throw e;
   }
-
-  return NextResponse.json(user);
 }
 
 export async function PUT(req: NextRequest) {
@@ -39,17 +55,10 @@ export async function PUT(req: NextRequest) {
   if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
 
   const body = await req.json();
-  const { id, sessionId, canScoreTeamIds, ...data } = body;
+  const { id, ...data } = body;
+  if (!id) return NextResponse.json({ error: "ID erforderlich" }, { status: 400 });
+
   const updated = await prisma.bdpUser.update({ where: { id }, data });
-
-  if (sessionId && canScoreTeamIds) {
-    await prisma.bdpObserverAssignment.upsert({
-      where: { sessionId_userId: { sessionId, userId: id } },
-      update: { canScoreTeamIds },
-      create: { sessionId, userId: id, canScoreTeamIds },
-    });
-  }
-
   return NextResponse.json(updated);
 }
 

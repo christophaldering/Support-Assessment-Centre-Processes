@@ -5,27 +5,26 @@ import { z } from "zod";
 
 const prisma = new PrismaClient();
 
-const createSchema = z.object({
-  code: z.string().min(1, "Code erforderlich"),
-  displayName: z.string().optional(),
-  environment: z.string().optional().default("live"),
+const assignSchema = z.object({
+  sessionId: z.string().uuid(),
+  userId: z.string().uuid(),
+  canScoreTeamIds: z.array(z.string().uuid()).optional().default([]),
 });
 
-const updateSchema = z.object({
-  id: z.string().uuid(),
-  code: z.string().min(1).optional(),
-  displayName: z.string().optional(),
-});
-
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = getBdpSession();
   if (!session) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
 
-  const teams = await prisma.bdpTeam.findMany({
-    include: { teamParticipants: { include: { participant: true } } },
-    orderBy: { code: "asc" },
+  const { searchParams } = new URL(req.url);
+  const sessionId = searchParams.get("sessionId");
+
+  const where = sessionId ? { sessionId } : {};
+  const assignments = await prisma.bdpObserverAssignment.findMany({
+    where,
+    include: { session: true, user: true },
+    orderBy: { user: { code: "asc" } },
   });
-  return NextResponse.json(teams);
+  return NextResponse.json(assignments);
 }
 
 export async function POST(req: NextRequest) {
@@ -33,14 +32,21 @@ export async function POST(req: NextRequest) {
   if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
 
   const body = await req.json();
-  const parsed = createSchema.safeParse(body);
+  const parsed = assignSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
 
   try {
-    const team = await prisma.bdpTeam.create({ data: parsed.data });
-    return NextResponse.json(team);
+    const assignment = await prisma.bdpObserverAssignment.create({
+      data: {
+        sessionId: parsed.data.sessionId,
+        userId: parsed.data.userId,
+        canScoreTeamIds: parsed.data.canScoreTeamIds,
+      },
+      include: { session: true, user: true },
+    });
+    return NextResponse.json(assignment);
   } catch (e: any) {
-    if (e.code === "P2002") return NextResponse.json({ error: "Team-Code existiert bereits" }, { status: 409 });
+    if (e.code === "P2002") return NextResponse.json({ error: "Beobachter bereits dieser Session zugeordnet" }, { status: 409 });
     throw e;
   }
 }
@@ -50,11 +56,14 @@ export async function PUT(req: NextRequest) {
   if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
 
   const body = await req.json();
-  const parsed = updateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
+  const { id, canScoreTeamIds } = body;
+  if (!id) return NextResponse.json({ error: "ID erforderlich" }, { status: 400 });
 
-  const { id, ...data } = parsed.data;
-  const updated = await prisma.bdpTeam.update({ where: { id }, data });
+  const updated = await prisma.bdpObserverAssignment.update({
+    where: { id },
+    data: { canScoreTeamIds: canScoreTeamIds || [] },
+    include: { session: true, user: true },
+  });
   return NextResponse.json(updated);
 }
 
@@ -66,6 +75,6 @@ export async function DELETE(req: NextRequest) {
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "ID erforderlich" }, { status: 400 });
 
-  await prisma.bdpTeam.delete({ where: { id } });
+  await prisma.bdpObserverAssignment.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }
