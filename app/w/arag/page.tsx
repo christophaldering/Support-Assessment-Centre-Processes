@@ -7,7 +7,6 @@ import StandardLanding from "@/app/components/arag/StandardLanding";
 import PasswordInput from "@/app/components/PasswordInput";
 
 const AppleLanding = dynamic(() => import("@/app/components/arag/AppleLanding"), { ssr: false });
-const BauernmalereiLanding = dynamic(() => import("@/app/components/arag/BauernmalereiLanding"), { ssr: false });
 
 type DemoRole = {
   code: string;
@@ -21,7 +20,7 @@ const DEMO_ROLES: DemoRole[] = [
   { code: "D-V1", label: "Beobachter", personaName: "Marie Curie", description: "Bewertung der Teams und individuelle Teilnehmer-Notizen" },
 ];
 
-type ViewMode = "standard" | "apple" | "bauernmalerei";
+type ViewMode = "standard" | "apple";
 
 export default function AragLobbyPage() {
   const router = useRouter();
@@ -41,7 +40,7 @@ export default function AragLobbyPage() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("arag_landing_view");
-      if (saved === "apple" || saved === "standard" || saved === "bauernmalerei") setViewMode(saved);
+      if (saved === "apple" || saved === "standard") setViewMode(saved);
     } catch {}
   }, []);
 
@@ -131,7 +130,7 @@ export default function AragLobbyPage() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col ${viewMode === "apple" ? "bg-black" : viewMode === "bauernmalerei" ? "bg-[#F5E6C8]" : "bg-[#FFFBF0]"}`}>
+    <div className={`min-h-screen flex flex-col ${viewMode === "apple" ? "bg-black" : "bg-[#FFFBF0]"}`}>
       <header className="bg-black text-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -164,15 +163,6 @@ export default function AragLobbyPage() {
                   >
                     Apple
                   </button>
-                  <button
-                    onClick={() => toggleView("bauernmalerei")}
-                    className={`text-[10px] font-medium px-3 py-1 rounded-full transition-all ${
-                      viewMode === "bauernmalerei" ? "bg-white text-black" : "text-white/50 hover:text-white"
-                    }`}
-                    data-testid="toggle-bauernmalerei"
-                  >
-                    Bauern
-                  </button>
                 </div>
               </div>
             )}
@@ -196,19 +186,16 @@ export default function AragLobbyPage() {
           {viewMode === "apple" && (
             <AppleLanding onSelectEnv={handleEnvSelect} envLockedNote={envLockedNote} />
           )}
-          {viewMode === "bauernmalerei" && (
-            <BauernmalereiLanding onSelectEnv={handleEnvSelect} envLockedNote={envLockedNote} />
-          )}
         </div>
       ) : (
-        <main className={`flex-1 flex items-start justify-center px-4 py-12 ${viewMode === "apple" ? "bg-black" : viewMode === "bauernmalerei" ? "bg-[#F5E6C8]" : ""}`}>
+        <main className={`flex-1 flex items-start justify-center px-4 py-12 ${viewMode === "apple" ? "bg-black" : ""}`}>
           <div className="w-full max-w-md space-y-6">
-            <div className={`rounded-2xl shadow-lg p-8 ${viewMode === "apple" ? "bg-[#111] border border-white/10" : viewMode === "bauernmalerei" ? "bg-[#FDF6E3] border-2 border-[#7A4B2A]" : "bg-white"}`}>
+            <div className={`rounded-2xl shadow-lg p-8 ${viewMode === "apple" ? "bg-[#111] border border-white/10" : "bg-white"}`}>
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2
                     className={`text-xl font-bold ${viewMode === "apple" ? "text-white" : "text-black"}`}
-                    style={{ fontFamily: viewMode === "bauernmalerei" ? "'Segoe Script', 'Comic Sans MS', 'Caveat', cursive" : viewMode === "apple" ? "inherit" : "Georgia, 'Playfair Display', serif" }}
+                    style={{ fontFamily: viewMode === "apple" ? "inherit" : "Georgia, 'Playfair Display', serif" }}
                   >
                     Perspektive wählen
                   </h2>
