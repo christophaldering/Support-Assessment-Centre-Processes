@@ -243,14 +243,14 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
       {/* ═══════════════════════════════════════════════
           MOBILE SHELL (below lg: breakpoint)
           ═══════════════════════════════════════════════ */}
-      <div className="lg:hidden min-h-screen bg-[#FFFBF0] text-black flex flex-col">
+      <div className="lg:hidden fixed inset-0 bg-[#FFFBF0] text-black flex flex-col" style={{ height: "100dvh", overflow: "hidden" }}>
         {user.environment === "demo" && (
-          <div data-testid="demo-banner" className="bg-[#FFD700] text-black text-center py-1 text-sm font-bold tracking-wider">
+          <div data-testid="demo-banner" className="bg-[#FFD700] text-black text-center py-1 text-sm font-bold tracking-wider shrink-0">
             DEMO-UMGEBUNG
           </div>
         )}
 
-        <header className="bg-black text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+        <header className="bg-black text-white px-4 py-3 flex items-center justify-between shrink-0 z-50">
           <div className="flex items-center gap-3">
             <span className="font-bold text-lg">ARAG BDP</span>
             <span className="text-[#FFD700] text-sm font-mono">{user.code}</span>
@@ -279,15 +279,11 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
           </div>
         )}
 
-        <main className="flex-1 max-w-md mx-auto w-full px-4 py-4 pb-24">
+        <main className="flex-1 overflow-y-auto overscroll-none max-w-md mx-auto w-full px-4 py-4" style={{ WebkitOverflowScrolling: "touch" }}>
           {children}
         </main>
 
-        <footer className="text-center py-2 text-xs text-gray-400 border-t border-gray-100 bg-white">
-          Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
-        </footer>
-
-        <nav className="fixed bottom-0 left-0 right-0 bg-[#FFFBF0] border-t border-black/10 z-50" role="navigation" data-testid="bottom-nav">
+        <nav className="shrink-0 bg-[#FFFBF0] border-t border-black/10 z-50" role="navigation" data-testid="bottom-nav">
           <div className="max-w-[480px] mx-auto flex justify-around items-center h-[70px]">
             {mobileTabs.map(tab => {
               const active = pathname === tab.href || (tab.href !== "/arag-bdp" && pathname.startsWith(tab.href));

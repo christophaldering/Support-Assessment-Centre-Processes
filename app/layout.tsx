@@ -17,11 +17,18 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de" suppressHydrationWarning>
       <head suppressHydrationWarning />
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning className="overscroll-none">{children}</body>
     </html>
   );
 }

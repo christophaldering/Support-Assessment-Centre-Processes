@@ -25,6 +25,11 @@
     --ae-gletscher: #3EC0CA;
   }
 
+  html, body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
   body {
     @apply bg-white text-slate-900 antialiased;
     font-family: "Inter", system-ui, sans-serif;
