@@ -35,13 +35,34 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
 
   const fetchUser = async () => {
     try {
-      const res = await fetch("/api/arag-bdp/auth/session");
-      const data = await res.json();
-      if (data.authenticated) {
-        setUser(data.user);
-      } else {
-        setUser(null);
+      const bdpRes = await fetch("/api/arag-bdp/auth/session");
+      const bdpData = await bdpRes.json();
+      if (bdpData.authenticated) {
+        setUser(bdpData.user);
+        setLoading(false);
+        return;
       }
+
+      const meRes = await fetch("/api/auth/me");
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        const isArag = meData.workspaceSlug === "arag";
+        if (isArag) {
+          setUser({
+            id: meData.id,
+            code: meData.name || meData.email.split("@")[0],
+            role: meData.roles?.[0] || "USER",
+            isAdmin: meData.roles?.includes("ADMIN") || meData.roles?.includes("WORKSPACE_ADMIN") || false,
+            environment: "demo",
+            viewMode: "mobile",
+            uiPreset: "whatsapp_spiegel",
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      setUser(null);
     } catch {
       setUser(null);
     } finally {
@@ -59,6 +80,7 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
 
   const handleLogout = async () => {
     await fetch("/api/arag-bdp/auth/session", { method: "DELETE" });
+    await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
     router.push("/anmeldung");
   };
