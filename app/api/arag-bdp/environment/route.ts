@@ -10,7 +10,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const session = getBdpSession();
-  if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
 
   const body = await req.json();
   const env = body.environment;

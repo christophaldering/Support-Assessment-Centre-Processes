@@ -87,8 +87,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ environment: env }),
     });
-    await fetchUser();
-    router.refresh();
+    window.location.reload();
   };
 
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
