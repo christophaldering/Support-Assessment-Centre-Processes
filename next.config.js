@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: "standalone",
-  webpack: (config, { isServer }) => {
+  ...(process.env.NODE_ENV === "production" ? { output: "standalone" } : {}),
+  webpack: (config, { isServer, dev }) => {
     if (isServer) {
       config.externals = config.externals || [];
       config.externals.push("pdfkit");
