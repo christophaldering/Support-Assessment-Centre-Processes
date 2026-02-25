@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useBdp } from "../layout";
+import { useBdp } from "../bdp-context";
 
 export default function BdpBewertungPage() {
   const { user } = useBdp();

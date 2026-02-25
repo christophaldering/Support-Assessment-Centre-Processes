@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useBdp } from "./layout";
+import { useBdp } from "./bdp-context";
 import Link from "next/link";
 
 export default function BdpHomePage() {
@@ -9,7 +9,10 @@ export default function BdpHomePage() {
   const [sessions, setSessions] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("/api/arag-bdp/sessions").then(r => r.json()).then(setSessions).catch(() => {});
+    fetch("/api/arag-bdp/sessions")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setSessions(data); })
+      .catch(() => {});
   }, []);
 
   const stateLabel: Record<string, string> = { DRAFT: "Entwurf", OPEN: "Offen", CLOSED: "Geschlossen", RELEASED: "Freigegeben" };

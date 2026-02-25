@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useBdp } from "../../layout";
+import { useBdp } from "../../bdp-context";
 
 export default function BdpScoringPage() {
   const params = useParams();

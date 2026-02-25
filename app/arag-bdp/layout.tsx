@@ -1,28 +1,9 @@
 "use client";
 
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-
-interface BdpUser {
-  id: string;
-  code: string;
-  role: string;
-  isAdmin: boolean;
-  environment: string;
-  photoUrl?: string;
-  viewMode: string;
-  uiPreset: string;
-}
-
-interface BdpContextType {
-  user: BdpUser | null;
-  loading: boolean;
-  refetchUser: () => void;
-}
-
-const BdpContext = createContext<BdpContextType>({ user: null, loading: true, refetchUser: () => {} });
-export const useBdp = () => useContext(BdpContext);
+import { BdpContext, BdpUser } from "./bdp-context";
 
 const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login", "/anmeldung"];
 

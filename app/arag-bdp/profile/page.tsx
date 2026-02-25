@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useBdp } from "../layout";
+import { useBdp } from "../bdp-context";
 
 export default function BdpProfilePage() {
   const { user, refetchUser } = useBdp();

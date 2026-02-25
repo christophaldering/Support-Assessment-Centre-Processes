@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useBdp } from "../../layout";
+import { useBdp } from "../../bdp-context";
 import { useRouter } from "next/navigation";
 
 interface QACheck {
