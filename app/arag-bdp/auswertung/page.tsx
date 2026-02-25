@@ -45,7 +45,7 @@ export default function BdpAuswertungPage() {
           <p className="text-gray-500" data-testid="text-no-results">
             {isDemoEnv
               ? "Noch keine abgeschlossenen Sessions vorhanden."
-              : "Noch keine Ergebnisse verfügbar. Ergebnisse werden sichtbar, sobald eine Session abgeschlossen ist."}
+              : "Die Auswertung wird sichtbar, sobald die Bewertung abgeschlossen ist."}
           </p>
         </div>
       ) : (

@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (sessions.length === 0) {
-    return NextResponse.json({ error: "Keine freigegebenen Sessions für den Export vorhanden" }, { status: 403 });
+    return NextResponse.json({ error: "Keine abgeschlossenen Sessions für den Export vorhanden" }, { status: 403 });
   }
 
   const releasedIds = sessions.map(s => s.id);

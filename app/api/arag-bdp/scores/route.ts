@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   const isDemoEnv = bdpSession.environment === "demo";
   if (!isDemoEnv) {
     if (dbSession.state === "CLOSED") return NextResponse.json({ error: "Session geschlossen – Bewertung gesperrt" }, { status: 403 });
-    if (dbSession.state === "RELEASED") return NextResponse.json({ error: "Session freigegeben – Bewertung gesperrt" }, { status: 403 });
+    if (dbSession.state === "RELEASED") return NextResponse.json({ error: "Session abgeschlossen – Bewertung gesperrt" }, { status: 403 });
   }
 
   const assignment = await prisma.bdpObserverAssignment.findUnique({

@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!lockNotes && dbSession.state === "RELEASED") {
-      return NextResponse.json({ error: "Notizen sind gesperrt (Session freigegeben)" }, { status: 403 });
+      return NextResponse.json({ error: "Notizen sind gesperrt (Session abgeschlossen)" }, { status: 403 });
     }
   }
 

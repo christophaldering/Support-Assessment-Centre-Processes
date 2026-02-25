@@ -1,0 +1,175 @@
+DU BIST REPLIT.
+KEINE RÜCKFRAGEN.
+KEINE LEGACY-TEXTE.
+KEIN TECHNISCHER TON.
+ALLES VORSTANDSGERECHT UND KLAR.
+
+SPRINT L3 – MICROCOPY & BUTTON-SCHÄRFUNG
+
+ZIEL:
+Alle relevanten Texte im ARAG BDP Tool werden sprachlich präzisiert.
+Ton:
+- klar
+- souverän
+- nicht technisch
+- nicht verspielt
+- maximal verständlich
+
+========================================================
+A) BEOBACHTER – BEWERTUNGSANSICHT
+========================================================
+
+1) Button "Zwischenspeichern" ersetzen durch:
+
+→ "Bewertung speichern"
+
+Tooltip:
+"Sie können Ihre Bewertung jederzeit anpassen, solange die Bewertungsphase läuft."
+
+data-testid bleibt: bdp-save-draft
+
+--------------------------------------------------------
+
+2) Button "Bewertung verbindlich abgeben" ersetzen durch:
+
+→ "Bewertung abschließen"
+
+Tooltip:
+"Mit dem Abschluss bestätigen Sie Ihre Bewertung. Änderungen sind im Live-Modus danach nicht mehr möglich."
+
+data-testid bleibt: bdp-submit-final
+
+--------------------------------------------------------
+
+3) Nach Abschluss (Observer):
+
+Badge:
+→ "Bewertung abgeschlossen"
+
+Unterzeile (klein):
+"Vielen Dank. Ihre Bewertung wurde verbindlich erfasst."
+
+========================================================
+B) ADMIN – SESSION STATUS
+========================================================
+
+4) Statusanzeige ersetzen:
+
+Statt:
+"Bewertungsphase läuft"
+
+Text:
+→ "Bewertung läuft"
+
+Statt:
+"Bewertungsphase beendet"
+
+Text:
+→ "Bewertung abgeschlossen"
+
+--------------------------------------------------------
+
+5) Admin Button ersetzen:
+
+Statt:
+"Bewertungsphase beenden"
+
+Neu:
+→ "Bewertung für alle abschließen"
+
+Tooltip:
+"Nach dem Abschluss sind keine Änderungen mehr möglich. Die Auswertung wird freigegeben."
+
+data-testid: bdp-admin-close-phase (beibehalten)
+
+--------------------------------------------------------
+
+6) Bestätigungsdialog (wichtig!):
+
+Titel:
+"Bewertung jetzt abschließen?"
+
+Text:
+"Mit diesem Schritt wird die Bewertungsphase für alle Beteiligten beendet. Änderungen sind danach nicht mehr möglich."
+
+Buttons:
+- "Abbrechen"
+- "Jetzt abschließen"
+
+========================================================
+C) AUSWERTUNGSTAB
+========================================================
+
+Wenn gesperrt:
+
+Statt:
+"Auswertung nach Abschluss der Bewertungsphase verfügbar."
+
+Neu:
+→ "Die Auswertung wird sichtbar, sobald die Bewertung abgeschlossen ist."
+
+--------------------------------------------------------
+
+In LIVE nach Abschluss:
+
+Oben im Auswertungsbereich:
+
+→ "Die Bewertung ist abgeschlossen. Ergebnisse sind verbindlich."
+
+--------------------------------------------------------
+
+In DEMO:
+
+Oben im Auswertungsbereich:
+
+→ "DEMO-UMGEBUNG – Änderungen wirken sich sofort auf die Auswertung aus."
+
+========================================================
+D) LOBBY-TEXTE (BOARD EXPERIENCE)
+========================================================
+
+Ersetze ggf. erklärende Texte durch:
+
+Überschrift:
+"Business Development Pitch – Bewertungsumgebung"
+
+Kurzinfo-Block:
+
+• Pro Kriterium stehen 100 Punkte zur Verfügung.
+• Die Punkte müssen vollständig verteilt werden.
+• Die Bewertung kann gespeichert und später abgeschlossen werden.
+• Die Ergebnisse werden nach Abschluss freigegeben.
+
+Kein technischer Hinweis.
+Kein Wort wie "Workflow".
+Kein Wort wie "Release".
+
+========================================================
+E) VERBOTENE BEGRIFFE (SUCHEN & ENTFERNEN)
+========================================================
+
+Entwurf
+Freigegeben
+Released
+Draft
+Publish
+Workflow
+Release
+Submit
+
+Wenn gefunden → ersetzen gemäß obiger Logik.
+
+========================================================
+F) QA – MUSS BESTEHEN
+========================================================
+
+- Observer versteht sofort:
+  Speichern ≠ Abschließen
+- Admin versteht:
+  Abschließen = final
+- Kein Text wirkt technisch
+- Keine Doppelbedeutungen
+- Keine Console Errors
+- Keine Inkonsistenzen
+
+IMPLEMENTIERE JETZT.

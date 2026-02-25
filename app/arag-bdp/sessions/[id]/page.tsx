@@ -22,7 +22,7 @@ export default function BdpSessionDetailPage() {
       .catch(() => {});
   }, [params.id]);
 
-  const stateLabel: Record<string, string> = { DRAFT: "Entwurf", OPEN: "Offen", CLOSED: "Geschlossen", RELEASED: "Abgeschlossen" };
+  const stateLabel: Record<string, string> = { DRAFT: "In Vorbereitung", OPEN: "Bewertung läuft", CLOSED: "Bewertung abgeschlossen", RELEASED: "Abgeschlossen" };
   const stateColor: Record<string, string> = { DRAFT: "bg-gray-200 text-gray-700", OPEN: "bg-green-100 text-green-800", CLOSED: "bg-orange-100 text-orange-800", RELEASED: "bg-blue-100 text-blue-800" };
 
   if (!session) return <div className="text-center py-8 text-gray-400">Laden...</div>;

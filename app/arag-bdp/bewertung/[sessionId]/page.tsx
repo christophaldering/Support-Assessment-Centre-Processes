@@ -264,7 +264,7 @@ export default function BdpScoringPage() {
                   disabled={saving || !allValid}
                   className="w-full bg-[#FFD700] text-black font-bold py-4 rounded-2xl hover:bg-[#E6C200] transition-colors disabled:opacity-50"
                 >
-                  {saving ? "Speichern..." : "Bewertung abgeben"}
+                  {saving ? "Speichern..." : "Bewertung speichern"}
                 </button>
               </>
             );

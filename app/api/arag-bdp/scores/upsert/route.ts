@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   if (dbSession.state === "DRAFT") return NextResponse.json({ error: "Session noch nicht geöffnet" }, { status: 403 });
   if (dbSession.state === "CLOSED") return NextResponse.json({ error: "Session geschlossen – Bewertung gesperrt" }, { status: 403 });
-  if (dbSession.state === "RELEASED") return NextResponse.json({ error: "Session freigegeben – Bewertung gesperrt" }, { status: 403 });
+  if (dbSession.state === "RELEASED") return NextResponse.json({ error: "Session abgeschlossen – Bewertung gesperrt" }, { status: 403 });
 
   const criterion = await prisma.bdpCriterion.findUnique({ where: { id: criterionId } });
   if (!criterion || !criterion.active) return NextResponse.json({ error: "Ungültiges Kriterium" }, { status: 400 });

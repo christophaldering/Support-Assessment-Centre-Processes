@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   const isDemoEnv = bdpSession.environment === "demo";
 
   if (dbSession.state !== "RELEASED" && !bdpSession.isAdmin && !isDemoEnv) {
-    return NextResponse.json({ error: "Ergebnisse sind noch nicht freigegeben" }, { status: 403 });
+    return NextResponse.json({ error: "Die Auswertung wird sichtbar, sobald die Bewertung abgeschlossen ist" }, { status: 403 });
   }
 
   const scores = await prisma.bdpScore.findMany({

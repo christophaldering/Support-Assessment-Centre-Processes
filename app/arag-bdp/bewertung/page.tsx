@@ -18,7 +18,7 @@ export default function BdpBewertungPage() {
     s.observerAssignments?.some((oa: any) => oa.user.id === user?.id || oa.user.code === user?.code)
   );
 
-  const stateLabel: Record<string, string> = { OPEN: "Offen", CLOSED: "Geschlossen", RELEASED: "Abgeschlossen" };
+  const stateLabel: Record<string, string> = { OPEN: "Bewertung läuft", CLOSED: "Bewertung abgeschlossen", RELEASED: "Abgeschlossen" };
   const stateColor: Record<string, string> = { OPEN: "bg-green-100 text-green-800", CLOSED: "bg-orange-100 text-orange-800", RELEASED: "bg-blue-100 text-blue-800" };
 
   return (

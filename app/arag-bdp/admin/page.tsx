@@ -208,7 +208,7 @@ export default function BdpAdminPage() {
 
   if (!user?.isAdmin) return null;
 
-  const stateLabel: Record<string, string> = { DRAFT: "Entwurf", OPEN: "Offen", CLOSED: "Geschlossen", RELEASED: "Abgeschlossen" };
+  const stateLabel: Record<string, string> = { DRAFT: "In Vorbereitung", OPEN: "Bewertung läuft", CLOSED: "Bewertung abgeschlossen", RELEASED: "Abgeschlossen" };
   const nextState: Record<string, string[]> = { DRAFT: ["OPEN"], OPEN: ["CLOSED"], CLOSED: ["RELEASED", "OPEN"], RELEASED: [] };
 
   const tabs: { key: AdminTab; label: string }[] = [
