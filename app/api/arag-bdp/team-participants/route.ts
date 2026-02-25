@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const teamId = searchParams.get("teamId");
 
-  const where = teamId ? { teamId } : {};
+  const where: any = teamId ? { teamId } : { team: { environment: session.environment } };
   const mappings = await prisma.bdpTeamParticipant.findMany({
     where,
     include: { team: true, participant: true },

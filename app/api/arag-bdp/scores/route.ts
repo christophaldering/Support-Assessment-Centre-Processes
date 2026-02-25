@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const sessionId = searchParams.get("sessionId");
 
-  const where: any = { observerId: session.userId };
+  const where: any = { observerId: session.userId, environment: session.environment };
   if (sessionId) where.sessionId = sessionId;
 
   const scores = await prisma.bdpScore.findMany({

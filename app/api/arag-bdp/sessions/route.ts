@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 const createSchema = z.object({
   name: z.string().min(1, "Name erforderlich"),
-  environment: z.string().optional().default("live"),
+  environment: z.string().optional(),
 });
 
 const updateSchema = z.object({
@@ -22,6 +22,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
 
   const sessions = await prisma.bdpSession.findMany({
+    where: { environment: session.environment },
     include: {
       sessionTeams: { include: { team: true } },
       observerAssignments: { include: { user: true } },
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
 
   const created = await prisma.bdpSession.create({
-    data: { name: parsed.data.name, state: "DRAFT", environment: parsed.data.environment },
+    data: { name: parsed.data.name, state: "DRAFT", environment: parsed.data.environment || session.environment },
   });
   return NextResponse.json(created);
 }

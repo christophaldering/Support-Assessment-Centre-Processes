@@ -15,6 +15,8 @@ export interface BdpSession {
 let _platformCache: Map<string, BdpSession | null> = new Map();
 
 export function getBdpSession(): BdpSession | null {
+  const envOverride = getEnvironmentOverride();
+
   try {
     const cookie = cookies().get("bdp_session");
     if (cookie) {
@@ -24,6 +26,7 @@ export function getBdpSession(): BdpSession | null {
           ...parsed,
           authSource: "bdp_session",
           workspaceSlug: parsed.workspaceSlug || "arag",
+          environment: envOverride || parsed.environment || "live",
         } as BdpSession;
       }
     }
@@ -41,12 +44,23 @@ export function getBdpSession(): BdpSession | null {
       code: isAdmin ? "MD1" : "V1",
       role: isAdmin ? "MANAGEMENT_DIAGNOSTICS" : "BOARD",
       isAdmin,
-      environment: "live",
+      environment: envOverride || "live",
       authSource: "platform",
       workspaceSlug: platformSession.workspaceSlug || "arag",
     };
   } catch {}
 
+  return null;
+}
+
+function getEnvironmentOverride(): string | null {
+  try {
+    const cookie = cookies().get("bdp_environment");
+    if (cookie) {
+      const val = cookie.value;
+      if (val === "demo" || val === "live") return val;
+    }
+  } catch {}
   return null;
 }
 

@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 const createSchema = z.object({
   code: z.string().min(1, "Code erforderlich"),
   displayName: z.string().optional(),
-  environment: z.string().optional().default("live"),
+  environment: z.string().optional(),
   teamId: z.string().uuid().optional(),
 });
 
@@ -24,6 +24,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
 
   const participants = await prisma.bdpParticipant.findMany({
+    where: { environment: session.environment },
     include: { teamParticipants: { include: { team: true } } },
     orderBy: { code: "asc" },
   });
@@ -40,7 +41,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const participant = await prisma.bdpParticipant.create({
-      data: { code: parsed.data.code, displayName: parsed.data.displayName, environment: parsed.data.environment },
+      data: {
+        code: parsed.data.code,
+        displayName: parsed.data.displayName,
+        environment: parsed.data.environment || session.environment,
+      },
     });
 
     if (parsed.data.teamId) {

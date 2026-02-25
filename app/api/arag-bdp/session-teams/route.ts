@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const sessionId = searchParams.get("sessionId");
 
-  const where = sessionId ? { sessionId } : {};
+  const where: any = sessionId ? { sessionId } : { session: { environment: session.environment } };
   const mappings = await prisma.bdpSessionTeam.findMany({
     where,
     include: { session: true, team: true },

@@ -81,6 +81,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
     - Admin invitations page at `/arag-bdp/admin/invitations`: 3 tabs (Vorstände/Experte/Teilnehmer), TipTap rich text editor with templates and placeholders ({{CODE}}, {{WORKSPACE}}, {{LINK}}, {{SESSION}}, {{SENDER}}), email storage per recipient via BdpNameMapping, preview & copy mode (SendGrid send disabled for safety), session reference selector, QA checks at bottom
     - Desktop sidebar + mobile hamburger both include "Einladungen" link (admin-only)
     - `/anmeldung` supports `?workspace=arag` query param for pre-filling workspace field
+    - **Demo Environment (first-class)**: Strict LIVE/DEMO separation via `bdp_environment` cookie. All GET routes filter by `environment` scope. Admin-only LIVE/DEMO toggle in sidebar + hamburger menu (`data-testid="bdp-env-toggle"`). Demo seed creates 3 RELEASED sessions, 6 teams, 21 TN, 3 observers, full scores (sum=100), tie-break case, sponsor flags, individual notes. Reset via `/arag-bdp/admin/demo` page (`data-testid="bdp-demo-reset"`). LIVE data never touched during reset. API: `/api/arag-bdp/environment` (GET/POST), `/api/arag-bdp/admin/demo-reset` (POST).
 
 ## External Dependencies
 

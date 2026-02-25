@@ -7,6 +7,9 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
+    const envCookie = cookies().get("bdp_environment");
+    const envOverride = envCookie && (envCookie.value === "demo" || envCookie.value === "live") ? envCookie.value : null;
+
     const cookie = cookies().get("bdp_session");
     if (cookie) {
       const session = JSON.parse(cookie.value);
@@ -19,7 +22,7 @@ export async function GET() {
             code: user.code,
             role: user.role,
             isAdmin: user.isAdmin,
-            environment: user.environment,
+            environment: envOverride || user.environment,
             photoUrl: user.photoUrl,
             viewMode: user.viewMode,
             uiPreset: user.uiPreset,
@@ -37,7 +40,7 @@ export async function GET() {
           code: bdpAuth.code,
           role: bdpAuth.role,
           isAdmin: bdpAuth.isAdmin,
-          environment: bdpAuth.environment,
+          environment: envOverride || bdpAuth.environment,
           viewMode: "mobile",
           uiPreset: "whatsapp_spiegel",
         },

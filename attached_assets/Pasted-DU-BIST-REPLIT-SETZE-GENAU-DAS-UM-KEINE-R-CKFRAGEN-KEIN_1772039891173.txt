@@ -1,0 +1,50 @@
+DU BIST REPLIT. SETZE GENAU DAS UM. KEINE RÜCKFRAGEN. KEIN REFACTORING.
+ZIEL: Baue im ARAG BDP Tool einen separaten DEMO-Raum (“environment=demo”), der komplett vorkonfiguriert ist und im Menü erreichbar ist. DEMO ist strikt getrennt von LIVE.
+
+IST-STAND:
+- BDP hat concept “environment” (Demo-Banner erscheint wenn environment==="demo")
+- Es existiert ein Demo-BDP-User (BOARD, Admin, Umgebung: demo) laut Systemstand.
+- DB enthält BDP Tabellen (BdpSession, BdpTeam, BdpParticipant, BdpCriterion, Scores, etc.)
+
+MUSS: 1) DEMO UMGEBUNG ALS FIRST-CLASS FILTER
+1) Jede BDP DB Query muss einen environment-scope anwenden:
+   - default: environment="live"
+   - demo-room: environment="demo"
+   - Niemals mischen. Keine Demo-Daten in Live-Listen.
+2) Implementiere in BdpConfig eine globale Einstellung:
+   - defaultEnvironmentForUser (optional) oder
+   - environmentSelectorEnabled=true
+
+MUSS: 2) MENÜ: UMGEBUNG UMSCHALTEN
+3) Füge in der Desktop Admin Shell UND im Hamburger Menü einen Punkt hinzu:
+   - “Raum: LIVE / DEMO”
+   - Toggle Switch oder Dropdown
+   - Speichere Auswahl pro User (Cookie oder DB Feld)
+   - data-testid="bdp-env-toggle"
+4) Bei Wechsel auf DEMO:
+   - setze environment="demo" im BDP Context
+   - zeige Demo-Banner (“DEMO-UMGEBUNG”) immer
+   - alle Screens (sessions/bewertung/admin/auswertung) laden Daten scoped to demo
+
+MUSS: 3) DEMO DATASET (VOLL)
+5) Seed / Generator für DEMO:
+   - 3 Sessions (state: RELEASED), 6 Teams, 21 TN
+   - alle Zuordnungen (SessionTeams, TeamParticipants, ObserverAssignments) vollständig
+   - Kriterien vorhanden
+   - Scores vorhanden: pro Observer (V1/MD1/E1) pro Session pro Kriterium Sum=100
+   - SponsorFlags gesetzt
+   - mindestens 1 Tie-break Fall (exakt gleiche Totalpunkte) + TieBreak Entscheidung gesetzt
+   - Individual Notes für 3 TN exemplarisch gesetzt
+6) Implementiere “Reset Demo” Button (Admin-only):
+   - Route: /arag-bdp/admin/demo
+   - Button: “DEMO zurücksetzen”
+   - löscht demo-scoped BDP Daten und seedet neu (idempotent)
+   - data-testid="bdp-demo-reset"
+7) WICHTIG: LIVE Daten dürfen bei Reset niemals verändert werden.
+
+QA:
+8) /arag-bdp/admin/qa:
+   - PASS: env switch changes dataset
+   - PASS: demo reset only affects demo
+   - PASS: demo has released sessions + results visible
+LIEFERN: DEMO Raum vollständig + Umschalter + Reset.

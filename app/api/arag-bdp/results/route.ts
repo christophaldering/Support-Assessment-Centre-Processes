@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   }
 
   const scores = await prisma.bdpScore.findMany({
-    where: { sessionId },
+    where: { sessionId, environment: bdpSession.environment },
     include: { criterion: true, team: true, observer: true },
   });
 

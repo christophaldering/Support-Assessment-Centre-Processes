@@ -10,7 +10,7 @@ const createSchema = z.object({
   role: z.enum(["BOARD", "MANAGEMENT_DIAGNOSTICS", "EXPERT"]),
   displayName: z.string().optional(),
   isAdmin: z.boolean().optional().default(false),
-  environment: z.string().optional().default("live"),
+  environment: z.string().optional(),
 });
 
 export async function GET() {
@@ -18,7 +18,10 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
 
   const observers = await prisma.bdpUser.findMany({
-    where: { role: { in: ["BOARD", "MANAGEMENT_DIAGNOSTICS", "EXPERT"] } },
+    where: {
+      role: { in: ["BOARD", "MANAGEMENT_DIAGNOSTICS", "EXPERT"] },
+      environment: session.environment,
+    },
     include: { observerAssignments: { include: { session: true } } },
     orderBy: { code: "asc" },
   });
@@ -40,7 +43,7 @@ export async function POST(req: NextRequest) {
         role: parsed.data.role,
         displayName: parsed.data.displayName,
         isAdmin: parsed.data.isAdmin,
-        environment: parsed.data.environment,
+        environment: parsed.data.environment || session.environment,
       },
     });
     return NextResponse.json(user);

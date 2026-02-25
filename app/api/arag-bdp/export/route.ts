@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const envFilter = includeDemo ? {} : { environment: { not: "demo" } };
 
   const sessions = await prisma.bdpSession.findMany({
-    where: { state: "RELEASED" },
+    where: { state: "RELEASED", ...envFilter as any },
     include: {
       sessionTeams: { include: { team: true } },
       observerAssignments: { include: { user: true } },

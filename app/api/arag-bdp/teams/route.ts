@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 const createSchema = z.object({
   code: z.string().min(1, "Code erforderlich"),
   displayName: z.string().optional(),
-  environment: z.string().optional().default("live"),
+  environment: z.string().optional(),
 });
 
 const updateSchema = z.object({
@@ -22,6 +22,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
 
   const teams = await prisma.bdpTeam.findMany({
+    where: { environment: session.environment },
     include: { teamParticipants: { include: { participant: true } } },
     orderBy: { code: "asc" },
   });
@@ -37,7 +38,13 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
 
   try {
-    const team = await prisma.bdpTeam.create({ data: parsed.data });
+    const team = await prisma.bdpTeam.create({
+      data: {
+        code: parsed.data.code,
+        displayName: parsed.data.displayName,
+        environment: parsed.data.environment || session.environment,
+      },
+    });
     return NextResponse.json(team);
   } catch (e: any) {
     if (e.code === "P2002") return NextResponse.json({ error: "Team-Code existiert bereits" }, { status: 409 });

@@ -14,6 +14,7 @@ import {
   LogOut,
   User,
   Mail,
+  Play,
 } from "lucide-react";
 import { BdpContext, BdpUser } from "./bdp-context";
 
@@ -79,6 +80,16 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
     router.push("/anmeldung");
   };
 
+  const switchEnvironment = async (env: string) => {
+    await fetch("/api/arag-bdp/environment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ environment: env }),
+    });
+    await fetchUser();
+    router.refresh();
+  };
+
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
 
   if (loading) {
@@ -118,6 +129,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
     { href: "/arag-bdp/admin/qa", label: "QA", testId: "bdp-side-qa", Icon: FlaskConical },
     { href: "/arag-bdp/admin?tab=export", label: "Exporte", testId: "bdp-side-exports", Icon: Download },
     { href: "/arag-bdp/admin/invitations", label: "Einladungen", testId: "bdp-side-invitations", Icon: Mail },
+    { href: "/arag-bdp/admin/demo", label: "Demo-Raum", testId: "bdp-side-demo", Icon: Play },
   ];
 
   const isActive = (href: string) => {
@@ -197,6 +209,27 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
               </>
             )}
           </nav>
+
+          {user.isAdmin && (
+            <div className="px-4 pb-2">
+              <div className="flex items-center justify-between px-2 py-2">
+                <span className="text-[11px] font-medium text-[#FFFBF0]/50">Raum</span>
+                <button
+                  data-testid="bdp-env-toggle"
+                  onClick={() => switchEnvironment(user.environment === "demo" ? "live" : "demo")}
+                  className={`relative inline-flex h-6 w-[88px] items-center rounded-full transition-colors duration-200 ${
+                    user.environment === "demo" ? "bg-[#FFD700]" : "bg-white/20"
+                  }`}
+                >
+                  <span className={`absolute left-2 text-[10px] font-bold ${user.environment === "live" ? "text-[#FFFBF0]" : "text-black/40"}`}>LIVE</span>
+                  <span className={`absolute right-2 text-[10px] font-bold ${user.environment === "demo" ? "text-black" : "text-[#FFFBF0]/40"}`}>DEMO</span>
+                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                    user.environment === "demo" ? "translate-x-[68px]" : "translate-x-1"
+                  }`} />
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="p-4 border-t border-white/5">
             <div className="flex items-center gap-3 px-2">
@@ -285,6 +318,25 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
                   <>
                     <Link href="/arag-bdp/admin" data-testid="bdp-menu-admin" className="block py-2 px-4 rounded hover:bg-gray-100 font-bold" onClick={() => setMenuOpen(false)}>Admin</Link>
                     <Link href="/arag-bdp/admin/invitations" data-testid="bdp-menu-invitations" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Einladungen</Link>
+                    <Link href="/arag-bdp/admin/demo" data-testid="bdp-menu-demo" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Demo-Raum</Link>
+                    <div className="px-4 py-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-black/50">Raum</span>
+                        <button
+                          data-testid="bdp-env-toggle-mobile"
+                          onClick={() => { switchEnvironment(user.environment === "demo" ? "live" : "demo"); setMenuOpen(false); }}
+                          className={`relative inline-flex h-6 w-[88px] items-center rounded-full transition-colors duration-200 ${
+                            user.environment === "demo" ? "bg-[#FFD700]" : "bg-black/10"
+                          }`}
+                        >
+                          <span className={`absolute left-2 text-[10px] font-bold ${user.environment === "live" ? "text-black" : "text-black/30"}`}>LIVE</span>
+                          <span className={`absolute right-2 text-[10px] font-bold ${user.environment === "demo" ? "text-black" : "text-black/30"}`}>DEMO</span>
+                          <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                            user.environment === "demo" ? "translate-x-[68px]" : "translate-x-1"
+                          }`} />
+                        </button>
+                      </div>
+                    </div>
                   </>
                 )}
                 <button data-testid="bdp-menu-logout" onClick={handleLogout} className="block py-2 px-4 rounded hover:bg-red-50 text-red-600 w-full text-left">Abmelden</button>

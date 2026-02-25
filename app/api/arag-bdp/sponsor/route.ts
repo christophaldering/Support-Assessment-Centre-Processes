@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const sessionId = searchParams.get("sessionId");
 
-  const where: any = {};
+  const where: any = { environment: session.environment };
   if (sessionId) where.sessionId = sessionId;
   if (!session.isAdmin) where.observerId = session.userId;
 

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const sessionId = searchParams.get("sessionId");
   const participantId = searchParams.get("participantId");
 
-  const where: any = { observerId: session.userId };
+  const where: any = { observerId: session.userId, environment: session.environment };
   if (sessionId) where.sessionId = sessionId;
   if (participantId) where.participantId = participantId;
 
