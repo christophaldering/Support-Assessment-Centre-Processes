@@ -10,8 +10,8 @@ export default function AragLobbyPage() {
   const router = useRouter();
   const [gateOk, setGateOk] = useState(false);
   const [gateLoading, setGateLoading] = useState(true);
-  const [gateEmail, setGateEmail] = useState("");
-  const [gatePassword, setGatePassword] = useState("");
+  const [gateEmail, setGateEmail] = useState("Christoph.aldering@googlemail.com");
+  const [gatePassword, setGatePassword] = useState("Christoph");
   const [gateError, setGateError] = useState("");
   const [gateSubmitting, setGateSubmitting] = useState(false);
 
@@ -231,14 +231,14 @@ export default function AragLobbyPage() {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   data-testid="arag-lobby-live"
-                  onClick={() => handleEnvSelect("live")}
-                  className="p-6 rounded-2xl border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all text-center group"
+                  disabled
+                  className="p-6 rounded-2xl border-2 border-gray-200 opacity-40 cursor-not-allowed text-center"
                 >
-                  <span className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3 group-hover:bg-green-500 group-hover:text-white transition-colors">
-                    <span className="w-3 h-3 rounded-full bg-green-500 group-hover:bg-white" />
+                  <span className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
+                    <span className="w-3 h-3 rounded-full bg-green-500" />
                   </span>
                   <span className="font-bold text-black block">LIVE starten</span>
-                  <span className="text-xs text-gray-400 mt-1 block">Produktivsystem</span>
+                  <span className="text-xs text-gray-400 mt-1 block">Noch nicht verfügbar</span>
                 </button>
                 <button
                   data-testid="arag-lobby-demo"
