@@ -7,9 +7,23 @@ const prisma = new PrismaClient();
 
 const ENV = "demo";
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = getBdpSession();
-  if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
+
+  let autoReset = false;
+  try {
+    const body = await req.json();
+    autoReset = body?.autoReset === true;
+  } catch {}
+
+  if (!autoReset && !session.isAdmin) {
+    return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
+  }
+
+  if (autoReset && session.environment !== "demo") {
+    return NextResponse.json({ error: "Auto-Reset nur im Demo-Modus" }, { status: 403 });
+  }
 
   await deleteDemo();
   const result = await seedDemo();

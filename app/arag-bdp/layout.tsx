@@ -22,7 +22,7 @@ import TourOverlay from "./components/TourOverlay";
 import AvatarCircle from "./components/AvatarCircle";
 import { getTourSteps } from "@/lib/arag-bdp-tour";
 
-const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login", "/anmeldung"];
+const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login"];
 
 function BdpLayoutInner({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<BdpUser | null>(null);
@@ -75,7 +75,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user && !PUBLIC_PATHS.includes(pathname)) {
-      router.push("/anmeldung");
+      router.push("/arag-bdp/login");
     }
   }, [loading, user, pathname, router]);
 
@@ -101,10 +101,19 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
   }, [loading, user, tourAutoChecked]);
 
   const handleLogout = async () => {
+    if (user?.environment === "demo") {
+      try {
+        await fetch("/api/arag-bdp/admin/demo-reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ autoReset: true }),
+        });
+      } catch {}
+    }
     await fetch("/api/arag-bdp/auth/session", { method: "DELETE" });
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
-    router.push("/anmeldung");
+    router.push("/arag-bdp/login");
   };
 
   const switchEnvironment = async (env: string) => {
@@ -302,9 +311,9 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
         </aside>
 
         <div className="flex-1 ml-[260px] flex flex-col min-h-screen">
-          {user.demoLock && (
+          {user.environment === "demo" && (
             <div data-testid="demo-lock-banner" className="bg-[#FFD700] text-black text-center py-1.5 text-xs font-bold tracking-wide">
-              DEMO-UMGEBUNG – Änderungen wirken sich sofort auf die Auswertung aus.
+              DEMO-MODUS – Sie dürfen mit den Daten experimentieren. Änderungen werden beim Abmelden zurückgesetzt.
             </div>
           )}
           <header className="sticky top-0 z-40 h-14 bg-[#FFFBF0] border-b border-black/5 flex items-center justify-between px-6">
@@ -352,8 +361,8 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
           ═══════════════════════════════════════════════ */}
       <div className="lg:hidden fixed inset-0 bg-[#FFFBF0] text-black flex flex-col" style={{ height: "100dvh", overflow: "hidden" }}>
         {user.environment === "demo" && (
-          <div data-testid="demo-banner" className="bg-[#FFD700] text-black text-center py-1 text-sm font-bold tracking-wider shrink-0">
-            {user.demoLock ? "DEMO-UMGEBUNG – Änderungen wirken sich sofort auf die Auswertung aus." : "DEMO-UMGEBUNG"}
+          <div data-testid="demo-banner" className="bg-[#FFD700] text-black text-center py-1 text-[11px] font-bold tracking-wide shrink-0 px-2">
+            DEMO – Experimentieren erlaubt! Änderungen werden beim Abmelden zurückgesetzt.
           </div>
         )}
 

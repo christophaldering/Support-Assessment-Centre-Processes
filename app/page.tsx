@@ -644,7 +644,7 @@ export default function LandingPage() {
               {lang === "de" ? "EN" : "DE"}
             </button>
             <a
-              href="/anmeldung"
+              href="/arag-bdp/login"
               className="text-xs font-medium text-white bg-brand-blue hover:bg-brand-blue-dark rounded-full px-5 py-1.5 transition-colors"
               data-testid="nav-login"
             >
@@ -680,7 +680,7 @@ export default function LandingPage() {
                   {l.heroCta1}
                 </a>
                 <a
-                  href="/anmeldung"
+                  href="/arag-bdp/login"
                   className="rounded-lg border border-white/20 text-white font-medium px-8 py-3.5 text-sm hover:bg-white/5 transition-colors"
                   data-testid="button-hero-login"
                 >
@@ -1199,7 +1199,7 @@ export default function LandingPage() {
 
               <div className="max-w-4xl mx-auto mt-8">
                 <a
-                  href="/anmeldung"
+                  href="/arag-bdp/login"
                   className="group block w-full bg-gradient-to-r from-[#1a1a1a] to-[#333] rounded-2xl border border-[#FFD700]/30 p-6 text-left transition-all hover:shadow-xl hover:-translate-y-1 hover:border-[#FFD700]/60"
                   data-testid="button-arag-bdp-entry"
                 >

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
 
   const { recipients, subject, body: template, sessionName } = parsed.data;
-  const link = "https://assessment-suite.replit.app/anmeldung?workspace=arag";
+  const link = "https://assessment-suite.replit.app/arag-bdp/login";
   const sender = "aestimamus / ARAG Projektteam";
 
   const previews = recipients.map(r => {

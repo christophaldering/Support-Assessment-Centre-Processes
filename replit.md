@@ -63,7 +63,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 *   **AI Governance (Phase 1 – Lite, Enterprise-Ready)**: Core LLM adapter in `server/llm/` with single entry point `generateLLMOutput()` and `transcribeAudio()`. ENV-based kill switch (`AI_DISABLED`, `AI_FEATURES_DISABLED`), provider routing via `ACTIVE_LLM_PROVIDER` (openai active, neuland stub, azure_eu placeholder). Strict OpenAI ENV usage (`AI_INTEGRATIONS_OPENAI_API_KEY` + `AI_INTEGRATIONS_OPENAI_BASE_URL`). Console logging for all AI requests with route/feature/task metadata. **All 19+ API routes fully migrated** — no direct OpenAI imports outside `server/llm/providers/openai.ts`. `lib/ai.ts` uses adapter internally. `lib/llm/` retained as re-export bridge for Phase 2 features (DB-backed config, Admin UI at `/admin/ai-governance`, audit logging via `ai_system_settings`/`ai_audit_log` tables). Old `lib/llm/providers/` removed (dead code). Architecture designed for Phase 2 extension without refactoring.
 *   Shared admin layout: All admin pages use consistent sidebar + terracotta gradient header via `layout.tsx` + `AdminSidebar.tsx`
 *   **ARAG BDP Evaluation Tool**: Complete self-contained module at `/arag-bdp/` for Business Development Pitch evaluation. Features:
-    - Entry point via `/anmeldung` general login page (workspace + email + password), old `/arag-bdp/gate` redirects to `/anmeldung`
+    - Entry point via `/arag-bdp/login` (username + password), `/arag-bdp/gate` redirects to `/arag-bdp/login`
     - Anonymous code system: LIVE (V1-V6, MD1, E1, TN1-TN21, Team1-Team6), DEMO prefixed (D-V1..D-V6, D-MD1, D-E1, D-TN1..D-TN21, D-Team1..D-Team6) to avoid unique constraint conflicts
     - Forced-point scoring (100 pts/criterion across teams per session), server-side validation
     - Session governance: DRAFT → OPEN → CLOSED → RELEASED state machine
@@ -80,7 +80,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
     - QA page at `/arag-bdp/admin/qa` with automated PASS/FAIL checks
     - Admin invitations page at `/arag-bdp/admin/invitations`: 3 tabs (Vorstände/Experte/Teilnehmer), TipTap rich text editor with templates and placeholders ({{CODE}}, {{WORKSPACE}}, {{LINK}}, {{SESSION}}, {{SENDER}}), email storage per recipient via BdpNameMapping, preview & copy mode (SendGrid send disabled for safety), session reference selector, QA checks at bottom
     - Desktop sidebar + mobile hamburger both include "Einladungen" link (admin-only)
-    - `/anmeldung` supports `?workspace=arag` query param for pre-filling workspace field
+    - Demo auto-reset: on logout from demo environment, demo data is automatically reset to hard-coded defaults. Demo banner informs users: "Experimentieren erlaubt! Änderungen werden beim Abmelden zurückgesetzt."
     - **Demo Environment (first-class)**: Strict LIVE/DEMO separation via `bdp_environment` cookie. All GET routes filter by `environment` scope. Admin-only LIVE/DEMO toggle in sidebar + hamburger menu (`data-testid="bdp-env-toggle"`). Demo seed creates 3 RELEASED sessions, 6 teams, 21 TN, 3 observers, full scores (sum=100), tie-break case, sponsor flags, individual notes. Reset via `/arag-bdp/admin/demo` page (`data-testid="bdp-demo-reset"`). LIVE data never touched during reset. API: `/api/arag-bdp/environment` (GET/POST), `/api/arag-bdp/admin/demo-reset` (POST).
     - **Guided Tour System**: Role-specific tour steps (admin=10, observer=8, participant=6) via `lib/arag-bdp-tour.ts`. `TourOverlay.tsx` with SVG spotlight mask, popover positioning, Escape key. Auto-starts on first demo login. "Tour starten" in sidebar + hamburger. Tour restart from profile page clears localStorage and dispatches custom event.
     - **Sprint D4 — Avatar System + Business Case Viewer**:
@@ -93,7 +93,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
       - Bewertung integration: "Case" link per team in first criterion row opens CaseModal.
       - Admin teams tab: shows business case type badge, PDF upload input per team.
       - Profile page: working photo upload with preview, tour restart button.
-      - `/anmeldung` login: now also checks BDP users via `bdpNameMapping` email lookup when workspace is "arag".
+      - `/anmeldung` page removed; all login flows through `/arag-bdp/login`.
 
 ## External Dependencies
 

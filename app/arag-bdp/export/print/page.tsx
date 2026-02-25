@@ -18,7 +18,7 @@ export default function BdpPrintPage() {
         const bdpData = await bdpRes.json();
         if (!bdpData.authenticated || !bdpData.user?.isAdmin) {
           const meRes = await fetch("/api/auth/me");
-          if (!meRes.ok) { router.push("/anmeldung"); return; }
+          if (!meRes.ok) { router.push("/arag-bdp/login"); return; }
           const meData = await meRes.json();
           if (!meData.roles?.includes("ADMIN") && !meData.roles?.includes("WORKSPACE_ADMIN")) {
             router.push("/arag-bdp"); return;
