@@ -43,7 +43,7 @@ async function main() {
   }
 
   const existingAdmin = await prisma.user.findUnique({
-    where: { email_workspaceId: { email: "admin@aestimamus.de", workspaceId } },
+    where: { email_workspaceId: { email: "christoph.aldering@aestimamus.com", workspaceId } },
   });
 
   if (!existingAdmin) {
@@ -205,12 +205,74 @@ async function main() {
   }
 }
 
+async function ensureWorkspaceArag() {
+  const adminHash = await bcrypt.hash("Christoph", 10);
+  const existing = await prisma.workspace.findUnique({ where: { slug: "arag" } });
+  let workspaceId: string;
+
+  if (existing) {
+    workspaceId = existing.id;
+    console.log("Seed: arag workspace already exists, skipping.");
+  } else {
+    const workspace = await prisma.workspace.create({
+      data: {
+        slug: "arag",
+        name: "ARAG",
+        status: "active",
+        aiEnabled: false,
+        adminPasswordHash: adminHash,
+        dataResidency: "EU",
+        theme: {
+          create: {
+            primaryColor: "#FFD700",
+            secondaryColor: "#1a1a1a",
+            accentColor: "#FFD700",
+            backgroundColor: "#ffffff",
+            textColor: "#1a1a1a",
+            fontFamily: "Inter",
+            fontFamilyHeading: "Playfair Display",
+          },
+        },
+      },
+    });
+    workspaceId = workspace.id;
+    console.log(`Seed: Created workspace "arag" (${workspace.id})`);
+  }
+
+  const demoHash = await bcrypt.hash("demo", 10);
+  const existingDemo = await prisma.user.findUnique({
+    where: { email_workspaceId: { email: "demo@demo.de", workspaceId } },
+  });
+
+  if (!existingDemo) {
+    const user = await prisma.user.create({
+      data: {
+        email: "demo@demo.de",
+        name: "Demo User",
+        passwordHash: demoHash,
+        roles: ["WORKSPACE_ADMIN"],
+        workspaceId,
+        forcePasswordChange: false,
+        status: "active",
+      },
+    });
+    console.log(`Seed: Created demo user "demo@demo.de" in arag workspace (${user.id})`);
+  } else {
+    await prisma.user.update({
+      where: { id: existingDemo.id },
+      data: { passwordHash: demoHash, forcePasswordChange: false, status: "active" },
+    });
+    console.log("Seed: Demo user already exists in arag, updated password.");
+  }
+}
+
 async function seedBdp() {
   const { seedBdp: runBdpSeed } = await import("./bdp-seed");
   await runBdpSeed();
 }
 
 main()
+  .then(() => ensureWorkspaceArag())
   .then(() => seedBdp())
   .catch((e) => {
     console.error(e);

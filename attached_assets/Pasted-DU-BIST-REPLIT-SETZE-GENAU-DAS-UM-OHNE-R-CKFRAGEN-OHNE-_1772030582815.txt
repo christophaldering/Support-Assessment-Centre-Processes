@@ -1,0 +1,83 @@
+DU BIST REPLIT. SETZE GENAU DAS UM – OHNE RÜCKFRAGEN, OHNE ZUSATZFEATURES, OHNE REFACTORING.
+ZIEL: Ein minimaler, stabiler Zugang zum Workspace „arag“ über die bestehende Next.js (App Router) Workspace-Login-Seite.
+STACK IST FEST: Next.js App Router, Prisma/Postgres, bestehende Auth-API unter app/api/auth/* und Workspace-Seiten unter app/w/[workspaceSlug]/*.
+
+NEUER MINI-SPRINT (S0): „ARAG Workspace Zugang“ – NUR DAS.
+
+KONKRETE VARIABLEN (FIX):
+- workspaceSlug: arag
+- login email: demo@demo.de
+- password: demo
+
+MUSS-KRITERIEN (MUST)
+1) WORKSPACE EXISTENZ SICHERSTELLEN
+   - Stelle sicher, dass in der DB ein Workspace mit slug="arag" existiert.
+   - Wenn nicht vorhanden: erstelle ihn per Prisma in seed.ts (oder neuer seed-Sektion) so, dass er beim nächsten Start/Seed zuverlässig vorhanden ist.
+   - Keine UI dafür bauen, nur Seed/DB.
+   - Achte auf bestehende Prisma-Konventionen (Workspace Model, required fields).
+   - Wenn bereits vorhanden: nichts ändern.
+
+2) DEMO USER IM WORKSPACE ARAG ANLEGEN (DB SEED)
+   - Stelle sicher, dass ein User mit email="demo@demo.de" im Workspace "arag" existiert und sich einloggen kann.
+   - Passwort muss funktionieren: "demo"
+   - Nutze genau das Auth-Pattern der Plattform:
+     - Wenn bcryptjs genutzt wird: korrekt hashen mit dem gleichen Salt/Mechanismus wie bestehende User.
+     - Nutze vorhandene helper in lib/auth.ts oder lib/session.ts (oder analog), NICHT neu erfinden.
+   - Rolle: setze so, dass der Login sicher klappt und keine Redirect-Schleife entsteht:
+     - Empfohlen: WORKSPACE_ADMIN (oder OBSERVER, falls der Login-Flow sonst ins Portal/Observer umleitet).
+     - Wähle die Rolle, die im bestehenden Routing nach Login zuverlässig ins Workspace Admin/Dashboard führt.
+   - Wichtig: Sprache ist deutsch, UI bleibt deutsch.
+   - Keine Änderung des globalen Standardpassworts „Christoph“. Nur diesen User zusätzlich.
+
+3) LANDING “ANMELDEN” ROUTING: MINIMAL & KOMPATIBEL
+   - Auf der Landing Page (app/page.tsx) bzw. dort wo der „Anmelden“-Button oben rechts gerendert wird:
+     - Ändere NUR das Ziel des Buttons auf: /w/arag/login
+     - KEINE neue “workspaces/arag” Route bauen.
+     - Wir nutzen den vorhandenen Workspace-Login: app/w/[workspaceSlug]/login/page.tsx
+   - Der Userfluss muss sein:
+     - Landing -> Klick “Anmelden” -> /w/arag/login -> Login mit demo@demo.de / demo -> erfolgreicher Eintritt in Workspace.
+
+4) LOGIN UX: PREFILL (MINIMAL, OHNE NEUE LOGIK)
+   - Auf /w/arag/login:
+     - Prefill das E-Mail Feld mit "demo@demo.de" NUR wenn workspaceSlug == "arag".
+     - Passwortfeld bleibt leer (kein Autofill des Passworts).
+   - Keine neue Komponente bauen, nutze bestehende Form-Komponenten.
+   - Keine zusätzliche Registrierung / Reset / Change Password Änderungen.
+
+5) QA / ABNAHME (MUSS)
+   - Implementiere 3 smoke checks:
+     A) „Anmelden“ führt auf /w/arag/login (manuell testbar)
+     B) Login demo@demo.de / demo funktioniert (manuell testbar)
+     C) Nach Login KEINE Redirect-Schleife, keine 500er Errors
+   - Zusätzlich: setze data-testid auf den „Anmelden“-Button (falls noch nicht vorhanden), da Konvention “Alle interaktiven Elemente brauchen data-testid” gilt.
+     - data-testid="nav-login"
+   - Gib am Ende im Code (z.B. als Kommentar in der PR/Commit-Nachricht oder in einer kurzen DEV-NOTE in README oder /docs/dev-notes.md) eine 5-Zeilen-Checkliste aus:
+     - PASS/FAIL: workspace arag exists
+     - PASS/FAIL: demo user exists
+     - PASS/FAIL: nav-login routes to /w/arag/login
+     - PASS/FAIL: login works
+     - PASS/FAIL: post-login redirect stable
+
+DARFST NICHT (MUST NOT)
+- Keine neue Auth-Implementierung bauen.
+- Keine neue Route-Struktur wie /workspaces/arag einführen.
+- Keine Änderungen am bestehenden Cookie-System oder RBAC-Framework.
+- Keine Änderungen an ARAG-BDP Routen.
+- Keine großen Refactorings.
+- Keine zusätzlichen Module / neue Dependencies.
+
+UMSETZUNGS-HINWEISE (STRIKT)
+- Nutze Prisma + seed.ts (oder vorhandene Seed-Infrastruktur). Wenn es bereits seed.ts und bdp-seed.ts gibt:
+  - Ergänze in seed.ts eine idempotente Seed-Funktion: ensureWorkspaceArag(), ensureDemoUserArag().
+- Nutze vorhandene Passwort-Hash-Utilities. Falls kein Helper existiert:
+  - Verwende bcryptjs mit dem gleichen Parameter-Pattern, das in bestehenden Auth-Routen genutzt wird.
+- Stelle sicher, dass Seed idempotent ist (kein Duplikat bei erneutem Lauf).
+
+LIEFERUMFANG (DELIVERABLES)
+- (1) Klick auf „Anmelden“ führt immer auf /w/arag/login
+- (2) Workspace „arag“ existiert in DB
+- (3) User demo@demo.de im Workspace „arag“ existiert und kann sich mit Passwort „demo“ anmelden
+- (4) Login-Seite /w/arag/login prefills email für arag
+- (5) Keine Fehler im Build/Compile; keine Redirect-Schleifen
+
+JETZT IMPLEMENTIEREN.
