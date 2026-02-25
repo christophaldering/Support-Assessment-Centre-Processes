@@ -1,0 +1,92 @@
+DU BIST REPLIT. SETZE GENAU DAS UM. KEINE RÜCKFRAGEN. KEIN REFACTORING.
+ZIEL: Zusätzlich zur bestehenden Mobile Bottom-Nav (Option A) eine DESKTOP/ADMIN-Ansicht bauen, die sich automatisch aktiviert, wenn (a) Bildschirm Desktop oder (b) User ist Admin. Primär für Admin-Workflows (CRUD, QA, Exporte, Tie-Break). Mobile UX bleibt unverändert.
+
+KONTEXT:
+- Next.js 14 App Router
+- app/arag-bdp/layout.tsx (BDP Layout)
+- app/arag-bdp/bdp-context.tsx (useBdp() liefert u.a. isAdmin, userCode, environment)
+- TailwindCSS
+- ARAG BDP Branding: Schwarz/Gold (#FFD700), Hintergrund #FFFBF0
+- Bottom Nav Option A (Outline Icons) ist bereits implementiert oder wird implementiert.
+
+MUSS: A) LAYOUT-SWITCHING LOGIK
+1) Implementiere ein Layout-Switching im BDP Layout:
+   - Wenn isAdmin == true ODER viewport >= lg (Desktop):
+       -> verwende Desktop Admin Shell
+   - Sonst:
+       -> verwende Mobile Shell (Bottom Nav)
+2) Desktop Shell darf NICHT die Mobile Shell ersetzen, sondern zusätzlich als alternative Darstellung existieren.
+3) Keine neuen Routes; nur Layout/Navigation anders rendern.
+
+MUSS: B) DESKTOP ADMIN SHELL (LINKS SIDEBAR + TOPBAR)
+4) Desktop Shell besteht aus:
+   - Left Sidebar (fixed/sticky), width ~ 260px
+   - Topbar (height ~ 56px), rechts: userCode, environment badge, Profil/Logout
+   - Main Content Area (scrollbar)
+5) Sidebar Styling:
+   - bg: #0b0b0b (sehr dunkles Schwarz)
+   - text: #FFFBF0
+   - active accent: #FFD700 (Gold)
+   - minimal outline icon style (Lucide outline, stroke 1.75, size 18–20)
+   - keine Schatten-Orgien, sehr clean
+6) Sidebar Items (Admin-first):
+   - Dashboard  -> /arag-bdp
+   - Sessions   -> /arag-bdp/sessions
+   - Bewertung  -> /arag-bdp/bewertung
+   - Auswertung -> /arag-bdp/auswertung
+   - Divider
+   - Admin Konsole -> /arag-bdp/admin
+   - QA           -> /arag-bdp/admin/qa (oder qa-lite falls vorhanden)
+   - Exporte      -> /arag-bdp/admin/exports (falls vorhanden; sonst /arag-bdp/admin)
+   - Tie-Break    -> /arag-bdp/admin (anchor/section; falls eigene route existiert: nutzen)
+7) Zusätzlich: Wenn user NICHT admin ist, dann zeige in Sidebar keine Admin-only Links (Admin, QA, Exporte, Tie-Break).
+8) Active state:
+   - Link text gold
+   - left indicator bar 3px gold
+   - icon gold
+9) data-testid für Sidebar Links:
+   - bdp-side-dashboard
+   - bdp-side-sessions
+   - bdp-side-bewertung
+   - bdp-side-auswertung
+   - bdp-side-admin
+   - bdp-side-qa
+   - bdp-side-exports
+
+MUSS: C) TOPBAR DETAILS
+10) Topbar enthält:
+   - links: “ARAG BDP” (klein, nicht laut)
+   - rechts: userCode (z.B. MD1), optional Avatar (aus Profilfoto wenn vorhanden), Logout button
+   - Environment badge:
+     - Wenn environment==demo -> Badge “DEMO” in Gold auf Schwarz
+     - Sonst kein Badge oder neutraler Punkt
+11) Logout nutzt vorhandenen Logout-Mechanismus (kein neuer Auth-Bau).
+
+MUSS: D) RESPONSIVE & KOMPATIBILITÄT
+12) Mobile bleibt exakt wie jetzt (Bottom Nav), inklusive Tab-IDs.
+13) Desktop Layout darf keine Hydration-Warnings erzeugen:
+   - Viewport detection clientseitig (useEffect) ODER CSS-first (Tailwind breakpoints) mit minimaler Logik.
+   - Wenn du isAdmin serverseitig hast: nutze das. Sonst nutze useBdp() und render fallback skeleton bis ready.
+14) Keine Layout Shifts beim ersten Render: nutze einen stabilen default.
+
+MUSS: E) ADMIN WORKFLOW OPTIMIERUNG
+15) Für Desktop Admin Shell:
+   - Hauptcontent max-w: 1100–1200px
+   - Tabellen/Listen in Admin-Bereich müssen besser lesbar sein:
+     - mehr Spaltenbreite
+     - sticky table headers optional (wenn einfach)
+16) Keine Änderungen an der Admin-Funktionalität selbst in diesem Sprint (nur Präsentation / Shell).
+
+MUSS: F) QUALITÄTSSICHERUNG
+17) Prüfe:
+   - Admin eingeloggt (MD1 oder Demo Admin): Desktop Shell erscheint auf Desktop
+   - Nicht-Admin auf Desktop: Desktop Shell erscheint, aber ohne Admin-only Links
+   - Mobile: weiterhin Bottom Nav, keine Sidebar
+   - Navigation funktioniert überall
+   - Keine Console Errors
+
+LIEFERUNG:
+- Desktop Admin Shell implementiert
+- Mobile Shell unverändert
+- Alle data-testid vorhanden
+- Clean ARAG Executive Look (minimal, keine Spielerei)

@@ -3,7 +3,18 @@
 import { useState, useEffect, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutGrid, Calendar, Scale, BarChart3 } from "lucide-react";
+import {
+  LayoutGrid,
+  Calendar,
+  Scale,
+  BarChart3,
+  Shield,
+  FlaskConical,
+  Download,
+  Scissors,
+  LogOut,
+  User,
+} from "lucide-react";
 import { BdpContext, BdpUser } from "./bdp-context";
 
 const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login", "/anmeldung"];
@@ -87,18 +98,152 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
 
   if (!user) return null;
 
-  const tabs = [
+  const mobileTabs = [
     { href: "/arag-bdp", label: "Home", testId: "bdp-tab-home", Icon: LayoutGrid, disabled: false },
     { href: "/arag-bdp/sessions", label: "Sessions", testId: "bdp-tab-sessions", Icon: Calendar, disabled: false },
     { href: "/arag-bdp/bewertung", label: "Bewertung", testId: "bdp-tab-bewertung", Icon: Scale, disabled: false },
     { href: "/arag-bdp/auswertung", label: "Auswertung", testId: "bdp-tab-auswertung", Icon: BarChart3, disabled: true },
   ];
 
-  const viewModeClass = user.viewMode === "desktop" ? "max-w-6xl" : user.viewMode === "tablet" ? "max-w-2xl" : "max-w-md";
+  const sidebarMain = [
+    { href: "/arag-bdp", label: "Dashboard", testId: "bdp-side-dashboard", Icon: LayoutGrid },
+    { href: "/arag-bdp/sessions", label: "Sessions", testId: "bdp-side-sessions", Icon: Calendar },
+    { href: "/arag-bdp/bewertung", label: "Bewertung", testId: "bdp-side-bewertung", Icon: Scale },
+    { href: "/arag-bdp/auswertung", label: "Auswertung", testId: "bdp-side-auswertung", Icon: BarChart3 },
+  ];
+
+  const sidebarAdmin = [
+    { href: "/arag-bdp/admin", label: "Admin Konsole", testId: "bdp-side-admin", Icon: Shield },
+    { href: "/arag-bdp/admin/qa", label: "QA", testId: "bdp-side-qa", Icon: FlaskConical },
+    { href: "/arag-bdp/admin?tab=export", label: "Exporte", testId: "bdp-side-exports", Icon: Download },
+  ];
+
+  const isActive = (href: string) => {
+    if (href === "/arag-bdp") return pathname === "/arag-bdp";
+    return pathname.startsWith(href);
+  };
 
   return (
     <BdpContext.Provider value={{ user, loading, refetchUser: fetchUser }}>
-      <div className="min-h-screen bg-[#FFFBF0] text-black flex flex-col">
+      {/* ═══════════════════════════════════════════════
+          DESKTOP SHELL (lg: breakpoint and above)
+          ═══════════════════════════════════════════════ */}
+      <div className="hidden lg:flex min-h-screen bg-[#FFFBF0] text-black">
+        <aside className="fixed top-0 left-0 bottom-0 w-[260px] bg-[#0b0b0b] text-[#FFFBF0] flex flex-col z-50">
+          <div className="h-14 flex items-center px-6 border-b border-white/5">
+            <span className="text-sm font-semibold tracking-wide text-[#FFFBF0]/80">ARAG BDP</span>
+          </div>
+
+          <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
+            {sidebarMain.map(item => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.testId}
+                  href={item.href}
+                  data-testid={item.testId}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 relative ${
+                    active
+                      ? "text-[#FFD700] bg-white/5"
+                      : "text-[#FFFBF0]/60 hover:text-[#FFFBF0] hover:bg-white/5"
+                  }`}
+                >
+                  {active && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#FFD700] rounded-r-full" />
+                  )}
+                  <item.Icon size={18} strokeWidth={1.75} className={active ? "text-[#FFD700]" : ""} />
+                  {item.label}
+                </Link>
+              );
+            })}
+
+            {user.isAdmin && (
+              <>
+                <div className="my-3 mx-3 border-t border-white/10" />
+                {sidebarAdmin.map(item => {
+                  const active = isActive(item.href);
+                  return (
+                    <Link
+                      key={item.testId}
+                      href={item.href}
+                      data-testid={item.testId}
+                      aria-current={active ? "page" : undefined}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 relative ${
+                        active
+                          ? "text-[#FFD700] bg-white/5"
+                          : "text-[#FFFBF0]/60 hover:text-[#FFFBF0] hover:bg-white/5"
+                      }`}
+                    >
+                      {active && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#FFD700] rounded-r-full" />
+                      )}
+                      <item.Icon size={18} strokeWidth={1.75} className={active ? "text-[#FFD700]" : ""} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </>
+            )}
+          </nav>
+
+          <div className="p-4 border-t border-white/5">
+            <div className="flex items-center gap-3 px-2">
+              <div className="w-8 h-8 rounded-full bg-[#FFD700] flex items-center justify-center text-black font-bold text-xs shrink-0">
+                {user.photoUrl ? <img src={user.photoUrl} className="w-8 h-8 rounded-full object-cover" alt="" /> : user.code[0]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-[#FFFBF0] truncate">{user.code}</div>
+                <div className="text-[10px] text-[#FFFBF0]/40">{user.role}</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <div className="flex-1 ml-[260px] flex flex-col min-h-screen">
+          <header className="sticky top-0 z-40 h-14 bg-[#FFFBF0] border-b border-black/5 flex items-center justify-between px-6">
+            <div className="flex items-center gap-3">
+              {user.environment === "demo" && (
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-[#FFD700] text-black px-2 py-0.5 rounded">
+                  Demo
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-mono text-black/50">{user.code}</span>
+              <Link
+                href="/arag-bdp/profile"
+                data-testid="link-profile"
+                className="w-7 h-7 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 transition-colors"
+              >
+                <User size={14} strokeWidth={1.75} className="text-black/50" />
+              </Link>
+              <button
+                onClick={handleLogout}
+                data-testid="bdp-desktop-logout"
+                className="w-7 h-7 rounded-full bg-black/5 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors text-black/50"
+              >
+                <LogOut size={14} strokeWidth={1.75} />
+              </button>
+            </div>
+          </header>
+
+          <main className="flex-1 px-8 py-6">
+            <div className="max-w-[1140px] mx-auto">
+              {children}
+            </div>
+          </main>
+
+          <footer className="text-center py-2 text-xs text-gray-400 border-t border-gray-100">
+            Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
+          </footer>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════
+          MOBILE SHELL (below lg: breakpoint)
+          ═══════════════════════════════════════════════ */}
+      <div className="lg:hidden min-h-screen bg-[#FFFBF0] text-black flex flex-col">
         {user.environment === "demo" && (
           <div data-testid="demo-banner" className="bg-[#FFD700] text-black text-center py-1 text-sm font-bold tracking-wider">
             DEMO-UMGEBUNG
@@ -134,7 +279,7 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
           </div>
         )}
 
-        <main className={`flex-1 ${viewModeClass} mx-auto w-full px-4 py-4 pb-24`}>
+        <main className="flex-1 max-w-md mx-auto w-full px-4 py-4 pb-24">
           {children}
         </main>
 
@@ -144,7 +289,7 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
 
         <nav className="fixed bottom-0 left-0 right-0 bg-[#FFFBF0] border-t border-black/10 z-50" role="navigation" data-testid="bottom-nav">
           <div className="max-w-[480px] mx-auto flex justify-around items-center h-[70px]">
-            {tabs.map(tab => {
+            {mobileTabs.map(tab => {
               const active = pathname === tab.href || (tab.href !== "/arag-bdp" && pathname.startsWith(tab.href));
 
               if (tab.disabled) {
