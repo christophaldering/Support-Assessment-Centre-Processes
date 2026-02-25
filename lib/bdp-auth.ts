@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+import { getUserSession } from "@/lib/session";
+import { prisma } from "@/lib/db";
 
 export interface BdpSession {
   userId: string;
@@ -6,16 +8,46 @@ export interface BdpSession {
   role: string;
   isAdmin: boolean;
   environment: string;
+  authSource: "bdp_session" | "platform";
+  workspaceSlug: string;
 }
+
+let _platformCache: Map<string, BdpSession | null> = new Map();
 
 export function getBdpSession(): BdpSession | null {
   try {
     const cookie = cookies().get("bdp_session");
-    if (!cookie) return null;
-    return JSON.parse(cookie.value) as BdpSession;
-  } catch {
-    return null;
-  }
+    if (cookie) {
+      const parsed = JSON.parse(cookie.value);
+      if (parsed && parsed.userId && parsed.code) {
+        return {
+          ...parsed,
+          authSource: "bdp_session",
+          workspaceSlug: parsed.workspaceSlug || "arag",
+        } as BdpSession;
+      }
+    }
+  } catch {}
+
+  try {
+    const platformSession = getUserSession();
+    if (!platformSession) return null;
+
+    const roles = platformSession.roles || [];
+    const isAdmin = roles.includes("ADMIN") || roles.includes("WORKSPACE_ADMIN");
+
+    return {
+      userId: platformSession.userId,
+      code: isAdmin ? "MD1" : "V1",
+      role: isAdmin ? "MANAGEMENT_DIAGNOSTICS" : "BOARD",
+      isAdmin,
+      environment: "live",
+      authSource: "platform",
+      workspaceSlug: platformSession.workspaceSlug || "arag",
+    };
+  } catch {}
+
+  return null;
 }
 
 export function requireBdpSession(): BdpSession {

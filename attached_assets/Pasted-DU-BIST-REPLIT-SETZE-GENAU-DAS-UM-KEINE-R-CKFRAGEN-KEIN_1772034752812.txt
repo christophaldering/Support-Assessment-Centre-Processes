@@ -1,0 +1,48 @@
+DU BIST REPLIT. SETZE GENAU DAS UM. KEINE RÜCKFRAGEN. KEIN REFACTORING.
+ZIEL: Alle /api/arag-bdp/* Endpunkte funktionieren, egal ob der User via BDP-Login (bdp_session Cookie) ODER via Hauptplattform-Login (/api/auth/me) eingeloggt ist.
+
+IST-ZUSTAND:
+- BDP Home fängt fehlende Sessions ab, aber /api/arag-bdp/* liefert leer/fehlerhaft, wenn nur Plattform-Session existiert.
+- BDP Context useBdp() existiert: app/arag-bdp/bdp-context.tsx
+
+MUSS:
+1) IMPLEMENTIERE EINE EINHEITLICHE AUTH-FUNKTION für BDP-APIs:
+   - Ort: lib/bdp-auth.ts (existiert) ODER neu: lib/arag-bdp-auth.ts (nur wenn bdp-auth.ts ungeeignet).
+   - Signatur: getBdpAuthContext(req) -> { ok, workspaceSlug, userId/email, bdpUserCode, isAdmin, environment }
+2) AUTH-LOGIK (Priorität):
+   A) Wenn bdp_session Cookie vorhanden und gültig:
+      - nutze BDP-Session -> liefere bdpUserCode + environment (z.B. demo) + workspaceSlug
+   B) ELSE: fallback auf Hauptplattform-Session:
+      - rufe serverseitig dieselbe Logik wie /api/auth/me (am besten: shared helper aus lib/session.ts / lib/auth.ts)
+      - ermittele workspaceSlug aus:
+        - request param (wenn vorhanden) ODER
+        - Default: "arag" (weil alle ARAG BDP Routen im ARAG Workspace laufen)
+      - mappe den Plattform-User (email) auf BDP-User:
+        - Wenn email == demo@demo.de -> map auf BdpUserCode="MD1" und isAdmin=true und environment="live" (nicht demo)
+        - Sonst: falls kein Mapping existiert, mappe auf BdpUserCode="V1" NUR als fallback, aber markiere ok=false und gib 403 zurück.
+        - Besser: setze ok=false, 403 "Kein BDP-Zugriff" wenn kein BdpUser gefunden.
+   C) Stelle sicher: workspaceSlug immer gesetzt (standard "arag").
+3) UPDATE ALLE /api/arag-bdp/* ROUTES:
+   - Jede Route muss zuerst getBdpAuthContext() nutzen.
+   - Wenn ok=false -> 401/403 mit deutscher Fehlermeldung.
+   - Wenn ok=true -> führe DB Query scoped to workspaceSlug aus.
+4) COOKIE-SET OPTIONAL (nur wenn sinnvoll, minimal):
+   - Wenn User über Hauptplattform eingeloggt ist und BDP-Context ok=true,
+     dann setze beim ersten BDP API Call optional ein bdp_session Cookie (httpOnly) als „Bridge“,
+     aber nur wenn das in eurer Cookie-Infra trivial ist.
+   - Wenn das kompliziert ist: NICHT machen. Wichtig ist: APIs funktionieren ohne bdp_session.
+
+DATA-TESTIDs:
+- Keine UI Änderung nötig, aber falls du UI-Fehlerbanner ergänzt: data-testid="bdp-auth-error"
+
+QA (MUSS):
+5) Füge /api/arag-bdp/health hinzu (wenn nicht vorhanden):
+   - returns { ok:true, auth:"bdp_session"|"platform", workspaceSlug, bdpUserCode, isAdmin, environment }
+6) Konsole/Serverlog Checkliste beim Start ODER in DEV-NOTE:
+   - PASS: platform-login demo@demo.de kann /api/arag-bdp/health aufrufen (auth=platform)
+   - PASS: /api/arag-bdp/sessions liefert 3 Sessions
+   - PASS: ohne Login liefert 401/403
+DARF NICHT:
+- Keine Änderungen am Hauptplattform Auth Flow.
+- Keine Änderungen an /anmeldung Seite.
+LIEFERN: funktionierende BDP-APIs unabhängig vom bdp_session Cookie.
