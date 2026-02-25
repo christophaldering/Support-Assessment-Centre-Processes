@@ -1,0 +1,184 @@
+DU BIST REPLIT. SETZE GENAU DAS UM. KEINE RÜCKFRAGEN. KEIN REFACTORING.
+SPRINT: L1 — ARAG LOBBY “BOARD EXPERIENCE” (LIVE/DEMO) + DROPDOWN PERSONA LOGIN
+
+ZIEL:
+Nach dem Eintritt in den Workspace "arag" landet man zuerst auf einer ARAG-Lobby-Landingpage.
+Dort:
+1) General-Gate (Admin/Projektzugang) mit E-Mail+Passwort
+2) Auswahl LIVE oder DEMO
+3) Dropdown Auswahl einer Person (Beobachter/Experte/Teilnehmer/Admin) + Passwort
+4) Redirect in den individuellen Bereich (Sessions/Bewertung/Admin/Portal)
+
+WICHTIG:
+- Funktioniert unabhängig vom Login-Weg (/anmeldung, /w/arag/login, etc.)
+- Keine Debug-UI
+- ARAG Design
+- DEMO: Passwörter in der UI vorbefüllt mit "''''"
+- LIVE: Passwörter nicht vorbefüllen
+- Für DEMO-locked Benutzer: Umschalten auf LIVE verhindern + Hinweis “Sie befinden sich in der DEMO-Umgebung.”
+
+========================================================
+A) ROUTING: ARAG LOBBY IST STANDARD LANDING
+========================================================
+1) Stelle sicher: Nach erfolgreichem Login in workspace "arag" erfolgt Redirect auf:
+   /w/arag
+   NICHT direkt auf /arag-bdp
+
+Betroffene Stellen:
+- app/anmeldung/page.tsx (Login Success Redirect)
+- app/w/[slug]/login/page.tsx (workspace login redirect für slug=arag)
+- ggf. middleware/redirect logic
+Ziel: Einheitlich immer /w/arag.
+
+2) Erstelle Seite:
+   app/w/arag/page.tsx
+   - ARAG Lobby Landing (siehe UI Vorgaben)
+   - Client Component dort, wo nötig (Form Handling).
+
+========================================================
+B) GENERAL GATE (PROJEKTZUGANG)
+========================================================
+3) ARAG Lobby zeigt initial ausschließlich “Projektzugang” Gate:
+   Felder:
+   - E-Mail
+   - Passwort
+   Button: “Zugang prüfen”
+   data-testid:
+   - arag-gate-email
+   - arag-gate-password
+   - arag-gate-submit
+
+4) Gate Credentials (bis auf weiteres, exakt so):
+   Email: Christoph.aldering@googlemail.com
+   Passwort: Christoph
+
+5) Implementiere API:
+   POST /api/arag-bdp/gate/general-login
+   body: { email: string, password: string }
+   - Zod validation
+   - Vergleiche exakt gegen obige Werte (konstant, serverseitig)
+   - Bei Erfolg: setze httpOnly cookie "arag_gate_session" (12h)
+   - return { ok: true }
+   - Bei Fehler: 401 + { ok:false, error:"Zugangsdaten nicht korrekt." }
+
+6) Implementiere API:
+   GET /api/arag-bdp/gate/me
+   - prüft arag_gate_session
+   - return { ok:true } oder { ok:false }
+
+7) Ohne gültiges arag_gate_session:
+   - keine LIVE/DEMO Buttons
+   - kein Dropdown
+   - keine Personenliste
+   - nur Gate sichtbar
+
+========================================================
+C) LIVE/DEMO AUSWAHL (LOBBY)
+========================================================
+8) Nach erfolgreichem Gate:
+   Zeige zwei Buttons:
+   - “LIVE starten”
+   - “DEMO starten”
+   data-testid:
+   - arag-lobby-live
+   - arag-lobby-demo
+   Diese Auswahl setzt lokalen lobbyEnvironment state ("live"|"demo").
+
+9) DEMO Besonderheit:
+   - In DEMO ist das Passwortfeld bei Persona Login vorbefüllt mit: "''''" (4 Apostrophe)
+   - In LIVE ist Passwortfeld leer.
+
+========================================================
+D) PERSONA LOGIN (DROPDOWN + PASSWORD)
+========================================================
+10) Nach Auswahl LIVE/DEMO:
+    Zeige Dropdown “Person auswählen” mit Gruppen:
+    - Beobachter (Codes V*)
+    - Experte (Codes E*)
+    - Teilnehmer (Codes TN*)
+    - Admin (MD1 + ggf. weitere Admins)
+    Anzeigeformat: "RealName (Code)"
+    Suche/Filter (typeahead) aktiv
+    data-testid:
+    - arag-person-select
+    - arag-person-password
+    - arag-person-login
+
+11) Datenquelle:
+    Implementiere API:
+    GET /api/arag-bdp/gate/people?environment=live|demo
+    Return:
+    {
+      observers:[{code, realName, role}],
+      experts:[...],
+      participants:[...],
+      admins:[...]
+    }
+    - Nutze BdpNameMapping + BdpUser + BdpParticipant
+    - Filter strikt nach environment (live vs demo)
+    - Keine LIVE Daten in DEMO Liste und umgekehrt.
+
+12) Persona Login API:
+    POST /api/arag-bdp/gate/person-login
+    body: { environment:"live"|"demo", code:string, password:string }
+    - Zod validation
+    - Prüfe:
+      a) Ist code in gewähltem environment vorhanden?
+      b) Passwort stimmt (bestehende Mechanik nutzen; KEIN Klartext Logging)
+    - Bei Erfolg:
+      setze bdp_session cookie passend (environment + code + role)
+      return { ok:true, redirectTo:"/..." }
+
+13) Redirect Regeln:
+    - BOARD / EXPERT -> /arag-bdp/sessions
+    - PARTICIPANT -> /arag-bdp/portal (wenn vorhanden), sonst /arag-bdp
+    - ADMIN (MD1 etc.) -> /arag-bdp/admin
+
+========================================================
+E) DEMO-LOCK: LIVE UMSCHALTUNG VERHINDERN
+========================================================
+14) Wenn ein User in DEMO eingeloggt ist und demoLock=true:
+    - In Lobby darf LIVE Button nicht funktionieren:
+      Klick -> Toast:
+      “Sie befinden sich in der DEMO-Umgebung.”
+      data-testid="arag-env-locked-note"
+    - Zusätzlich: selbst wenn jemand LIVE manuell aufruft, immer zurück nach DEMO.
+    (Serverseitig absichern: person-login verweigert environment=live für demoLock user.)
+
+========================================================
+F) UI / ARAG DESIGN (LOBBY)
+========================================================
+15) ARAG Lobby wirkt wie “Warte-Lounge”:
+    - Hintergrund #FFFBF0
+    - Header schwarz, Titel “ARAG Executive BDP”
+    - Gold Akzent #FFD700
+    - Kurze Info-Kachel:
+      * “Bewertung: pro Kriterium 100 Punkte (Summe muss 100 sein)”
+      * “Sponsorflag = Transparenz”
+      * “Ergebnisse erst nach Freigabe”
+      * “DEMO: Änderungen wirken sofort auf Auswertung”
+    - Footer: “Powered by aestimamus”
+    - Keine langen Texte, keine Spielerei.
+
+========================================================
+G) TECHNISCHE STABILITÄT
+========================================================
+16) Keine Hydration Warnings:
+    - Gate-Check clientseitig via GET /api/arag-bdp/gate/me (cache:no-store)
+17) Keine Console Errors.
+18) Alle Buttons/Inputs erhalten data-testid.
+
+========================================================
+H) QA (MUSS BESTEHEN)
+========================================================
+19) Tests:
+    - Ohne Gate cookie: nur Gate sichtbar
+    - Gate korrekt: Lobby zeigt LIVE/DEMO
+    - LIVE gewählt: People API liefert nur live people
+    - DEMO gewählt: People API liefert nur demo people, Passwortfeld vorbefüllt "''''"
+    - Persona Login als BOARD -> /arag-bdp/sessions
+    - Persona Login als ADMIN -> /arag-bdp/admin
+    - demoLock user: LIVE blockiert mit Hinweis
+    - Login-Weg egal: nach workspace login immer /w/arag
+
+JETZT IMPLEMENTIEREN.

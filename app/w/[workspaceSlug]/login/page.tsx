@@ -42,7 +42,7 @@ export default function WorkspaceUserLoginPage() {
       }
 
       if (workspaceSlug === "arag") {
-        router.push("/arag-bdp");
+        router.push("/w/arag");
         return;
       }
 
