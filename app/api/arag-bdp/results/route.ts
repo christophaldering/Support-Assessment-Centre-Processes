@@ -1,0 +1,83 @@
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+import { getBdpSession } from "@/lib/bdp-auth";
+
+const prisma = new PrismaClient();
+
+export async function GET(req: NextRequest) {
+  const bdpSession = getBdpSession();
+  if (!bdpSession) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const sessionId = searchParams.get("sessionId");
+  if (!sessionId) return NextResponse.json({ error: "sessionId erforderlich" }, { status: 400 });
+
+  const dbSession = await prisma.bdpSession.findUnique({
+    where: { id: sessionId },
+    include: { sessionTeams: { include: { team: true } } },
+  });
+
+  if (!dbSession) return NextResponse.json({ error: "Session nicht gefunden" }, { status: 404 });
+
+  if (dbSession.state !== "RELEASED" && !bdpSession.isAdmin) {
+    return NextResponse.json({ error: "Ergebnisse sind noch nicht freigegeben" }, { status: 403 });
+  }
+
+  const scores = await prisma.bdpScore.findMany({
+    where: { sessionId },
+    include: { criterion: true, team: true, observer: true },
+  });
+
+  const criteria = await prisma.bdpCriterion.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } });
+
+  const teamTotals: Record<string, { teamId: string; teamCode: string; total: number; byCriterion: Record<string, number> }> = {};
+
+  for (const st of dbSession.sessionTeams) {
+    teamTotals[st.team.id] = {
+      teamId: st.team.id,
+      teamCode: st.team.code,
+      total: 0,
+      byCriterion: {},
+    };
+    for (const c of criteria) {
+      teamTotals[st.team.id].byCriterion[c.id] = 0;
+    }
+  }
+
+  for (const score of scores) {
+    if (teamTotals[score.teamId]) {
+      teamTotals[score.teamId].total += score.points;
+      teamTotals[score.teamId].byCriterion[score.criterionId] =
+        (teamTotals[score.teamId].byCriterion[score.criterionId] || 0) + score.points;
+    }
+  }
+
+  const ranked = Object.values(teamTotals).sort((a, b) => b.total - a.total);
+
+  let isTie = false;
+  if (ranked.length >= 2 && ranked[0].total === ranked[1].total) {
+    isTie = true;
+  }
+
+  const tieBreak = await prisma.bdpTieBreak.findUnique({ where: { sessionId } });
+
+  let perObserver = null;
+  if (bdpSession.isAdmin && dbSession.transparencyMode === "show_per_observer_breakdown") {
+    const grouped: Record<string, Record<string, Record<string, number>>> = {};
+    for (const score of scores) {
+      if (!grouped[score.observer.code]) grouped[score.observer.code] = {};
+      if (!grouped[score.observer.code][score.teamId]) grouped[score.observer.code][score.teamId] = {};
+      grouped[score.observer.code][score.teamId][score.criterionId] = score.points;
+    }
+    perObserver = grouped;
+  }
+
+  return NextResponse.json({
+    session: { id: dbSession.id, name: dbSession.name, state: dbSession.state },
+    criteria: criteria.map(c => ({ id: c.id, name: c.name })),
+    ranked,
+    isTie,
+    tieBreak: tieBreak ? { winnerTeamId: tieBreak.winnerTeamId, rationale: tieBreak.rationale, decidedById: tieBreak.decidedById } : null,
+    perObserver,
+  });
+}

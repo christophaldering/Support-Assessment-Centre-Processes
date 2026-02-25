@@ -205,7 +205,13 @@ async function main() {
   }
 }
 
+async function seedBdp() {
+  const { seedBdp: runBdpSeed } = await import("./bdp-seed");
+  await runBdpSeed();
+}
+
 main()
+  .then(() => seedBdp())
   .catch((e) => {
     console.error(e);
     process.exit(1);

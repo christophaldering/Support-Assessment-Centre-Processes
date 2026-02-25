@@ -88,39 +88,24 @@ export default function WorkspaceUserLoginPage() {
     }
   };
 
-  const displayName = workspaceSlug.toUpperCase();
-
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col">
       <header className="bg-brand-navy text-white">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity" data-testid="link-back-landing">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
+          <Link href="/" className="font-serif text-lg font-bold tracking-tight hover:opacity-80 transition-opacity">
             Executive Diagnostics Suite
-          </Link>
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors"
-            data-testid="link-back-home"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-            Zurück
           </Link>
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-6 py-12">
+      <main className="flex-1 flex items-center justify-center px-6">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-navy text-white font-bold text-xl mb-4" data-testid="workspace-icon">
-              {displayName.charAt(0)}
-            </div>
-            <h1 className="text-2xl font-bold text-brand-navy mb-1" data-testid="text-workspace-title">
-              {displayName}
+            <h1 className="text-2xl font-bold text-brand-navy mb-2">
+              {mode === "login" ? "Anmeldung" : "Erstanmeldung"}
             </h1>
-            <p className="text-sm text-slate-500 mb-1">
-              {mode === "login" ? "Workspace-Anmeldung" : "Erstanmeldung"}
+            <p className="text-sm text-slate-500">
+              Workspace: <strong>{workspaceSlug}</strong>
             </p>
             <div className="h-1 w-10 bg-brand-blue mx-auto rounded-full mt-4" />
           </div>

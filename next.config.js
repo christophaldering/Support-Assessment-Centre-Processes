@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  ...(process.env.NODE_ENV === "production" ? { output: "standalone" } : {}),
-  webpack: (config, { isServer, dev }) => {
+  output: "standalone",
+  webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = config.externals || [];
       config.externals.push("pdfkit");
@@ -29,6 +29,17 @@ const nextConfig = {
   env: {
     PORT: "5000",
     HOSTNAME: "0.0.0.0",
+  },
+  async headers() {
+    return [
+      {
+        source: "/((?!_next/static|_next/image|favicon.ico).*)",
+        headers: [
+          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate" },
+          { key: "Pragma", value: "no-cache" },
+        ],
+      },
+    ];
   },
 };
 

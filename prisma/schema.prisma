@@ -989,3 +989,245 @@ model AiAuditLog {
   @@index([workspaceId, createdAt])
   @@map("ai_audit_log")
 }
+
+// ============================================================
+// ARAG BDP (Business Development Pitch) Evaluation Tool Models
+// ============================================================
+
+model BdpUser {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  role        String
+  displayName String?  @map("display_name")
+  isAdmin     Boolean  @default(false) @map("is_admin")
+  environment String   @default("live")
+  username    String?
+  passwordHash String? @map("password_hash")
+  photoUrl    String?  @map("photo_url")
+  viewMode    String   @default("mobile") @map("view_mode")
+  uiPreset    String   @default("whatsapp_spiegel") @map("ui_preset")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  observerAssignments BdpObserverAssignment[]
+  scores              BdpScore[]
+  sponsorFlags        BdpSponsorFlag[]
+  individualNotes     BdpIndividualNote[]
+  tieBreakDecisions   BdpTieBreak[]
+
+  @@map("bdp_users")
+}
+
+model BdpSession {
+  id                String   @id @default(uuid())
+  name              String
+  state             String   @default("DRAFT")
+  transparencyMode  String   @default("aggregates_only") @map("transparency_mode")
+  environment       String   @default("live")
+  startedAt         DateTime? @map("started_at")
+  closedAt          DateTime? @map("closed_at")
+  releasedAt        DateTime? @map("released_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  sessionTeams        BdpSessionTeam[]
+  observerAssignments BdpObserverAssignment[]
+  scores              BdpScore[]
+  sponsorFlags        BdpSponsorFlag[]
+  individualNotes     BdpIndividualNote[]
+  tieBreaks           BdpTieBreak[]
+
+  @@map("bdp_sessions")
+}
+
+model BdpTeam {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  displayName String?  @map("display_name")
+  environment String   @default("live")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  sessionTeams     BdpSessionTeam[]
+  teamParticipants BdpTeamParticipant[]
+  scores           BdpScore[]
+  sponsorFlags     BdpSponsorFlag[]
+  tieBreakWins     BdpTieBreak[]
+
+  @@map("bdp_teams")
+}
+
+model BdpParticipant {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  displayName String?  @map("display_name")
+  environment String   @default("live")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  teamParticipants BdpTeamParticipant[]
+  individualNotes  BdpIndividualNote[]
+
+  @@map("bdp_participants")
+}
+
+model BdpTeamParticipant {
+  id            String @id @default(uuid())
+  teamId        String @map("team_id")
+  participantId String @map("participant_id")
+
+  team        BdpTeam        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  participant BdpParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, participantId])
+  @@map("bdp_team_participants")
+}
+
+model BdpSessionTeam {
+  id        String @id @default(uuid())
+  sessionId String @map("session_id")
+  teamId    String @map("team_id")
+
+  session BdpSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  team    BdpTeam    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, teamId])
+  @@map("bdp_session_teams")
+}
+
+model BdpObserverAssignment {
+  id              String   @id @default(uuid())
+  sessionId       String   @map("session_id")
+  userId          String   @map("user_id")
+  canScoreTeamIds String[] @map("can_score_team_ids")
+
+  session BdpSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    BdpUser    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+  @@map("bdp_observer_assignments")
+}
+
+model BdpCriterion {
+  id        String   @id @default(uuid())
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  scores      BdpScore[]
+  roleWeights BdpRoleWeight[]
+  notes       BdpIndividualNote[]
+
+  @@map("bdp_criteria")
+}
+
+model BdpScore {
+  id          String   @id @default(uuid())
+  sessionId   String   @map("session_id")
+  criterionId String   @map("criterion_id")
+  observerId  String   @map("observer_id")
+  teamId      String   @map("team_id")
+  points      Int
+  environment String   @default("live")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  session   BdpSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  criterion BdpCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  observer  BdpUser      @relation(fields: [observerId], references: [id], onDelete: Cascade)
+  team      BdpTeam      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, criterionId, observerId, teamId])
+  @@map("bdp_scores")
+}
+
+model BdpSponsorFlag {
+  id          String  @id @default(uuid())
+  observerId  String  @map("observer_id")
+  teamId      String  @map("team_id")
+  sessionId   String  @map("session_id")
+  isSponsor   Boolean @default(false) @map("is_sponsor")
+  environment String  @default("live")
+
+  observer BdpUser    @relation(fields: [observerId], references: [id], onDelete: Cascade)
+  team     BdpTeam    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  session  BdpSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([observerId, teamId, sessionId])
+  @@map("bdp_sponsor_flags")
+}
+
+model BdpIndividualNote {
+  id            String   @id @default(uuid())
+  sessionId     String   @map("session_id")
+  participantId String   @map("participant_id")
+  observerId    String   @map("observer_id")
+  criterionId   String?  @map("criterion_id")
+  note          String   @default("")
+  generalNote   String   @default("") @map("general_note")
+  contribution  Int?
+  presence      Int?
+  environment   String   @default("live")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  session     BdpSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  participant BdpParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  observer    BdpUser        @relation(fields: [observerId], references: [id], onDelete: Cascade)
+  criterion   BdpCriterion?  @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, participantId, observerId, criterionId])
+  @@map("bdp_individual_notes")
+}
+
+model BdpNameMapping {
+  id         String  @id @default(uuid())
+  entityType String  @map("entity_type")
+  entityId   String  @map("entity_id")
+  realName   String  @map("real_name")
+
+  @@unique([entityType, entityId])
+  @@map("bdp_name_mappings")
+}
+
+model BdpTieBreak {
+  id           String  @id @default(uuid())
+  sessionId    String  @map("session_id")
+  winnerTeamId String  @map("winner_team_id")
+  decidedById  String  @map("decided_by_id")
+  rationale    String? @default("")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  session    BdpSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  winnerTeam BdpTeam    @relation(fields: [winnerTeamId], references: [id], onDelete: Cascade)
+  decidedBy  BdpUser    @relation(fields: [decidedById], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId])
+  @@map("bdp_tie_breaks")
+}
+
+model BdpRoleWeight {
+  id          String @id @default(uuid())
+  role        String
+  criterionId String @map("criterion_id")
+  weight      Float  @default(1.0)
+  enabled     Boolean @default(false)
+
+  criterion BdpCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@unique([role, criterionId])
+  @@map("bdp_role_weights")
+}
+
+model BdpConfig {
+  id                   String  @id @default(uuid())
+  projectKey           String  @default("ARAG_BDP") @map("project_key")
+  gatePassword         String? @map("gate_password")
+  enforceGatePassword  Boolean @default(false) @map("enforce_gate_password")
+  weightedAnalytics    Boolean @default(false) @map("weighted_analytics")
+  lockNotesOnClose     Boolean @default(true) @map("lock_notes_on_close")
+
+  @@map("bdp_config")
+}
