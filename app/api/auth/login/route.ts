@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const workspace = await prisma.workspace.findUnique({
-      where: { slug: workspaceSlug },
+      where: { slug: workspaceSlug.toLowerCase().trim() },
     });
 
     if (!workspace) {
