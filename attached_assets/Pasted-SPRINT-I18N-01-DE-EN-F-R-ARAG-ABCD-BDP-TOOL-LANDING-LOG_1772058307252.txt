@@ -1,0 +1,170 @@
+SPRINT I18N-01 – DE/EN FÜR ARAG/ABCD BDP TOOL + LANDING + LOGIN (MIT LANGUAGE TOGGLE AUF JEDER SEITE)
+
+DU BIST REPLIT.
+KEINE RÜCKFRAGEN.
+KEINE TEILLÖSUNGEN.
+KEINE „TODO“-STELLEN OHNE UMSETZUNG.
+ALLES MUSS KOMPIELIEREN UND LAUFEN.
+
+ZIEL
+1) Vollständige englische Version aller relevanten UI-Texte (DE/EN).
+2) Auf JEDER Seite ein sichtbarer Language-Toggle (DE | EN).
+3) Umschalten ohne Reload (client-side), aber SSR-kompatibel.
+4) Sprache persistiert (Cookie + localStorage) und gilt für alle Seiten/Routes.
+5) Default-Sprache: DE.
+6) KEINE Änderung an Auth-Logik, Routing-Logik, DB-Schema (nur UI/i18n Layer).
+7) Alle UI-Texte bleiben weiterhin „Board-tauglich“ (sachlich, klar).
+
+SCOPE (MUSS ABGEDECKT SEIN)
+- app/anmeldung/page.tsx
+- app/w/[workspaceSlug]/login/page.tsx (mindestens für arag)
+- app/w/arag/page.tsx (Landing: Standard + Apple Toggle)
+- app/arag-bdp/** (alle Seiten: home, sessions, bewertung, auswertung, profile, admin, gate)
+- falls vorhanden: app/abcd-bdp/** analog (wenn bereits gebaut)
+- alle shared UI-Komponenten, die in diesen Bereichen Texte ausgeben (Buttons, Labels, Tooltips, Errors, Empty States, Badges)
+
+ARCHITEKTURVORGABE (EINFACH, ROBUST, OHNE EXTERNE ABHÄNGIGKEITEN)
+- KEIN next-intl Setup, KEIN komplexes Locale Routing.
+- Implementiere ein internes i18n-System über:
+  1) /lib/i18n/translations.ts (DE/EN Dictionaries)
+  2) /lib/i18n/i18n.ts (t()-Helper, Typing, Fallback)
+  3) /lib/i18n/language.ts (Cookie/localStorage read/write)
+  4) /app/components/LanguageToggle.tsx (UI Toggle)
+  5) Optional: /app/providers/LanguageProvider.tsx (Context) – empfohlen
+
+SPRACH-PERSISTENZ
+- Cookie Name: lang
+- Werte: "de" | "en"
+- localStorage Key: "arag_lang"
+- Priorität beim Laden:
+  1) Cookie lang
+  2) localStorage arag_lang
+  3) default "de"
+
+LANGUAGE TOGGLE – PLATZIERUNG
+- In JEDEM Layout/Header der folgenden Bereiche:
+  - app/arag-bdp/layout.tsx (Header rechts)
+  - app/w/arag (Landing Header rechts)
+  - app/anmeldung (Header rechts)
+  - app/w/[slug]/login (Header rechts)
+- Zusätzlich: auf Seiten ohne Header (falls vorhanden) oben rechts in einer minimalen Topbar.
+- UI:
+  - klein, hochwertig, nicht störend
+  - "DE" und "EN" als Segmented Control
+  - data-testid="lang-toggle"
+  - active state klar sichtbar
+  - ARAG-Design-konform (schwarz/gelb, sonst neutral)
+
+UMSCHALT-LOGIK
+- Beim Umschalten:
+  - setLang("de"|"en")
+  - schreibt Cookie + localStorage
+  - triggert Re-Render (Context state)
+  - KEIN Full Reload
+- Sprache gilt sofort auf der aktuellen Seite.
+
+ÜBERSETZUNGS-UMFANG (MUSS)
+1) Alle sichtbaren Labels:
+   Buttons, Tabs, Menüs, Überschriften, Badges, Tooltips, Hinweise, leere Zustände.
+2) Alle Status-Begriffe (deutlich, Board-tauglich):
+   DE:
+   - "Bewertung speichern"
+   - "Bewertung abschließen"
+   - "Bewertung läuft"
+   - "Bewertung abgeschlossen"
+   - "DEMO-UMGEBUNG"
+   EN:
+   - "Save rating"
+   - "Finalize rating"
+   - "Rating in progress"
+   - "Rating closed"
+   - "DEMO ENVIRONMENT"
+3) Admin-Texte:
+   - "Bewertung für alle abschließen" → "Close rating for everyone"
+   - Confirm Dialog Titel/Text korrekt übersetzen.
+4) Landing-Kontext (Standard + Apple):
+   - Alle Headlines/Sub-lines in EN-Version (professionell, kein Slang).
+5) Fehler-/Empty-States:
+   - z.B. "Keine Sessions vorhanden" → "No sessions available"
+   - "Bitte Workspace eingeben" → "Please enter workspace"
+   - etc.
+
+QUALITÄTSREGELN FÜR ÜBERSETZUNG
+- Keine wörtliche Maschinenübersetzung ohne Tonalität.
+- Executive tone: klar, knapp, professionell.
+- Keine Marketingfloskeln.
+- Kurze UI-Texte (keine 3-Zeilen Buttons).
+- Tooltips maximal 1–2 Sätze.
+
+IMPLEMENTIERUNGSDETAILS
+
+A) TRANSLATIONS DICTIONARY
+Erstelle /lib/i18n/translations.ts mit Struktur:
+export const translations = {
+  de: { ... },
+  en: { ... }
+} as const;
+
+B) t()-HELPER
+/lib/i18n/i18n.ts:
+- function t(key: keyof typeof translations.de, vars?) returns string
+- fallback: de
+- erlaubt string interpolation {name}
+
+C) LANGUAGE PROVIDER
+/app/providers/LanguageProvider.tsx:
+- use client
+- state lang
+- init from cookie/localStorage (client)
+- provide t + lang + setLang
+
+D) SERVER-SIDE DEFAULT (OPTIONAL, NICHT INVASIV)
+- Wenn möglich, im Root Layout cookie lang lesen und initialLang setzen.
+- Aber: keine Locale Routes, kein Middleware-Zwang.
+
+E) INTEGRATION
+- Umstelle alle Hardcoded Strings im SCOPE auf t("...").
+- Minimaler Key-Satz, aber vollständig (keine verbleibenden deutschen ARAG-BDP Texte hardcoded).
+- Suche nach häufigen Strings: "Bewertung", "Session", "Admin", "Abmelden", etc. und migriere.
+
+F) LANGUAGE TOGGLE COMPONENT
+/app/components/LanguageToggle.tsx:
+- Segmented control DE|EN
+- calls setLang
+- data-testid="lang-toggle"
+- aria-label="Language"
+
+G) APPLE/STANDARD LANDING TOGGLE BLEIBT
+- Apple/Standard Toggle bleibt unverändert.
+- Language Toggle wird zusätzlich (Header rechts) angezeigt.
+- Beide Toggles dürfen sich nicht überlagern: sauberes Layout (flex gap).
+
+H) KEINE REGRESSIONS
+- Keine Änderung an Login-Flows.
+- Keine Änderung an BDP Session Cookies.
+- Keine Änderung an Redirect Guards.
+- Nur Textlayer + Toggle.
+
+QA / ABNAHMETESTS (Zwingend)
+1) Start /anmeldung:
+   - Toggle sichtbar
+   - Umschalten DE/EN wirkt sofort
+   - Eingabefelder Labels übersetzt
+2) Nach Login in arag:
+   - /w/arag Landing: Toggle sichtbar
+   - Standard und Apple View beide übersetzt
+3) /arag-bdp:
+   - Header: Toggle sichtbar
+   - Tabs übersetzt
+   - Buttons/Tooltips übersetzt
+   - Admin-Bereich übersetzt
+4) Persistenz:
+   - Sprache umstellen → Seite neu laden → Sprache bleibt
+   - Neue Route öffnen → Sprache bleibt
+5) Lint/Build:
+   - Keine TS Errors
+   - Keine Runtime Errors
+   - Keine missing keys (Fallback darf nicht stillschweigend falsche Sprache zeigen; logge missing key einmal in dev)
+
+ENDE.
+IMPLEMENTIERE JETZT VOLLSTÄNDIG.
