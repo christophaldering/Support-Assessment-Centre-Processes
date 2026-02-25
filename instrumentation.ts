@@ -34,8 +34,66 @@ export async function register() {
         }
       }
 
+      const aragExists = await prisma.workspace.findUnique({ where: { slug: "arag" } });
+      if (!aragExists) {
+        const aragAdminHash = await bcrypt.hash("Christoph", 10);
+        const aragWs = await prisma.workspace.create({
+          data: {
+            slug: "arag",
+            name: "ARAG",
+            status: "active",
+            aiEnabled: false,
+            adminPasswordHash: aragAdminHash,
+            dataResidency: "EU",
+            theme: {
+              create: {
+                primaryColor: "#FFD700",
+                secondaryColor: "#1a1a1a",
+                accentColor: "#FFD700",
+                backgroundColor: "#ffffff",
+                textColor: "#1a1a1a",
+                fontFamily: "Inter",
+                fontFamilyHeading: "Playfair Display",
+              },
+            },
+          },
+        });
+        const demoHash = await bcrypt.hash("demo", 10);
+        await prisma.user.create({
+          data: {
+            email: "demo@demo.de",
+            name: "Demo User",
+            passwordHash: demoHash,
+            roles: ["WORKSPACE_ADMIN"],
+            workspaceId: aragWs.id,
+            forcePasswordChange: false,
+            status: "active",
+          },
+        });
+        console.log("[seed] Created arag workspace + demo user");
+      } else {
+        const demoUser = await prisma.user.findUnique({
+          where: { email_workspaceId: { email: "demo@demo.de", workspaceId: aragExists.id } },
+        });
+        if (!demoUser) {
+          const demoHash = await bcrypt.hash("demo", 10);
+          await prisma.user.create({
+            data: {
+              email: "demo@demo.de",
+              name: "Demo User",
+              passwordHash: demoHash,
+              roles: ["WORKSPACE_ADMIN"],
+              workspaceId: aragExists.id,
+              forcePasswordChange: false,
+              status: "active",
+            },
+          });
+          console.log("[seed] Created demo user in existing arag workspace");
+        }
+      }
+
       const count = await prisma.workspace.count();
-      if (count === 0) {
+      if (count <= 1) {
         console.log("[seed] No workspaces found, auto-seeding...");
 
         const adminHash = await bcrypt.hash("Christoph", 10);
