@@ -11,9 +11,9 @@ import {
   Shield,
   FlaskConical,
   Download,
-  Scissors,
   LogOut,
   User,
+  Mail,
 } from "lucide-react";
 import { BdpContext, BdpUser } from "./bdp-context";
 
@@ -116,6 +116,7 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
     { href: "/arag-bdp/admin", label: "Admin Konsole", testId: "bdp-side-admin", Icon: Shield },
     { href: "/arag-bdp/admin/qa", label: "QA", testId: "bdp-side-qa", Icon: FlaskConical },
     { href: "/arag-bdp/admin?tab=export", label: "Exporte", testId: "bdp-side-exports", Icon: Download },
+    { href: "/arag-bdp/admin/invitations", label: "Einladungen", testId: "bdp-side-invitations", Icon: Mail },
   ];
 
   const isActive = (href: string) => {
@@ -271,7 +272,10 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
                 <Link href="/arag-bdp/profile" data-testid="bdp-menu-profile" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Profil</Link>
                 <Link href="/arag-bdp/profile" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Einstellungen</Link>
                 {user.isAdmin && (
-                  <Link href="/arag-bdp/admin" data-testid="bdp-menu-admin" className="block py-2 px-4 rounded hover:bg-gray-100 font-bold" onClick={() => setMenuOpen(false)}>Admin</Link>
+                  <>
+                    <Link href="/arag-bdp/admin" data-testid="bdp-menu-admin" className="block py-2 px-4 rounded hover:bg-gray-100 font-bold" onClick={() => setMenuOpen(false)}>Admin</Link>
+                    <Link href="/arag-bdp/admin/invitations" data-testid="bdp-menu-invitations" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Einladungen</Link>
+                  </>
                 )}
                 <button data-testid="bdp-menu-logout" onClick={handleLogout} className="block py-2 px-4 rounded hover:bg-red-50 text-red-600 w-full text-left">Abmelden</button>
               </nav>

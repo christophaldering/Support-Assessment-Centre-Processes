@@ -1,0 +1,140 @@
+DU BIST REPLIT. SETZE GENAU DAS UM. KEINE RÜCKFRAGEN. KEIN REFACTORING.
+SPRINT: ADMIN EINLADUNGEN (ARAG BDP)
+ZIEL: Im Admin-Bereich des ARAG-BDP Tools eine Einladungsseite bereitstellen, über die der Admin Beobachter (Vorstände), Experten und Teilnehmer einladen kann – inklusive Texteditor, um eine Vorlage zu modifizieren. Fokus: funktional, stabil, testbar. Keine Scope-Erweiterung.
+
+KONTEXT / IST-STAND:
+- Next.js 14 App Router, Prisma, Postgres, Tailwind
+- Admin Bereich existiert: /arag-bdp/admin
+- Es gibt BDP Models (u.a. BdpUser, BdpParticipant, BdpNameMapping, BdpConfig, etc.)
+- E-Mail System via SendGrid vorhanden (lib/email.ts oder ähnlich), aber Implementierung darf auch als “Send Preview / Copy” starten, falls Email-Versand in diesem Sprint riskant ist.
+
+MUSS: 1) ROUTE & NAV
+1) Erstelle neue Admin-Seite:
+   - Route: /arag-bdp/admin/invitations
+   - Link in Admin Navigation (Desktop Sidebar + Hamburger) hinzufügen:
+     - Label: “Einladungen”
+     - data-testid="bdp-side-invitations" (Sidebar)
+     - data-testid="bdp-menu-invitations" (Hamburger, falls vorhanden)
+2) Admin-Guard:
+   - Nur Admin (useBdp().isAdmin == true) darf die Seite sehen.
+   - Nicht-Admin redirect -> /arag-bdp
+
+MUSS: 2) EINLADUNGSTYPEN & EMPFÄNGERAUSWAHL
+3) Auf /arag-bdp/admin/invitations drei Tabs/Segmente:
+   A) Vorstände (Beobachter)
+   B) Experte(n)
+   C) Teilnehmer
+   Jeder Tab hat:
+   - Empfängerliste (Checkboxen)
+   - “Alle auswählen”
+   - Suchfeld (Filter nach Code und nach optionalem RealName)
+
+4) Datenquelle:
+   - Vorstände/Experten kommen aus BdpUser (role BOARD / EXPERT)
+   - Teilnehmer kommen aus BdpParticipant
+   - Falls RealName-Mapping existiert: zeige “Code — RealName” (RealName optional)
+   - Falls keine Email-Adresse im Modell vorhanden:
+     - zeige pro Empfänger ein Eingabefeld “E-Mail (optional)” und speichere diese Email im Mapping/Config (siehe Punkt 8)
+     - Default: leer
+
+MUSS: 3) TEMPLATE-TEXTEDITOR (MODIFIZIERBAR)
+5) In jedem Tab: ein Editor-Feld “Einladungstext” (vorbefüllt).
+   - Verwende einen robusten Rich-Text-Editor:
+     - Bevorzugt: TipTap (bereits im Projekt)
+     - Alternativ: einfacher textarea Editor, NUR falls TipTap in Admin-Page zu riskant wäre.
+   - Der Editor muss:
+     - Bold/Italic
+     - Bullet List
+     - Link
+     (Minimalset; keine großen Plugins)
+   - data-testid="bdp-invite-editor"
+
+6) Vorlage (Deutsch) – per Tab leicht angepasst (muss als Starttext gesetzt sein).
+   Platzhalter müssen unterstützt werden:
+   - {{CODE}} (z.B. V1, E1, TN12)
+   - {{WORKSPACE}} = ARAG
+   - {{LINK}} = Login-Link (siehe Punkt 7)
+   - {{SESSION_OVERVIEW_LINK}} optional (kann gleich {{LINK}} sein)
+   - {{SENDER}} = “aestimamus / ARAG Projektteam” (fix)
+   Platzhalter werden beim Versand/Preview pro Empfänger ersetzt.
+
+MUSS: 4) LINK-LOGIK
+7) Login Link für Einladung:
+   - Nutze den bestehenden Login-Flow: https://assessment-suite.replit.app/anmeldung
+   - Workspace soll vorausgefüllt sein: arag (wenn möglich via Query)
+   - Wenn euer /anmeldung Textfeld workspace unterstützt, setze Query:
+     - /anmeldung?workspace=arag
+   - Falls das nicht implementiert ist, implementiere minimal:
+     - /anmeldung liest query param workspace und prefills das Workspace Feld.
+   - Der Link wird als {{LINK}} in den Text eingesetzt.
+
+MUSS: 5) SEND-MODUS: 2 STUFEN (SICHER)
+8) Speichere pro Empfänger optional eine E-Mail Adresse:
+   - Für BdpUser: falls kein Email Feld existiert, speichere im BdpNameMapping oder BdpConfig JSON:
+     - key: "emailByCode": { "V1": "x@y.de", "E1": "...", "TN12": "..." }
+   - Für BdpParticipant analog per Code.
+   - Implementiere API endpoints:
+     - GET /api/arag-bdp/admin/invitations/recipients
+     - POST /api/arag-bdp/admin/invitations/save-emails
+     - POST /api/arag-bdp/admin/invitations/preview
+     - POST /api/arag-bdp/admin/invitations/send (optional; siehe 9)
+
+9) Versand-Funktion:
+   - Implementiere ZWEI Modi (Admin wählbar per Toggle):
+     A) “Nur Vorschau & Kopieren” (DEFAULT, sicher)
+        - Erzeuge pro ausgewähltem Empfänger den final gerenderten Text (Platzhalter ersetzt)
+        - Zeige in einer Liste “Empfänger / Betreff / Text”
+        - Button “In Zwischenablage kopieren”
+     B) “E-Mail senden (SendGrid)” (optional nur wenn zuverlässig)
+        - Nutze vorhandenes SendGrid Setup in lib/email.ts
+        - Sende pro Empfänger eine Mail
+        - Logge Versand in AuditLog oder in neuem Prisma Model BdpInvitationLog (NUR falls schon sinnvoll vorhanden).
+   - Wenn SendGrid Versand in diesem Sprint zu riskant ist:
+     - Implementiere nur Modus A (Vorschau & Kopieren) und baue Modus B als disabled “Kommt bald”.
+   WICHTIG: Du darfst NICHT halb kaputten Versand shippen. Lieber sauberer Preview-only.
+
+MUSS: 6) BETREFF & METADATEN
+10) Admin kann Betreff bearbeiten (Default pro Tab):
+   - Vorstände: “ARAG BDP – Einladung zur Beobachtung & Bewertung”
+   - Experte: “ARAG BDP – Einladung als Experte”
+   - Teilnehmer: “ARAG BDP – Einladung zur Teilnahme am Business Development Pitch”
+   data-testid="bdp-invite-subject"
+
+11) Admin kann eine “Session Referenz” auswählen (optional dropdown):
+   - “Alle Sessions”
+   - “BDP Session 1/2/3”
+   Diese Referenz kann als {{SESSION}} im Text erscheinen.
+
+MUSS: 7) UX & TESTIDS
+12) Seite Layout:
+   - Desktop: 2-Spalten
+     links: Empfänger-Auswahl
+     rechts: Editor + Subject + Preview/Senden
+   - Mobile: stacked
+13) Buttons:
+   - “Vorschau erzeugen” data-testid="bdp-invite-preview"
+   - “Kopieren” data-testid="bdp-invite-copy"
+   - “Senden” data-testid="bdp-invite-send" (wenn enabled)
+   - “E-Mails speichern” data-testid="bdp-invite-save-emails"
+
+MUSS: 8) SICHERHEIT / BERECHTIGUNG
+14) Alle /api/arag-bdp/admin/invitations/* Endpunkte:
+   - prüfen Admin-Recht serverseitig (nicht nur client)
+   - zod validation der bodies
+   - workspace scoping: nur arag
+
+MUSS: 9) QUALITÄTSSICHERUNG
+15) Erstelle mini QA checklist (admin-only) auf der Seite unten:
+   - PASS: Empfänger laden
+   - PASS: Editor speichert Text (local state + optional persist in BdpConfig)
+   - PASS: Preview ersetzt Platzhalter korrekt
+   - PASS: Copy funktioniert
+   - PASS: Non-admin blocked
+
+LIEFERUNG:
+- Neue Seite /arag-bdp/admin/invitations
+- Tabs: Vorstände / Experte / Teilnehmer
+- Editor (TipTap bevorzugt) + Subject + Preview/Copy
+- Optional Email speichern + optional SendGrid Versand (nur wenn stabil)
+- data-testid überall
+- Keine Regressionen

@@ -78,6 +78,9 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
     - API: All routes under `app/api/arag-bdp/`, auth via `bdp_session` HTTP-only cookie
     - ARAG styling: yellow (#FFD700) accent, black text, warm background (#FFFBF0)
     - QA page at `/arag-bdp/admin/qa` with automated PASS/FAIL checks
+    - Admin invitations page at `/arag-bdp/admin/invitations`: 3 tabs (Vorstände/Experte/Teilnehmer), TipTap rich text editor with templates and placeholders ({{CODE}}, {{WORKSPACE}}, {{LINK}}, {{SESSION}}, {{SENDER}}), email storage per recipient via BdpNameMapping, preview & copy mode (SendGrid send disabled for safety), session reference selector, QA checks at bottom
+    - Desktop sidebar + mobile hamburger both include "Einladungen" link (admin-only)
+    - `/anmeldung` supports `?workspace=arag` query param for pre-filling workspace field
 
 ## External Dependencies
 

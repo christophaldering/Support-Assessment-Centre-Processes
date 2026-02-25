@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default function AnmeldungPage() {
+function AnmeldungForm() {
   const router = useRouter();
-  const [workspace, setWorkspace] = useState("");
+  const searchParams = useSearchParams();
+  const [workspace, setWorkspace] = useState(searchParams.get("workspace") || "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -195,5 +197,17 @@ export default function AnmeldungPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function AnmeldungPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-brand-blue border-t-transparent rounded-full" />
+      </div>
+    }>
+      <AnmeldungForm />
+    </Suspense>
   );
 }
