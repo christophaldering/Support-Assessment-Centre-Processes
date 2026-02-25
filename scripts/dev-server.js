@@ -3,45 +3,82 @@ const { spawn } = require("child_process");
 
 const PORT = 5000;
 const NEXT_PORT = 5001;
-let nextReady = false;
 let pagesWarmed = false;
 
 const loadingHTML = `<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <title>Executive Diagnostics Suite</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0f172a; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .loader { text-align: center; }
-    .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1.5rem; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; }
-    p { font-size: 0.875rem; color: #64748b; }
-  </style>
-  <script>setTimeout(function(){location.reload()}, 2000);</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Executive Diagnostics Suite</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.c{text-align:center}
+.s{width:36px;height:36px;border:3px solid rgba(255,255,255,0.2);border-top-color:#3b82f6;border-radius:50%;animation:r .7s linear infinite;margin:0 auto 1.5rem}
+@keyframes r{to{transform:rotate(360deg)}}
+h2{font-size:1rem;font-weight:500;opacity:.9;margin-bottom:.5rem}
+p{font-size:.8rem;opacity:.5}
+</style>
 </head>
 <body>
-  <div class="loader">
-    <div class="spinner"></div>
-    <h2>Wird geladen...</h2>
-    <p>Die Anwendung wird gestartet.</p>
-  </div>
+<div class="c">
+<div class="s"></div>
+<h2>Anwendung wird gestartet</h2>
+<p>Bitte einen Moment warten...</p>
+</div>
+<script>
+var c=0;
+function p(){
+fetch(window.location.href,{method:'HEAD',cache:'no-store'}).then(function(r){
+if(r.headers.get('x-app-ready')==='1'){window.location.reload()}
+else{c++;if(c<30)setTimeout(p,2000)}
+}).catch(function(){c++;if(c<30)setTimeout(p,2000)})
+}
+setTimeout(p,2000);
+</script>
 </body>
 </html>`;
 
-const server = http.createServer((req, res) => {
-  if (!pagesWarmed) {
-    res.writeHead(200, {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      "Pragma": "no-cache",
-    });
+function proxyRequest(req, res) {
+  const options = {
+    hostname: "127.0.0.1",
+    port: NEXT_PORT,
+    path: req.url,
+    method: req.method,
+    headers: req.headers,
+  };
+
+  const proxyReq = http.request(options, (proxyRes) => {
+    proxyRes.headers["x-app-ready"] = "1";
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on("error", () => {
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(loadingHTML);
+  });
+
+  req.pipe(proxyReq);
+}
+
+const server = http.createServer((req, res) => {
+  if (pagesWarmed) {
+    proxyRequest(req, res);
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+  });
+  res.end(loadingHTML);
+});
+
+server.on("upgrade", (req, socket, head) => {
+  if (!pagesWarmed) {
+    socket.destroy();
     return;
   }
 
@@ -53,36 +90,14 @@ const server = http.createServer((req, res) => {
     headers: req.headers,
   };
 
-  const proxyReq = http.request(options, (proxyRes) => {
-    res.writeHead(proxyRes.statusCode, proxyRes.headers);
-    proxyRes.pipe(res);
-  });
-
-  proxyReq.on("error", () => {
-    res.writeHead(502, { "Content-Type": "text/html" });
-    res.end(loadingHTML);
-  });
-
-  req.pipe(proxyReq);
-});
-
-server.on("upgrade", (req, socket, head) => {
-  if (!pagesWarmed) return socket.destroy();
-
-  const options = {
-    hostname: "127.0.0.1",
-    port: NEXT_PORT,
-    path: req.url,
-    method: req.method,
-    headers: req.headers,
-  };
-
   const proxyReq = http.request(options);
-  proxyReq.on("upgrade", (proxyRes, proxySocket, proxyHead) => {
+  proxyReq.on("upgrade", (proxyRes, proxySocket) => {
     socket.write(
       "HTTP/1.1 101 Switching Protocols\r\n" +
-      Object.entries(proxyRes.headers).map(([k, v]) => `${k}: ${v}`).join("\r\n") +
-      "\r\n\r\n"
+        Object.entries(proxyRes.headers)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join("\r\n") +
+        "\r\n\r\n"
     );
     proxySocket.pipe(socket);
     socket.pipe(proxySocket);
@@ -92,7 +107,7 @@ server.on("upgrade", (req, socket, head) => {
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`[proxy] Loading page on port ${PORT}, starting Next.js on port ${NEXT_PORT}...`);
+  console.log(`[proxy] Listening on port ${PORT}, starting Next.js...`);
 
   const next = spawn("npx", ["next", "dev", "-p", String(NEXT_PORT), "-H", "0.0.0.0"], {
     stdio: "inherit",
@@ -104,19 +119,25 @@ server.listen(PORT, "0.0.0.0", () => {
     process.exit(code || 1);
   });
 
-  async function waitForNext() {
+  async function fetchPage(url) {
+    return new Promise((resolve, reject) => {
+      const r = http.get(url, (res) => {
+        let data = "";
+        res.on("data", (d) => (data += d));
+        res.on("end", () => resolve(res.statusCode));
+      });
+      r.on("error", reject);
+      r.setTimeout(30000, () => {
+        r.destroy();
+        reject(new Error("timeout"));
+      });
+    });
+  }
+
+  async function waitAndWarm() {
     for (let i = 0; i < 60; i++) {
       try {
-        await new Promise((resolve, reject) => {
-          const r = http.get(`http://127.0.0.1:${NEXT_PORT}/`, (res) => {
-            let data = "";
-            res.on("data", (d) => (data += d));
-            res.on("end", () => resolve(res.statusCode));
-          });
-          r.on("error", reject);
-          r.setTimeout(5000, () => { r.destroy(); reject(new Error("timeout")); });
-        });
-        nextReady = true;
+        await fetchPage(`http://127.0.0.1:${NEXT_PORT}/`);
         console.log("[proxy] Next.js ready, pre-warming pages...");
         break;
       } catch {
@@ -124,32 +145,19 @@ server.listen(PORT, "0.0.0.0", () => {
       }
     }
 
-    if (!nextReady) {
-      console.log("[proxy] Next.js failed to start");
-      process.exit(1);
-    }
-
     const warmPages = ["/", "/w/aestimamus/login", "/arag-bdp/gate"];
     for (const page of warmPages) {
       try {
-        await new Promise((resolve, reject) => {
-          const r = http.get(`http://127.0.0.1:${NEXT_PORT}${page}`, (res) => {
-            let d = "";
-            res.on("data", (c) => (d += c));
-            res.on("end", () => { console.log(`[proxy] Warmed ${page} → ${res.statusCode}`); resolve(); });
-          });
-          r.on("error", reject);
-          r.setTimeout(30000, () => { r.destroy(); reject(new Error("timeout")); });
-        });
+        const code = await fetchPage(`http://127.0.0.1:${NEXT_PORT}${page}`);
+        console.log(`[proxy] Warmed ${page} → ${code}`);
       } catch (e) {
         console.log(`[proxy] Failed to warm ${page}: ${e.message}`);
       }
     }
 
-    await new Promise((r) => setTimeout(r, 500));
     pagesWarmed = true;
     console.log("[proxy] All pages warmed, proxying traffic to Next.js");
   }
 
-  waitForNext();
+  waitAndWarm();
 });
