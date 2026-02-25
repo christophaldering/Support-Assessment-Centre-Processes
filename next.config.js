@@ -30,17 +30,6 @@ const nextConfig = {
     PORT: "5000",
     HOSTNAME: "0.0.0.0",
   },
-  async headers() {
-    return [
-      {
-        source: "/((?!_next/static|_next/image|favicon.ico).*)",
-        headers: [
-          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate" },
-          { key: "Pragma", value: "no-cache" },
-        ],
-      },
-    ];
-  },
 };
 
 module.exports = nextConfig;

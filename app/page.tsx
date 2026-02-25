@@ -1174,46 +1174,27 @@ export default function LandingPage() {
           </div>
 
           {!activeMode && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                {accessCards.map((card) => (
-                  <button
-                    key={card.id}
-                    onClick={() => { setActiveMode(card.id); setError(""); }}
-                    className="group bg-white rounded-2xl border border-slate-200 p-6 text-left transition-all hover:shadow-xl hover:-translate-y-1 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    data-testid={`button-access-${card.id}`}
-                  >
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient} text-white flex items-center justify-center mb-4`}>
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d={card.icon} /></svg>
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-800 group-hover:text-slate-900 font-serif">{card.title}</h3>
-                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mt-0.5">{card.subtitle}</p>
-                    <p className="text-sm text-slate-500 mt-3 leading-relaxed">{card.description}</p>
-                    <div className="mt-4 flex items-center text-sm font-medium text-blue-600 group-hover:text-blue-700">
-                      {l.loginBtn}
-                      <svg className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <div className="max-w-4xl mx-auto mt-8">
-                <a
-                  href="/arag-bdp/gate"
-                  className="group block w-full bg-gradient-to-r from-[#1a1a1a] to-[#333] rounded-2xl border border-[#FFD700]/30 p-6 text-left transition-all hover:shadow-xl hover:-translate-y-1 hover:border-[#FFD700]/60"
-                  data-testid="button-arag-bdp-entry"
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {accessCards.map((card) => (
+                <button
+                  key={card.id}
+                  onClick={() => { setActiveMode(card.id); setError(""); }}
+                  className="group bg-white rounded-2xl border border-slate-200 p-6 text-left transition-all hover:shadow-xl hover:-translate-y-1 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  data-testid={`button-access-${card.id}`}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-[#FFD700] text-black flex items-center justify-center font-bold text-xl">A</div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white group-hover:text-[#FFD700] transition-colors">Direkte Anmeldung im Projekt</h3>
-                      <p className="text-xs text-white/50 mt-0.5">ARAG Business Development Pitch · Evaluation Tool</p>
-                    </div>
-                    <svg className="w-5 h-5 text-[#FFD700] transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient} text-white flex items-center justify-center mb-4`}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d={card.icon} /></svg>
                   </div>
-                </a>
-              </div>
-            </>
+                  <h3 className="text-lg font-bold text-slate-800 group-hover:text-slate-900 font-serif">{card.title}</h3>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mt-0.5">{card.subtitle}</p>
+                  <p className="text-sm text-slate-500 mt-3 leading-relaxed">{card.description}</p>
+                  <div className="mt-4 flex items-center text-sm font-medium text-blue-600 group-hover:text-blue-700">
+                    {l.loginBtn}
+                    <svg className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                  </div>
+                </button>
+              ))}
+            </div>
           )}
 
           {activeMode && (

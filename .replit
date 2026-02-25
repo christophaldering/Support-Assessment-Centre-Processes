@@ -42,12 +42,9 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
-[workflows.workflow.metadata]
-outputType = "webview"
-
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node scripts/dev-server.js"
+args = "npm run dev"
 waitForPort = 5000
 
 [agent]
