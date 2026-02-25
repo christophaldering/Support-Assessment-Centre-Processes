@@ -271,7 +271,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
             </button>
           </nav>
 
-          {!user.demoLock && (
+          {user.environment !== "demo" && (
             <div className="px-4 pb-3">
               <button
                 data-testid="bdp-env-toggle"
@@ -399,7 +399,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
                     Tour starten
                   </span>
                 </button>
-                {!user.demoLock && (
+                {user.environment !== "demo" && (
                   <div className="px-4 py-2">
                     <button
                       data-testid="bdp-env-toggle-mobile"

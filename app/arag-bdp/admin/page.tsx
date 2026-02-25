@@ -208,7 +208,7 @@ export default function BdpAdminPage() {
 
   if (!user?.isAdmin) return null;
 
-  const stateLabel: Record<string, string> = { DRAFT: "Entwurf", OPEN: "Offen", CLOSED: "Geschlossen", RELEASED: "Freigegeben" };
+  const stateLabel: Record<string, string> = { DRAFT: "Entwurf", OPEN: "Offen", CLOSED: "Geschlossen", RELEASED: "Abgeschlossen" };
   const nextState: Record<string, string[]> = { DRAFT: ["OPEN"], OPEN: ["CLOSED"], CLOSED: ["RELEASED", "OPEN"], RELEASED: [] };
 
   const tabs: { key: AdminTab; label: string }[] = [
@@ -551,11 +551,11 @@ export default function BdpAdminPage() {
 
       {tab === "export" && (
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-          <h2 className="font-bold">Export (nur Admin, nur RELEASED)</h2>
-          <p className="text-xs text-gray-500">Exports enthalten ausschließlich freigegebene Sessions. Demo-Daten werden standardmäßig ausgeschlossen.</p>
+          <h2 className="font-bold">Export (nur Admin)</h2>
+          <p className="text-xs text-gray-500">Exports enthalten ausschließlich abgeschlossene Sessions. Demo-Daten werden standardmäßig ausgeschlossen.</p>
           {sessions.filter(s => s.state === "RELEASED").length === 0 && (
             <div className="bg-amber-50 text-amber-700 p-3 rounded-xl text-sm" data-testid="text-export-no-released">
-              Keine freigegebenen Sessions vorhanden. Exports sind erst nach Freigabe möglich.
+              Keine abgeschlossenen Sessions vorhanden.
             </div>
           )}
           <div className="space-y-3">

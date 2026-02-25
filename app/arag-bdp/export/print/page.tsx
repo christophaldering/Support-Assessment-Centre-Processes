@@ -77,7 +77,7 @@ export default function BdpPrintPage() {
       </button>
 
       {sessions.length === 0 ? (
-        <p className="text-gray-400 text-center py-8">Keine freigegebenen Sessions.</p>
+        <p className="text-gray-400 text-center py-8">Keine abgeschlossenen Sessions.</p>
       ) : (
         sessions.map(s => {
           const result = allResults[s.id];

@@ -83,7 +83,7 @@ export async function PUT(req: NextRequest) {
     const stateLabels: Record<string, string> = {
       OPEN: "geöffnet",
       CLOSED: "geschlossen",
-      RELEASED: "freigegeben",
+      RELEASED: "abgeschlossen",
     };
     const stateTypes: Record<string, string> = {
       OPEN: "session_opened",
