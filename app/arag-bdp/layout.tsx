@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect, ReactNode, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -19,7 +19,7 @@ import { BdpContext, BdpUser } from "./bdp-context";
 
 const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login", "/anmeldung"];
 
-export default function BdpLayout({ children }: { children: ReactNode }) {
+function BdpLayoutInner({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<BdpUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -347,5 +347,17 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
         </nav>
       </div>
     </BdpContext.Provider>
+  );
+}
+
+export default function BdpLayout({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[#FFD700] border-t-transparent rounded-full" />
+      </div>
+    }>
+      <BdpLayoutInner>{children}</BdpLayoutInner>
+    </Suspense>
   );
 }

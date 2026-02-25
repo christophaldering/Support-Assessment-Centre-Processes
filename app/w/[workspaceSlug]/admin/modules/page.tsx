@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -97,6 +97,14 @@ const typeIcon = (t: string) => {
 const inputClass = "w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors";
 
 export default function ModulesHubPage() {
+  return (
+    <Suspense fallback={<div className="py-8 px-6 lg:px-10 flex items-center justify-center text-slate-400">Laden...</div>}>
+      <ModulesHubContent />
+    </Suspense>
+  );
+}
+
+function ModulesHubContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const workspaceSlug = params.workspaceSlug as string;

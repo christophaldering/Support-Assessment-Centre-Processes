@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 
 
@@ -138,6 +138,14 @@ function PersonBlock({
 }
 
 export default function RequirementsAnalysisPage() {
+  return (
+    <Suspense fallback={<div className="py-8 px-6 lg:px-10 flex items-center justify-center text-slate-400">Laden...</div>}>
+      <RequirementsContent />
+    </Suspense>
+  );
+}
+
+function RequirementsContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
