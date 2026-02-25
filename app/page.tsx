@@ -646,13 +646,13 @@ export default function LandingPage() {
             >
               {lang === "de" ? "EN" : "DE"}
             </button>
-            <button
-              onClick={scrollToLogin}
+            <a
+              href="/w/arag/login"
               className="text-xs font-medium text-white bg-brand-blue hover:bg-brand-blue-dark rounded-full px-5 py-1.5 transition-colors"
               data-testid="nav-login"
             >
               {l.navLogin}
-            </button>
+            </a>
           </div>
         </div>
       </header>
@@ -682,13 +682,13 @@ export default function LandingPage() {
                 >
                   {l.heroCta1}
                 </a>
-                <button
-                  onClick={scrollToLogin}
+                <a
+                  href="/w/arag/login"
                   className="rounded-lg border border-white/20 text-white font-medium px-8 py-3.5 text-sm hover:bg-white/5 transition-colors"
                   data-testid="button-hero-login"
                 >
                   {l.heroCta2}
-                </button>
+                </a>
               </div>
             </div>
 
@@ -1200,22 +1200,6 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              <div className="max-w-4xl mx-auto mt-8">
-                <a
-                  href="/w/arag"
-                  className="group block w-full bg-gradient-to-r from-[#1a1a1a] to-[#333] rounded-2xl border border-[#FFD700]/30 p-6 text-left transition-all hover:shadow-xl hover:-translate-y-1 hover:border-[#FFD700]/60"
-                  data-testid="button-arag-bdp-entry"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-[#FFD700] text-black flex items-center justify-center font-bold text-xl">A</div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white group-hover:text-[#FFD700] transition-colors">Direkte Anmeldung im Projekt</h3>
-                      <p className="text-xs text-white/50 mt-0.5">ARAG Business Development Pitch · Evaluation Tool</p>
-                    </div>
-                    <svg className="w-5 h-5 text-[#FFD700] transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-                  </div>
-                </a>
-              </div>
             </>
           )}
 
