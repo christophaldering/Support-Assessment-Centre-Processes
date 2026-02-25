@@ -33,6 +33,23 @@ export async function GET() {
       }
     }
 
+    if (cookie) {
+      const session = JSON.parse(cookie.value);
+      return NextResponse.json({
+        authenticated: true,
+        user: {
+          id: session.userId,
+          code: session.code,
+          displayName: session.displayName || session.code,
+          role: session.role,
+          isAdmin: session.isAdmin,
+          environment: envOverride || session.environment,
+          viewMode: "mobile",
+          uiPreset: "whatsapp_spiegel",
+        },
+      });
+    }
+
     const bdpAuth = getBdpSession();
     if (bdpAuth && bdpAuth.authSource === "platform") {
       return NextResponse.json({
@@ -40,6 +57,7 @@ export async function GET() {
         user: {
           id: bdpAuth.userId,
           code: bdpAuth.code,
+          displayName: bdpAuth.code,
           role: bdpAuth.role,
           isAdmin: bdpAuth.isAdmin,
           environment: envOverride || bdpAuth.environment,

@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
       const sessionData = JSON.stringify({
         userId: user.id,
         code: user.code,
+        displayName: user.displayName || user.code,
         role: user.role,
         isAdmin: user.isAdmin,
         environment: user.environment,
