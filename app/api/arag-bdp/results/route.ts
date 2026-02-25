@@ -19,7 +19,9 @@ export async function GET(req: NextRequest) {
 
   if (!dbSession) return NextResponse.json({ error: "Session nicht gefunden" }, { status: 404 });
 
-  if (dbSession.state !== "RELEASED" && !bdpSession.isAdmin) {
+  const isDemoEnv = bdpSession.environment === "demo";
+
+  if (dbSession.state !== "RELEASED" && !bdpSession.isAdmin && !isDemoEnv) {
     return NextResponse.json({ error: "Ergebnisse sind noch nicht freigegeben" }, { status: 403 });
   }
 
@@ -62,7 +64,7 @@ export async function GET(req: NextRequest) {
   const tieBreak = await prisma.bdpTieBreak.findUnique({ where: { sessionId } });
 
   let perObserver = null;
-  if (bdpSession.isAdmin && dbSession.transparencyMode === "show_per_observer_breakdown") {
+  if (bdpSession.isAdmin) {
     const grouped: Record<string, Record<string, Record<string, number>>> = {};
     for (const score of scores) {
       const obsKey = score.observer.displayName || score.observer.code;
@@ -73,12 +75,48 @@ export async function GET(req: NextRequest) {
     perObserver = grouped;
   }
 
+  const teamIds = dbSession.sessionTeams.map(st => st.team.id);
+  const teamFeedbacks: Record<string, string> = {};
+  for (const st of dbSession.sessionTeams) {
+    if (st.team.feedback) {
+      const teamLabel = st.team.displayName || st.team.code;
+      teamFeedbacks[teamLabel] = st.team.feedback;
+    }
+  }
+
+  const participantIds = await prisma.bdpTeamParticipant.findMany({
+    where: { teamId: { in: teamIds } },
+    include: { participant: true, team: true },
+  });
+
+  const individualNotes = await prisma.bdpIndividualNote.findMany({
+    where: { sessionId, environment: bdpSession.environment },
+    include: { participant: true, observer: true },
+  });
+
+  const notesFormatted = individualNotes.map(n => ({
+    participantName: n.participant.displayName || n.participant.code,
+    observerName: n.observer.displayName || n.observer.code,
+    note: n.note,
+    generalNote: n.generalNote,
+    contribution: n.contribution,
+    presence: n.presence,
+    teamName: participantIds.find(tp => tp.participantId === n.participantId)?.team?.displayName || "",
+  }));
+
   return NextResponse.json({
-    session: { id: dbSession.id, name: dbSession.name, state: dbSession.state },
+    session: {
+      id: dbSession.id,
+      name: dbSession.name,
+      state: dbSession.state,
+      summary: dbSession.summary || null,
+    },
     criteria: criteria.map(c => ({ id: c.id, name: c.name })),
     ranked,
     isTie,
     tieBreak: tieBreak ? { winnerTeamId: tieBreak.winnerTeamId, rationale: tieBreak.rationale, decidedById: tieBreak.decidedById } : null,
     perObserver,
+    teamFeedbacks,
+    individualNotes: notesFormatted,
   });
 }

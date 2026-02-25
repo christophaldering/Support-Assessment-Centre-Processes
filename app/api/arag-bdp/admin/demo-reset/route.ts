@@ -125,7 +125,9 @@ async function seedDemo() {
 
   const teamFeedback: Record<number, string> = {
     0: "Das Team Amsterdam überzeugte durch strategische Klarheit und eine strukturierte Herangehensweise. Die Präsentation war prägnant, das Q&A solide – wenngleich Elizabeth Bennet gelegentlich so wirkte, als würde sie den Raum nach einem würdigen Mr. Darcy abscannen statt nach Gegenargumenten.",
+    1: "Team Barcelona brachte unternehmerische Kreativität und eine erfrischende Dynamik in die Session. Anna Karenina führte mit Leidenschaft – bisweilen so intensiv, dass die Risikoabwägung etwas zu kurz kam. Don Quijotes visionärer Ansatz war inspirierend, hätte aber von etwas mehr Bodenhaftung profitiert.",
     2: "Das Team Berlin überzeugte durch strategische Stringenz. Die Präsentation war präzise, wenngleich im Q&A ein Moment entstand, in dem selbst Sherlock Holmes kurz nach der Logik suchte. Die Zahlenlogik war durchgängig belastbar, die Teamdynamik produktiv.",
+    3: "Team Kopenhagen zeigte eine beeindruckend kohärente Teamleistung. Jean Valjean führte mit der stillen Autorität eines Mannes, der weiß, was es bedeutet, sich durchzusetzen. Cosettes empathischer Ansatz ergänzte die analytische Schärfe hervorragend. Im Defense kam das Team mit hauchdünnem Abstand an Berlin heran.",
     4: "Team Mailand lieferte eine solide Gesamtleistung mit guter Rollenverteilung. Odysseus führte mit ruhiger Hand durch unbekannte Gewässer – ein Ansatz, der an seine legendären Irrfahrten erinnerte, diesmal aber deutlich zielgerichteter ausfiel.",
     5: "Team Paris zeigte kreative Ansätze bei der Strategieentwicklung. Winston Smith brachte eine ungewöhnlich kritische Perspektive ein, die das Team produktiv herausforderte. Gandalf bewies einmal mehr, dass ein weiser Berater den Unterschied machen kann – auch ohne Zauberstab.",
   };
@@ -235,9 +237,9 @@ async function seedDemo() {
   }
 
   const sessionObserverMap: Record<number, string[]> = {
-    0: ["D-V1", "D-MD1", "D-E1"],
-    1: ["D-V2", "D-MD1", "D-E1"],
-    2: ["D-V3", "D-MD1", "D-V7"],
+    0: ["D-V1", "D-V4", "D-MD1", "D-E1"],
+    1: ["D-V2", "D-V5", "D-MD1", "D-E1"],
+    2: ["D-V3", "D-V6", "D-MD1", "D-V7"],
   };
 
   for (const [si, obsCodes] of Object.entries(sessionObserverMap)) {
@@ -292,18 +294,22 @@ async function seedDemo() {
   const scorePatterns: Record<number, Record<string, number[][]>> = {
     0: {
       "D-V1":  [[68,32],[54,46],[58,42],[52,48],[66,34]],
+      "D-V4":  [[60,40],[58,42],[55,45],[56,44],[57,43]],
       "D-MD1": [[56,44],[53,47],[44,56],[58,42],[60,40]],
       "D-E1":  [[58,42],[55,45],[56,44],[52,48],[54,46]],
     },
     2: {
       "D-V3":  [[56,44],[52,48],[54,46],[58,42],[55,45]],
+      "D-V6":  [[54,46],[50,50],[52,48],[55,45],[53,47]],
       "D-MD1": [[53,47],[48,52],[44,56],[57,43],[56,44]],
       "D-V7":  [[52,48],[51,49],[50,50],[53,47],[52,48]],
     },
   };
 
   // Session 2: engineered tie-break scenario
+  // D-V5 (Tesla): high logic, strong economics, medium leadership
   const s2V2:  number[][] = [[56,44],[62,38],[54,46],[46,54],[52,48]];
+  const s2V5:  number[][] = [[50,50],[55,45],[48,52],[52,48],[50,50]];
   const s2MD1: number[][] = [[52,48],[48,52],[44,56],[56,44],[55,45]];
   const s2E1:  number[][] = [[54,46],[52,48],[54,46],[48,52],[47,53]];
 
@@ -311,18 +317,19 @@ async function seedDemo() {
     return patterns.reduce((s, row) => s + row[col], 0);
   }
 
-  const berlin = sumCol(s2V2, 0) + sumCol(s2MD1, 0) + sumCol(s2E1, 0);
-  const kopenh = sumCol(s2V2, 1) + sumCol(s2MD1, 1) + sumCol(s2E1, 1);
+  const berlin = sumCol(s2V2, 0) + sumCol(s2V5, 0) + sumCol(s2MD1, 0) + sumCol(s2E1, 0);
+  const kopenh = sumCol(s2V2, 1) + sumCol(s2V5, 1) + sumCol(s2MD1, 1) + sumCol(s2E1, 1);
   const diff = berlin - kopenh;
 
   if (diff !== 0) {
-    const half = diff / 2;
-    s2V2[0][0] -= half;
-    s2V2[0][1] += half;
+    const half = Math.round(diff / 2);
+    s2V5[0][0] -= half;
+    s2V5[0][1] += half;
   }
 
   scorePatterns[1] = {
     "D-V2": s2V2,
+    "D-V5": s2V5,
     "D-MD1": s2MD1,
     "D-E1": s2E1,
   };
@@ -373,6 +380,14 @@ async function seedDemo() {
     { si: 2, pIdx: 18, obsCode: "D-V7", note: "Eine mit beinahe stoischer Gelassenheit vorgetragene Analyse, die durch innere Ruhe und sachliche Präzision bestach. Keine überflüssigen Worte, keine theatralischen Gesten – das Wesentliche wurde auf das Wesentliche reduziert.", general: "Ein Kandidat, der beweist, dass wahre Überzeugungskraft nicht aus Lautstärke, sondern aus Klarheit entsteht. Sein Beitrag erinnerte daran, dass nicht alles, was glänzt, Gold ist – aber manches, was still leuchtet, sehr wohl.", contribution: 4, presence: 4 },
     { si: 2, pIdx: 19, obsCode: "D-V7", note: "Clarissa Dalloway brachte eine unerwartete Eleganz in die Strategiepräsentation. Ihre Fähigkeit, verschiedene Perspektiven zu integrieren, war bemerkenswert – gelegentlich verlor sie sich jedoch in der Schönheit der Darstellung und vergaß die harte Kennzahl.", general: "Kommunikativ stark mit ausgeprägtem Sinn für das große Ganze. Sollte die Balance zwischen ästhetischer Präsentation und nüchterner Zahlenlogik weiter schärfen.", contribution: 3, presence: 4 },
     { si: 2, pIdx: 21, obsCode: "D-V3", note: "Holden Caulfield überraschte mit erfrischend unkonventionellen Perspektiven. Seine Skepsis gegenüber ‚phoniness' im Business-Kontext war ebenso charmant wie gelegentlich herausfordernd für das Team. Im Kern aber durchaus substanziell.", general: "Ein Querdenker mit Potenzial. Wenn er lernt, seinen gesunden Skeptizismus produktiv einzusetzen statt nur zu dekonstruieren, könnte daraus echte Führungsstärke entstehen.", contribution: 3, presence: 3 },
+    { si: 0, pIdx: 4, obsCode: "D-MD1", note: "Anna Karenina brachte eine intensive Leidenschaft in die Präsentation ein, die das Auditorium sofort in den Bann zog. Ihre emotionale Intelligenz ist bemerkenswert – gelegentlich führte die Intensität jedoch dazu, dass die Risikoanalyse etwas zu kurz kam.", general: "Eine Kandidatin mit natürlichem Charisma und starker Überzeugungskraft. Sollte lernen, die Leidenschaft in kontrollierte Bahnen zu lenken, ohne sie zu verlieren.", contribution: 4, presence: 5 },
+    { si: 0, pIdx: 5, obsCode: "D-E1", note: "Gregor Samsa überraschte mit einer bemerkenswert strukturierten Analyse, die hinter seiner zurückhaltenden Fassade eine scharfe Beobachtungsgabe offenbarte. Seine Perspektive auf organisatorische Transformation war ungewöhnlich tiefgründig.", general: "Ein stiller Beobachter mit scharfem Verstand. Seine Fähigkeit, Veränderungsprozesse aus einer unkonventionellen Perspektive zu betrachten, ist ein echtes Asset – solange er nicht zu sehr in seiner eigenen Metamorphose versinkt.", contribution: 3, presence: 3 },
+    { si: 0, pIdx: 6, obsCode: "D-V1", note: "Don Quijote brachte eine visionäre Komponente in den Pitch ein, die zwischen Genialität und Enthusiasmus changierte. Seine Fähigkeit, große Zusammenhänge zu sehen, ist beeindruckend – die Erdung in konkreten Zahlen bleibt seine Entwicklungsaufgabe.", general: "Ein Visionär mit ansteckender Begeisterung. Wenn er lernt, seine Windmühlen von echten Geschäftschancen zu unterscheiden, wird er ein formidabler Stratege.", contribution: 4, presence: 4 },
+    { si: 1, pIdx: 11, obsCode: "D-MD1", note: "Jean Valjean führte sein Team mit der stillen Autorität und dem moralischen Kompass eines Mannes, der weiß, wofür er steht. Seine Argumente waren durchdacht, seine Haltung vorbildlich. Im Q&A zeigte er eine Resilienz, die beeindruckte.", general: "Führungspersönlichkeit mit Integrität. Beweist, dass wahre Stärke nicht in der Lautstärke liegt, sondern in der Überzeugung. Ein Kandidat, dem man instinktiv vertraut.", contribution: 5, presence: 5 },
+    { si: 1, pIdx: 12, obsCode: "D-E1", note: "Cosette ergänzte das Team mit empathischer Kommunikation und einem feinen Gespür für die Bedürfnisse des Auditoriums. Ihre Fähigkeit, komplexe Sachverhalte zugänglich zu machen, war eine echte Stärke.", general: "Kommunikationstalent mit emotionaler Intelligenz. Sollte ihren analytischen Beitrag noch stärker in den Vordergrund stellen – sie hat mehr zu bieten, als sie zeigt.", contribution: 4, presence: 4 },
+    { si: 1, pIdx: 13, obsCode: "D-V2", note: "Odysseus navigierte mit strategischer Weitsicht durch den Business Case. Seine Fähigkeit, unter Druck klar zu denken und das Team zu koordinieren, war beeindruckend. Im Q&A bewies er Nervenstärke und argumentative Flexibilität.", general: "Ein natürlicher Anführer mit der Gabe, auch in stürmischen Gewässern Kurs zu halten. Sein strategisches Denken ist ausgeprägt – manchmal könnte die Reise allerdings etwas direkter verlaufen.", contribution: 5, presence: 5 },
+    { si: 2, pIdx: 17, obsCode: "D-MD1", note: "Ophelia brachte eine sensible und zugleich durchdachte Perspektive in die Diskussion ein. Ihre Beobachtungen waren häufig überraschend treffend, wenngleich sie ihre Punkte manchmal zu leise platzierte.", general: "Unterschätzte Stärke im Team. Wenn sie lernt, ihre Einsichten mit mehr Nachdruck zu vertreten, wird sie zur stillen Führungskraft – ohne dabei ihre besondere Beobachtungsgabe zu verlieren.", contribution: 3, presence: 3 },
+    { si: 2, pIdx: 20, obsCode: "D-V7", note: "Gandalf brachte die Weisheit der Erfahrung in den Business Case ein – ruhig, bedacht und mit einem Timing, das Respekt einflößte. Seine strategischen Einwürfe kamen stets zum richtigen Moment und lenkten die Diskussion in produktive Bahnen.", general: "Ein Berater par excellence. Beweist, dass ein einziger kluger Gedanke zum richtigen Zeitpunkt mehr wert sein kann als eine halbe Stunde Powerpoint. Auch ohne Zauberstab durchaus magisch.", contribution: 5, presence: 5 },
   ];
 
   for (const nd of notesDefs) {
