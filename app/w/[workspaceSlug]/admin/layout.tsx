@@ -28,6 +28,10 @@ export default async function AdminLayout({ children, params }: Props) {
     redirect(`/w/${params.workspaceSlug}/login`);
   }
 
+  if (params.workspaceSlug === "arag" && !masterAuth) {
+    redirect("/arag-bdp");
+  }
+
   const workspace = await prisma.workspace.findUnique({
     where: { slug: params.workspaceSlug },
     include: { theme: true },

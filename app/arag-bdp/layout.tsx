@@ -84,10 +84,10 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
   if (!user) return null;
 
   const tabs = [
-    { href: "/arag-bdp", label: "Home", icon: "🏠" },
-    { href: "/arag-bdp/sessions", label: "Sessions", icon: "📋" },
-    { href: "/arag-bdp/bewertung", label: "Bewertung", icon: "⭐" },
-    { href: "/arag-bdp/auswertung", label: "Auswertung", icon: "📊" },
+    { href: "/arag-bdp", label: "Home", testId: "bdp-tab-home", icon: "🏠", disabled: false },
+    { href: "/arag-bdp/sessions", label: "Sessions", testId: "bdp-tab-sessions", icon: "📋", disabled: false },
+    { href: "/arag-bdp/bewertung", label: "Bewertung", testId: "bdp-tab-bewertung", icon: "⭐", disabled: false },
+    { href: "/arag-bdp/auswertung", label: "Auswertung", testId: "bdp-tab-auswertung", icon: "📊", disabled: true },
   ];
 
   const viewModeClass = user.viewMode === "desktop" ? "max-w-6xl" : user.viewMode === "tablet" ? "max-w-2xl" : "max-w-md";
@@ -110,7 +110,7 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
             <Link href="/arag-bdp/profile" data-testid="link-profile" className="w-8 h-8 rounded-full bg-[#FFD700] flex items-center justify-center text-black font-bold text-sm">
               {user.photoUrl ? <img src={user.photoUrl} className="w-8 h-8 rounded-full object-cover" alt="" /> : user.code[0]}
             </Link>
-            <button data-testid="button-hamburger" onClick={() => setMenuOpen(!menuOpen)} className="text-2xl">☰</button>
+            <button data-testid="bdp-menu-hamburger" onClick={() => setMenuOpen(!menuOpen)} className="text-2xl">☰</button>
           </div>
         </header>
 
@@ -119,12 +119,12 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
             <div className="absolute right-0 top-0 h-full w-64 bg-white shadow-xl p-6" onClick={e => e.stopPropagation()}>
               <button onClick={() => setMenuOpen(false)} className="absolute top-4 right-4 text-xl">✕</button>
               <nav className="mt-12 space-y-4">
-                <Link href="/arag-bdp/profile" data-testid="menu-settings" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Einstellungen</Link>
-                <div className="block py-2 px-4 rounded text-gray-400">Hilfe</div>
+                <Link href="/arag-bdp/profile" data-testid="bdp-menu-profile" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Profil</Link>
+                <Link href="/arag-bdp/profile" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Einstellungen</Link>
                 {user.isAdmin && (
-                  <Link href="/arag-bdp/admin" data-testid="menu-admin" className="block py-2 px-4 rounded hover:bg-gray-100 font-bold" onClick={() => setMenuOpen(false)}>Admin</Link>
+                  <Link href="/arag-bdp/admin" data-testid="bdp-menu-admin" className="block py-2 px-4 rounded hover:bg-gray-100 font-bold" onClick={() => setMenuOpen(false)}>Admin</Link>
                 )}
-                <button data-testid="button-logout" onClick={handleLogout} className="block py-2 px-4 rounded hover:bg-red-50 text-red-600 w-full text-left">Abmelden</button>
+                <button data-testid="bdp-menu-logout" onClick={handleLogout} className="block py-2 px-4 rounded hover:bg-red-50 text-red-600 w-full text-left">Abmelden</button>
               </nav>
             </div>
           </div>
@@ -142,11 +142,23 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
           <div className={`${viewModeClass} mx-auto flex justify-around py-2`}>
             {tabs.map(tab => {
               const active = pathname === tab.href || (tab.href !== "/arag-bdp" && pathname.startsWith(tab.href));
+              if (tab.disabled) {
+                return (
+                  <span
+                    key={tab.href}
+                    data-testid={tab.testId}
+                    className="flex flex-col items-center text-xs px-3 py-1 rounded-lg text-gray-300 cursor-not-allowed"
+                  >
+                    <span className="text-lg">{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </span>
+                );
+              }
               return (
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  data-testid={`tab-${tab.label.toLowerCase()}`}
+                  data-testid={tab.testId}
                   className={`flex flex-col items-center text-xs px-3 py-1 rounded-lg transition-colors ${active ? "text-[#FFD700] font-bold" : "text-gray-500 hover:text-black"}`}
                 >
                   <span className="text-lg">{tab.icon}</span>

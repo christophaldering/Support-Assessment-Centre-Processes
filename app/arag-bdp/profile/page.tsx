@@ -8,11 +8,13 @@ export default function BdpProfilePage() {
   const [viewMode, setViewMode] = useState(user?.viewMode || "mobile");
   const [uiPreset, setUiPreset] = useState(user?.uiPreset || "whatsapp_spiegel");
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   if (!user) return null;
 
   const handleSave = async () => {
     setSaving(true);
+    setSaved(false);
     try {
       await fetch("/api/arag-bdp/auth/session", {
         method: "PUT",
@@ -20,6 +22,8 @@ export default function BdpProfilePage() {
         body: JSON.stringify({ viewMode, uiPreset }),
       });
       refetchUser();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     } catch {}
     setSaving(false);
   };
@@ -41,6 +45,14 @@ export default function BdpProfilePage() {
         </div>
 
         <div className="space-y-1 text-sm">
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-gray-500">User-Code</span>
+            <span className="font-medium font-mono" data-testid="text-profile-usercode">{user.code}</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-gray-500">Workspace</span>
+            <span className="font-medium" data-testid="text-profile-workspace">arag</span>
+          </div>
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-500">Umgebung</span>
             <span className="font-medium">{user.environment}</span>
@@ -71,22 +83,6 @@ export default function BdpProfilePage() {
         <h2 className="font-bold text-lg mb-4">Ansicht</h2>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-500 mb-2 block">Anzeige-Modus</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["mobile", "tablet", "desktop"] as const).map(mode => (
-                <button
-                  key={mode}
-                  data-testid={`button-viewmode-${mode}`}
-                  onClick={() => setViewMode(mode)}
-                  className={`py-2 px-3 rounded-xl text-sm font-medium transition-colors ${viewMode === mode ? "bg-[#FFD700] text-black" : "bg-gray-100 text-gray-600"}`}
-                >
-                  {mode === "mobile" ? "📱 Mobil" : mode === "tablet" ? "📲 Tablet" : "🖥️ Desktop"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
             <label className="text-sm font-medium text-gray-500 mb-2 block">UI-Vorlage</label>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -104,6 +100,31 @@ export default function BdpProfilePage() {
               ))}
             </div>
           </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-500 mb-2 block">Anzeige-Modus</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["mobile", "tablet", "desktop"] as const).map(mode => (
+                <button
+                  key={mode}
+                  data-testid={`button-viewmode-${mode}`}
+                  onClick={() => setViewMode(mode)}
+                  className={`py-2 px-3 rounded-xl text-sm font-medium transition-colors ${viewMode === mode ? "bg-[#FFD700] text-black" : "bg-gray-100 text-gray-600"}`}
+                >
+                  {mode === "mobile" ? "📱 Mobil" : mode === "tablet" ? "📲 Tablet" : "🖥️ Desktop"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            data-testid="button-save-settings"
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-[#FFD700] text-black font-bold py-3 rounded-xl hover:bg-[#E6C200] transition-colors disabled:opacity-50 mt-2"
+          >
+            {saving ? "Speichern..." : saved ? "✓ Gespeichert" : "Einstellungen speichern"}
+          </button>
         </div>
       </div>
     </div>
