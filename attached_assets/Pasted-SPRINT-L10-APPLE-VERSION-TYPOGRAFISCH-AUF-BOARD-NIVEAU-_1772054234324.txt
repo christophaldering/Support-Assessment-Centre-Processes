@@ -1,0 +1,171 @@
+SPRINT L10 – APPLE-VERSION TYPOGRAFISCH AUF BOARD-NIVEAU ANHEBEN
+
+ZIEL:
+Behalte die Apple-Keynote-Ästhetik.
+Skaliere Typografie und Hierarchie auf Executive-Niveau.
+Keine Layout-Neustrukturierung.
+Keine Logikänderung.
+Nur Typografie + Spacing + Kontrast.
+
+------------------------------------------------------------
+1) HERO TYPOGRAFIE SKALIEREN
+------------------------------------------------------------
+
+Hero Headline:
+
+Aktuell: zu klein.
+Neu:
+
+Desktop:
+text-[72px] bis text-[88px]
+leading-[1.05]
+tracking-[-0.02em]
+
+Mobile:
+text-[42px] bis text-[48px]
+
+Font:
+Serif (Playfair / Georgia)
+font-semibold
+Keine ultra-dünnen Schnitte.
+
+Subline:
+
+Desktop:
+text-[24px] bis text-[28px]
+leading-relaxed
+max-w-[800px]
+
+Mobile:
+text-[18px] bis text-[20px]
+
+------------------------------------------------------------
+2) SECTION HEADLINES VERGRÖSSERN
+------------------------------------------------------------
+
+Alle Section-Headlines:
+
+Desktop:
+text-[48px] bis text-[56px]
+leading-tight
+
+Mobile:
+text-[30px] bis text-[34px]
+
+Zwischen Headline und Content:
+mindestens mt-12
+
+------------------------------------------------------------
+3) BODY-TEXT AUF BOARD-LESBARKEIT
+------------------------------------------------------------
+
+Body niemals kleiner als:
+
+Desktop:
+text-[18px] bis text-[20px]
+
+Mobile:
+text-[16px] minimum
+
+Line Height:
+leading-[1.6] oder leading-relaxed
+
+Kein text-sm mehr in Apple-Version.
+Keine 14px.
+Keine 15px.
+
+------------------------------------------------------------
+4) MAX WIDTH REDUZIEREN
+------------------------------------------------------------
+
+Leseblöcke:
+
+max-w-[900px]
+mx-auto
+
+Keine 1200px Fließtexte.
+Keine breite Marketing-Container.
+
+------------------------------------------------------------
+5) KONTRAST ERHÖHEN
+------------------------------------------------------------
+
+Im Dark-Apple-Modus:
+
+Body-Text:
+text-white/90
+nicht text-white/60
+
+Secondary-Text:
+maximal text-white/70
+
+Keine schwachen Grauwerte.
+
+------------------------------------------------------------
+6) DRAMATURGIE VERSTÄRKEN
+------------------------------------------------------------
+
+Zwischen großen Sektionen:
+
+mindestens py-32 (Desktop)
+py-20 (Mobile)
+
+Mehr Luft.
+Weniger visuelle Dichte.
+
+------------------------------------------------------------
+7) JOURNEY SEKTION SKALIEREN
+------------------------------------------------------------
+
+Stations-Titel:
+text-[36px] Desktop
+text-[24px] Mobile
+
+Keine kleinen Timeline-Texte.
+
+------------------------------------------------------------
+8) BUTTONS SKALIEREN
+------------------------------------------------------------
+
+LIVE / DEMO Buttons:
+
+py-4 px-10
+text-[18px]
+font-medium
+
+Nicht klein.
+Nicht „UI-mäßig“.
+
+------------------------------------------------------------
+9) NICHT ÄNDERN
+------------------------------------------------------------
+
+Nicht ändern:
+
+- Routing
+- Toggle-Logik
+- Auth
+- Component-Struktur
+- Animation-Logik
+
+Nur Typografie & Spacing.
+
+------------------------------------------------------------
+10) QA CHECK
+------------------------------------------------------------
+
+Prüfen:
+
+- 1440px Desktop
+- 1280px Laptop
+- iPad
+- Mobile
+
+Ergebnis muss wirken wie:
+
+Keynote Slide auf 27-Zoll-Monitor.
+
+Nicht wie SaaS-Landingpage.
+
+Kein Marketing-Vibe.
+Executive Presence.
