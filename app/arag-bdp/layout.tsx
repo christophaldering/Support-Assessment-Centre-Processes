@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, ReactNode } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutGrid,
@@ -25,6 +25,7 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const fetchUser = async () => {
     try {
@@ -121,8 +122,16 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
 
   const isActive = (href: string) => {
     if (href === "/arag-bdp") return pathname === "/arag-bdp";
-    if (href === "/arag-bdp/admin" || href.startsWith("/arag-bdp/admin?")) return pathname === "/arag-bdp/admin";
-    return pathname === href || pathname.startsWith(href + "/");
+    const [hrefPath, hrefQuery] = href.split("?");
+    if (hrefPath === "/arag-bdp/admin" && hrefQuery) {
+      const params = new URLSearchParams(hrefQuery);
+      const tabValue = params.get("tab");
+      return pathname === "/arag-bdp/admin" && searchParams.get("tab") === tabValue;
+    }
+    if (hrefPath === "/arag-bdp/admin" && !hrefQuery) {
+      return pathname === "/arag-bdp/admin" && !searchParams.get("tab");
+    }
+    return pathname === hrefPath || pathname.startsWith(hrefPath + "/");
   };
 
   return (
