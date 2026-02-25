@@ -1,0 +1,148 @@
+DU BIST REPLIT. SETZE GENAU DAS UM. KEINE RÜCKFRAGEN. KEIN REFACTORING.
+SPRINT: D2-FLYOVER — ROBUSTE GUIDED TOUR (für alle Login-Wege)
+
+ZIEL:
+Implementiere einen Flyover/Guided Tour im ARAG BDP Tool, der unabhängig vom Login-Weg funktioniert:
+- Login über /anmeldung (Plattform-Session) ODER /w/arag/login (Workspace-Login) ODER BDP-intern
+- Tour richtet sich nach Rolle (Admin vs Beobachter vs Teilnehmer)
+- In DEMO kann Tour automatisch starten (1x), in LIVE niemals automatisch.
+
+KONTEXT / IST-STAND:
+- Next.js 14 App Router
+- app/arag-bdp/layout.tsx existiert (Bottom-Nav/Sidebar + Hamburger)
+- app/arag-bdp/bdp-context.tsx liefert useBdp() mit { role, isAdmin, environment, userCode, workspaceSlug }
+- data-testid Konvention vorhanden
+- DEMO environment existiert und ist hart verdrahtet für Dummy-User (kein LIVE switch)
+
+--------------------------------------------
+1) TOUR ENGINE (EIGENE, LEICHTGEWICHTIGE IMPLEMENTIERUNG)
+--------------------------------------------
+MUSS:
+1. Erstelle eine kleine Tour-Komponente OHNE externe Lib (stabil, kein Dependency-Risiko):
+   - Datei: app/arag-bdp/components/TourOverlay.tsx (use client)
+   - Features:
+     - dim backdrop (overlay)
+     - popover box (title, text, step counter)
+     - “Weiter”, “Zurück”, “Beenden”
+     - optional “Nicht mehr automatisch anzeigen” (nur DEMO)
+     - highlight target element per data-testid (outline ring gold)
+   - Wenn target nicht gefunden:
+     - zeige Popover zentriert (fallbackMode)
+     - und setze Hinweis klein: “Hinweis: Element aktuell nicht sichtbar – Schritt wird trotzdem erklärt.”
+2. Tour state:
+   - currentStepIndex, running, lastError
+   - keyboard: ESC beendet Tour
+3. Styling:
+   - ARAG: Gold (#FFD700) als Akzent, Hintergrund #FFFBF0, Text schwarz
+   - keine übertriebene Animation; nur fade 150ms
+
+--------------------------------------------
+2) STEP DEFINITIONS (JSON, rollenspezifisch)
+--------------------------------------------
+MUSS:
+4. Erstelle Step-Definitionen als reine Daten:
+   - Datei: lib/arag-bdp-tour.ts
+   - Exporte:
+     - getTourSteps({ role, isAdmin, environment }): Step[]
+   - Step Schema:
+     {
+       id: string,
+       title: string,
+       body: string (DE),
+       targetTestId?: string,   // optional
+       route?: string,          // optional - wenn Step eine Route braucht
+       placement?: "top"|"bottom"|"left"|"right"|"center"
+     }
+5. Rollen:
+   - Admin Tour (10 Schritte)
+   - Beobachter Tour (8 Schritte)
+   - Teilnehmer Tour (6 Schritte)
+6. Inhalte müssen exakt euer Tool erklären (Punkte-only):
+   - Navigation (Home/Sessions/Bewertung/Auswertung)
+   - DEMO Hinweis (nur in DEMO)
+   - Bewertung: 100 Punkte je Kriterium, Summe==100, Sponsorflag nur Transparenz
+   - Admin: Sessions/Teams/TN/Assignments/Kriterien, Release, Tie-break, Export
+   - Auswertung gesperrt bis Release (LIVE), im DEMO ggf. sichtbar
+   - Individual Notes sind Zusatz, beeinflussen nicht Siegerlogik
+   Ton: professionell, leicht pfiffig, aber nicht albern.
+
+--------------------------------------------
+3) ROUTING SUPPORT (Tour darf Seiten wechseln)
+--------------------------------------------
+MUSS:
+7. TourOverlay muss optional route steps unterstützen:
+   - Wenn Step.route gesetzt ist und Nutzer “Weiter” klickt:
+     - router.push(route)
+     - warte bis DOM stabil (useEffect + setTimeout 250ms)
+     - dann versuche target zu highlighten
+8. Tour muss robust bleiben, wenn Route push fehlschlägt:
+   - fallback center popover
+
+--------------------------------------------
+4) ENTRY POINTS (Menü + optional DEMO Auto-Start)
+--------------------------------------------
+MUSS:
+9. Menüpunkt “Tour starten” hinzufügen:
+   - Desktop Sidebar (falls Desktop Shell): data-testid="bdp-side-tour"
+   - Hamburger Menü: data-testid="bdp-menu-tour"
+   - Klick startet Tour.
+10. Auto-Start:
+   - NUR wenn environment==="demo"
+   - NUR wenn user setting tourSeen !== true
+   - Speichere tourSeen pro UserCode+environment:
+     - bevorzugt localStorage key: "arag_bdp_tourSeen_{environment}_{userCode}"
+     - Alternativ in DB/Config, wenn bereits UserSettings existieren
+   - In LIVE niemals automatisch starten.
+
+--------------------------------------------
+5) “LOGIN-WEG EGAL” – TECHNISCHE GARANTIE
+--------------------------------------------
+MUSS:
+11. Tour darf NICHT davon abhängen, ob bdp_session Cookie existiert.
+   - Sie nutzt ausschließlich useBdp() Context.
+   - Wenn useBdp() noch “loading” ist:
+     - zeige Skeleton + disable “Tour starten” bis ready
+     - oder Tour startet und zeigt center step: “Authentifizierung wird geladen…”
+12. Tour darf nicht brechen, wenn role unbekannt:
+   - fallback: observerSteps
+
+--------------------------------------------
+6) TARGETS: data-testid HÄRTEN (falls fehlen)
+--------------------------------------------
+MUSS:
+13. Stelle sicher, dass alle Tour-Targets existieren (data-testid setzen falls fehlt):
+   - Navigation Tabs:
+     - bdp-tab-home, bdp-tab-sessions, bdp-tab-bewertung, bdp-tab-auswertung
+   - Hamburger:
+     - bdp-menu-hamburger
+   - Admin Link:
+     - bdp-side-admin oder bdp-menu-admin
+   - Sessions Liste:
+     - bdp-session-row-*
+   - Bewertung Save Button (falls vorhanden):
+     - bdp-score-save
+   - Sponsor Toggle:
+     - bdp-sponsor-flag
+   - Export Button (admin):
+     - bdp-admin-export
+   Wenn einzelne Elemente (noch) nicht existieren: Tour soll sie überspringen (fallback), aber bitte trotzdem testids ergänzen, wo trivial.
+
+--------------------------------------------
+7) QA / ABNAHME
+--------------------------------------------
+MUSS:
+14. QA Checkliste (dev note oder /arag-bdp/admin/qa):
+   - PASS: Tour startet für Admin (MD1) in DEMO und läuft durch
+   - PASS: Tour startet für Beobachter Dummy-User und läuft durch
+   - PASS: Tour startet für Teilnehmer Dummy-User und läuft durch
+   - PASS: Auto-Start nur 1x in DEMO
+   - PASS: Kein Auto-Start in LIVE
+   - PASS: Fehlende targets führen nicht zu Crash (center fallback)
+15. Keine console errors / hydration warnings.
+
+LIEFERUNG:
+- TourOverlay Komponente
+- lib/arag-bdp-tour.ts definitions
+- Menüeintrag “Tour starten”
+- Auto-Start in DEMO 1x
+- robust, login-wegunabhängig

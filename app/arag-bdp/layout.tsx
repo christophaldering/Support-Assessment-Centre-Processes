@@ -14,9 +14,12 @@ import {
   User,
   Mail,
   Play,
+  Compass,
 } from "lucide-react";
 import { BdpContext, BdpUser } from "./bdp-context";
 import NotificationBell from "./notification-bell";
+import TourOverlay from "./components/TourOverlay";
+import { getTourSteps } from "@/lib/arag-bdp-tour";
 
 const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login", "/anmeldung"];
 
@@ -24,6 +27,8 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<BdpUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [tourRunning, setTourRunning] = useState(false);
+  const [tourAutoChecked, setTourAutoChecked] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -73,6 +78,21 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
     }
   }, [loading, user, pathname, router]);
 
+  useEffect(() => {
+    if (!loading && user && !tourAutoChecked && user.environment === "demo") {
+      setTourAutoChecked(true);
+      try {
+        const key = `arag_bdp_tourSeen_${user.environment}_${user.code}`;
+        if (localStorage.getItem(key) !== "true") {
+          localStorage.setItem(key, "true");
+          setTimeout(() => setTourRunning(true), 600);
+        }
+      } catch {}
+    } else if (!loading && user) {
+      setTourAutoChecked(true);
+    }
+  }, [loading, user, tourAutoChecked]);
+
   const handleLogout = async () => {
     await fetch("/api/arag-bdp/auth/session", { method: "DELETE" });
     await fetch("/api/auth/logout", { method: "POST" });
@@ -88,6 +108,11 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
       body: JSON.stringify({ environment: env }),
     });
     window.location.reload();
+  };
+
+  const startTour = () => {
+    setMenuOpen(false);
+    setTourRunning(true);
   };
 
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
@@ -109,6 +134,8 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
   }
 
   if (!user) return null;
+
+  const tourSteps = getTourSteps({ role: user.role, isAdmin: user.isAdmin, environment: user.environment });
 
   const mobileTabs = [
     { href: "/arag-bdp", label: "Home", testId: "bdp-tab-home", Icon: LayoutGrid, disabled: false },
@@ -146,6 +173,16 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
 
   return (
     <BdpContext.Provider value={{ user, loading, refetchUser: fetchUser }}>
+      {tourRunning && (
+        <TourOverlay
+          steps={tourSteps}
+          onClose={() => setTourRunning(false)}
+          isDemoEnv={user.environment === "demo"}
+          userCode={user.code}
+          environment={user.environment}
+        />
+      )}
+
       {/* ═══════════════════════════════════════════════
           DESKTOP SHELL (lg: breakpoint and above)
           ═══════════════════════════════════════════════ */}
@@ -206,6 +243,16 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
                 })}
               </>
             )}
+
+            <div className="my-3 mx-3 border-t border-white/10" />
+            <button
+              onClick={startTour}
+              data-testid="bdp-side-tour"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 text-[#FFFBF0]/60 hover:text-[#FFFBF0] hover:bg-white/5 w-full"
+            >
+              <Compass size={18} strokeWidth={1.75} />
+              Tour starten
+            </button>
           </nav>
 
           {!user.demoLock && (
@@ -332,6 +379,12 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
                     <Link href="/arag-bdp/admin/demo" data-testid="bdp-menu-demo" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Demo-Raum</Link>
                   </>
                 )}
+                <button data-testid="bdp-menu-tour" onClick={startTour} className="block py-2 px-4 rounded hover:bg-[#FFFBF0] text-black w-full text-left">
+                  <span className="flex items-center gap-2">
+                    <Compass size={16} strokeWidth={1.75} className="text-[#FFD700]" />
+                    Tour starten
+                  </span>
+                </button>
                 {!user.demoLock && (
                   <div className="px-4 py-2">
                     <button

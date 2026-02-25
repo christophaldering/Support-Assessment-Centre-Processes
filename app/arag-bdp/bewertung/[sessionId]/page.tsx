@@ -202,6 +202,7 @@ export default function BdpScoringPage() {
                   checked={!!sponsorFlags[team.id]}
                   onChange={() => handleSponsorToggle(team.id)}
                   disabled={isReadOnly}
+                  data-testid={`bdp-sponsor-flag-${team.id}`}
                   className="w-5 h-5 accent-[#FFD700]"
                 />
                 <span className="text-sm">{team.displayName || team.code} — Ich bin Sponsor</span>
@@ -223,7 +224,7 @@ export default function BdpScoringPage() {
                   </div>
                 )}
                 <button
-                  data-testid="button-submit-scores"
+                  data-testid="bdp-score-save"
                   onClick={handleSubmitScores}
                   disabled={saving || !allValid}
                   className="w-full bg-[#FFD700] text-black font-bold py-4 rounded-2xl hover:bg-[#E6C200] transition-colors disabled:opacity-50"

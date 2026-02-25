@@ -1,0 +1,164 @@
+DU BIST REPLIT. SETZE GENAU DAS UM. KEINE RÜCKFRAGEN. KEIN REFACTORING.
+SPRINT: D3 — FLYOVER / GUIDED TOUR (LOGIN-WEG-UNABHÄNGIG)
+
+ZIEL:
+Implementiere einen Flyover/Guided Tour im ARAG BDP Tool, der für ALLE Nutzer funktioniert – unabhängig davon, ob sie sich über /anmeldung (Plattform-Login), /w/arag/login (Workspace-Login) oder BDP-intern einloggen.
+Die Tour ist rollenspezifisch (Admin vs Beobachter/Vorstand vs Teilnehmer) und in DEMO optional auto-start (1x), in LIVE niemals auto-start.
+
+KONTEXT (IST-STAND):
+- Next.js 14 App Router
+- app/arag-bdp/layout.tsx (ARAG BDP Shell: Bottom-Nav Mobile + Desktop Sidebar für Admin)
+- app/arag-bdp/bdp-context.tsx (useBdp() liefert mindestens: { role, isAdmin, environment, userCode, workspaceSlug, loading? })
+- data-testid Konvention ist wichtig
+- DEMO ist hart verdrahtet (einige User dürfen nicht auf LIVE umschalten)
+
+========================================================
+1) TOUR ENGINE (EIGENE, STABILE IMPLEMENTIERUNG OHNE NEUE DEPENDENCIES)
+========================================================
+MUSS:
+1. Erstelle eine Tour-Overlay-Komponente ohne externe Libraries.
+   Datei: app/arag-bdp/components/TourOverlay.tsx
+   - "use client"
+   - Props: { steps: Step[], isOpen: boolean, onClose: () => void, onComplete?: () => void }
+   - Features:
+     a) Hintergrund dimmen (BackDrop)
+     b) Popover Box mit:
+        - Titel
+        - Text (Deutsch)
+        - Schrittanzeige “Schritt X/Y”
+        - Buttons: Zurück / Weiter / Beenden
+     c) Highlight Ziel-Element:
+        - Steps referenzieren target via data-testid
+        - finde Element per document.querySelector([data-testid="..."])
+        - Highlight via goldener Outline/Ring (z.B. box-shadow/ring classes), ohne Layout zu verschieben
+     d) Fallback:
+        - Wenn target nicht existiert oder nicht sichtbar: Popover zentriert anzeigen (placement="center") und weiter funktionieren.
+        - Hinweis klein: “Hinweis: Element aktuell nicht sichtbar – Erklärung bleibt gültig.”
+     e) Keyboard:
+        - ESC beendet
+2. Keine Hydration-Warnings:
+   - TourOverlay darf erst clientseitig DOM suchen.
+   - Nutze useEffect für target lookup.
+3. Animation:
+   - Nur Fade-In 150ms, keine Bounce/Spring.
+
+STEP TYPE:
+4. Definiere Step Type in lib/arag-bdp-tour.ts:
+   type Step = {
+     id: string;
+     title: string;
+     body: string;
+     targetTestId?: string;
+     route?: string;           // optional: Tour navigiert dorthin
+     placement?: "top"|"bottom"|"left"|"right"|"center";
+   }
+
+========================================================
+2) STEP DEFINITIONS (ROLLENSPEZIFISCH, DEUTSCH, PUNKTE-LOGIK)
+========================================================
+MUSS:
+5. Erstelle Datei: lib/arag-bdp-tour.ts
+   - export function getTourSteps(ctx:{ role?: string, isAdmin?: boolean, environment?: string }): Step[]
+   - Liefere abhängig von Rolle:
+     A) Admin Tour (10 Schritte)
+     B) Beobachter/Vorstand Tour (8 Schritte)
+     C) Teilnehmer Tour (6 Schritte)
+   - Wenn Rolle unbekannt: fallback auf Beobachter-Tour.
+
+INHALTLICHE ANFORDERUNGEN (WICHTIG):
+6. Tour erklärt NICHT Likert, sondern NUR Punkte-Logik:
+   - pro Kriterium 100 Punkte Budget
+   - Summe muss 100 sein (zwingend)
+   - Sponsorflag nur Transparenz
+   - Ergebnisse erst nach Admin-Release (LIVE); DEMO ggf. sichtbar
+   - Individual Notes sind Zusatz und ändern nicht die Siegerlogik
+7. Ton:
+   - professionell, vorstandsadäquat
+   - leichte pfiffige Nuance (1–2 kleine Schmunzler), aber nicht albern
+   - keine langen Texte (max 2–4 Sätze pro Step)
+
+========================================================
+3) ROUTING SUPPORT (TOUR DARF SEITEN WECHSELN)
+========================================================
+MUSS:
+8. TourOverlay muss route steps unterstützen:
+   - Wenn currentStep.route gesetzt ist und User klickt “Weiter”:
+     - router.push(route)
+     - warte DOM Stabilität (setTimeout 250–400ms)
+     - dann target highlight attempt
+9. Fehlerrobust:
+   - wenn route nicht erreichbar: fallback center popover, kein Crash.
+
+========================================================
+4) ENTRY POINTS (MENÜ + OPTIONAL DEMO AUTO-START 1X)
+========================================================
+MUSS:
+10. Füge Menüpunkt “Tour starten” hinzu:
+   - Desktop Sidebar: data-testid="bdp-side-tour"
+   - Hamburger Menü: data-testid="bdp-menu-tour"
+   - Falls Mobile ohne Sidebar: Hamburger genügt.
+11. Klick auf “Tour starten”:
+   - startet Tour mit steps = getTourSteps(useBdp() context)
+12. Auto-Start:
+   - NUR wenn environment==="demo"
+   - NUR beim ersten Besuch pro UserCode
+   - localStorage Key: "arag_bdp_tourSeen_demo_{userCode}"
+   - In LIVE niemals auto-start.
+13. Profil-Seite:
+   - Button “Tour erneut starten”
+   - data-testid="bdp-tour-restart"
+   - setzt tourSeen=false und startet Tour.
+
+========================================================
+5) LOGIN-WEG-UNABHÄNGIGKEIT (KERNPUNKT)
+========================================================
+MUSS:
+14. Tour darf NICHT vom bdp_session Cookie abhängen.
+   - Sie darf nur auf useBdp() und vorhandene UI-Elemente zugreifen.
+15. Wenn useBdp() noch lädt:
+   - disable Menüpunkt “Tour starten” oder zeige Step0 center: “Authentifizierung wird geladen…”
+   - Keine Fehler/Toasts.
+
+========================================================
+6) TARGETS (data-testid) SICHERSTELLEN
+========================================================
+MUSS:
+16. Stelle sicher, dass die wichtigsten Elemente im UI ein data-testid haben (ergänzen falls fehlt):
+   - Bottom Nav:
+     bdp-tab-home, bdp-tab-sessions, bdp-tab-bewertung, bdp-tab-auswertung
+   - Hamburger:
+     bdp-menu-hamburger
+   - Admin Link:
+     bdp-side-admin ODER bdp-menu-admin
+   - Sessions:
+     bdp-session-row-{id} (falls schon existiert, nutzen)
+     sonst: bdp-session-row
+   - Bewertung:
+     Save/Commit Button: bdp-score-save (falls vorhanden)
+     Sponsor Toggle: bdp-sponsor-flag (falls vorhanden)
+   - Admin Export:
+     bdp-admin-export (falls vorhanden)
+17. Wenn bestimmte targets noch nicht existieren, Steps trotzdem behalten (fallback center), aber ergänze testids wo trivial.
+
+========================================================
+7) QUALITÄTSSICHERUNG
+========================================================
+MUSS:
+18. Baue eine kleine Dev-Note (docs/dev-notes.md oder Kommentar) mit:
+   - wie Tour gestartet wird
+   - welche Targets genutzt werden
+   - wie Auto-Start gespeichert ist
+19. Manuelle Smoke-Tests (müssen nach Implementierung bestehen):
+   - Admin (MD1) in DEMO: Tour läuft durch, keine Errors
+   - Beobachter Dummy-User: Tour läuft durch
+   - Teilnehmer Dummy-User: Tour läuft durch
+   - In LIVE: kein Auto-Start
+   - Fehlende Targets -> fallback center, kein Crash
+20. Keine console errors, keine hydration warnings.
+
+LIEFERUNG:
+- TourOverlay Komponente
+- Step-Definitions Datei
+- Menüeinträge + Profil Restart
+- DEMO Auto-Start 1x, LIVE nie
+- robust, login-wegunabhängig
