@@ -29,7 +29,7 @@ export default function BdpLoginPage() {
         return;
       }
 
-      router.push("/arag-bdp");
+      router.push("/w/arag");
       router.refresh();
     } catch {
       setError("Verbindungsfehler");

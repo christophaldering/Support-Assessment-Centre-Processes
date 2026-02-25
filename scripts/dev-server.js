@@ -145,7 +145,7 @@ server.listen(PORT, "0.0.0.0", () => {
       }
     }
 
-    const warmPages = ["/", "/w/aestimamus/login", "/arag-bdp/login"];
+    const warmPages = ["/", "/w/aestimamus/login", "/w/arag"];
     for (const page of warmPages) {
       try {
         const code = await fetchPage(`http://127.0.0.1:${NEXT_PORT}${page}`);

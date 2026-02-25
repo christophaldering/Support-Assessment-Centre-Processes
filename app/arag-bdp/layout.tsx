@@ -75,7 +75,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user && !PUBLIC_PATHS.includes(pathname)) {
-      router.push("/arag-bdp/login");
+      router.push("/w/arag");
     }
   }, [loading, user, pathname, router]);
 
@@ -113,7 +113,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
     await fetch("/api/arag-bdp/auth/session", { method: "DELETE" });
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
-    router.push("/arag-bdp/login");
+    router.push("/w/arag");
   };
 
   const startTour = () => {

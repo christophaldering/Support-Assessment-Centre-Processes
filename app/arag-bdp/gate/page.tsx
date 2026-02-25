@@ -7,7 +7,7 @@ export default function BdpGateRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/arag-bdp/login");
+    router.replace("/w/arag");
   }, [router]);
 
   return (

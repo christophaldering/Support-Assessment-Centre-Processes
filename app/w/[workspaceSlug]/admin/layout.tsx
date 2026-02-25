@@ -29,7 +29,7 @@ export default async function AdminLayout({ children, params }: Props) {
   }
 
   if (params.workspaceSlug === "arag" && !masterAuth) {
-    redirect("/arag-bdp");
+    redirect("/w/arag");
   }
 
   const workspace = await prisma.workspace.findUnique({
