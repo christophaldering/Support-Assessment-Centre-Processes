@@ -1005,6 +1005,8 @@ model BdpUser {
   username    String?
   passwordHash String? @map("password_hash")
   photoUrl    String?  @map("photo_url")
+  avatarUrl   String?  @map("avatar_url")
+  avatarUpdatedAt DateTime? @map("avatar_updated_at")
   viewMode    String   @default("mobile") @map("view_mode")
   uiPreset    String   @default("whatsapp_spiegel") @map("ui_preset")
   createdAt   DateTime @default(now()) @map("created_at")
@@ -1047,8 +1049,10 @@ model BdpTeam {
   id          String   @id @default(uuid())
   code        String   @unique
   displayName String?  @map("display_name")
-  environment String   @default("live")
-  feedback    String?
+  environment     String   @default("live")
+  feedback        String?
+  businessCaseUrl  String?  @map("business_case_url")
+  businessCaseType String?  @map("business_case_type")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

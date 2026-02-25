@@ -1,0 +1,210 @@
+DU BIST REPLIT.
+KEINE RÜCKFRAGEN.
+KEINE HALBEN LÖSUNGEN.
+KEIN PLACEHOLDER.
+IMPLEMENTIERE VOLLSTÄNDIG.
+
+SPRINT D4 – AVATAR + BUSINESS CASE VIEWER + DEMO CASES
+
+========================================================
+TEIL 1 — PROFILFOTO STATT KÜRZEL (WHATSAPP-LOGIK)
+========================================================
+
+ZIEL:
+Wenn User ein Foto hochlädt → überall Avatar anzeigen.
+Wenn kein Foto → Fallback auf Kürzel.
+
+1. DB:
+   - Nutze vorhandenes BdpUser.avatarUrl oder erweitere Modell falls fehlt.
+   - Upload über bestehendes Replit Object Storage.
+   - Speichere:
+     avatarUrl
+     avatarUpdatedAt
+
+2. Profil-Seite:
+   - Nach Upload sofort Preview anzeigen (optimistic UI)
+   - data-testid="bdp-avatar-image"
+   - Kreisform (rounded-full)
+   - 40px mobile, 48px desktop
+
+3. Anzeige ersetzen:
+   - Header (statt UserCode)
+   - Hamburger Menü
+   - Admin User-Liste
+   - Observer-Auswahl
+   - Teilnehmer-Listen
+   - Bewertungsscreen
+
+4. Fallback:
+   Wenn avatarUrl null:
+     → Kreis mit Gold-Hintergrund + Initialen
+
+========================================================
+TEIL 2 — DEMO-AVATARE (COMIC-STIL)
+========================================================
+
+NUR IM DEMO-MODUS:
+
+Erzeuge feste Avatar-URLs für Demo-User.
+
+Beispiele:
+
+Marie Curie → stilisierte Wissenschaftlerin mit Reagenzglas
+Alan Turing → Retro-Computer Nerd mit Lochkarten
+Hannah Arendt → Intellektuelle mit Notizbuch
+Virginia Woolf → Literarische Silhouette mit Feder
+Peter Drucker → Business-Denker mit Diagramm
+Marcus Aurelius → Stoischer Philosoph mit Lorbeerkranz
+Holden Caulfield → Leicht rebellischer Jugendlicher mit roter Mütze
+
+Implementierung:
+- Speichere statische SVG/PNG Assets in /public/demo-avatars/
+- Weise diese im Demo-Seed automatisch zu.
+
+KEINE KI-BILDGENERIERUNG.
+KEINE EXTERNE API.
+Nur statische Assets.
+
+========================================================
+TEIL 3 — BUSINESS CASE UPLOAD PRO TEAM
+========================================================
+
+ZIEL:
+Admin kann pro Team eine Präsentation hochladen ODER Demo generiert automatisch.
+
+1. DB:
+   Neues Feld in BdpTeam:
+     businessCaseUrl
+     businessCaseType ("pdf" | "demo-generated")
+
+2. Admin UI:
+   In Team-Konfiguration:
+   - Upload-Feld
+   - data-testid="bdp-team-upload-case"
+
+3. Speichern in Object Storage.
+4. PDF max 15MB.
+5. Nur PDF erlaubt.
+
+========================================================
+TEIL 4 — DEMO-GENERIERTE 5-SEITEN MINI-PRÄSENTATIONEN
+========================================================
+
+Für DEMO automatisch generieren, wenn kein PDF vorhanden.
+
+Erzeuge interne Case-Datenstruktur:
+
+type DemoCase = {
+  slides: {
+    title: string;
+    body: string;
+    kpis?: string[];
+  }[]
+}
+
+Erstelle 5 Slides pro Team.
+
+TEAMS (Beispiel):
+Berlin, Paris, Madrid, Wien, Stockholm, Prag
+
+Charakter-Logik an Namen & Bewertungen anpassen.
+
+Beispiel Berlin:
+Slide 1 – Strategische Vision
+Slide 2 – Marktanalyse
+Slide 3 – Business Modell
+Slide 4 – Finanzplanung
+Slide 5 – Risikoanalyse
+
+Inhalte:
+- Zahlen plausibel
+- Humor subtil
+- Kleine charmante Übertreibung erlaubt
+
+Beispiel Formulierung:
+"Die EBIT-Projektion ist ambitioniert – aber nicht völlig utopisch."
+"Selbst Sherlock Holmes hätte hier eine Excel-Tabelle gebraucht."
+
+========================================================
+TEIL 5 — BUSINESS CASE VIEWER IM BEWERTUNGSMODUS
+========================================================
+
+In /arag-bdp/bewertung:
+
+Neue Sektion oberhalb der Kriterien:
+
+Button:
+  "Business Case anzeigen"
+  data-testid="bdp-open-case"
+
+Bei Klick:
+  Modal öffnen (Fullscreen auf Mobile, Dialog Desktop)
+
+Wenn PDF:
+  <iframe> Viewer
+
+Wenn demo-generated:
+  Slide-Viewer implementieren:
+
+  - Titel oben
+  - Body Text
+  - KPI-Liste als Bullet Points
+  - Navigation:
+      ← Zurück
+      → Weiter
+  - Slide Indicator "2 / 5"
+
+  - data-testid:
+      bdp-case-slide
+      bdp-case-next
+      bdp-case-prev
+
+========================================================
+TEIL 6 — BEWERTUNGEN KREATIV ANPASSEN
+========================================================
+
+Passe Demo-Scores so an,
+dass sie zur Qualität der BusinessCases passen.
+
+Beispiel:
+Team mit exzellenter Finanzplanung → hohe Ökonomische Stringenz
+Team mit rhetorisch starkem Auftritt → hohe Präsentation
+Team mit philosophischer Tiefe → hohe Strategische Kohärenz
+
+Sorge für:
+- Streuung
+- 1 knappe Entscheidung
+- 1 klarer Sieger
+- 1 Überraschungsmoment
+
+========================================================
+TEIL 7 — UI DETAILS
+========================================================
+
+Avatar:
+- Kreis
+- Leichter Schatten
+- Goldener Hover-Ring
+
+Business Case Modal:
+- ARAG Schwarz/Gold
+- Hintergrund #FFFBF0
+- Keine externe UI Library
+
+========================================================
+TEIL 8 — QUALITÄTSSICHERUNG
+========================================================
+
+PASS NUR WENN:
+
+- Avatar ersetzt überall Kürzel
+- Upload zeigt sofort Preview
+- Demo-User haben Comic-Avatare
+- Jede Demo-Session hat 5 Slides pro Team
+- Slide-Viewer funktioniert mobil & Desktop
+- PDF Upload funktioniert
+- Keine Console Errors
+- Keine Hydration Errors
+- Bewertung reagiert logisch auf Case-Qualität
+
+IMPLEMENTIERE JETZT.
