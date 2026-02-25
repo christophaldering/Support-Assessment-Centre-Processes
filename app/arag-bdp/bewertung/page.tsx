@@ -54,10 +54,12 @@ export default function BdpBewertungPage() {
 
           {closedSessions.length > 0 && (
             <div>
-              <h2 className="font-bold text-lg mb-3 text-gray-500">Abgeschlossene Sessions (Nur-Lesen)</h2>
+              <h2 className="font-bold text-lg mb-3 text-gray-500">
+                {user?.environment === "demo" ? "Abgeschlossene Sessions (Editierbar in DEMO)" : "Abgeschlossene Sessions (Nur-Lesen)"}
+              </h2>
               <div className="space-y-3">
                 {closedSessions.map(s => (
-                  <Link key={s.id} href={`/arag-bdp/bewertung/${s.id}`} data-testid={`card-readonly-session-${s.id}`} className="block bg-white rounded-2xl p-5 shadow-sm opacity-75">
+                  <Link key={s.id} href={`/arag-bdp/bewertung/${s.id}`} data-testid={`card-readonly-session-${s.id}`} className={`block bg-white rounded-2xl p-5 shadow-sm ${user?.environment === "demo" ? "hover:shadow-md transition-all border-l-4 border-[#FFD700]" : "opacity-75"}`}>
                     <div className="flex items-center justify-between">
                       <h3 className="font-bold">{s.name}</h3>
                       <span className={`text-xs px-3 py-1 rounded-full font-medium ${stateColor[s.state]}`}>{stateLabel[s.state]}</span>

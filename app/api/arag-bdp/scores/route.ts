@@ -52,8 +52,12 @@ export async function POST(req: NextRequest) {
   if (!dbSession) return NextResponse.json({ error: "Session nicht gefunden" }, { status: 404 });
 
   if (dbSession.state === "DRAFT") return NextResponse.json({ error: "Session noch nicht geöffnet" }, { status: 403 });
-  if (dbSession.state === "CLOSED") return NextResponse.json({ error: "Session geschlossen – Bewertung gesperrt" }, { status: 403 });
-  if (dbSession.state === "RELEASED") return NextResponse.json({ error: "Session freigegeben – Bewertung gesperrt" }, { status: 403 });
+
+  const isDemoEnv = bdpSession.environment === "demo";
+  if (!isDemoEnv) {
+    if (dbSession.state === "CLOSED") return NextResponse.json({ error: "Session geschlossen – Bewertung gesperrt" }, { status: 403 });
+    if (dbSession.state === "RELEASED") return NextResponse.json({ error: "Session freigegeben – Bewertung gesperrt" }, { status: 403 });
+  }
 
   const assignment = await prisma.bdpObserverAssignment.findUnique({
     where: { sessionId_userId: { sessionId, userId: bdpSession.userId } },

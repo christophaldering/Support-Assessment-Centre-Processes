@@ -8,6 +8,7 @@ export interface BdpUser {
   role: string;
   isAdmin: boolean;
   environment: string;
+  demoLock?: boolean;
   photoUrl?: string;
   viewMode: string;
   uiPreset: string;

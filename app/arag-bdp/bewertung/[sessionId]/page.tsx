@@ -61,7 +61,8 @@ export default function BdpScoringPage() {
     }).catch(() => {});
   }, [sessionId]);
 
-  const isReadOnly = session?.state === "CLOSED" || session?.state === "RELEASED" || session?.state === "DRAFT";
+  const isDemoEnv = user?.environment === "demo";
+  const isReadOnly = session?.state === "DRAFT" || (!isDemoEnv && (session?.state === "CLOSED" || session?.state === "RELEASED"));
 
   const setScore = (criterionId: string, teamId: string, value: number) => {
     setScores(prev => ({

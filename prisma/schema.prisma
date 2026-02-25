@@ -1001,6 +1001,7 @@ model BdpUser {
   displayName String?  @map("display_name")
   isAdmin     Boolean  @default(false) @map("is_admin")
   environment String   @default("live")
+  demoLock    Boolean  @default(false) @map("demo_lock")
   username    String?
   passwordHash String? @map("password_hash")
   photoUrl    String?  @map("photo_url")
@@ -1025,6 +1026,7 @@ model BdpSession {
   state             String   @default("DRAFT")
   transparencyMode  String   @default("aggregates_only") @map("transparency_mode")
   environment       String   @default("live")
+  summary           String?
   startedAt         DateTime? @map("started_at")
   closedAt          DateTime? @map("closed_at")
   releasedAt        DateTime? @map("released_at")
@@ -1046,6 +1048,7 @@ model BdpTeam {
   code        String   @unique
   displayName String?  @map("display_name")
   environment String   @default("live")
+  feedback    String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

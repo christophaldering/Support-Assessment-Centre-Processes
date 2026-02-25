@@ -1,0 +1,162 @@
+DU BIST REPLIT. IMPLEMENTIERE EXAKT DAS. KEINE RÜCKFRAGEN.
+ZIEL: DEMO-MODUS FEST VERDRAHTEN + CHARAKTERBASIERTE SCORES + HUMORVOLLE AUSWERTUNGEN + DUMMY-USER.
+
+---------------------------------------
+1) MENÜPUNKT ENTFERNEN
+---------------------------------------
+- Entferne den nicht benötigten Prozessschritt vollständig aus:
+  - Desktop Admin Sidebar
+  - Mobile Bottom Nav
+  - Hamburger Menü
+- Keine Route darf mehr erreichbar sein.
+- Keine toten Links.
+- Keine console errors.
+
+---------------------------------------
+2) DEMO-MODUS HART VERDRAHTEN
+---------------------------------------
+Für User mit:
+  environment="demo" AND demoLock=true
+
+GILT:
+- Kein LIVE/DEMO Toggle anzeigen
+- Wenn versucht wird /arag-bdp?env=live aufzurufen:
+  -> Hard Redirect zurück zu DEMO
+  -> Toast: "Sie befinden sich in der DEMO-Umgebung."
+
+Für alle anderen:
+- Umschaltung bleibt möglich.
+
+---------------------------------------
+3) 2 NEUE DUMMY-USER ANLEGEN
+---------------------------------------
+Beobachter:
+  Code: V7
+  RealName: "Marcus Aurelius"
+  Email: aurelius@demo.de
+  Passwort: aurelius
+  Rolle: BOARD
+  environment: demo
+  demoLock: true
+
+Teilnehmer:
+  Code: TN22
+  RealName: "Holden Caulfield"
+  Email: caulfield@demo.de
+  Passwort: caulfield
+  Rolle: PARTICIPANT
+  environment: demo
+  demoLock: true
+
+TN22 wird Team "Paris" zugeordnet.
+
+---------------------------------------
+4) SCORES – CHARAKTERBASIERT MIT STREUUNG
+---------------------------------------
+Bewertungen sind vollständig abgeschlossen (status="SUBMITTED"),
+aber im DEMO-Modus editierbar.
+
+CHARAKTERLOGIK (WICHTIG):
+Scores sollen subtil zur Persönlichkeit passen.
+
+BEISPIELLOGIK:
+
+Marie Curie:
+- Stark bei Strategischer Kohärenz
+- Leicht strenger bei Souveränität
+- Tendenziell analytisch
+
+Alan Turing:
+- Sehr hohe Ökonomische Stringenz
+- Sehr hohe Logik
+- Mittel bei Kollektiver Führung
+
+Hannah Arendt:
+- Stark bei Führungsfähigkeit
+- Sehr differenziert bei Defense/Q&A
+- Keine extremen Ausschläge
+
+Virginia Woolf:
+- Etwas großzügiger bei Präsentation
+- Kritisch bei Operationalisierung
+
+Peter Drucker:
+- Sehr rational, strukturierte Verteilungen
+
+Marcus Aurelius (V7):
+- Ausgewogen, philosophisch ruhig
+- Kaum extreme Streuungen
+- Notizen mit stoischer Nuance
+
+Stelle sicher:
+- JEDE Kombination (Session × Observer × Criterion × Team) hat Score
+- Summe pro Observer/Kriterium = 100
+- Leichte Streuung
+- Mindestens 1 echtes TieBreak-Szenario bleibt bestehen
+
+---------------------------------------
+5) TEXTLICHE ERLÄUTERUNGEN (HUMORVOLL, ABER SERIÖS)
+---------------------------------------
+
+Erzeuge für:
+- Jede Session eine Aggregat-Auswertung (kurze Executive Summary)
+- Für 8 Teilnehmer Individual Notes
+- Für mindestens 3 Teams Team-Feedback
+
+Stil:
+- Intelligent
+- Leicht augenzwinkernd
+- Nicht albern
+- Keine Ironie auf Kosten von Personen
+- Subtile Referenzen (z.B. "mit beinahe stoischer Gelassenheit")
+
+Beispiel Individual Note:
+"Sehr klare Argumentationslinie mit analytischer Präzision. Im Q&A gelegentlich zu sehr im eigenen Gedankengebäude verhaftet – ein Hauch weniger Kafka, ein Hauch mehr Kundenorientierung wäre hilfreich."
+
+Beispiel Team Feedback:
+"Das Team Berlin überzeugte durch strategische Stringenz. Die Präsentation war präzise, wenngleich im Q&A ein Moment entstand, in dem selbst Sherlock Holmes kurz nach der Logik suchte."
+
+Keine Copy-Paste-Wiederholungen.
+Texte variieren.
+Max. 4–6 Sätze je Text.
+
+---------------------------------------
+6) DEMO-EDITIERBARKEIT
+---------------------------------------
+In DEMO:
+- Auch wenn status="SUBMITTED"
+- Scores dürfen bearbeitet werden
+- Änderungen triggern sofort:
+   -> Re-Aggregation
+   -> UI Refresh
+   -> Aktualisierung TieBreak (falls betroffen)
+
+In LIVE:
+- Wenn status="SUBMITTED"
+- Scores read-only
+- Kein Override
+
+---------------------------------------
+7) QA HARD CHECKS
+---------------------------------------
+Erweitere QA:
+
+PASS nur wenn:
+- Alle Scores existieren
+- Alle Summen = 100
+- Mind. 8 Individual Notes
+- Mind. 3 Team Feedbacks
+- Mind. 3 Session Summaries
+- Dummy-User können nicht auf LIVE wechseln
+- Edit in DEMO verändert Auswertung sofort
+
+---------------------------------------
+8) UI DETAIL
+---------------------------------------
+Bei Dummy-User Login:
+- Gelber Banner oben:
+  "DEMO-UMGEBUNG – Änderungen wirken sich sofort auf die Auswertung aus."
+
+---------------------------------------
+
+JETZT IMPLEMENTIEREN.

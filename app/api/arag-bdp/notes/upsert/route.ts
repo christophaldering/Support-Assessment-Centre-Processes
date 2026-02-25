@@ -41,15 +41,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Session noch nicht geöffnet" }, { status: 403 });
   }
 
-  const config = await prisma.bdpConfig.findFirst();
-  const lockNotes = config?.lockNotesOnClose ?? true;
+  const isDemoEnv = bdpSession.environment === "demo";
+  if (!isDemoEnv) {
+    const config = await prisma.bdpConfig.findFirst();
+    const lockNotes = config?.lockNotesOnClose ?? true;
 
-  if (lockNotes && (dbSession.state === "CLOSED" || dbSession.state === "RELEASED")) {
-    return NextResponse.json({ error: "Notizen sind gesperrt (Session geschlossen)" }, { status: 403 });
-  }
+    if (lockNotes && (dbSession.state === "CLOSED" || dbSession.state === "RELEASED")) {
+      return NextResponse.json({ error: "Notizen sind gesperrt (Session geschlossen)" }, { status: 403 });
+    }
 
-  if (!lockNotes && dbSession.state === "RELEASED") {
-    return NextResponse.json({ error: "Notizen sind gesperrt (Session freigegeben)" }, { status: 403 });
+    if (!lockNotes && dbSession.state === "RELEASED") {
+      return NextResponse.json({ error: "Notizen sind gesperrt (Session freigegeben)" }, { status: 403 });
+    }
   }
 
   const result = await prisma.bdpIndividualNote.upsert({

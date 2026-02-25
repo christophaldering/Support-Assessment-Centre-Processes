@@ -73,8 +73,8 @@ export async function GET() {
 
   const participants = await prisma.bdpParticipant.findMany({ where: { environment: ENV } });
   checks.push({
-    name: "Teilnehmer vorhanden (21)",
-    status: participants.length === 21 ? "PASS" : "FAIL",
+    name: "Teilnehmer vorhanden (22)",
+    status: participants.length === 22 ? "PASS" : "FAIL",
     detail: `${participants.length} Teilnehmer gefunden`,
   });
 
@@ -141,12 +141,14 @@ export async function GET() {
 
   let allScoresValid = true;
   let scoreDetail = "";
+  let totalScoreCount = 0;
   for (const s of sessions) {
     for (const oa of s.observerAssignments) {
       for (const crit of criteria) {
         const scores = await prisma.bdpScore.findMany({
           where: { sessionId: s.id, observerId: oa.userId, criterionId: crit.id, environment: ENV },
         });
+        totalScoreCount += scores.length;
         const sum = scores.reduce((acc, sc) => acc + sc.points, 0);
         if (sum !== 100) {
           allScoresValid = false;
@@ -158,7 +160,13 @@ export async function GET() {
   checks.push({
     name: "Alle Score-Summen = 100",
     status: allScoresValid ? "PASS" : "FAIL",
-    detail: allScoresValid ? "Alle Kombinationen korrekt" : scoreDetail.slice(0, 300),
+    detail: allScoresValid ? `Alle Kombinationen korrekt (${totalScoreCount} Scores)` : scoreDetail.slice(0, 300),
+  });
+
+  checks.push({
+    name: "Alle Scores existieren",
+    status: totalScoreCount > 0 && allScoresValid ? "PASS" : "FAIL",
+    detail: `${totalScoreCount} Score-Einträge`,
   });
 
   let tieFound = false;
@@ -189,9 +197,33 @@ export async function GET() {
 
   const notes = await prisma.bdpIndividualNote.findMany({ where: { environment: ENV } });
   checks.push({
-    name: "Individual Notes vorhanden (≥6)",
-    status: notes.length >= 6 ? "PASS" : "FAIL",
+    name: "Individual Notes vorhanden (≥8)",
+    status: notes.length >= 8 ? "PASS" : "FAIL",
     detail: `${notes.length} Notizen gefunden`,
+  });
+
+  const teamsWithFeedback = teams.filter(t => t.feedback && t.feedback.length > 0);
+  checks.push({
+    name: "Team Feedbacks vorhanden (≥3)",
+    status: teamsWithFeedback.length >= 3 ? "PASS" : "FAIL",
+    detail: `${teamsWithFeedback.length} Teams mit Feedback`,
+  });
+
+  const sessionsWithSummary = sessions.filter(s => s.summary && s.summary.length > 0);
+  checks.push({
+    name: "Session Summaries vorhanden (≥3)",
+    status: sessionsWithSummary.length >= 3 ? "PASS" : "FAIL",
+    detail: `${sessionsWithSummary.length} Sessions mit Summary`,
+  });
+
+  const demoLockedUsers = users.filter(u => u.demoLock);
+  const demoLockedCannotSwitch = demoLockedUsers.length > 0;
+  checks.push({
+    name: "Dummy-User können nicht auf LIVE wechseln",
+    status: demoLockedCannotSwitch ? "PASS" : "FAIL",
+    detail: demoLockedCannotSwitch
+      ? `${demoLockedUsers.length} User mit demoLock (${demoLockedUsers.map(u => u.code).join(", ")})`
+      : "Keine demoLock-User gefunden",
   });
 
   const passCount = checks.filter(c => c.status === "PASS").length;
