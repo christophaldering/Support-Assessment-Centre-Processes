@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getBdpSession } from "@/lib/bdp-auth";
+import { z } from "zod";
 
 const prisma = new PrismaClient();
+
+const scoreItemSchema = z.object({
+  criterionId: z.string(),
+  teamId: z.string(),
+  points: z.number().int().min(0).max(100),
+});
+
+const submitSchema = z.object({
+  sessionId: z.string(),
+  scores: z.array(scoreItemSchema),
+});
 
 export async function GET(req: NextRequest) {
   const session = getBdpSession();
@@ -28,16 +40,20 @@ export async function POST(req: NextRequest) {
   if (!bdpSession) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
 
   const body = await req.json();
-  const { sessionId, scores } = body;
+  const parsed = submitSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
 
-  const dbSession = await prisma.bdpSession.findUnique({ where: { id: sessionId } });
+  const { sessionId, scores } = parsed.data;
+
+  const dbSession = await prisma.bdpSession.findUnique({
+    where: { id: sessionId },
+    include: { sessionTeams: true },
+  });
   if (!dbSession) return NextResponse.json({ error: "Session nicht gefunden" }, { status: 404 });
-  if (dbSession.state === "CLOSED" || dbSession.state === "RELEASED") {
-    return NextResponse.json({ error: "Bewertung ist gesperrt (Session geschlossen)" }, { status: 403 });
-  }
-  if (dbSession.state !== "OPEN") {
-    return NextResponse.json({ error: "Bewertung noch nicht geöffnet" }, { status: 403 });
-  }
+
+  if (dbSession.state === "DRAFT") return NextResponse.json({ error: "Session noch nicht geöffnet" }, { status: 403 });
+  if (dbSession.state === "CLOSED") return NextResponse.json({ error: "Session geschlossen – Bewertung gesperrt" }, { status: 403 });
+  if (dbSession.state === "RELEASED") return NextResponse.json({ error: "Session freigegeben – Bewertung gesperrt" }, { status: 403 });
 
   const assignment = await prisma.bdpObserverAssignment.findUnique({
     where: { sessionId_userId: { sessionId, userId: bdpSession.userId } },
@@ -46,34 +62,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Sie sind dieser Session nicht zugewiesen" }, { status: 403 });
   }
 
+  const sessionTeamIds = dbSession.sessionTeams.map(st => st.teamId);
+  const assignedTeamIds = assignment.canScoreTeamIds.length > 0
+    ? assignment.canScoreTeamIds.filter(id => sessionTeamIds.includes(id))
+    : sessionTeamIds;
+
   const criteria = await prisma.bdpCriterion.findMany({ where: { active: true } });
   const criterionIds = criteria.map(c => c.id);
-  const assignedTeamIds = assignment.canScoreTeamIds;
-
-  for (const criterionId of criterionIds) {
-    const criterionScores = scores.filter((s: any) => s.criterionId === criterionId);
-    const sum = criterionScores.reduce((acc: number, s: any) => acc + (s.points || 0), 0);
-
-    const scoredTeamIds = criterionScores.map((s: any) => s.teamId);
-    const allAssignedTeamsScored = assignedTeamIds.every((tid: string) => scoredTeamIds.includes(tid));
-
-    if (allAssignedTeamsScored && sum !== 100) {
-      const critName = criteria.find(c => c.id === criterionId)?.name || criterionId;
-      return NextResponse.json({
-        error: `Punkte für "${critName}" müssen genau 100 ergeben (aktuell: ${sum})`,
-      }, { status: 400 });
-    }
-  }
 
   for (const score of scores) {
     if (!assignedTeamIds.includes(score.teamId)) {
-      return NextResponse.json({ error: `Team ${score.teamId} ist Ihnen nicht zugewiesen` }, { status: 403 });
+      return NextResponse.json({ error: `Team ${score.teamId} ist nicht in Ihrem Bewertungsbereich` }, { status: 403 });
     }
     if (!criterionIds.includes(score.criterionId)) {
       return NextResponse.json({ error: "Ungültiges Kriterium" }, { status: 400 });
     }
-    if (typeof score.points !== "number" || score.points < 0) {
-      return NextResponse.json({ error: "Punkte müssen eine positive Zahl sein" }, { status: 400 });
+  }
+
+  for (const criterionId of criterionIds) {
+    const criterionScores = scores.filter(s => s.criterionId === criterionId);
+    if (criterionScores.length === 0) continue;
+
+    const scoredTeamIds = criterionScores.map(s => s.teamId);
+    const allTeamsScored = assignedTeamIds.every(tid => scoredTeamIds.includes(tid));
+
+    if (allTeamsScored) {
+      const sum = criterionScores.reduce((acc, s) => acc + s.points, 0);
+      if (sum !== 100) {
+        const critName = criteria.find(c => c.id === criterionId)?.name || criterionId;
+        return NextResponse.json({
+          error: `Punkte für "${critName}" müssen genau 100 ergeben (aktuell: ${sum})`,
+        }, { status: 400 });
+      }
     }
   }
 

@@ -30,7 +30,7 @@ export default function BdpAuswertungPage() {
       .finally(() => setLoading(false));
   }, [selectedSession]);
 
-  const releasedSessions = sessions.filter(s => s.state === "RELEASED" || (user?.isAdmin && s.state !== "DRAFT"));
+  const releasedSessions = sessions.filter(s => s.state === "RELEASED");
 
   return (
     <div className="space-y-6">
@@ -101,9 +101,15 @@ export default function BdpAuswertungPage() {
                   <div className="mt-4 p-4 bg-blue-50 rounded-xl" data-testid="text-tiebreak-result">
                     <p className="font-bold text-blue-800">Tie-Break Entscheidung</p>
                     <p className="text-sm text-blue-700 mt-1">
-                      Sieger: {results.ranked.find((r: any) => r.teamId === results.tieBreak.winnerTeamId)?.teamCode || "–"} (Entscheidung durch Board)
+                      Winner (Tie-break by Board): <strong>{results.ranked.find((r: any) => r.teamId === results.tieBreak.winnerTeamId)?.teamCode || "–"}</strong>
                     </p>
                     {results.tieBreak.rationale && <p className="text-xs text-blue-600 mt-1">Begründung: {results.tieBreak.rationale}</p>}
+                  </div>
+                )}
+                {results.isTie && !results.tieBreak && (
+                  <div className="mt-4 p-4 bg-amber-50 rounded-xl" data-testid="text-tie-pending">
+                    <p className="font-bold text-amber-800">Gleichstand</p>
+                    <p className="text-sm text-amber-700 mt-1">Tie-Break Entscheidung steht noch aus.</p>
                   </div>
                 )}
               </div>

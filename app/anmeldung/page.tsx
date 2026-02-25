@@ -169,6 +169,21 @@ export default function AnmeldungPage() {
           </form>
 
           <div className="text-center mt-6 space-y-2">
+            <button
+              type="button"
+              onClick={() => {
+                const slug = workspace.trim().toLowerCase();
+                if (slug) {
+                  router.push(`/w/${slug}/reset-password`);
+                } else {
+                  setError("Bitte zuerst einen Workspace eingeben.");
+                }
+              }}
+              className="block w-full text-sm text-slate-400 hover:text-brand-blue transition-colors"
+              data-testid="link-forgot-password"
+            >
+              Passwort vergessen?
+            </button>
             <Link
               href="/"
               className="block text-sm text-slate-400 hover:text-brand-blue transition-colors"

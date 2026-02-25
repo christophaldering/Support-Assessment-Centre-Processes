@@ -61,7 +61,7 @@ export default function BdpScoringPage() {
     }).catch(() => {});
   }, [sessionId]);
 
-  const isReadOnly = session?.state === "CLOSED" || session?.state === "RELEASED";
+  const isReadOnly = session?.state === "CLOSED" || session?.state === "RELEASED" || session?.state === "DRAFT";
 
   const setScore = (criterionId: string, teamId: string, value: number) => {
     setScores(prev => ({
@@ -139,8 +139,8 @@ export default function BdpScoringPage() {
       <div className="bg-white rounded-2xl p-5 shadow-sm">
         <h1 className="text-xl font-bold" data-testid="text-scoring-session">{session.name}</h1>
         {isReadOnly && (
-          <div className="mt-2 px-3 py-2 bg-orange-50 rounded-lg text-orange-700 text-sm">
-            🔒 Diese Session ist geschlossen. Nur-Lesen-Modus.
+          <div className="mt-2 px-3 py-2 bg-orange-50 rounded-lg text-orange-700 text-sm" data-testid="text-scoring-locked">
+            {session.state === "DRAFT" ? "Diese Session ist noch nicht geöffnet. Bewertung nicht möglich." : "Diese Session ist gesperrt. Nur-Lesen-Modus."}
           </div>
         )}
       </div>
@@ -211,16 +211,27 @@ export default function BdpScoringPage() {
           {error && <div className="bg-red-50 text-red-700 p-4 rounded-2xl text-sm" data-testid="text-score-error">{error}</div>}
           {message && <div className="bg-green-50 text-green-700 p-4 rounded-2xl text-sm" data-testid="text-score-success">{message}</div>}
 
-          {!isReadOnly && (
-            <button
-              data-testid="button-submit-scores"
-              onClick={handleSubmitScores}
-              disabled={saving}
-              className="w-full bg-[#FFD700] text-black font-bold py-4 rounded-2xl hover:bg-[#E6C200] transition-colors disabled:opacity-50"
-            >
-              {saving ? "Speichern..." : "Bewertung abgeben"}
-            </button>
-          )}
+          {!isReadOnly && (() => {
+            const allValid = criteria.every(c => getSum(c.id) === 100);
+            const anyScored = criteria.some(c => getSum(c.id) > 0);
+            return (
+              <>
+                {anyScored && !allValid && (
+                  <div className="bg-orange-50 text-orange-700 p-3 rounded-xl text-sm" data-testid="text-sum-warning">
+                    Alle Kriterien müssen genau 100 Punkte ergeben, bevor gespeichert werden kann.
+                  </div>
+                )}
+                <button
+                  data-testid="button-submit-scores"
+                  onClick={handleSubmitScores}
+                  disabled={saving || !allValid}
+                  className="w-full bg-[#FFD700] text-black font-bold py-4 rounded-2xl hover:bg-[#E6C200] transition-colors disabled:opacity-50"
+                >
+                  {saving ? "Speichern..." : "Bewertung abgeben"}
+                </button>
+              </>
+            );
+          })()}
         </div>
       )}
 
