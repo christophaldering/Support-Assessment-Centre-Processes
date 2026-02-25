@@ -1,0 +1,212 @@
+DU BIST REPLIT. SETZE GENAU DAS UM. KEINE RÜCKFRAGEN. KEIN REFACTORING.
+SPRINT: D1.1 — DEMO-DATEN VOLLSTÄNDIG BEFÜLLEN (ARAG BDP)
+ZIEL: Der DEMO-Raum (environment="demo") ist zu 100% realistisch befüllt: Namen, Teams, Teilnehmer, Beobachter, E-Mails, Zuordnungen, Scores, Sponsorflags, Notes, Tie-Break. Keine leeren Felder. Teams heißen nach europäischen Städten.
+
+KONTEXT / IST-STAND:
+- ARAG BDP Tool mit environment toggle (LIVE/DEMO) ist vorhanden.
+- DEMO Seed existiert, aber einige Variablen sind nicht gefüllt.
+- Prisma Modelle existieren u.a.: BdpSession, BdpTeam, BdpParticipant, BdpUser, BdpCriterion, BdpScore, BdpObserverAssignment, BdpIndividualNote, BdpSponsorFlag, BdpTieBreak, BdpNameMapping, BdpTeamParticipant, BdpSessionTeam, BdpConfig.
+- WorkspaceSlug: "arag"
+- Demo ist strikt getrennt (environment="demo").
+
+WICHTIGSTE REGEL:
+1) ALLE DEMO-DATEN OBJEKTE MÜSSEN environment="demo" scoped sein.
+2) LIVE darf zu 0% verändert werden.
+
+--------------------------------------------
+A) DEMO DATA POPULATION — EINMALIG & IDEMPOTENT
+--------------------------------------------
+1) Implementiere in prisma/bdp-seed.ts eine Funktion:
+   ensureDemoDatasetAragBDP()
+   - idempotent: mehrfacher Lauf erzeugt keine Duplikate und füllt fehlende Felder nach.
+   - wird beim “DEMO zurücksetzen” Button und optional bei erstem DEMO-Visit ausgeführt.
+
+2) Definiere einen klaren “datasetVersion” Marker (BdpConfig oder BdpSession meta):
+   - key: demoDatasetVersion = "D1.1"
+   - Wenn Version alt oder fehlt: führe ensureDemoDatasetAragBDP() aus.
+
+--------------------------------------------
+B) TEAMS: EUROPÄISCHE STÄDTE + LOGISCHE SESSION ZUORDNUNG
+--------------------------------------------
+3) Benenne/erstelle exakt 6 Teams (Codes bleiben Team1..Team6 oder TeamA..F – wie eure DB es vorsieht, aber displayName muss gesetzt sein):
+   - Team1: "Amsterdam"
+   - Team2: "Barcelona"
+   - Team3: "Berlin"
+   - Team4: "Kopenhagen"
+   - Team5: "Mailand"
+   - Team6: "Paris"
+   (Wenn ihr displayName-Feld nicht habt: nutze BdpNameMapping für Team-Codes -> RealName.)
+
+4) Sessions (3) sind vorhanden. Stelle sicher:
+   - Demo Sessions sind state="RELEASED"
+   - SessionTeams:
+     - Session 1: Amsterdam vs Barcelona
+     - Session 2: Berlin vs Kopenhagen
+     - Session 3: Mailand vs Paris
+
+--------------------------------------------
+C) REALISTISCHE NAMEN + EMAILS (CODE → REALNAME)
+--------------------------------------------
+5) Beobachter (BdpUser) in DEMO:
+   - V1..V3 genutzt (assigned), V4..V6 optional vorhanden aber nicht assigned
+   - MD1 vorhanden, Admin=true
+   - E1 vorhanden
+   - Jeder BdpUser in DEMO bekommt:
+     - RealName (BdpNameMapping)
+     - Email (im emailByCode mapping in BdpConfig ODER Feld im User, je nach Model)
+   VERWENDE FOLGENDE REALNAMES (bekannte Persönlichkeiten, international, unkritisch):
+   - V1: "Marie Curie"
+   - V2: "Alan Turing"
+   - V3: "Hannah Arendt"
+   - V4: "Ada Lovelace"
+   - V5: "Nikola Tesla"
+   - V6: "Simone de Beauvoir"
+   - MD1: "Virginia Woolf"
+   - E1: "Peter Drucker"
+   Emails (Demo, realistisch, aber fiktiv):
+   - curie@arag-demo.eu
+   - turing@arag-demo.eu
+   - arendt@arag-demo.eu
+   - lovelace@arag-demo.eu
+   - tesla@arag-demo.eu
+   - beauvoir@arag-demo.eu
+   - woolf@arag-demo.eu
+   - drucker@arag-demo.eu
+
+6) Teilnehmer TN1..TN21:
+   - Weise JEDEM TN einen RealName zu (BdpNameMapping) + Demo-Email:
+     Format: <lastname-lower>@participants-demo.eu
+   - Verwende Literatur-/Kultur-Namen (berühmte Figuren/Autor:innen), z.B.:
+     TN1 "Elizabeth Bennet"
+     TN2 "Mr. Darcy"
+     TN3 "Sherlock Holmes"
+     TN4 "Dr. Watson"
+     TN5 "Anna Karenina"
+     TN6 "Gregor Samsa"
+     TN7 "Don Quijote"
+     TN8 "Sancho Panza"
+     TN9 "Jay Gatsby"
+     TN10 "Atticus Finch"
+     TN11 "Hermione Granger"
+     TN12 "Jean Valjean"
+     TN13 "Cosette Fauchelevent"
+     TN14 "Odysseus"
+     TN15 "Penelope"
+     TN16 "Hamlet"
+     TN17 "Ophelia"
+     TN18 "Huckleberry Finn"
+     TN19 "Winston Smith"
+     TN20 "Clarissa Dalloway"
+     TN21 "Gandalf"
+   (Wenn einzelne Namen kollidieren/unerwünscht sind: ersetze durch andere Literaturfiguren; wichtig ist: nicht leer.)
+
+7) TeamParticipants (DEMO):
+   - Stelle sicher, dass JEDEM Team TNs zugeordnet sind, ohne Lücken:
+     Amsterdam: TN1–TN4
+     Barcelona: TN5–TN7
+     Berlin: TN8–TN11
+     Kopenhagen: TN12–TN14
+     Mailand: TN15–TN18
+     Paris: TN19–TN21
+
+--------------------------------------------
+D) OBSERVER ASSIGNMENTS (DEMO)
+--------------------------------------------
+8) ObserverAssignments (DEMO) vollständig:
+   - Session1: V1, MD1, E1
+   - Session2: V2, MD1, E1
+   - Session3: V3, MD1, E1
+9) SponsorFlags (DEMO) setzen (nur Transparenz):
+   - In jeder Session ist der jeweilige Vorstand Sponsor für EIN Team:
+     Session1: V1 sponsor Amsterdam = true
+     Session2: V2 sponsor Berlin = true
+     Session3: V3 sponsor Paris = true
+   - Alle anderen sponsor flags false oder absent.
+
+--------------------------------------------
+E) CRITERIA (DEMO) + WEIGHTINGS
+--------------------------------------------
+10) Stelle sicher, dass exakt 5 Kriterien (DEMO scoped) existieren und displayNames gesetzt sind:
+   - Strategische Kohärenz
+   - Ökonomische Stringenz & Business-Logik
+   - Umsetzungsfähigkeit & Operationalisierung
+   - Kollektive Führungsfähigkeit
+   - Souveränität im Defense / Q&A
+11) Falls Rollengewichtung existiert (BdpRoleWeight):
+   - Setze defaults (DEMO):
+     BOARD: 1.0
+     MANAGEMENT_DIAGNOSTICS: 1.0
+     EXPERT: 1.0
+   (Nur setzen, wenn euer System das nutzt – sonst ignorieren.)
+
+--------------------------------------------
+F) SCORES: VOLLSTÄNDIG + REALISTISCH + 1 TIE-BREAK FALL
+--------------------------------------------
+12) Für JEDE DEMO Session, für JEDEN assigned Observer, für JEDES Kriterium:
+   - Erzeuge Scores so, dass Summe über Teams je (session, observer, criterion) == 100
+   - Nutze realistische Verteilungen (nicht immer 50/50).
+   - Beispielmuster (Session 1 Amsterdam vs Barcelona):
+     - V1: 65/35, 55/45, 60/40, 50/50, 70/30
+     - MD1: 60/40, 52/48, 58/42, 55/45, 62/38
+     - E1: 57/43, 49/51, 54/46, 52/48, 59/41
+   - Session2 Berlin vs Kopenhagen: andere Werte.
+   - Session3 Mailand vs Paris: andere Werte.
+
+13) TIE-BREAK Szenario (DEMO) erzwingen:
+   - Wähle Session2 als Tie-Fall:
+     - Aggregation muss ergeben: Berlin == Kopenhagen (Totalpunkte exakt gleich).
+   - Dann setze BdpTieBreak (DEMO) mit:
+     - winnerTeam = Berlin
+     - decidingBoardCode = V2
+     - note = "Entscheidung nach inhaltlicher Zuspitzung im Q&A."
+   WICHTIG: Tie muss wirklich entstehen. Passe Scores so lange an, bis totals exakt gleich sind, dann TieBreak entscheidet.
+
+--------------------------------------------
+G) INDIVIDUAL NOTES (DEMO)
+--------------------------------------------
+14) Erzeuge Individual Notes (DEMO) für mind. 6 TN (2 pro Session), inkl.:
+   - Prosa (kurz, professionell, deutsch)
+   - optional per-criterion short notes (wenn Model unterstützt)
+   Beispiele:
+   - "Sehr klare Rollenübernahme in der Strukturierung; im Q&A punktuell defensiv."
+   - "Hohe Kundenorientierung, starke Zahlenlogik; noch mehr Priorisierung im Maßnahmenplan."
+
+--------------------------------------------
+H) ADMIN “DEMO RESET” + QA (HART)
+--------------------------------------------
+15) Demo Reset Button (existiert) muss nach Reset garantieren:
+   - KEINE leeren displayNames
+   - JEDEM Team sind TN zugeordnet
+   - JEDE Session hat 2 Teams
+   - JEDE Session hat 3 Observers (Vx, MD1, E1)
+   - JEDE Kombination (session, observer, criterion) hat vollständige Score allocations mit Sum=100
+   - Tie in Session2 vorhanden + TieBreak record vorhanden
+   - NameMappings für ALLE Codes (Teams, TNs, Observers) vorhanden
+   - Emails für ALLE Codes vorhanden
+
+16) Baue/erweitere /arag-bdp/admin/qa (oder qa-lite) um harte Checks:
+   - FAIL, wenn irgendetwas fehlt (zeige genaue Ursache)
+   - data-testid="bdp-qa-demo-completeness"
+
+--------------------------------------------
+I) UI: IMMER REALNAMES ANZEIGEN (DEMO), Codes in Klammern
+--------------------------------------------
+17) In DEMO sollen Listen standardmäßig anzeigen:
+   - "RealName (Code)"
+   Beispiele: "Marie Curie (V1)", "Amsterdam (Team1)", "Elizabeth Bennet (TN1)"
+18) In LIVE bleibt die Standardanzeige unverändert (Codes-only oder wie konfiguriert).
+
+DARF NICHT:
+- LIVE Daten verändern
+- Schema-Änderungen, außer ihr habt keine Möglichkeit Emails/Mappings zu speichern; dann nutzt BdpConfig JSON “emailByCode” und “realNameByCode” statt Schema.
+- Keine neuen Dependencies
+
+QUALITÄTSSICHERUNG:
+- Nach Implementierung:
+  1) Switch to DEMO -> alle Seiten zeigen befüllte Daten
+  2) Sessions: alle 3 released und sichtbar
+  3) Auswertung in DEMO sichtbar (weil released)
+  4) TieBreak sichtbar in Session2
+  5) Export Preview (falls vorhanden) zeigt Namen korrekt
+
+JETZT IMPLEMENTIEREN.

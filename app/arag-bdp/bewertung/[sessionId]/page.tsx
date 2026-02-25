@@ -168,7 +168,7 @@ export default function BdpScoringPage() {
                 <div className="space-y-3">
                   {teams.map(team => (
                     <div key={team.id} className="flex items-center gap-3">
-                      <div className="w-16 text-sm font-medium">{team.code}</div>
+                      <div className="w-16 text-sm font-medium">{team.displayName || team.code}</div>
                       <input
                         data-testid={`input-score-${criterion.id}-${team.id}`}
                         type="number"
@@ -203,7 +203,7 @@ export default function BdpScoringPage() {
                   disabled={isReadOnly}
                   className="w-5 h-5 accent-[#FFD700]"
                 />
-                <span className="text-sm">{team.code} — Ich bin Sponsor</span>
+                <span className="text-sm">{team.displayName || team.code} — Ich bin Sponsor</span>
               </label>
             ))}
           </div>
@@ -239,7 +239,7 @@ export default function BdpScoringPage() {
         <div className="space-y-4">
           {teams.map(team => (
             <div key={team.id} className="bg-white rounded-2xl p-5 shadow-sm">
-              <h3 className="font-bold mb-3">{team.code} — Teilnehmer</h3>
+              <h3 className="font-bold mb-3">{team.displayName || team.code} — Teilnehmer</h3>
               <div className="space-y-2">
                 {teamParticipants(team.id).map(p => (
                   <div key={p.id} className="border border-gray-100 rounded-xl overflow-hidden">
@@ -248,7 +248,7 @@ export default function BdpScoringPage() {
                       onClick={() => setExpandedTN(expandedTN === p.id ? null : p.id)}
                       className="w-full flex items-center justify-between p-4 hover:bg-gray-50"
                     >
-                      <span className="font-medium">{p.code}</span>
+                      <span className="font-medium">{p.displayName || p.code}</span>
                       <span className="text-gray-400">{expandedTN === p.id ? "▲" : "▼"}</span>
                     </button>
                     {expandedTN === p.id && (

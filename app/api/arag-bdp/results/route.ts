@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   for (const st of dbSession.sessionTeams) {
     teamTotals[st.team.id] = {
       teamId: st.team.id,
-      teamCode: st.team.code,
+      teamCode: st.team.displayName ? `${st.team.displayName} (${st.team.code})` : st.team.code,
       total: 0,
       byCriterion: {},
     };
@@ -65,9 +65,10 @@ export async function GET(req: NextRequest) {
   if (bdpSession.isAdmin && dbSession.transparencyMode === "show_per_observer_breakdown") {
     const grouped: Record<string, Record<string, Record<string, number>>> = {};
     for (const score of scores) {
-      if (!grouped[score.observer.code]) grouped[score.observer.code] = {};
-      if (!grouped[score.observer.code][score.teamId]) grouped[score.observer.code][score.teamId] = {};
-      grouped[score.observer.code][score.teamId][score.criterionId] = score.points;
+      const obsKey = score.observer.displayName || score.observer.code;
+      if (!grouped[obsKey]) grouped[obsKey] = {};
+      if (!grouped[obsKey][score.teamId]) grouped[obsKey][score.teamId] = {};
+      grouped[obsKey][score.teamId][score.criterionId] = score.points;
     }
     perObserver = grouped;
   }

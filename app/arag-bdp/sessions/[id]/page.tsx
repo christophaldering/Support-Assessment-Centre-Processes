@@ -51,7 +51,7 @@ export default function BdpSessionDetailPage() {
             {teams.map((t: any) => (
               <div key={t.id} data-testid={`text-team-${t.code}`} className="p-3 bg-[#FFFBF0] rounded-xl flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#FFD700] rounded-lg flex items-center justify-center font-bold text-sm">{t.code.replace("Team", "T")}</div>
-                <span className="font-medium">{t.code}</span>
+                <span className="font-medium">{t.displayName ? `${t.displayName} (${t.code})` : t.code}</span>
               </div>
             ))}
           </div>
@@ -66,7 +66,7 @@ export default function BdpSessionDetailPage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center text-[#FFD700] font-bold text-sm">{oa.user.code}</div>
                 <div>
-                  <span className="font-medium">{oa.user.code}</span>
+                  <span className="font-medium">{oa.user.displayName || oa.user.code}</span>
                   <span className="text-xs text-gray-400 ml-2">{oa.user.role}</span>
                 </div>
               </div>

@@ -60,11 +60,11 @@ export default function BdpSessionsPage() {
               <div className="space-y-2">
                 <div className="text-sm text-gray-600">
                   <span className="font-medium">Teams:</span>{" "}
-                  {s.sessionTeams?.map((st: any) => st.team.code).join(", ") || "–"}
+                  {s.sessionTeams?.map((st: any) => st.team.displayName ? `${st.team.displayName} (${st.team.code})` : st.team.code).join(", ") || "–"}
                 </div>
                 <div className="text-sm text-gray-600">
                   <span className="font-medium">Beobachter:</span>{" "}
-                  {s.observerAssignments?.map((oa: any) => oa.user.code).join(", ") || "–"}
+                  {s.observerAssignments?.map((oa: any) => oa.user.displayName || oa.user.code).join(", ") || "–"}
                 </div>
               </div>
             </Link>

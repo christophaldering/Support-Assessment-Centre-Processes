@@ -231,6 +231,7 @@ export default function BdpAdminPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold" data-testid="text-admin-title">Admin-Konsole</h1>
         <div className="flex gap-2">
+          <Link href="/arag-bdp/admin/qa-demo" data-testid="link-qa-demo" className="text-xs bg-yellow-100 px-3 py-1 rounded-full hover:bg-yellow-200 font-medium">QA Demo</Link>
           <Link href="/arag-bdp/admin/qa-lite" data-testid="link-qa-lite" className="text-xs bg-green-100 px-3 py-1 rounded-full hover:bg-green-200">QA-Lite</Link>
           <Link href="/arag-bdp/admin/qa" data-testid="link-qa" className="text-xs bg-gray-100 px-3 py-1 rounded-full hover:bg-gray-200">QA</Link>
         </div>

@@ -63,8 +63,8 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 *   **AI Governance (Phase 1 – Lite, Enterprise-Ready)**: Core LLM adapter in `server/llm/` with single entry point `generateLLMOutput()` and `transcribeAudio()`. ENV-based kill switch (`AI_DISABLED`, `AI_FEATURES_DISABLED`), provider routing via `ACTIVE_LLM_PROVIDER` (openai active, neuland stub, azure_eu placeholder). Strict OpenAI ENV usage (`AI_INTEGRATIONS_OPENAI_API_KEY` + `AI_INTEGRATIONS_OPENAI_BASE_URL`). Console logging for all AI requests with route/feature/task metadata. **All 19+ API routes fully migrated** — no direct OpenAI imports outside `server/llm/providers/openai.ts`. `lib/ai.ts` uses adapter internally. `lib/llm/` retained as re-export bridge for Phase 2 features (DB-backed config, Admin UI at `/admin/ai-governance`, audit logging via `ai_system_settings`/`ai_audit_log` tables). Old `lib/llm/providers/` removed (dead code). Architecture designed for Phase 2 extension without refactoring.
 *   Shared admin layout: All admin pages use consistent sidebar + terracotta gradient header via `layout.tsx` + `AdminSidebar.tsx`
 *   **ARAG BDP Evaluation Tool**: Complete self-contained module at `/arag-bdp/` for Business Development Pitch evaluation. Features:
-    - Entry point via "Direkte Anmeldung im Projekt" button on landing page → Project Gate → Login (Demo/Demo)
-    - Anonymous code system (V1-V6 Board, MD1 Management Diagnostics, E1 Expert, TN1-TN21 Participants, Team1-Team6)
+    - Entry point via `/anmeldung` general login page (workspace + email + password), old `/arag-bdp/gate` redirects to `/anmeldung`
+    - Anonymous code system: LIVE (V1-V6, MD1, E1, TN1-TN21, Team1-Team6), DEMO prefixed (D-V1..D-V6, D-MD1, D-E1, D-TN1..D-TN21, D-Team1..D-Team6) to avoid unique constraint conflicts
     - Forced-point scoring (100 pts/criterion across teams per session), server-side validation
     - Session governance: DRAFT → OPEN → CLOSED → RELEASED state machine
     - Individual candidate evaluation (per-criterion prose notes, contribution/presence markers)
