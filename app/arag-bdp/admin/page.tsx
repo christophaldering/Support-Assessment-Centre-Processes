@@ -528,7 +528,13 @@ export default function BdpAdminPage() {
 
       {tab === "export" && (
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-          <h2 className="font-bold">Export (nur Admin)</h2>
+          <h2 className="font-bold">Export (nur Admin, nur RELEASED)</h2>
+          <p className="text-xs text-gray-500">Exports enthalten ausschließlich freigegebene Sessions. Demo-Daten werden standardmäßig ausgeschlossen.</p>
+          {sessions.filter(s => s.state === "RELEASED").length === 0 && (
+            <div className="bg-amber-50 text-amber-700 p-3 rounded-xl text-sm" data-testid="text-export-no-released">
+              Keine freigegebenen Sessions vorhanden. Exports sind erst nach Freigabe möglich.
+            </div>
+          )}
           <div className="space-y-3">
             <div>
               <h3 className="font-medium text-sm mb-2">Live-Daten (ohne Demo)</h3>
@@ -541,12 +547,12 @@ export default function BdpAdminPage() {
             <div>
               <h3 className="font-medium text-sm mb-2">Mit Klarnamen (Admin)</h3>
               <div className="flex gap-2">
-                <button onClick={() => handleExport("csv", false, true)} className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-lg text-sm hover:bg-blue-100">CSV (benannt)</button>
-                <button onClick={() => handleExport("json", false, true)} className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-lg text-sm hover:bg-blue-100">JSON (benannt)</button>
+                <button data-testid="button-export-csv-named" onClick={() => handleExport("csv", false, true)} className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-lg text-sm hover:bg-blue-100">CSV (benannt)</button>
+                <button data-testid="button-export-json-named" onClick={() => handleExport("json", false, true)} className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-lg text-sm hover:bg-blue-100">JSON (benannt)</button>
               </div>
             </div>
             <div>
-              <h3 className="font-medium text-sm mb-2">Demo-Daten separat</h3>
+              <h3 className="font-medium text-sm mb-2">DEMO einschließen</h3>
               <div className="flex gap-2">
                 <button data-testid="button-export-demo-csv" onClick={() => handleExport("csv", true, false)} className="flex-1 bg-orange-50 text-orange-700 py-2 rounded-lg text-sm hover:bg-orange-100">CSV (mit Demo)</button>
                 <button data-testid="button-export-demo-json" onClick={() => handleExport("json", true, false)} className="flex-1 bg-orange-50 text-orange-700 py-2 rounded-lg text-sm hover:bg-orange-100">JSON (mit Demo)</button>

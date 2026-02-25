@@ -1,33 +1,60 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function BdpPrintPage() {
+  const router = useRouter();
   const [sessions, setSessions] = useState<any[]>([]);
   const [allResults, setAllResults] = useState<Record<string, any>>({});
+  const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    fetch("/api/arag-bdp/sessions")
-      .then(r => r.json())
-      .then(async (sessions: any[]) => {
-        setSessions(sessions);
+    (async () => {
+      try {
+        const bdpRes = await fetch("/api/arag-bdp/auth/session");
+        const bdpData = await bdpRes.json();
+        if (!bdpData.authenticated || !bdpData.user?.isAdmin) {
+          const meRes = await fetch("/api/auth/me");
+          if (!meRes.ok) { router.push("/anmeldung"); return; }
+          const meData = await meRes.json();
+          if (!meData.roles?.includes("ADMIN") && !meData.roles?.includes("WORKSPACE_ADMIN")) {
+            router.push("/arag-bdp"); return;
+          }
+        }
+        setIsAdmin(true);
+
+        const sessRes = await fetch("/api/arag-bdp/sessions");
+        const allSessions = await sessRes.json();
+        const released = allSessions.filter((s: any) => s.state === "RELEASED");
+        setSessions(released);
+
         const results: Record<string, any> = {};
-        for (const s of sessions.filter(s => s.state === "RELEASED")) {
+        for (const s of released) {
           try {
             const res = await fetch(`/api/arag-bdp/results?sessionId=${s.id}`);
             results[s.id] = await res.json();
           } catch {}
         }
         setAllResults(results);
+
+        try {
+          const exportRes = await fetch("/api/arag-bdp/export?format=json&include_demo=false");
+          if (exportRes.ok) {
+            const exportData = await exportRes.json();
+            setNotes(exportData.notes || []);
+          }
+        } catch {}
+      } catch {} finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    })();
   }, []);
 
   if (loading) return <div className="p-8 text-center">Laden...</div>;
-
-  const releasedSessions = sessions.filter(s => s.state === "RELEASED");
+  if (!isAdmin) return null;
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white print:p-4" data-testid="print-view">
@@ -35,6 +62,7 @@ export default function BdpPrintPage() {
         @media print {
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .no-print { display: none !important; }
+          .page-break { page-break-before: always; }
         }
       `}</style>
 
@@ -44,16 +72,18 @@ export default function BdpPrintPage() {
         <p className="text-gray-400 text-sm mt-1">{new Date().toLocaleDateString("de-DE", { year: "numeric", month: "long", day: "numeric" })}</p>
       </div>
 
-      <button onClick={() => window.print()} className="no-print mb-6 bg-[#FFD700] text-black px-6 py-2 rounded-lg font-bold">
+      <button onClick={() => window.print()} className="no-print mb-6 bg-[#FFD700] text-black px-6 py-2 rounded-lg font-bold" data-testid="button-print">
         Drucken
       </button>
 
-      {releasedSessions.length === 0 ? (
+      {sessions.length === 0 ? (
         <p className="text-gray-400 text-center py-8">Keine freigegebenen Sessions.</p>
       ) : (
-        releasedSessions.map(s => {
+        sessions.map(s => {
           const result = allResults[s.id];
           if (!result || result.error) return null;
+
+          const sessionNotes = notes.filter((n: any) => n.session === s.id);
 
           return (
             <div key={s.id} className="mb-12 break-inside-avoid">
@@ -90,18 +120,44 @@ export default function BdpPrintPage() {
                   {result.tieBreak.rationale && ` — ${result.tieBreak.rationale}`}
                 </div>
               )}
+
+              {sessionNotes.length > 0 && (
+                <div className="mt-4 page-break">
+                  <h3 className="font-bold text-sm mb-2">Individuelle Notizen</h3>
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b">
+                        <th className="text-left p-1.5">TN</th>
+                        <th className="text-left p-1.5">Beobachter</th>
+                        <th className="text-left p-1.5">Kriterium</th>
+                        <th className="text-left p-1.5">Notiz</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sessionNotes.map((n: any, i: number) => (
+                        <tr key={i} className="border-b border-gray-100">
+                          <td className="p-1.5">{n.participant}</td>
+                          <td className="p-1.5">{n.observer}</td>
+                          <td className="p-1.5">{n.criterion}</td>
+                          <td className="p-1.5">{n.note || n.generalNote || "–"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           );
         })
       )}
 
-      <footer className="mt-12 pt-4 border-t border-gray-200 text-center text-xs text-gray-400 print:fixed print:bottom-0 print:left-0 print:right-0 print:py-2">
+      <footer className="mt-12 pt-4 border-t border-gray-200 text-center text-xs text-gray-400 print:fixed print:bottom-0 print:left-0 print:right-0 print:py-2 print:bg-white">
         <div className="flex items-center justify-center gap-2">
           <svg width="80" height="16" viewBox="0 0 80 16" className="inline-block">
             <text x="0" y="12" fontSize="11" fontWeight="bold" fill="#A6473B" fontFamily="sans-serif">aestimamus</text>
           </svg>
         </div>
-        <p className="mt-1">Powered by aestimamus · © Christoph Aldering · Private initiative / concept</p>
+        <p className="mt-1">Powered by aestimamus</p>
       </footer>
     </div>
   );

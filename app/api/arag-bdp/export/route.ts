@@ -16,24 +16,31 @@ export async function GET(req: NextRequest) {
   const envFilter = includeDemo ? {} : { environment: { not: "demo" } };
 
   const sessions = await prisma.bdpSession.findMany({
+    where: { state: "RELEASED" },
     include: {
       sessionTeams: { include: { team: true } },
       observerAssignments: { include: { user: true } },
     },
   });
 
+  if (sessions.length === 0) {
+    return NextResponse.json({ error: "Keine freigegebenen Sessions für den Export vorhanden" }, { status: 403 });
+  }
+
+  const releasedIds = sessions.map(s => s.id);
+
   const scores = await prisma.bdpScore.findMany({
-    where: envFilter as any,
+    where: { ...envFilter as any, sessionId: { in: releasedIds } },
     include: { criterion: true, team: true, observer: true, session: true },
   });
 
   const criteria = await prisma.bdpCriterion.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } });
   const notes = await prisma.bdpIndividualNote.findMany({
-    where: envFilter as any,
+    where: { ...envFilter as any, sessionId: { in: releasedIds } },
     include: { participant: true, criterion: true, observer: true },
   });
   const nameMappings = named ? await prisma.bdpNameMapping.findMany() : [];
-  const tieBreaks = await prisma.bdpTieBreak.findMany({ include: { winnerTeam: true, decidedBy: true } });
+  const tieBreaks = await prisma.bdpTieBreak.findMany({ where: { sessionId: { in: releasedIds } }, include: { winnerTeam: true, decidedBy: true } });
 
   const nameMap: Record<string, string> = {};
   nameMappings.forEach(m => { nameMap[`${m.entityType}:${m.entityId}`] = m.realName; });

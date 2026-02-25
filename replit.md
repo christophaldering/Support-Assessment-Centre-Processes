@@ -69,7 +69,10 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
     - Session governance: DRAFT → OPEN → CLOSED → RELEASED state machine
     - Individual candidate evaluation (per-criterion prose notes, contribution/presence markers)
     - Admin console: CRUD sessions/teams/participants/observers/criteria, state transitions, transparency mode, tie-break, export, name mappings
-    - Export: CSV/JSON (anon/named), print view with "Powered by aestimamus" footer
+    - Individual notes API: `/api/arag-bdp/notes/upsert` with Zod validation, locked in CLOSED/RELEASED
+    - Export: CSV aggregate/JSON full (anon/named), print view with "Powered by aestimamus" footer
+    - Export restrictions: admin-only, RELEASED-only, demo excluded by default (environment!="demo")
+    - Demo exclusion: default exclude records with environment=="demo"; admin toggle "DEMO einschließen" in export tab
     - Mobile-first UI: bottom nav (Home/Sessions/Bewertung/Auswertung), hamburger menu, DEMO banner
     - DB: Prisma models prefixed `Bdp*` (15 tables), seeded via `prisma/bdp-seed.ts`
     - API: All routes under `app/api/arag-bdp/`, auth via `bdp_session` HTTP-only cookie

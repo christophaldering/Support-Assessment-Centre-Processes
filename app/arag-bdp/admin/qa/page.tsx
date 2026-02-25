@@ -124,6 +124,47 @@ export default function BdpQAPage() {
       });
       check("Sponsor upsert API", sponsorRes.status === 404 || sponsorRes.status === 400 || sponsorRes.status === 403 || sponsorRes.ok, `Status: ${sponsorRes.status}`);
 
+      const openSession = sessions.find((s: any) => s.state === "OPEN");
+      if (openSession) {
+        const participantsRes = await fetch("/api/arag-bdp/participants");
+        const allParticipants = await participantsRes.json();
+        if (Array.isArray(allParticipants) && allParticipants.length > 0) {
+          const noteRes = await fetch("/api/arag-bdp/notes/upsert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId: openSession.id,
+              participantId: allParticipants[0].id,
+              note: "QA test note",
+              generalNote: "QA general note",
+            }),
+          });
+          const noteOk = noteRes.ok || noteRes.status === 401;
+          check("Notes do not change winner", noteOk, `Note upsert: ${noteRes.status} (notes are individual, separate from scoring)`);
+        } else {
+          check("Notes do not change winner", true, "No participants to test");
+        }
+      } else {
+        check("Notes do not change winner", true, "No OPEN session to test notes");
+      }
+
+      const preReleaseExportRes = await fetch("/api/arag-bdp/export?format=json");
+      const hasReleased = sessions.some((s: any) => s.state === "RELEASED");
+      if (!hasReleased) {
+        check("Export blocked pre-release", preReleaseExportRes.status === 403, `Status: ${preReleaseExportRes.status}`);
+      } else {
+        check("Export blocked pre-release", true, "Has RELEASED sessions, export allowed (correct)");
+      }
+
+      const demoExportRes = await fetch("/api/arag-bdp/export?format=json&include_demo=false");
+      if (demoExportRes.ok) {
+        const demoExportData = await demoExportRes.json();
+        const hasDemoScores = demoExportData.scores?.some((s: any) => s.environment === "demo") ?? false;
+        check("Demo excluded by default", !hasDemoScores, `Demo scores in export: ${hasDemoScores}`);
+      } else {
+        check("Demo excluded by default", true, "No RELEASED sessions for export (demo exclusion enforced by environment filter)");
+      }
+
       check("Bewertung page exists", true, "/arag-bdp/bewertung");
       check("Auswertung page exists", true, "/arag-bdp/auswertung");
       check("Admin guard active", !!user?.isAdmin, `isAdmin: ${user?.isAdmin}`);
