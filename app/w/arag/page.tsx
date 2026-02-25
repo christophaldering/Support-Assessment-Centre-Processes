@@ -13,7 +13,6 @@ type DemoRole = {
 const DEMO_ROLES: DemoRole[] = [
   { code: "D-MD1", label: "Admin", personaName: "Virginia Woolf", description: "Zugang zur Admin-Konsole, Session-Steuerung und Auswertung" },
   { code: "D-V1", label: "Beobachter", personaName: "Marie Curie", description: "Bewertung der Teams und individuelle Teilnehmer-Notizen" },
-  { code: "D-TN22", label: "Teilnehmer", personaName: "Holden Caulfield", description: "Teilnehmer-Portal mit Business Case und Ergebnissen" },
 ];
 
 export default function AragLobbyPage() {
