@@ -81,6 +81,7 @@ export default function AragLobbyPage() {
     setPersonError("");
     setPersonLoading(true);
     try {
+      await fetch("/api/arag-bdp/auth/session", { method: "DELETE" });
       const res = await fetch("/api/arag-bdp/gate/person-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,7 +89,7 @@ export default function AragLobbyPage() {
       });
       const data = await res.json();
       if (data.ok) {
-        router.push(data.redirectTo || "/arag-bdp");
+        window.location.href = data.redirectTo || "/arag-bdp";
       } else {
         setPersonError(data.error || "Anmeldung fehlgeschlagen.");
       }
