@@ -2,13 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import LandingHero from "@/app/components/arag/LandingHero";
-import LandingCards from "@/app/components/arag/LandingCards";
-import LandingCharts from "@/app/components/arag/LandingCharts";
-import JourneyTimeline from "@/app/components/arag/JourneyTimeline";
-import StrategicStoryboard from "@/app/components/arag/StrategicStoryboard";
-import AmbivalenceDiagram from "@/app/components/arag/AmbivalenceDiagram";
-import FrameworkVisual from "@/app/components/arag/FrameworkVisual";
+import dynamic from "next/dynamic";
+import StandardLanding from "@/app/components/arag/StandardLanding";
+
+const AppleLanding = dynamic(() => import("@/app/components/arag/AppleLanding"), { ssr: false });
 
 type DemoRole = {
   code: string;
@@ -22,6 +19,8 @@ const DEMO_ROLES: DemoRole[] = [
   { code: "D-V1", label: "Beobachter", personaName: "Marie Curie", description: "Bewertung der Teams und individuelle Teilnehmer-Notizen" },
 ];
 
+type ViewMode = "standard" | "apple";
+
 export default function AragLobbyPage() {
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState(false);
@@ -34,6 +33,20 @@ export default function AragLobbyPage() {
   const [selectedRole, setSelectedRole] = useState<DemoRole | null>(null);
   const [personError, setPersonError] = useState("");
   const [personLoading, setPersonLoading] = useState(false);
+
+  const [viewMode, setViewMode] = useState<ViewMode>("standard");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("arag_landing_view");
+      if (saved === "apple" || saved === "standard") setViewMode(saved);
+    } catch {}
+  }, []);
+
+  const toggleView = (mode: ViewMode) => {
+    setViewMode(mode);
+    try { localStorage.setItem("arag_landing_view", mode); } catch {}
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -116,7 +129,7 @@ export default function AragLobbyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFBF0] flex flex-col">
+    <div className={`min-h-screen flex flex-col ${viewMode === "apple" ? "bg-black" : "bg-[#FFFBF0]"}`}>
       <header className="bg-black text-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -126,100 +139,73 @@ export default function AragLobbyPage() {
             <span className="font-bold text-lg tracking-tight">ARAG</span>
             <span className="text-white/40 text-sm hidden sm:inline">Executive Diagnostics</span>
           </div>
-          {lobbyEnv && (
-            <button
-              onClick={() => { setLobbyEnv(null); setSelectedRole(null); setPersonError(""); }}
-              className="text-xs text-white/50 hover:text-white transition-colors"
-            >
-              Zurück zur Übersicht
-            </button>
-          )}
+          <div className="flex items-center gap-4">
+            {!lobbyEnv && (
+              <div className="flex items-center gap-2" data-testid="toggle-view-mode">
+                <span className="text-[10px] text-white/30 uppercase tracking-wider hidden sm:inline">Darstellung</span>
+                <div className="flex bg-white/10 rounded-full p-0.5">
+                  <button
+                    onClick={() => toggleView("standard")}
+                    className={`text-[10px] font-medium px-3 py-1 rounded-full transition-all ${
+                      viewMode === "standard" ? "bg-white text-black" : "text-white/50 hover:text-white"
+                    }`}
+                    data-testid="toggle-standard"
+                  >
+                    Standard
+                  </button>
+                  <button
+                    onClick={() => toggleView("apple")}
+                    className={`text-[10px] font-medium px-3 py-1 rounded-full transition-all ${
+                      viewMode === "apple" ? "bg-white text-black" : "text-white/50 hover:text-white"
+                    }`}
+                    data-testid="toggle-apple"
+                  >
+                    Apple
+                  </button>
+                </div>
+              </div>
+            )}
+            {lobbyEnv && (
+              <button
+                onClick={() => { setLobbyEnv(null); setSelectedRole(null); setPersonError(""); }}
+                className="text-xs text-white/50 hover:text-white transition-colors"
+              >
+                Zurück zur Übersicht
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
       {!lobbyEnv ? (
-        <>
-          <LandingHero />
-          <StrategicStoryboard />
-          <AmbivalenceDiagram />
-          <FrameworkVisual />
-          <LandingCards />
-          <LandingCharts />
-          <JourneyTimeline />
-
-          <section className="w-full bg-black" data-testid="section-env-select">
-            <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 lg:py-20">
-              <div className="max-w-2xl mx-auto text-center">
-                <p className="text-sm font-semibold tracking-[0.2em] uppercase text-[#FFD700] mb-3">
-                  Zugang
-                </p>
-                <h2
-                  className="text-2xl md:text-3xl font-bold text-white mb-4"
-                  style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
-                >
-                  Umgebung wählen
-                </h2>
-                <p className="text-gray-400 text-sm mb-10">
-                  Starten Sie die Bewertungsumgebung im LIVE- oder DEMO-Modus.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
-                  <button
-                    data-testid="arag-lobby-live"
-                    disabled
-                    className="group relative px-8 py-5 border-2 border-gray-700 rounded-xl text-center opacity-40 cursor-not-allowed"
-                  >
-                    <span className="block font-bold text-white text-lg mb-1">LIVE</span>
-                    <span className="block text-xs text-gray-500">Noch nicht verfügbar</span>
-                  </button>
-                  <button
-                    data-testid="arag-lobby-demo"
-                    onClick={() => handleEnvSelect("demo")}
-                    className="group relative px-8 py-5 border-2 border-[#FFD700] rounded-xl text-center transition-all hover:bg-[#FFD700]"
-                  >
-                    <span className="block font-bold text-white text-lg mb-1 group-hover:text-black transition-colors">DEMO</span>
-                    <span className="block text-xs text-gray-400 group-hover:text-black/60 transition-colors">Testumgebung starten</span>
-                  </button>
-                </div>
-
-                {envLockedNote && (
-                  <p className="text-sm text-amber-400 mt-6" data-testid="arag-env-locked-note">
-                    Sie befinden sich in der DEMO-Umgebung.
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <footer className="bg-black border-t border-white/10 py-6">
-            <div className="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between">
-              <p className="text-xs text-gray-500">
-                Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
-              </p>
-              <p className="text-xs text-gray-600">ARAG SE</p>
-            </div>
-          </footer>
-        </>
+        <div className="transition-opacity duration-150">
+          {viewMode === "standard" && (
+            <StandardLanding onSelectEnv={handleEnvSelect} envLockedNote={envLockedNote} />
+          )}
+          {viewMode === "apple" && (
+            <AppleLanding onSelectEnv={handleEnvSelect} envLockedNote={envLockedNote} />
+          )}
+        </div>
       ) : (
-        <main className="flex-1 flex items-start justify-center px-4 py-12">
+        <main className={`flex-1 flex items-start justify-center px-4 py-12 ${viewMode === "apple" ? "bg-black" : ""}`}>
           <div className="w-full max-w-md space-y-6">
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className={`rounded-2xl shadow-lg p-8 ${viewMode === "apple" ? "bg-[#111] border border-white/10" : "bg-white"}`}>
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2
-                    className="text-xl font-bold text-black"
-                    style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
+                    className={`text-xl font-bold ${viewMode === "apple" ? "text-white" : "text-black"}`}
+                    style={{ fontFamily: viewMode === "apple" ? "inherit" : "Georgia, 'Playfair Display', serif" }}
                   >
                     Perspektive wählen
                   </h2>
-                  <p className="text-gray-500 text-sm mt-0.5">
+                  <p className={`text-sm mt-0.5 ${viewMode === "apple" ? "text-white/40" : "text-gray-500"}`}>
                     {lobbyEnv === "demo" ? "Demo-Umgebung" : "Live-System"}
                   </p>
                 </div>
                 <button
                   data-testid="arag-back-env"
                   onClick={() => { setLobbyEnv(null); setSelectedRole(null); setPersonError(""); }}
-                  className="text-xs text-gray-400 hover:text-black transition-colors"
+                  className={`text-xs transition-colors ${viewMode === "apple" ? "text-white/30 hover:text-white" : "text-gray-400 hover:text-black"}`}
                 >
                   Umgebung wechseln
                 </button>
@@ -235,25 +221,29 @@ export default function AragLobbyPage() {
                     className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                       selectedRole?.code === role.code
                         ? "border-[#FFD700] bg-[#FFD700]/10"
-                        : "border-gray-100 hover:border-gray-200 bg-white"
+                        : viewMode === "apple"
+                          ? "border-white/10 hover:border-white/20 bg-transparent"
+                          : "border-gray-100 hover:border-gray-200 bg-white"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
                         selectedRole?.code === role.code
                           ? "bg-[#FFD700] text-black"
-                          : "bg-gray-100 text-gray-500"
+                          : viewMode === "apple" ? "bg-white/10 text-white/50" : "bg-gray-100 text-gray-500"
                       }`}>
                         {role.personaName.charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-black">{role.personaName}</span>
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
+                          <span className={`font-bold text-sm ${viewMode === "apple" ? "text-white" : "text-black"}`}>{role.personaName}</span>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                            viewMode === "apple" ? "bg-white/10 text-white/40" : "bg-gray-100 text-gray-500"
+                          }`}>
                             {role.label}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-400 mt-0.5">{role.description}</p>
+                        <p className={`text-xs mt-0.5 ${viewMode === "apple" ? "text-white/30" : "text-gray-400"}`}>{role.description}</p>
                       </div>
                       {selectedRole?.code === role.code && (
                         <span className="text-[#FFD700] font-bold text-lg">&#10003;</span>
@@ -266,13 +256,17 @@ export default function AragLobbyPage() {
               {selectedRole && (
                 <div className="mt-4 space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
+                    <label className={`block text-sm font-medium mb-1 ${viewMode === "apple" ? "text-white/50" : "text-gray-700"}`}>Passwort</label>
                     <input
                       data-testid="arag-person-password"
                       type="password"
                       value="****"
                       readOnly
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-400 cursor-default"
+                      className={`w-full px-4 py-3 border rounded-xl text-sm cursor-default ${
+                        viewMode === "apple"
+                          ? "border-white/10 bg-white/5 text-white/30"
+                          : "border-gray-200 bg-gray-50 text-gray-400"
+                      }`}
                     />
                   </div>
 
@@ -291,7 +285,7 @@ export default function AragLobbyPage() {
               )}
             </div>
 
-            <p className="text-center text-xs text-gray-400 pb-4">
+            <p className={`text-center text-xs pb-4 ${viewMode === "apple" ? "text-white/20" : "text-gray-400"}`}>
               Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
             </p>
           </div>

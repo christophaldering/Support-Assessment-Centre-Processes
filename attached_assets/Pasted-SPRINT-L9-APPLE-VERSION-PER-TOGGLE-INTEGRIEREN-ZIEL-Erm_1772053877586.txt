@@ -1,0 +1,133 @@
+SPRINT L9 – APPLE VERSION PER TOGGLE INTEGRIEREN
+
+ZIEL:
+Ermögliche auf der ARAG Landing Page (/w/arag) einen Umschalter zwischen:
+
+1) Standard Board-Version
+2) Apple-Keynote-Version
+
+Ohne Routing-Änderung.
+Ohne Page-Reload.
+Ohne Einfluss auf Auth.
+Nur visuelle Umschaltung.
+
+------------------------------------------------------------
+1) UI-TOGGLE EINBAUEN
+------------------------------------------------------------
+
+Position:
+Oben rechts in der Landing Header-Leiste.
+
+Label:
+"Darstellung"
+
+Darunter Toggle-Switch mit zwei Optionen:
+
+Standard
+Apple
+
+Design:
+Minimalistisch.
+Kleine Schrift.
+Kein prominenter Button.
+Diskret.
+
+------------------------------------------------------------
+2) TECHNISCHE UMSETZUNG
+------------------------------------------------------------
+
+State-basiert im Client:
+
+const [viewMode, setViewMode] = useState<'standard' | 'apple'>('standard')
+
+Default:
+'standard'
+
+Optional:
+Persistiere Auswahl im localStorage unter key:
+arag_landing_view
+
+Beim Laden:
+Falls localStorage vorhanden → übernehmen.
+
+------------------------------------------------------------
+3) RENDER-LOGIK
+------------------------------------------------------------
+
+In app/w/arag/page.tsx:
+
+{viewMode === 'standard' && <StandardLanding />}
+{viewMode === 'apple' && <AppleLanding />}
+
+Beide Versionen als getrennte Komponenten:
+
+components/arag/StandardLanding.tsx
+components/arag/AppleLanding.tsx
+
+Keine Vermischung der Logik.
+Keine Conditional-Fragmente in Einzelkomponenten.
+
+------------------------------------------------------------
+4) APPLE VERSION NUR VISUELL
+------------------------------------------------------------
+
+WICHTIG:
+
+Apple-Version darf:
+- nur Design verändern
+- keine Logik verändern
+- keine Buttons entfernen
+- keine Routing-Änderungen erzeugen
+- keine Auth verändern
+
+LIVE / DEMO Buttons identisch.
+
+------------------------------------------------------------
+5) KEIN RELOAD
+------------------------------------------------------------
+
+Beim Umschalten:
+- Kein Seitenreload
+- Kein Scroll-Reset
+- Smooth Transition (Fade 150ms optional)
+
+------------------------------------------------------------
+6) KEINE PRODUKTIONSRISIKEN
+------------------------------------------------------------
+
+Toggle nur sichtbar wenn:
+
+process.env.NODE_ENV !== 'production'
+ODER
+User-Rolle === ADMIN
+
+Alternative:
+Zeige Toggle nur für:
+MANAGEMENT_DIAGNOSTICS + WORKSPACE_ADMIN
+
+------------------------------------------------------------
+7) QA
+------------------------------------------------------------
+
+- Umschalten funktioniert ohne Fehler
+- Keine Console Errors
+- Kein Layout-Shift
+- Keine Scroll-Probleme
+- Mobile Toggle sichtbar
+- Desktop Toggle diskret
+
+------------------------------------------------------------
+8) PERFORMANCE
+------------------------------------------------------------
+
+Lazy load Apple-Version:
+
+const AppleLanding = dynamic(() => import(...), { ssr: false })
+
+Damit initiale Ladezeit nicht steigt.
+
+------------------------------------------------------------
+KEINE weiteren Features.
+KEINE Architekturänderung.
+Nur visuelle Umschaltung.
+Sauber modular.
