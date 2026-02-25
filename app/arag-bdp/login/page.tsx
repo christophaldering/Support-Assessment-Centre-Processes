@@ -31,7 +31,7 @@ export default function BdpLoginPage() {
 
       router.push("/arag-bdp");
       router.refresh();
-    } catch (err: any) {
+    } catch {
       setError("Verbindungsfehler");
     } finally {
       setLoading(false);
@@ -52,14 +52,14 @@ export default function BdpLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Benutzercode oder E-Mail</label>
               <input
                 data-testid="input-username"
                 type="text"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                placeholder="Demo"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFD700] bg-gray-50"
+                placeholder="z.B. D-V1, aurelius@demo.de oder Demo"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFD700] bg-gray-50 text-sm"
                 required
               />
             </div>
@@ -70,8 +70,8 @@ export default function BdpLoginPage() {
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Demo"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFD700] bg-gray-50"
+                placeholder="Passwort"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFD700] bg-gray-50 text-sm"
                 required
               />
             </div>
@@ -87,9 +87,11 @@ export default function BdpLoginPage() {
               {loading ? "Anmeldung..." : "Anmelden"}
             </button>
 
-            <p className="text-center text-xs text-gray-400 mt-2">
-              Demo-Zugang: Demo / Demo
-            </p>
+            <div className="text-center text-xs text-gray-400 mt-4 space-y-1">
+              <p className="font-medium text-gray-500">Demo-Zugangsdaten:</p>
+              <p>Schnellzugang: <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">Demo</span> / <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">Demo</span></p>
+              <p>Oder mit E-Mail: <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">aurelius@demo.de</span> / <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">aurelius</span></p>
+            </div>
           </form>
         </div>
 

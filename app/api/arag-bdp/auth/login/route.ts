@@ -41,15 +41,51 @@ export async function POST(req: NextRequest) {
         sameSite: "lax",
       });
 
+      cookies().set("bdp_environment", "demo", {
+        path: "/",
+        maxAge: 60 * 60 * 24,
+        sameSite: "lax",
+      });
+
       return NextResponse.json({ success: true, user: { code: demoUser.code, role: demoUser.role, isAdmin: demoUser.isAdmin, environment: "demo" } });
     }
 
-    const user = await prisma.bdpUser.findFirst({
+    let user = await prisma.bdpUser.findFirst({
       where: { username, passwordHash: password },
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Ungültige Anmeldedaten" }, { status: 401 });
+      const input = username.toLowerCase().trim();
+      const emailMapping = await prisma.bdpNameMapping.findFirst({
+        where: { entityType: "email", realName: input },
+      });
+      if (emailMapping) {
+        const candidate = await prisma.bdpUser.findUnique({
+          where: { id: emailMapping.entityId },
+        });
+        if (candidate && candidate.passwordHash === password) {
+          user = candidate;
+        }
+      }
+    }
+
+    if (!user) {
+      const input = username.trim();
+      const nameMapping = await prisma.bdpNameMapping.findFirst({
+        where: { entityType: "observer", realName: input },
+      });
+      if (nameMapping) {
+        const candidate = await prisma.bdpUser.findUnique({
+          where: { id: nameMapping.entityId },
+        });
+        if (candidate && candidate.passwordHash === password) {
+          user = candidate;
+        }
+      }
+    }
+
+    if (!user) {
+      return NextResponse.json({ error: "Ungültige Anmeldedaten. Verwenden Sie Ihren Benutzercode (z.B. D-V1) oder Ihre E-Mail-Adresse." }, { status: 401 });
     }
 
     const sessionData = JSON.stringify({
@@ -62,6 +98,12 @@ export async function POST(req: NextRequest) {
 
     cookies().set("bdp_session", sessionData, {
       httpOnly: true,
+      path: "/",
+      maxAge: 60 * 60 * 24,
+      sameSite: "lax",
+    });
+
+    cookies().set("bdp_environment", user.environment, {
       path: "/",
       maxAge: 60 * 60 * 24,
       sameSite: "lax",
