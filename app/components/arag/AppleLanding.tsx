@@ -1,5 +1,7 @@
 "use client";
 
+import HeroStrategicPanel from "@/app/components/arag/HeroStrategicPanel";
+
 interface Props {
   onSelectEnv: (env: "live" | "demo") => void;
   envLockedNote: boolean;
@@ -25,27 +27,32 @@ const JOURNEY = [
 export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
   return (
     <>
-      <section className="relative min-h-[90vh] flex items-center justify-center bg-black text-white overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center bg-black text-white overflow-hidden">
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "48px 48px" }} />
-        <div className="relative max-w-[900px] mx-auto px-6 text-center py-32 md:py-40">
-          <p className="text-[#FFD700] text-base md:text-lg font-medium tracking-[0.3em] uppercase mb-10">
-            ARAG SE
-          </p>
-          <h1
-            className="text-[42px] md:text-[72px] lg:text-[88px] font-semibold tracking-[-0.02em] leading-[1.05] mb-10"
-            style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
-          >
-            Executive
-            <br />
-            <span className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] bg-clip-text text-transparent">
-              Potential Journey
-            </span>
-          </h1>
-          <p className="text-[18px] md:text-[24px] lg:text-[28px] text-white/70 font-light max-w-[800px] mx-auto leading-relaxed">
-            Strategische Entscheidungssimulation.
-            <br className="hidden md:block" />
-            Strukturierte Potenzialbeobachtung.
-          </p>
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-12 py-24 md:py-32 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div className="text-center lg:text-left">
+              <p className="text-[#FFD700] text-base md:text-lg font-medium tracking-[0.3em] uppercase mb-10">
+                ARAG SE
+              </p>
+              <h1
+                className="text-[42px] md:text-[72px] lg:text-[88px] font-semibold tracking-[-0.02em] leading-[1.05] mb-10"
+                style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
+              >
+                Executive
+                <br />
+                <span className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] bg-clip-text text-transparent">
+                  Potential Journey
+                </span>
+              </h1>
+              <p className="text-[18px] md:text-[24px] lg:text-[28px] text-white/70 font-light max-w-[800px] leading-relaxed">
+                Strategische Entscheidungssimulation.
+                <br className="hidden md:block" />
+                Strukturierte Potenzialbeobachtung.
+              </p>
+            </div>
+            <HeroStrategicPanel />
+          </div>
         </div>
       </section>
 

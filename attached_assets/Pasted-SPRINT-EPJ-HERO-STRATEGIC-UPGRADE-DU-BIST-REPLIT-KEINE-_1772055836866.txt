@@ -1,0 +1,169 @@
+SPRINT EPJ-HERO-STRATEGIC-UPGRADE
+
+DU BIST REPLIT.
+KEINE RÜCKFRAGEN.
+KEINE HALBFERTIGEN LÖSUNGEN.
+KEINE TODOs.
+KEINE DESIGN-BRÜCHE.
+
+ZIEL
+Das rechte Hero-Feld auf der ARAG/ABCD Landing (Standard + Apple View) wird ersetzt durch eine strategische High-End-Komponente.
+
+Kombination aus:
+
+1) STRATEGIC CONTEXT (Board-Level Substanz)
+2) JOURNEY VISUAL (Prozesslogik sichtbar machen)
+
+Keine Verspieltheit.
+Keine Gamification.
+Executive-Level.
+
+---
+
+ARCHITEKTUR
+
+Erstelle neue Komponente:
+
+components/arag/HeroStrategicPanel.tsx
+
+Diese ersetzt im Hero-Bereich das bisherige dunkle Dummy-Panel.
+
+Sie muss in beiden Views (Standard & Apple) identisch einsetzbar sein.
+
+---
+
+DESIGN ANFORDERUNG
+
+Optik:
+- dunkles, elegantes Panel
+- subtiler Gradient (anthrazit → dunkles blau/grau)
+- leichte Tiefe (shadow-lg)
+- Border-Radius 20px
+- kein greller Gelbanteil
+- Typo: groß, ruhig, großzügiger Zeilenabstand
+
+Layout intern:
+---------------------------------------------------
+[ STRATEGIC CONTEXT ]   (klein, uppercase, letterspacing)
+
+AI-native transformation of the core business  
+Self-disruption over incremental optimization  
+Capital allocation under uncertainty  
+Leadership readiness for complexity  
+
+----------------------------------------------
+
+From Simulation to Development
+
+Context → Pitch → Defense → Evaluation → Dialogue
+
+---------------------------------------------------
+
+---
+
+INHALT (EXAKT SO VERWENDEN)
+
+Label oben:
+STRATEGIC CONTEXT
+
+Bullet-Block (keine klassischen Bullet-Icons, nur dezente Marker oder Spacing):
+
+AI-native transformation of the core business  
+Self-disruption instead of incremental optimization  
+Capital allocation under uncertainty  
+Leadership readiness for complexity  
+
+Darunter kleine Divider-Line (hairline, 20% opacity)
+
+Dann Journey:
+
+Titel:
+From Simulation to Development
+
+Darunter horizontaler Prozess:
+
+Context → Pitch → Defense → Evaluation → Development Dialogue
+
+- Pfeile typografisch (→)
+- gleichmäßiger Abstand
+- keine Icons
+- ruhig
+
+Ganz unten, klein, sehr subtil (opacity 50%):
+
+Structured potential observation under governance conditions
+
+---
+
+TYPO-SKALIERUNG (Board-tauglich!)
+
+Headline Bereich:
+- Label: text-xs tracking-widest uppercase
+- Kontext-Bullets: text-base md:text-lg leading-relaxed
+- Journey Title: text-lg md:text-xl font-semibold
+- Prozesslinie: text-sm md:text-base
+- Footer-Line: text-xs opacity-60
+
+Keine zu kleine Schrift.
+Keine Apple-Micro-Typo.
+
+---
+
+ANIMATION (SUBTIL!)
+
+- Fade-in beim Laden (duration 600ms)
+- Journey-Linie erscheint mit leichter Slide-in von links (300ms delay)
+- Keine Bounce.
+- Kein Zoom.
+- Keine auffällige Bewegung.
+
+---
+
+INTEGRATION
+
+1) Importiere HeroStrategicPanel in:
+   - components/arag/StandardLanding.tsx
+   - components/arag/AppleLanding.tsx
+
+2) Ersetze dort das bisherige rechte Hero-Panel.
+
+3) Layout muss responsiv bleiben:
+   - Desktop: Text links, Panel rechts
+   - Mobile: Panel unter Text
+
+4) Keine Regression am Language Toggle.
+5) Keine Regression am Standard/Apple Toggle.
+
+---
+
+WICHTIGER HINWEIS
+
+Das Panel darf NICHT:
+- wie ein Marketing-Banner wirken
+- wie ein Dashboard wirken
+- wie ein KPI-Tool wirken
+
+Es ist ein strategischer Kontext-Rahmen.
+
+Board-level calm authority.
+
+---
+
+QUALITÄTS-CHECK
+
+- Schrift nicht zu klein.
+- Kein harter Kontrast.
+- Genügend Padding (min p-8).
+- Auf 16:9 und auf MacBook-Auflösung testen.
+- Keine abgeschnittenen Zeilen.
+- Kein Zeilenumbruch mitten im Prozesspfeil.
+
+---
+
+ABSCHLUSS
+
+Baue die Komponente sauber modular.
+Kein Inline-Spaghetti.
+Kein Copy-Paste zwischen Standard/Apple.
+
+Umsetzen. Testen. Commit.
