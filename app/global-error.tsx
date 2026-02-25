@@ -24,6 +24,9 @@ export default function GlobalError({
 
   return (
     <html lang="de">
+      <head>
+        <script src="/chunk-recovery.js" />
+      </head>
       <body
         style={{
           fontFamily: "system-ui, -apple-system, sans-serif",
