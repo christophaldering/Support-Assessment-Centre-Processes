@@ -41,6 +41,11 @@ export default function WorkspaceUserLoginPage() {
         return;
       }
 
+      if (workspaceSlug === "arag") {
+        router.push("/arag-bdp/gate");
+        return;
+      }
+
       if (data.user.roles.includes("CANDIDATE")) {
         router.push(`/w/${workspaceSlug}/assessment`);
       } else if (data.user.roles.length === 1 && data.user.roles[0] === "OBSERVER") {
@@ -176,7 +181,7 @@ export default function WorkspaceUserLoginPage() {
               <button
                 type="submit"
                 disabled={loading || !email.trim() || !password.trim()}
-                data-testid="button-login"
+                data-testid="workspace-login-submit"
                 className="w-full rounded-lg bg-brand-blue text-white font-medium py-2.5 text-sm hover:bg-brand-blue-dark disabled:opacity-50 transition-colors"
               >
                 {loading ? "Anmelden…" : "Anmelden"}
