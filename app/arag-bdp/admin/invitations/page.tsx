@@ -108,6 +108,7 @@ export default function BdpInvitationsPage() {
   const [qaChecks, setQaChecks] = useState<{ name: string; pass: boolean; detail?: string }[]>([]);
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Underline,
