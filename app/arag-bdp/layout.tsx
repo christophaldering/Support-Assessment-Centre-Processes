@@ -24,7 +24,7 @@ interface BdpContextType {
 const BdpContext = createContext<BdpContextType>({ user: null, loading: true, refetchUser: () => {} });
 export const useBdp = () => useContext(BdpContext);
 
-const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login"];
+const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login", "/anmeldung"];
 
 export default function BdpLayout({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<BdpUser | null>(null);
@@ -53,14 +53,14 @@ export default function BdpLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user && !PUBLIC_PATHS.includes(pathname)) {
-      router.push("/arag-bdp/gate");
+      router.push("/anmeldung");
     }
   }, [loading, user, pathname, router]);
 
   const handleLogout = async () => {
     await fetch("/api/arag-bdp/auth/session", { method: "DELETE" });
     setUser(null);
-    router.push("/arag-bdp/gate");
+    router.push("/anmeldung");
   };
 
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
