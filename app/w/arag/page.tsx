@@ -8,16 +8,12 @@ type PeopleData = { observers: Person[]; experts: Person[]; participants: Person
 
 export default function AragLobbyPage() {
   const router = useRouter();
-  const [gateOk, setGateOk] = useState(false);
-  const [gateLoading, setGateLoading] = useState(true);
-  const [gateEmail, setGateEmail] = useState("Christoph.aldering@googlemail.com");
-  const [gatePassword, setGatePassword] = useState("Christoph");
-  const [gateError, setGateError] = useState("");
-  const [gateSubmitting, setGateSubmitting] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isDemoLocked, setIsDemoLocked] = useState(false);
 
   const [lobbyEnv, setLobbyEnv] = useState<"live" | "demo" | null>(null);
   const [envLockedNote, setEnvLockedNote] = useState(false);
-  const [isDemoLocked, setIsDemoLocked] = useState(false);
 
   const [people, setPeople] = useState<PeopleData | null>(null);
   const [peopleLoading, setPeopleLoading] = useState(false);
@@ -28,15 +24,43 @@ export default function AragLobbyPage() {
   const [searchFilter, setSearchFilter] = useState("");
 
   useEffect(() => {
-    fetch("/api/arag-bdp/gate/me", { cache: "no-store" })
-      .then(r => r.json())
-      .then(d => {
-        setGateOk(d.ok === true);
-        if (d.demoLock) setIsDemoLocked(true);
-      })
-      .catch(() => setGateOk(false))
-      .finally(() => setGateLoading(false));
+    const checkAuth = async () => {
+      try {
+        const gateRes = await fetch("/api/arag-bdp/gate/me", { cache: "no-store" });
+        const gateData = await gateRes.json();
+        if (gateData.ok) {
+          setAuthenticated(true);
+          if (gateData.demoLock) setIsDemoLocked(true);
+          setAuthLoading(false);
+          return;
+        }
+      } catch {}
+
+      try {
+        const meRes = await fetch("/api/auth/me", { cache: "no-store" });
+        if (meRes.ok) {
+          await fetch("/api/arag-bdp/gate/general-login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ platform: true }),
+          });
+          setAuthenticated(true);
+          setAuthLoading(false);
+          return;
+        }
+      } catch {}
+
+      setAuthenticated(false);
+      setAuthLoading(false);
+    };
+    checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (!authLoading && !authenticated) {
+      router.push("/");
+    }
+  }, [authLoading, authenticated, router]);
 
   useEffect(() => {
     if (!lobbyEnv) return;
@@ -53,29 +77,6 @@ export default function AragLobbyPage() {
       .catch(() => setPeople(null))
       .finally(() => setPeopleLoading(false));
   }, [lobbyEnv]);
-
-  const handleGateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setGateError("");
-    setGateSubmitting(true);
-    try {
-      const res = await fetch("/api/arag-bdp/gate/general-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: gateEmail, password: gatePassword }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setGateOk(true);
-      } else {
-        setGateError(data.error || "Zugangsdaten nicht korrekt.");
-      }
-    } catch {
-      setGateError("Verbindungsfehler.");
-    } finally {
-      setGateSubmitting(false);
-    }
-  };
 
   const handleEnvSelect = (env: "live" | "demo") => {
     if (env === "live" && isDemoLocked) {
@@ -112,13 +113,12 @@ export default function AragLobbyPage() {
 
   const allPeople = useMemo(() => {
     if (!people) return [];
-    const groups: { label: string; items: Person[] }[] = [
+    return [
       { label: "Admin", items: people.admins },
       { label: "Beobachter", items: people.observers },
       { label: "Experte", items: people.experts },
       { label: "Teilnehmer", items: people.participants },
     ];
-    return groups;
   }, [people]);
 
   const filteredGroups = useMemo(() => {
@@ -144,7 +144,7 @@ export default function AragLobbyPage() {
     }
   }, [selectedCode, lobbyEnv]);
 
-  if (gateLoading) {
+  if (authLoading || !authenticated) {
     return (
       <div className="min-h-screen bg-[#FFFBF0] flex items-center justify-center">
         <div className="text-gray-400">Laden...</div>
@@ -162,7 +162,7 @@ export default function AragLobbyPage() {
             </div>
             <h1 className="font-bold text-lg tracking-tight">ARAG Executive BDP</h1>
           </div>
-          {gateOk && lobbyEnv && (
+          {lobbyEnv && (
             <span className={`text-xs font-bold px-3 py-1 rounded-full ${
               lobbyEnv === "demo" ? "bg-[#FFD700] text-black" : "bg-green-500 text-white"
             }`}>
@@ -175,54 +175,7 @@ export default function AragLobbyPage() {
       <main className="flex-1 flex items-start justify-center px-4 py-8">
         <div className="w-full max-w-md space-y-6">
 
-          {!gateOk && (
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-black rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <span className="text-[#FFD700] font-bold text-2xl">A</span>
-                </div>
-                <h2 className="text-xl font-bold text-black">Projektzugang</h2>
-                <p className="text-gray-500 text-sm mt-1">Bitte authentifizieren Sie sich.</p>
-              </div>
-              <form onSubmit={handleGateSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">E-Mail</label>
-                  <input
-                    data-testid="arag-gate-email"
-                    type="email"
-                    value={gateEmail}
-                    onChange={e => setGateEmail(e.target.value)}
-                    placeholder="ihre@email.de"
-                    required
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFD700] bg-gray-50 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
-                  <input
-                    data-testid="arag-gate-password"
-                    type="password"
-                    value={gatePassword}
-                    onChange={e => setGatePassword(e.target.value)}
-                    placeholder="Passwort"
-                    required
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFD700] bg-gray-50 text-sm"
-                  />
-                </div>
-                {gateError && <p className="text-red-500 text-sm" data-testid="text-gate-error">{gateError}</p>}
-                <button
-                  data-testid="arag-gate-submit"
-                  type="submit"
-                  disabled={gateSubmitting}
-                  className="w-full bg-[#FFD700] text-black font-bold py-3 rounded-xl hover:bg-[#E6C200] transition-colors disabled:opacity-50"
-                >
-                  {gateSubmitting ? "Prüfen..." : "Zugang prüfen"}
-                </button>
-              </form>
-            </div>
-          )}
-
-          {gateOk && !lobbyEnv && (
+          {!lobbyEnv && (
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <div className="text-center mb-6">
                 <h2 className="text-xl font-bold text-black">Umgebung wählen</h2>
@@ -260,7 +213,7 @@ export default function AragLobbyPage() {
             </div>
           )}
 
-          {gateOk && lobbyEnv && (
+          {lobbyEnv && (
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -364,29 +317,27 @@ export default function AragLobbyPage() {
             </div>
           )}
 
-          {gateOk && (
-            <div className="bg-white/60 rounded-2xl p-5 space-y-2">
-              <h3 className="font-bold text-sm text-black">Kurzinfo</h3>
-              <ul className="text-xs text-gray-500 space-y-1.5">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                  Bewertung: pro Kriterium 100 Punkte (Summe muss 100 sein)
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                  Sponsorflag = Transparenz
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                  Ergebnisse erst nach Abschluss sichtbar
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                  DEMO: Änderungen wirken sofort auf Auswertung
-                </li>
-              </ul>
-            </div>
-          )}
+          <div className="bg-white/60 rounded-2xl p-5 space-y-2">
+            <h3 className="font-bold text-sm text-black">Kurzinfo</h3>
+            <ul className="text-xs text-gray-500 space-y-1.5">
+              <li className="flex items-start gap-2">
+                <span className="text-[#FFD700] mt-0.5">&#9679;</span>
+                Bewertung: pro Kriterium 100 Punkte (Summe muss 100 sein)
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#FFD700] mt-0.5">&#9679;</span>
+                Sponsorflag = Transparenz
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#FFD700] mt-0.5">&#9679;</span>
+                Ergebnisse erst nach Abschluss sichtbar
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#FFD700] mt-0.5">&#9679;</span>
+                DEMO: Änderungen wirken sofort auf Auswertung
+              </li>
+            </ul>
+          </div>
 
           <p className="text-center text-xs text-gray-400 pb-4">
             Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>

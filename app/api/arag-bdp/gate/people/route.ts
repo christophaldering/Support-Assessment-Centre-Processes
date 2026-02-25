@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { cookies } from "next/headers";
+import { getUserSession } from "@/lib/session";
 
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   const gateCookie = cookies().get("arag_gate_session");
-  if (gateCookie?.value !== "authenticated") {
+  let authorized = gateCookie?.value === "authenticated";
+
+  if (!authorized) {
+    try {
+      const session = await getUserSession();
+      if (session) authorized = true;
+    } catch {}
+  }
+
+  if (!authorized) {
     return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
 

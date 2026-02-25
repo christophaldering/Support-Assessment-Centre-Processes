@@ -507,24 +507,25 @@ export default function LandingPage() {
     setError("");
     setLoading(true);
     try {
+      const slugLower = workspaceSlug.toLowerCase();
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password: wsPassword, workspaceSlug }),
+        body: JSON.stringify({ email, password: wsPassword, workspaceSlug: slugLower }),
         credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
         if (data.user.forcePasswordChange) {
-          router.push(`/w/${workspaceSlug}/change-password`);
-        } else if (workspaceSlug === "arag") {
+          router.push(`/w/${slugLower}/change-password`);
+        } else if (slugLower === "arag") {
           router.push("/w/arag");
         } else if (data.user.roles.includes("CANDIDATE")) {
-          router.push(`/w/${workspaceSlug}/assessment`);
+          router.push(`/w/${slugLower}/assessment`);
         } else if (data.user.roles.length === 1 && data.user.roles[0] === "OBSERVER") {
-          router.push(`/w/${workspaceSlug}/observer`);
+          router.push(`/w/${slugLower}/observer`);
         } else {
-          router.push(`/w/${workspaceSlug}/admin`);
+          router.push(`/w/${slugLower}/admin`);
         }
       } else {
         const data = await res.json().catch(() => ({}));
@@ -1257,7 +1258,7 @@ export default function LandingPage() {
                 {activeMode === "workspace" && (
                   <form onSubmit={handleWorkspaceLogin}>
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginWsLabel}</label>
-                    <input type="text" value={workspaceSlug} onChange={(e) => setWorkspaceSlug(e.target.value.toLowerCase().trim())} placeholder={l.loginWsPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3" autoFocus data-testid="input-workspace-slug" />
+                    <input type="text" value={workspaceSlug} onChange={(e) => setWorkspaceSlug(e.target.value.trim())} placeholder={l.loginWsPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3" autoFocus data-testid="input-workspace-slug" />
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginEmailLabel}</label>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={l.loginEmailPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3" data-testid="input-workspace-email" />
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginPwLabel}</label>
@@ -1271,7 +1272,7 @@ export default function LandingPage() {
                 {activeMode === "candidate" && (
                   <form onSubmit={handleCandidateLogin}>
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginWsLabel}</label>
-                    <input type="text" value={workspaceSlug} onChange={(e) => setWorkspaceSlug(e.target.value.toLowerCase().trim())} placeholder={l.loginWsPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 mb-3" autoFocus data-testid="input-candidate-workspace" />
+                    <input type="text" value={workspaceSlug} onChange={(e) => setWorkspaceSlug(e.target.value.trim())} placeholder={l.loginWsPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 mb-3" autoFocus data-testid="input-candidate-workspace" />
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginEmailLabel}</label>
                     <input type="email" value={candidateEmail} onChange={(e) => setCandidateEmail(e.target.value)} placeholder={l.loginEmailPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 mb-3" data-testid="input-candidate-email" />
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginPwLabel}</label>
