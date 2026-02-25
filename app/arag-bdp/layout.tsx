@@ -13,7 +13,6 @@ import {
   LogOut,
   User,
   Mail,
-  Play,
   Compass,
 } from "lucide-react";
 import { BdpContext, BdpUser } from "./bdp-context";
@@ -158,7 +157,6 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
     { href: "/arag-bdp/admin/qa", label: "QA", testId: "bdp-side-qa", Icon: FlaskConical },
     { href: "/arag-bdp/admin?tab=export", label: "Exporte", testId: "bdp-side-exports", Icon: Download },
     { href: "/arag-bdp/admin/invitations", label: "Einladungen", testId: "bdp-side-invitations", Icon: Mail },
-    { href: "/arag-bdp/admin/demo", label: "Demo-Raum", testId: "bdp-side-demo", Icon: Play },
   ];
 
   const isActive = (href: string) => {
@@ -349,7 +347,6 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
                   <>
                     <Link href="/arag-bdp/admin" data-testid="bdp-menu-admin" className="block py-2 px-4 rounded hover:bg-gray-100 font-bold" onClick={() => setMenuOpen(false)}>Admin</Link>
                     <Link href="/arag-bdp/admin/invitations" data-testid="bdp-menu-invitations" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Einladungen</Link>
-                    <Link href="/arag-bdp/admin/demo" data-testid="bdp-menu-demo" className="block py-2 px-4 rounded hover:bg-gray-100" onClick={() => setMenuOpen(false)}>Demo-Raum</Link>
                   </>
                 )}
                 <button data-testid="bdp-menu-tour" onClick={startTour} className="block py-2 px-4 rounded hover:bg-[#FFFBF0] text-black w-full text-left">
