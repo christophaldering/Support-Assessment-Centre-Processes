@@ -26,6 +26,24 @@ export async function POST(req: NextRequest) {
 
   const { sessionId, winnerTeamId, decidedById, rationale } = await req.json();
 
+  if (!sessionId || !winnerTeamId || !decidedById) {
+    return NextResponse.json({ error: "sessionId, winnerTeamId und decidedById erforderlich" }, { status: 400 });
+  }
+
+  const bdpUser = await prisma.bdpUser.findUnique({ where: { id: decidedById } });
+  if (!bdpUser) {
+    const byCode = await prisma.bdpUser.findUnique({ where: { code: session.code } });
+    if (!byCode) {
+      return NextResponse.json({ error: "Entscheider nicht gefunden" }, { status: 404 });
+    }
+    const tieBreak = await prisma.bdpTieBreak.upsert({
+      where: { sessionId },
+      update: { winnerTeamId, decidedById: byCode.id, rationale },
+      create: { sessionId, winnerTeamId, decidedById: byCode.id, rationale },
+    });
+    return NextResponse.json(tieBreak);
+  }
+
   const tieBreak = await prisma.bdpTieBreak.upsert({
     where: { sessionId },
     update: { winnerTeamId, decidedById, rationale },
