@@ -1,0 +1,146 @@
+SPRINT L1 – ARAG PREMIUM LANDING IMPLEMENTIEREN
+
+ZIEL:
+Ersetze die bestehende ARAG-Landing-Page unter /w/arag durch eine hochwertige, vorstandsadäquate Premium-Landing-Page im ARAG CD.
+
+TECH STACK:
+Next.js 14 (App Router)
+TailwindCSS
+Bestehende Auth-Architektur beibehalten
+Keine Änderungen an Session-Logik
+
+ROUTING:
+Route bleibt:
+app/w/arag/page.tsx
+
+Diese Seite wird nach General-Login angezeigt.
+
+DESIGN-VORGABEN (ARAG CD):
+Primary Yellow: #FFD700
+Black: #000000
+Background: #FFFBF0
+Neutral: #F2F2F2
+Kein Verlauf
+Minimalistische Schatten
+Großzügiger Weißraum
+
+TYPOGRAFIE:
+Headlines: Serif (Playfair Display oder Georgia)
+Body: Inter
+Große Headline-Hierarchie
+Keine verspielten Fonts
+
+SEITENAUFBAU:
+
+1) HERO SECTION (2-spaltig Desktop)
+Links:
+- ARAG Executive Potential Journey
+- Business Development Pitch
+- Subline:
+  "Strategische Entscheidungssimulation mit strukturierter Potenzialbeobachtung."
+
+Rechts:
+- Hochwertiges Bild (Boardroom / strategische Diskussion)
+- Leichte Yellow-Overlay (opacity 0.05)
+- Next Image verwenden
+- Lazy Loading aktivieren
+
+2) DREI STRATEGIE-KACHELN (Grid 3 Spalten Desktop / 1 Spalte Mobile)
+
+Kachel 1:
+Titel: Strategischer Kontext
+Bulletpoints:
+- AI-nativer Angriff auf das Kerngeschäft
+- Selbst-Disruptionslogik
+- KPI-basierte Ableitung
+- Marktpositionierung
+
+Kachel 2:
+Titel: Bewertungsarchitektur
+Bulletpoints:
+- 100 Punkte pro Team
+- Vollständige Verteilung
+- Vergleichbarkeit
+- Strukturierte Aggregation
+
+Kachel 3:
+Titel: Governance & Transparenz
+Bulletpoints:
+- Identische Bewertungslogik
+- Standardisierte Kriterien
+- Einbettung in Development Dialogues
+- Diagnostische Kontextualisierung
+
+JEDE KACHEL:
+- Gelber Top-Akzent (2px)
+- Weißer Hintergrund
+- Kein Button
+- Klarer Board-Charakter
+
+3) BEWERTUNGSSTRUKTUR-SEKTION
+
+Titel:
+"Bewertungsdimensionen"
+
+Baue ein statisches Balkendiagramm mit SVG oder Recharts (keine echten Zahlen anzeigen):
+
+- Strategic Relevance
+- Innovation
+- KPI Logic
+- Go-to-Market
+- Defense & Q&A
+- Leadership Alignment
+
+Nur Struktur visualisieren.
+Keine echten Punktwerte.
+
+4) MINI-JOURNEY TIMELINE (horizontal)
+
+Titel:
+"Executive Potential Journey"
+
+Horizontale Timeline mit 5 Stationen:
+
+- WHU Learning
+- Business Development Pitch
+- Board Evaluation
+- Development Dialogue
+- Individual Development Path
+
+JEDE STATION:
+- Minimalistisches Icon
+- 1 Satz Beschreibung
+- leichte Scroll-Fade-In Animation
+- keine Spielerei
+
+5) UNTERER BEREICH – UMGEBUNGSAUSWAHL
+
+Zwei große Buttons:
+
+LIVE Umgebung starten
+DEMO Umgebung starten
+
+Buttons:
+- Schwarz mit gelbem Border
+- Hover: gelber Hintergrund
+
+WICHTIG:
+Keine direkte Weiterleitung beim Laden.
+Nur Button-basierter Einstieg.
+
+PERFORMANCE:
+- Next Image
+- Keine unnötigen Rerenders
+- Modularisieren in:
+
+components/arag/LandingHero.tsx
+components/arag/LandingCards.tsx
+components/arag/LandingCharts.tsx
+components/arag/JourneyTimeline.tsx
+
+QA:
+- Mobile prüfen
+- iPad prüfen
+- Desktop 1440 prüfen
+- Keine Auth-Regression
+- Lighthouse > 85

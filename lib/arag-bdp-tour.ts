@@ -139,7 +139,7 @@ const participantSteps: TourStep[] = [
   {
     id: "tn-welcome",
     title: "Willkommen!",
-    body: "Sie sind als Teilnehmer registriert. Hier sehen Sie Ihre Sessions und Ergebnisse, sobald diese freigegeben werden.",
+    body: "Sie sind als Teilnehmer registriert. Hier sehen Sie Ihre Sessions und Ergebnisse, sobald diese abgeschlossen sind.",
     placement: "center",
   },
   {
@@ -159,7 +159,7 @@ const participantSteps: TourStep[] = [
   {
     id: "tn-results",
     title: "Ergebnisse",
-    body: "Nach der Freigabe (RELEASED) durch den Administrator können Sie die Auswertung einsehen.",
+    body: "Nach Abschluss durch den Administrator können Sie die Auswertung einsehen.",
     placement: "center",
   },
   {
