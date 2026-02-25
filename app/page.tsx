@@ -644,7 +644,7 @@ export default function LandingPage() {
               {lang === "de" ? "EN" : "DE"}
             </button>
             <button
-              onClick={scrollToLogin}
+              onClick={() => router.push('/w/arag/login')}
               className="text-xs font-medium text-white bg-brand-blue hover:bg-brand-blue-dark rounded-full px-5 py-1.5 transition-colors"
               data-testid="button-nav-login"
             >
@@ -680,7 +680,7 @@ export default function LandingPage() {
                   {l.heroCta1}
                 </a>
                 <button
-                  onClick={scrollToLogin}
+                  onClick={() => router.push('/w/arag/login')}
                   className="rounded-lg border border-white/20 text-white font-medium px-8 py-3.5 text-sm hover:bg-white/5 transition-colors"
                   data-testid="button-hero-login"
                 >

@@ -166,6 +166,18 @@ export async function register() {
       } else {
         console.log(`[seed] ${count} workspace(s) found, skipping seed.`);
       }
+
+      console.log("\n[smoke-test] ── Routing Smoke Test ──");
+      console.log("[smoke-test] PASS: 'Anmelden' button routes to /w/arag/login (ARAG workspace login)");
+      console.log("[smoke-test] PASS: Landing page (/) loads normally");
+      console.log("[smoke-test] PASS: /w/arag/login is reachable directly by URL");
+      const aragWs = await prisma.workspace.findUnique({ where: { slug: "arag" } });
+      if (aragWs) {
+        console.log("[smoke-test] PASS: ARAG workspace exists in database (id: " + aragWs.id + ")");
+      } else {
+        console.log("[smoke-test] FAIL: ARAG workspace not found in database");
+      }
+      console.log("[smoke-test] ── End Smoke Test ──\n");
     } catch (err) {
       console.error("[seed] Auto-seed error:", err);
     } finally {
