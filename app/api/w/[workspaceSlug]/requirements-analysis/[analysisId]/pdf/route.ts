@@ -267,7 +267,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
       doc.save();
       doc.fontSize(7).font("Helvetica").fillColor(mutedColor)
-        .text("© Christoph Aldering · Private initiative / concept  ·  Eco-Print", ML, PH - 45, { width: CW * 0.7, lineBreak: false });
+        .text("© Christoph Aldering · Private initiative – for training reasons only – no data from reality so far!", ML, PH - 45, { width: CW * 0.7, lineBreak: false });
       doc.fontSize(7).font("Helvetica").fillColor(mutedColor)
         .text(`Seite ${i + 1} / ${totalPages}`, ML + CW * 0.7, PH - 45, { width: CW * 0.3, align: "right", lineBreak: false });
       doc.restore();

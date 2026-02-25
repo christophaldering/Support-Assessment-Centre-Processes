@@ -912,7 +912,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
       doc.save();
       doc.fontSize(7).font("Helvetica").fillColor(lightMuted)
-        .text("© Christoph Aldering  ·  Eco-Print", ML, PH - 50, { width: CW * 0.5, lineBreak: false });
+        .text("© Christoph Aldering · Private initiative – training only", ML, PH - 50, { width: CW * 0.5, lineBreak: false });
       doc.fontSize(6).font("Helvetica-Oblique").fillColor("#cbd5e1")
         .text("VERTRAULICH", ML + CW * 0.5, PH - 50, { width: CW * 0.25, align: "center", lineBreak: false });
       doc.fontSize(7).font("Helvetica").fillColor(lightMuted)

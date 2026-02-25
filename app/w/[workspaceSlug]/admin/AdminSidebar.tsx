@@ -220,8 +220,8 @@ export default function AdminSidebar({
               Workspace wechseln
             </Link>
           )}
-          <p className="text-[9px] text-slate-300 pt-1">
-            &copy; Christoph Aldering &middot; Private initiative / concept
+          <p className="text-[9px] text-slate-400 pt-1">
+            &copy; Christoph Aldering &middot; Private initiative &ndash; for training reasons only &ndash; no data from reality so far!
           </p>
         </div>
       </aside>

@@ -1606,8 +1606,8 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
       </div>
 
       <footer className="border-t border-slate-100 py-6">
-        <p className="text-center text-xs text-slate-300">
-          &copy; Christoph Aldering &middot; Private initiative / concept
+        <p className="text-center text-xs text-slate-500">
+          &copy; Christoph Aldering &middot; Private initiative &ndash; for training reasons only &ndash; no data from reality so far!
         </p>
       </footer>
     </div>

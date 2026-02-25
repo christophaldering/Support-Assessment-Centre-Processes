@@ -268,7 +268,7 @@ export async function GET() {
       x: 0.8, y: 2.5, w: 7, h: 0.8,
       fontSize: 14, fontFace: "Arial", color: SLATE400, lineSpacingMultiple: 1.5,
     });
-    closingSlide.addText("Executive Diagnostics Suite\n© Christoph Aldering · Private initiative / concept", {
+    closingSlide.addText("Executive Diagnostics Suite\n© Christoph Aldering · Private initiative – for training reasons only – no data from reality so far!", {
       x: 0.8, y: 4.0, w: 5, h: 0.6,
       fontSize: 10, fontFace: "Arial", color: SLATE500, lineSpacingMultiple: 1.4,
     });

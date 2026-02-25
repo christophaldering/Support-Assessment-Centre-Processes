@@ -260,8 +260,8 @@ export default function MasterModuleOverviewPage() {
       </main>
 
       <footer className="border-t border-slate-200 py-6 mt-10">
-        <p className="text-center text-xs text-slate-400">
-          &copy; Christoph Aldering &middot; Private initiative / concept
+        <p className="text-center text-xs text-slate-500">
+          &copy; Christoph Aldering &middot; Private initiative &ndash; for training reasons only &ndash; no data from reality so far!
         </p>
       </footer>
     </div>

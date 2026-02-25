@@ -218,7 +218,7 @@ const t = {
     loginWrongPw: "Falsches Passwort",
     loginFailed: "Anmeldung fehlgeschlagen",
     loginConnErr: "Verbindungsfehler",
-    footerCopy: "\u00a9 Christoph Aldering \u00b7 Private initiative / concept",
+    footerCopy: "\u00a9 Christoph Aldering \u00b7 Private initiative \u2013 for training reasons only \u2013 no data from reality so far!",
     footerSub: "Mandantenf\u00e4hig \u00b7 Enterprise-Grade \u00b7 Made with ambition",
   },
   en: {
@@ -432,7 +432,7 @@ const t = {
     loginWrongPw: "Wrong password",
     loginFailed: "Login failed",
     loginConnErr: "Connection error",
-    footerCopy: "\u00a9 Christoph Aldering \u00b7 Private initiative / concept",
+    footerCopy: "\u00a9 Christoph Aldering \u00b7 Private initiative \u2013 for training reasons only \u2013 no data from reality so far!",
     footerSub: "Multi-tenant \u00b7 Enterprise-Grade \u00b7 Made with ambition",
   },
 };
@@ -1289,8 +1289,8 @@ export default function LandingPage() {
       <footer className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 py-3 bg-slate-50/95 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-2">
-            <p className="text-xs text-slate-400" data-testid="text-footer-copy">{l.footerCopy}</p>
-            <p className="text-[10px] text-slate-300 uppercase tracking-wider">{l.footerSub}</p>
+            <p className="text-xs text-slate-500" data-testid="text-footer-copy">{l.footerCopy}</p>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider">{l.footerSub}</p>
           </div>
         </div>
       </footer>
