@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import StandardLanding from "@/app/components/arag/StandardLanding";
+import PasswordInput from "@/app/components/PasswordInput";
 
 const AppleLanding = dynamic(() => import("@/app/components/arag/AppleLanding"), { ssr: false });
 
@@ -257,15 +258,19 @@ export default function AragLobbyPage() {
                 <div className="mt-4 space-y-3">
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${viewMode === "apple" ? "text-white/50" : "text-gray-700"}`}>Passwort</label>
-                    <input
+                    <PasswordInput
                       data-testid="arag-person-password"
-                      type="password"
                       value="****"
                       readOnly
-                      className={`w-full px-4 py-3 border rounded-xl text-sm cursor-default ${
+                      className={`w-full px-4 py-3 border rounded-xl text-sm cursor-default pr-12 ${
                         viewMode === "apple"
                           ? "border-white/10 bg-white/5 text-white/30"
                           : "border-gray-200 bg-gray-50 text-gray-400"
+                      }`}
+                      toggleClassName={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${
+                        viewMode === "apple"
+                          ? "text-white/30 hover:text-white/60"
+                          : "text-gray-400 hover:text-gray-600"
                       }`}
                     />
                   </div>

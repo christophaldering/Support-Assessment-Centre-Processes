@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import PasswordInput from "@/app/components/PasswordInput";
 
 type AccessMode = null | "master" | "workspace" | "candidate";
 type Lang = "de" | "en";
@@ -1232,7 +1233,7 @@ export default function LandingPage() {
                 {activeMode === "master" && (
                   <form onSubmit={handleMasterLogin}>
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginPwLabel}</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={l.loginMasterPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500" autoFocus data-testid="input-master-password" />
+                    <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder={l.loginMasterPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 pr-12" autoFocus data-testid="input-master-password" />
                     <button type="submit" disabled={loading || !password} className="w-full mt-4 px-4 py-2.5 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700 disabled:opacity-50 transition" data-testid="button-master-login">
                       {loading ? l.loginLoading : l.loginMasterBtn}
                     </button>
@@ -1246,7 +1247,7 @@ export default function LandingPage() {
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginEmailLabel}</label>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={l.loginEmailPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3" data-testid="input-workspace-email" />
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginPwLabel}</label>
-                    <input type="password" value={wsPassword} onChange={(e) => setWsPassword(e.target.value)} placeholder={l.loginPwPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-testid="input-workspace-password" />
+                    <PasswordInput value={wsPassword} onChange={(e) => setWsPassword(e.target.value)} placeholder={l.loginPwPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12" data-testid="input-workspace-password" />
                     <button type="submit" disabled={loading || !workspaceSlug || !email || !wsPassword} className="w-full mt-4 px-4 py-2.5 bg-blue-700 text-white text-sm font-medium rounded-lg hover:bg-blue-600 disabled:opacity-50 transition" data-testid="button-workspace-login">
                       {loading ? l.loginLoading : l.loginWorkBtn}
                     </button>
@@ -1260,7 +1261,7 @@ export default function LandingPage() {
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginEmailLabel}</label>
                     <input type="email" value={candidateEmail} onChange={(e) => setCandidateEmail(e.target.value)} placeholder={l.loginEmailPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 mb-3" data-testid="input-candidate-email" />
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">{l.loginPwLabel}</label>
-                    <input type="password" value={candidatePassword} onChange={(e) => setCandidatePassword(e.target.value)} placeholder={l.loginPwPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500" data-testid="input-candidate-password" />
+                    <PasswordInput value={candidatePassword} onChange={(e) => setCandidatePassword(e.target.value)} placeholder={l.loginPwPh} className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 pr-12" data-testid="input-candidate-password" />
                     <button type="submit" disabled={loading || !workspaceSlug || !candidateEmail || !candidatePassword} className="w-full mt-4 px-4 py-2.5 bg-amber-700 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-50 transition" data-testid="button-candidate-login">
                       {loading ? l.loginLoading : l.loginCandBtn}
                     </button>

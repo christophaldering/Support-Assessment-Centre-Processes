@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import PasswordInput from "@/app/components/PasswordInput";
 
 interface Theme {
   primaryColor: string;
@@ -145,13 +146,12 @@ export default function WorkspaceSelectorPage() {
 
               {selectedId === ws.id ? (
                 <form onSubmit={handleWorkspaceAuth} className="flex gap-2 mt-3">
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={wsPassword}
                     onChange={(e) => setWsPassword(e.target.value)}
                     placeholder="Workspace admin password"
                     required
-                    className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue pr-12"
                   />
                   <button
                     type="submit"

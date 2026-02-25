@@ -1,38 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, InputHTMLAttributes } from "react";
 
-interface PasswordInputProps {
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder?: string;
-  className?: string;
-  autoFocus?: boolean;
-  "data-testid"?: string;
-  readOnly?: boolean;
+interface PasswordInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
+  toggleClassName?: string;
 }
 
-export default function PasswordInput({ value, onChange, placeholder, className, autoFocus, readOnly, ...props }: PasswordInputProps) {
+export default function PasswordInput({ toggleClassName, className, ...props }: PasswordInputProps) {
   const [visible, setVisible] = useState(false);
 
   return (
     <div className="relative">
       <input
+        {...props}
         type={visible ? "text" : "password"}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
         className={className}
-        autoFocus={autoFocus}
-        readOnly={readOnly}
-        data-testid={props["data-testid"]}
       />
       <button
         type="button"
         onClick={() => setVisible(!visible)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+        className={toggleClassName || "absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"}
         tabIndex={-1}
-        data-testid={props["data-testid"] ? `${props["data-testid"]}-toggle` : "toggle-password"}
       >
         {visible ? (
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

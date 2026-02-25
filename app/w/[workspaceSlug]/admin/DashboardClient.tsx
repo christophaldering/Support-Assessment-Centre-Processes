@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import PasswordInput from "@/app/components/PasswordInput";
 
 interface AssessmentItem {
   id: string;
@@ -476,12 +477,11 @@ export default function DashboardClient({
 
           <div className="mb-5">
             <label className="text-xs font-medium text-slate-600 block mb-1.5">Passwort zur Bestätigung</label>
-            <input
-              type="password"
+            <PasswordInput
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
               placeholder="Ihr Passwort eingeben"
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
               data-testid="input-delete-password"
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleDeleteOrArchive(confirmDelete); } }}
             />

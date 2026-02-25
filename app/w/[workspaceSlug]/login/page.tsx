@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import PasswordInput from "@/app/components/PasswordInput";
 
 export default function WorkspaceUserLoginPage() {
   const router = useRouter();
@@ -164,15 +165,14 @@ export default function WorkspaceUserLoginPage() {
                 <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
                   Passwort
                 </label>
-                <input
+                <PasswordInput
                   id="password"
-                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Passwort eingeben"
                   required
                   data-testid="input-password"
-                  className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue transition-colors"
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue transition-colors pr-12"
                 />
               </div>
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import PasswordInput from "@/app/components/PasswordInput";
 
 interface ArchivedAssessment {
   id: string;
@@ -183,12 +184,11 @@ export default function MasterArchivePage() {
             </p>
             <div className="mb-4">
               <label className="text-xs font-medium text-slate-600 block mb-1.5">Master-Passwort zur Bestätigung</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={restorePassword}
                 onChange={(e) => setRestorePassword(e.target.value)}
                 placeholder="Master-Passwort eingeben"
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
                 autoFocus
                 data-testid="input-restore-password"
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleRestore(); } }}
