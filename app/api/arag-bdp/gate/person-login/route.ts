@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 const schema = z.object({
   environment: z.enum(["live", "demo"]),
   code: z.string().min(1),
-  password: z.string().min(1),
+  password: z.string(),
 });
 
 export async function POST(req: NextRequest) {
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: false, error: "Sie befinden sich in der DEMO-Umgebung." }, { status: 403 });
       }
 
-      if (user.passwordHash !== password) {
+      if (environment !== "demo" && user.passwordHash !== password) {
         return NextResponse.json({ ok: false, error: "Falsches Passwort." }, { status: 401 });
       }
 
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (participant) {
-      if (participant.passwordHash && participant.passwordHash !== password) {
+      if (environment !== "demo" && participant.passwordHash && participant.passwordHash !== password) {
         return NextResponse.json({ ok: false, error: "Falsches Passwort." }, { status: 401 });
       }
 

@@ -1,10 +1,20 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-type Person = { code: string; realName: string; role: string };
-type PeopleData = { observers: Person[]; experts: Person[]; participants: Person[]; admins: Person[] };
+type DemoRole = {
+  code: string;
+  label: string;
+  personaName: string;
+  description: string;
+};
+
+const DEMO_ROLES: DemoRole[] = [
+  { code: "D-MD1", label: "Admin", personaName: "Virginia Woolf", description: "Zugang zur Admin-Konsole, Session-Steuerung und Auswertung" },
+  { code: "D-V1", label: "Beobachter", personaName: "Marie Curie", description: "Bewertung der Teams und individuelle Teilnehmer-Notizen" },
+  { code: "D-TN22", label: "Teilnehmer", personaName: "Holden Caulfield", description: "Teilnehmer-Portal mit Business Case und Ergebnissen" },
+];
 
 export default function AragLobbyPage() {
   const router = useRouter();
@@ -15,13 +25,9 @@ export default function AragLobbyPage() {
   const [lobbyEnv, setLobbyEnv] = useState<"live" | "demo" | null>(null);
   const [envLockedNote, setEnvLockedNote] = useState(false);
 
-  const [people, setPeople] = useState<PeopleData | null>(null);
-  const [peopleLoading, setPeopleLoading] = useState(false);
-  const [selectedCode, setSelectedCode] = useState("");
-  const [personPassword, setPersonPassword] = useState("");
+  const [selectedRole, setSelectedRole] = useState<DemoRole | null>(null);
   const [personError, setPersonError] = useState("");
   const [personLoading, setPersonLoading] = useState(false);
-  const [searchFilter, setSearchFilter] = useState("");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -62,22 +68,6 @@ export default function AragLobbyPage() {
     }
   }, [authLoading, authenticated, router]);
 
-  useEffect(() => {
-    if (!lobbyEnv) return;
-    setPeopleLoading(true);
-    setSelectedCode("");
-    setPersonPassword("");
-    setPersonError("");
-    fetch(`/api/arag-bdp/gate/people?environment=${lobbyEnv}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.error) { setPeople(null); return; }
-        setPeople(d);
-      })
-      .catch(() => setPeople(null))
-      .finally(() => setPeopleLoading(false));
-  }, [lobbyEnv]);
-
   const handleEnvSelect = (env: "live" | "demo") => {
     if (env === "live" && isDemoLocked) {
       setEnvLockedNote(true);
@@ -87,16 +77,15 @@ export default function AragLobbyPage() {
     setLobbyEnv(env);
   };
 
-  const handlePersonLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePersonLogin = async () => {
+    if (!selectedRole || !lobbyEnv) return;
     setPersonError("");
-    if (!selectedCode || !personPassword || !lobbyEnv) return;
     setPersonLoading(true);
     try {
       const res = await fetch("/api/arag-bdp/gate/person-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ environment: lobbyEnv, code: selectedCode, password: personPassword }),
+        body: JSON.stringify({ environment: lobbyEnv, code: selectedRole.code, password: "demo-bypass" }),
       });
       const data = await res.json();
       if (data.ok) {
@@ -110,39 +99,6 @@ export default function AragLobbyPage() {
       setPersonLoading(false);
     }
   };
-
-  const allPeople = useMemo(() => {
-    if (!people) return [];
-    return [
-      { label: "Admin", items: people.admins },
-      { label: "Beobachter", items: people.observers },
-      { label: "Experte", items: people.experts },
-      { label: "Teilnehmer", items: people.participants },
-    ];
-  }, [people]);
-
-  const filteredGroups = useMemo(() => {
-    if (!searchFilter.trim()) return allPeople;
-    const q = searchFilter.toLowerCase();
-    return allPeople.map(g => ({
-      ...g,
-      items: g.items.filter(p =>
-        p.realName.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)
-      ),
-    })).filter(g => g.items.length > 0);
-  }, [allPeople, searchFilter]);
-
-  const selectedPerson = useMemo(() => {
-    if (!people || !selectedCode) return null;
-    const all = [...people.admins, ...people.observers, ...people.experts, ...people.participants];
-    return all.find(p => p.code === selectedCode) || null;
-  }, [people, selectedCode]);
-
-  useEffect(() => {
-    if (lobbyEnv === "demo" && selectedCode) {
-      setPersonPassword("''''");
-    }
-  }, [selectedCode, lobbyEnv]);
 
   if (authLoading || !authenticated) {
     return (
@@ -217,88 +173,68 @@ export default function AragLobbyPage() {
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-black">Anmeldung</h2>
+                  <h2 className="text-xl font-bold text-black">Perspektive wählen</h2>
                   <p className="text-gray-500 text-sm mt-0.5">
                     {lobbyEnv === "demo" ? "Demo-Umgebung" : "Live-System"}
                   </p>
                 </div>
                 <button
                   data-testid="arag-back-env"
-                  onClick={() => { setLobbyEnv(null); setPeople(null); setSelectedCode(""); }}
+                  onClick={() => { setLobbyEnv(null); setSelectedRole(null); setPersonError(""); }}
                   className="text-xs text-gray-400 hover:text-black transition-colors"
                 >
                   Umgebung wechseln
                 </button>
               </div>
 
-              {peopleLoading ? (
-                <div className="text-center py-6 text-gray-400">Personen werden geladen...</div>
-              ) : (
-                <form onSubmit={handlePersonLogin} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Person auswählen</label>
-                    <input
-                      type="text"
-                      value={searchFilter}
-                      onChange={e => setSearchFilter(e.target.value)}
-                      placeholder="Suchen..."
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFD700] bg-gray-50 text-sm mb-2"
-                      data-testid="arag-person-search"
-                    />
-                    <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-xl bg-gray-50" data-testid="arag-person-select">
-                      {filteredGroups.map(group => (
-                        <div key={group.label}>
-                          <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-100 sticky top-0">
-                            {group.label}
-                          </div>
-                          {group.items.map(p => (
-                            <button
-                              key={p.code}
-                              type="button"
-                              data-testid={`arag-person-option-${p.code}`}
-                              onClick={() => {
-                                setSelectedCode(p.code);
-                                setSearchFilter("");
-                                setPersonError("");
-                              }}
-                              className={`w-full text-left px-3 py-2.5 text-sm hover:bg-[#FFD700]/10 transition-colors flex items-center justify-between ${
-                                selectedCode === p.code ? "bg-[#FFD700]/15 font-medium" : ""
-                              }`}
-                            >
-                              <span>{p.realName} <span className="text-gray-400">({p.code})</span></span>
-                              {selectedCode === p.code && <span className="text-[#FFD700] font-bold text-xs">&#10003;</span>}
-                            </button>
-                          ))}
+              <div className="space-y-3">
+                {DEMO_ROLES.map(role => (
+                  <button
+                    key={role.code}
+                    type="button"
+                    data-testid={`arag-role-${role.label.toLowerCase()}`}
+                    onClick={() => { setSelectedRole(role); setPersonError(""); }}
+                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                      selectedRole?.code === role.code
+                        ? "border-[#FFD700] bg-[#FFD700]/10"
+                        : "border-gray-100 hover:border-gray-200 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                        selectedRole?.code === role.code
+                          ? "bg-[#FFD700] text-black"
+                          : "bg-gray-100 text-gray-500"
+                      }`}>
+                        {role.personaName.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-black">{role.personaName}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
+                            {role.label}
+                          </span>
                         </div>
-                      ))}
-                      {filteredGroups.length === 0 && (
-                        <div className="px-3 py-4 text-sm text-gray-400 text-center">Keine Treffer</div>
+                        <p className="text-xs text-gray-400 mt-0.5">{role.description}</p>
+                      </div>
+                      {selectedRole?.code === role.code && (
+                        <span className="text-[#FFD700] font-bold text-lg">&#10003;</span>
                       )}
                     </div>
-                  </div>
+                  </button>
+                ))}
+              </div>
 
-                  {selectedPerson && (
-                    <div className="bg-[#FFFBF0] rounded-xl p-3 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#FFD700]/20 flex items-center justify-center font-bold text-sm">
-                        {selectedPerson.realName.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{selectedPerson.realName}</p>
-                        <p className="text-xs text-gray-400">{selectedPerson.code} &middot; {selectedPerson.role}</p>
-                      </div>
-                    </div>
-                  )}
-
+              {selectedRole && (
+                <div className="mt-4 space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
                     <input
                       data-testid="arag-person-password"
                       type="password"
-                      value={personPassword}
-                      onChange={e => setPersonPassword(e.target.value)}
-                      placeholder={lobbyEnv === "demo" ? "Vorbefüllt" : "Passwort eingeben"}
-                      required
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFD700] bg-gray-50 text-sm"
+                      value="****"
+                      readOnly
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-400 cursor-default"
                     />
                   </div>
 
@@ -306,35 +242,36 @@ export default function AragLobbyPage() {
 
                   <button
                     data-testid="arag-person-login"
-                    type="submit"
-                    disabled={personLoading || !selectedCode || !personPassword}
+                    type="button"
+                    onClick={handlePersonLogin}
+                    disabled={personLoading}
                     className="w-full bg-[#FFD700] text-black font-bold py-3 rounded-xl hover:bg-[#E6C200] transition-colors disabled:opacity-50"
                   >
-                    {personLoading ? "Anmeldung..." : "Anmelden"}
+                    {personLoading ? "Anmeldung..." : `Als ${selectedRole.personaName} anmelden`}
                   </button>
-                </form>
+                </div>
               )}
             </div>
           )}
 
           <div className="bg-white/60 rounded-2xl p-5 space-y-2">
-            <h3 className="font-bold text-sm text-black">Kurzinfo</h3>
+            <h3 className="font-bold text-sm text-black">Business Development Pitch – Bewertungsumgebung</h3>
             <ul className="text-xs text-gray-500 space-y-1.5">
               <li className="flex items-start gap-2">
                 <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                Bewertung: pro Kriterium 100 Punkte (Summe muss 100 sein)
+                Pro Kriterium stehen 100 Punkte zur Verfügung.
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                Sponsorflag = Transparenz
+                Die Punkte müssen vollständig verteilt werden.
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                Ergebnisse erst nach Abschluss sichtbar
+                Die Bewertung kann gespeichert und später abgeschlossen werden.
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#FFD700] mt-0.5">&#9679;</span>
-                DEMO: Änderungen wirken sofort auf Auswertung
+                Die Ergebnisse werden nach Abschluss der Bewertung sichtbar.
               </li>
             </ul>
           </div>
