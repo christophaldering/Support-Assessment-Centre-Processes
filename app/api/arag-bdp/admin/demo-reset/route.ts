@@ -37,13 +37,13 @@ async function seedDemo() {
   }
 
   const v1 = await prisma.bdpUser.create({
-    data: { id: randomUUID(), code: "DV1", role: "BOARD", displayName: "Demo Vorstand 1", isAdmin: true, environment: ENV, email: "demo-v1@demo.de", username: "DV1", passwordHash: "Demo" },
+    data: { id: randomUUID(), code: "DV1", role: "BOARD", displayName: "Demo Vorstand 1", isAdmin: true, environment: ENV, username: "DV1", passwordHash: "Demo" },
   });
   const md1 = await prisma.bdpUser.create({
-    data: { id: randomUUID(), code: "DMD1", role: "MANAGEMENT_DIAGNOSTICS", displayName: "Demo MD 1", isAdmin: true, environment: ENV, email: "demo-md1@demo.de", username: "DMD1", passwordHash: "Demo" },
+    data: { id: randomUUID(), code: "DMD1", role: "MANAGEMENT_DIAGNOSTICS", displayName: "Demo MD 1", isAdmin: true, environment: ENV, username: "DMD1", passwordHash: "Demo" },
   });
   const e1 = await prisma.bdpUser.create({
-    data: { id: randomUUID(), code: "DE1", role: "EXPERT", displayName: "Demo Experte 1", isAdmin: false, environment: ENV, email: "demo-e1@demo.de", username: "DE1", passwordHash: "Demo" },
+    data: { id: randomUUID(), code: "DE1", role: "EXPERT", displayName: "Demo Experte 1", isAdmin: false, environment: ENV, username: "DE1", passwordHash: "Demo" },
   });
   const observers = [v1, md1, e1];
 
