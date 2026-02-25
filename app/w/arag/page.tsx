@@ -17,6 +17,7 @@ export default function AragLobbyPage() {
 
   const [lobbyEnv, setLobbyEnv] = useState<"live" | "demo" | null>(null);
   const [envLockedNote, setEnvLockedNote] = useState(false);
+  const [isDemoLocked, setIsDemoLocked] = useState(false);
 
   const [people, setPeople] = useState<PeopleData | null>(null);
   const [peopleLoading, setPeopleLoading] = useState(false);
@@ -29,7 +30,10 @@ export default function AragLobbyPage() {
   useEffect(() => {
     fetch("/api/arag-bdp/gate/me", { cache: "no-store" })
       .then(r => r.json())
-      .then(d => setGateOk(d.ok === true))
+      .then(d => {
+        setGateOk(d.ok === true);
+        if (d.demoLock) setIsDemoLocked(true);
+      })
       .catch(() => setGateOk(false))
       .finally(() => setGateLoading(false));
   }, []);
@@ -74,6 +78,10 @@ export default function AragLobbyPage() {
   };
 
   const handleEnvSelect = (env: "live" | "demo") => {
+    if (env === "live" && isDemoLocked) {
+      setEnvLockedNote(true);
+      return;
+    }
     setEnvLockedNote(false);
     setLobbyEnv(env);
   };
@@ -132,7 +140,7 @@ export default function AragLobbyPage() {
 
   useEffect(() => {
     if (lobbyEnv === "demo" && selectedCode) {
-      setPersonPassword("Demo");
+      setPersonPassword("''''");
     }
   }, [selectedCode, lobbyEnv]);
 
@@ -229,7 +237,7 @@ export default function AragLobbyPage() {
                   <span className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3 group-hover:bg-green-500 group-hover:text-white transition-colors">
                     <span className="w-3 h-3 rounded-full bg-green-500 group-hover:bg-white" />
                   </span>
-                  <span className="font-bold text-black block">LIVE</span>
+                  <span className="font-bold text-black block">LIVE starten</span>
                   <span className="text-xs text-gray-400 mt-1 block">Produktivsystem</span>
                 </button>
                 <button
@@ -240,7 +248,7 @@ export default function AragLobbyPage() {
                   <span className="w-10 h-10 rounded-full bg-[#FFD700]/20 flex items-center justify-center mx-auto mb-3 group-hover:bg-[#FFD700] transition-colors">
                     <span className="w-3 h-3 rounded-full bg-[#FFD700] group-hover:bg-black" />
                   </span>
-                  <span className="font-bold text-black block">DEMO</span>
+                  <span className="font-bold text-black block">DEMO starten</span>
                   <span className="text-xs text-gray-400 mt-1 block">Testumgebung</span>
                 </button>
               </div>
