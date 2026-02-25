@@ -22,7 +22,7 @@ import TourOverlay from "./components/TourOverlay";
 import AvatarCircle from "./components/AvatarCircle";
 import { getTourSteps } from "@/lib/arag-bdp-tour";
 
-const PUBLIC_PATHS = ["/arag-bdp/gate", "/arag-bdp/login"];
+const PUBLIC_PATHS = ["/arag-bdp/gate"];
 
 function BdpLayoutInner({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<BdpUser | null>(null);
@@ -144,13 +144,11 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
   const tourSteps = getTourSteps({ role: user.role, isAdmin: user.isAdmin, environment: user.environment });
 
   const mobileTabs = [
-    { href: "/arag-bdp", label: "Home", testId: "bdp-tab-home", Icon: LayoutGrid, disabled: false },
     { href: "/arag-bdp/sessions", label: "Sessions", testId: "bdp-tab-sessions", Icon: Calendar, disabled: false },
     { href: "/arag-bdp/bewertung", label: "Bewertung", testId: "bdp-tab-bewertung", Icon: Scale, disabled: false },
   ];
 
   const sidebarMain = [
-    { href: "/arag-bdp", label: "Dashboard", testId: "bdp-side-dashboard", Icon: LayoutGrid },
     { href: "/arag-bdp/sessions", label: "Sessions", testId: "bdp-side-sessions", Icon: Calendar },
     { href: "/arag-bdp/bewertung", label: "Bewertung", testId: "bdp-side-bewertung", Icon: Scale },
   ];
@@ -164,7 +162,6 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
   ];
 
   const isActive = (href: string) => {
-    if (href === "/arag-bdp") return pathname === "/arag-bdp";
     const [hrefPath, hrefQuery] = href.split("?");
     if (hrefPath === "/arag-bdp/admin" && hrefQuery) {
       const params = new URLSearchParams(hrefQuery);
@@ -374,7 +371,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
         <nav className="shrink-0 bg-[#FFFBF0] border-t border-black/10 z-50" role="navigation" data-testid="bottom-nav">
           <div className="max-w-[480px] mx-auto flex justify-around items-center h-[70px]">
             {mobileTabs.map(tab => {
-              const active = pathname === tab.href || (tab.href !== "/arag-bdp" && pathname.startsWith(tab.href));
+              const active = pathname === tab.href || pathname.startsWith(tab.href);
 
               if (tab.disabled) {
                 return (
