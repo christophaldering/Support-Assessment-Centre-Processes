@@ -77,7 +77,7 @@ export default function BdpProfilePage() {
             <AvatarCircle avatarUrl={displayAvatar} code={user.code} size="lg" />
           </div>
           <div>
-            <h2 className="text-xl font-bold" data-testid="text-profile-code">{user.code}</h2>
+            <h2 className="text-xl font-bold" data-testid="text-profile-code">{user.displayName || user.code}</h2>
             <p className="text-gray-500 text-sm">{user.role}</p>
             {user.isAdmin && <span className="text-xs bg-[#FFD700] px-2 py-0.5 rounded-full font-bold">Admin</span>}
           </div>

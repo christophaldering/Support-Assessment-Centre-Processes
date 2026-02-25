@@ -5,6 +5,7 @@ import { createContext, useContext } from "react";
 export interface BdpUser {
   id: string;
   code: string;
+  displayName?: string;
   role: string;
   isAdmin: boolean;
   environment: string;

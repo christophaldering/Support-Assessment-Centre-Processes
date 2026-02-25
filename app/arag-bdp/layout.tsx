@@ -51,6 +51,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
           setUser({
             id: meData.id,
             code: meData.name || meData.email.split("@")[0],
+            displayName: meData.name || meData.email.split("@")[0],
             role: meData.roles?.[0] || "USER",
             isAdmin: meData.roles?.includes("ADMIN") || meData.roles?.includes("WORKSPACE_ADMIN") || false,
             environment: "demo",
@@ -260,8 +261,8 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-3 px-2">
               <AvatarCircle avatarUrl={user.photoUrl} code={user.code} size="sm" />
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-[#FFFBF0] truncate">{user.code}</div>
-                <div className="text-[10px] text-[#FFFBF0]/40">{user.role}</div>
+                <div className="text-xs font-semibold text-[#FFFBF0] truncate">{user.displayName || user.code}</div>
+                <div className="text-[10px] text-[#FFFBF0]/40">{user.code}</div>
               </div>
             </div>
           </div>
@@ -282,7 +283,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
               )}
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-xs font-mono text-black/50">{user.code}</span>
+              <span className="text-xs text-black/50">{user.displayName || user.code}</span>
               <NotificationBell variant="desktop" />
               <Link
                 href="/arag-bdp/profile"
@@ -326,7 +327,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
         <header className="bg-black text-white px-4 py-3 flex items-center justify-between shrink-0 z-50">
           <div className="flex items-center gap-3">
             <span className="font-bold text-lg">ARAG BDP</span>
-            <span className="text-[#FFD700] text-sm font-mono">{user.code}</span>
+            <span className="text-[#FFD700] text-sm">{user.displayName || user.code}</span>
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell variant="mobile" />

@@ -20,6 +20,7 @@ export async function GET() {
           user: {
             id: user.id,
             code: user.code,
+            displayName: user.displayName || user.code,
             role: user.role,
             isAdmin: user.isAdmin,
             environment: (user as any).demoLock ? "demo" : (envOverride || user.environment),
