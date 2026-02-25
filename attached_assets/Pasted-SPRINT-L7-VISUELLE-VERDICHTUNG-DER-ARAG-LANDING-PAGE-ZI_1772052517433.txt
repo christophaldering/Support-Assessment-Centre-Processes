@@ -1,0 +1,138 @@
+SPRINT L7 – VISUELLE VERDICHTUNG DER ARAG LANDING PAGE
+
+ZIEL:
+Reduziere Textlastigkeit.
+Erhöhe visuelle Klarheit.
+Erhalte Board-Level-Seriosität.
+Keine Marketing-Optik.
+Keine Spielerei.
+
+------------------------------------------------------------
+1) STRATEGISCHER KONTEXT ALS VISUELLES STORYBOARD
+------------------------------------------------------------
+
+Ersetze die lange Textsektion durch ein 3-stufiges visuelles Story-Element.
+
+LAYOUT:
+Horizontale 3-Box-Story (Desktop)
+Vertikal gestapelt (Mobile)
+
+JEDE BOX:
+- Nummeriert (01 / 02 / 03)
+- Großzügiger Weißraum
+- Gelber Linien-Akzent
+- Max. 3 kurze Bulletpoints
+
+BOX 01
+Titel: Vorstandsmotivation
+Icon: dezentes Strategy-Icon (z.B. Liniengrafik)
+Inhalt:
+- Zukunftsfähigkeit sichtbar machen
+- Strategisches Denken unter Realbedingungen
+- Potenziale differenzieren
+
+BOX 02
+Titel: Spannung im Format
+Icon: Balance-Icon (Waage stilisiert, minimalistisch)
+Inhalt:
+- Teamkonstellation beeinflusst Vergleichbarkeit
+- Wettbewerbsrealität bleibt gewollt
+- Auswahl & Diagnose stehen nebeneinander
+
+BOX 03
+Titel: Unser Lösungsansatz
+Icon: Struktur/Framework-Icon
+Inhalt:
+- Standardisierte Bewertungsarchitektur
+- 100-Punkte-System
+- Einbettung in Development Dialogues
+
+KEIN Fließtext.
+KEINE langen Absätze.
+Nur visuelle Verdichtung.
+
+------------------------------------------------------------
+2) VISUELLE AMBIVALENZ-GRAFIK
+------------------------------------------------------------
+
+Unterhalb der 3-Box-Story:
+
+Erstelle eine einfache, elegante Visualisierung:
+
+Zwei Kreise (Venn-Diagramm-Logik):
+
+Linker Kreis:
+"Auswahlentscheidung"
+
+Rechter Kreis:
+"Diagnostische Beobachtung"
+
+Überlappung:
+"Strukturierte Transparenz"
+
+Design:
+- Dünne schwarze Linien
+- Gelbe Überlappungsfläche
+- Sehr minimalistisch
+- Kein 3D
+- Kein Schatten
+
+------------------------------------------------------------
+3) KONZEPT ALS FRAMEWORK-GRAFIK
+------------------------------------------------------------
+
+Erstelle eine horizontale Framework-Darstellung:
+
+[ Realitätsnahe Entscheidungssimulation ]
+              ↓
+[ Strukturierte Bewertung ]
+              ↓
+[ Development Dialogue ]
+
+Minimalistische Pfeile.
+Große Typografie.
+Viel Weißraum.
+
+------------------------------------------------------------
+4) REDUKTION TEXTMENGE
+------------------------------------------------------------
+
+- Entferne lange erklärende Absätze.
+- Maximal 60% der bisherigen Textmenge.
+- Keine Wiederholungen.
+- Keine doppelten Aussagen.
+
+------------------------------------------------------------
+5) BOARD-LEVEL DESIGN PRINZIPIEN
+------------------------------------------------------------
+
+- Große Headlines
+- Viel Weißraum
+- Maximal 3 Bulletpoints je Block
+- Keine runden Karten mit Schatten
+- Eher Linien und klare Container
+
+------------------------------------------------------------
+6) TECHNISCHE UMSETZUNG
+------------------------------------------------------------
+
+Neue Komponenten:
+
+components/arag/StrategicStoryboard.tsx
+components/arag/AmbivalenceDiagram.tsx
+components/arag/FrameworkVisual.tsx
+
+Keine Änderung an Routing.
+Keine Änderung an Auth.
+Keine Performance-Regression.
+
+------------------------------------------------------------
+7) QA
+------------------------------------------------------------
+
+- Desktop 1440
+- iPad
+- Mobile
+- Keine Textwüste mehr
+- Kein Marketing-Look
+- Board-Paper-Charakter erhalten
