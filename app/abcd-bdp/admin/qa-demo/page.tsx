@@ -20,7 +20,7 @@ export default function QADemoPage() {
   const [failCount, setFailCount] = useState(0);
 
   useEffect(() => {
-    if (!user?.isAdmin) router.push("/arag-bdp");
+    if (!user?.isAdmin) router.push("/abcd-bdp");
   }, [user]);
 
   const runChecks = async () => {
@@ -55,7 +55,7 @@ export default function QADemoPage() {
         data-testid="bdp-qa-demo-completeness"
         onClick={runChecks}
         disabled={running}
-        className="w-full bg-[#FFD700] py-3 rounded-xl font-bold disabled:opacity-50"
+        className="w-full bg-[#0071e3] py-3 rounded-xl font-bold disabled:opacity-50"
       >
         {running ? "Prüfung läuft..." : "Demo-Vollständigkeit prüfen"}
       </button>

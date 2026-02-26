@@ -76,7 +76,7 @@ export default function BdpAuswertungPage() {
           {results && !results.error && (
             <div className="space-y-4">
               {results.session?.summary && (
-                <div className="bg-gradient-to-r from-[#FFFBF0] to-white rounded-2xl p-6 shadow-sm border border-[#FFD700]/30" data-testid="text-session-summary">
+                <div className="bg-gradient-to-r from-[#f5f5f7] to-white rounded-2xl p-6 shadow-sm border border-[#0071e3]/30" data-testid="text-session-summary">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">📝</span>
                     <h2 className="font-bold text-lg">{t("executiveSummary")}</h2>
@@ -97,7 +97,7 @@ export default function BdpAuswertungPage() {
                     onClick={() => setActiveTab(tab.key)}
                     className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all ${
                       activeTab === tab.key
-                        ? "bg-[#FFD700] text-black shadow-sm"
+                        ? "bg-[#0071e3] text-black shadow-sm"
                         : "text-gray-500 hover:text-black hover:bg-gray-100"
                     }`}
                   >
@@ -118,20 +118,20 @@ export default function BdpAuswertungPage() {
                         const isTied = results.isTie && idx <= 1;
 
                         return (
-                          <div key={r.teamId} data-testid={`result-team-${r.teamCode}`} className={`p-4 rounded-xl ${isWinner && !isTied ? "bg-[#FFD700]/10 border-2 border-[#FFD700]" : "bg-gray-50"}`}>
+                          <div key={r.teamId} data-testid={`result-team-${r.teamCode}`} className={`p-4 rounded-xl ${isWinner && !isTied ? "bg-[#0071e3]/10 border-2 border-[#0071e3]" : "bg-gray-50"}`}>
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-3">
-                                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isWinner && !isTied ? "bg-[#FFD700] text-black" : "bg-gray-200"}`}>
+                                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isWinner && !isTied ? "bg-[#0071e3] text-black" : "bg-gray-200"}`}>
                                   {idx + 1}
                                 </span>
                                 <span className="font-bold">{r.teamCode}</span>
-                                {isWinner && !isTied && <span className="text-xs bg-[#FFD700] px-2 py-0.5 rounded-full font-bold">{t("winner")}</span>}
+                                {isWinner && !isTied && <span className="text-xs bg-[#0071e3] px-2 py-0.5 rounded-full font-bold">{t("winner")}</span>}
                                 {isTied && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">{t("tie")}</span>}
                               </div>
                               <span className="font-bold text-lg">{r.total} P</span>
                             </div>
                             <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                              <div className="h-full bg-[#FFD700] rounded-full transition-all" style={{ width: `${pct}%` }} />
+                              <div className="h-full bg-[#0071e3] rounded-full transition-all" style={{ width: `${pct}%` }} />
                             </div>
                           </div>
                         );
@@ -168,7 +168,7 @@ export default function BdpAuswertungPage() {
                               <div key={r.teamId} className="flex items-center gap-2 text-sm">
                                 <span className="w-24 font-medium truncate">{r.teamCode.split(" (")[0]}</span>
                                 <div className="flex-1 h-5 bg-gray-100 rounded overflow-hidden">
-                                  <div className="h-full bg-[#FFD700] rounded transition-all" style={{ width: `${(pts / maxPts) * 100}%` }} />
+                                  <div className="h-full bg-[#0071e3] rounded transition-all" style={{ width: `${(pts / maxPts) * 100}%` }} />
                                 </div>
                                 <span className="w-12 text-right text-gray-600">{pts}</span>
                               </div>
@@ -216,7 +216,7 @@ export default function BdpAuswertungPage() {
                     Object.entries(results.teamFeedbacks).map(([teamName, feedback]: [string, any]) => (
                       <div key={teamName} className="bg-white rounded-2xl p-6 shadow-sm" data-testid={`feedback-team-${teamName}`}>
                         <div className="flex items-center gap-3 mb-3">
-                          <span className="w-10 h-10 rounded-full bg-[#FFD700]/20 flex items-center justify-center font-bold text-sm">
+                          <span className="w-10 h-10 rounded-full bg-[#0071e3]/20 flex items-center justify-center font-bold text-sm">
                             {teamName.charAt(0)}
                           </span>
                           <h3 className="font-bold text-lg">{teamName}</h3>
@@ -264,7 +264,7 @@ export default function BdpAuswertungPage() {
                           </div>
                         )}
                         {note.generalNote && (
-                          <div className="bg-[#FFFBF0] rounded-xl p-3 mt-2">
+                          <div className="bg-[#f5f5f7] rounded-xl p-3 mt-2">
                             <p className="text-sm text-gray-500 font-medium mb-1">{t("overallAssessment")}</p>
                             <p className="text-gray-700 text-sm leading-relaxed italic">{note.generalNote}</p>
                           </div>

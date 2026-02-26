@@ -12,7 +12,7 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   const session = getBdpSession();
   if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
-  if (session.workspaceSlug && session.workspaceSlug !== "arag") return NextResponse.json({ error: "Workspace nicht erlaubt" }, { status: 403 });
+  if (session.workspaceSlug && session.workspaceSlug !== "abcd") return NextResponse.json({ error: "Workspace nicht erlaubt" }, { status: 403 });
 
   const body = await req.json();
   const parsed = schema.safeParse(body);

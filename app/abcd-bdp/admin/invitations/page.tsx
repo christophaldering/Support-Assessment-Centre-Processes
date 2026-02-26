@@ -44,7 +44,7 @@ interface Preview {
 
 const DEFAULT_TEMPLATES: Record<InviteTab, string> = {
   observers: `<p>Sehr geehrte/r {{CODE}},</p>
-<p>im Rahmen des <strong>ARAG Business Development Pitch (BDP)</strong> laden wir Sie herzlich zur Beobachtung und Bewertung ein.</p>
+<p>im Rahmen des <strong>ABCD Business Development Pitch (BDP)</strong> laden wir Sie herzlich zur Beobachtung und Bewertung ein.</p>
 <p>Ihre Rolle als Vorstand ist entscheidend für die objektive Einschätzung der Teilnehmenden. Bitte nutzen Sie den folgenden Link, um sich in der Bewertungsplattform anzumelden:</p>
 <p><strong>Login:</strong> <a href="{{LINK}}">{{LINK}}</a></p>
 <p><strong>Workspace:</strong> {{WORKSPACE}}<br/><strong>Ihr Code:</strong> {{CODE}}</p>
@@ -52,7 +52,7 @@ const DEFAULT_TEMPLATES: Record<InviteTab, string> = {
 <p>Bei Fragen stehen wir Ihnen jederzeit zur Verfügung.</p>
 <p>Mit freundlichen Grüßen,<br/>{{SENDER}}</p>`,
   experts: `<p>Sehr geehrte/r {{CODE}},</p>
-<p>wir laden Sie herzlich als <strong>Experte</strong> zum <strong>ARAG Business Development Pitch (BDP)</strong> ein.</p>
+<p>wir laden Sie herzlich als <strong>Experte</strong> zum <strong>ABCD Business Development Pitch (BDP)</strong> ein.</p>
 <p>Ihre fachliche Expertise ist für die Bewertung der Pitches von großer Bedeutung. Bitte melden Sie sich über folgenden Link an:</p>
 <p><strong>Login:</strong> <a href="{{LINK}}">{{LINK}}</a></p>
 <p><strong>Workspace:</strong> {{WORKSPACE}}<br/><strong>Ihr Code:</strong> {{CODE}}</p>
@@ -60,7 +60,7 @@ const DEFAULT_TEMPLATES: Record<InviteTab, string> = {
 <p>Bei Fragen stehen wir Ihnen jederzeit zur Verfügung.</p>
 <p>Mit freundlichen Grüßen,<br/>{{SENDER}}</p>`,
   participants: `<p>Sehr geehrte/r {{CODE}},</p>
-<p>wir freuen uns, Sie zum <strong>ARAG Business Development Pitch (BDP)</strong> einzuladen.</p>
+<p>wir freuen uns, Sie zum <strong>ABCD Business Development Pitch (BDP)</strong> einzuladen.</p>
 <p>Als Teilnehmer/in haben Sie die Gelegenheit, Ihre Geschäftsidee vor einem hochkarätigen Gremium zu präsentieren. Bitte melden Sie sich über folgenden Link an:</p>
 <p><strong>Login:</strong> <a href="{{LINK}}">{{LINK}}</a></p>
 <p><strong>Workspace:</strong> {{WORKSPACE}}<br/><strong>Ihr Code:</strong> {{CODE}}</p>
@@ -70,9 +70,9 @@ const DEFAULT_TEMPLATES: Record<InviteTab, string> = {
 };
 
 const DEFAULT_SUBJECTS: Record<InviteTab, string> = {
-  observers: "ARAG BDP – Einladung zur Beobachtung & Bewertung",
-  experts: "ARAG BDP – Einladung als Experte",
-  participants: "ARAG BDP – Einladung zur Teilnahme am Business Development Pitch",
+  observers: "ABCD BDP – Einladung zur Beobachtung & Bewertung",
+  experts: "ABCD BDP – Einladung als Experte",
+  participants: "ABCD BDP – Einladung zur Teilnahme am Business Development Pitch",
 };
 
 function ToolbarButton({ active, onClick, children, title }: { active?: boolean; onClick: () => void; children: React.ReactNode; title: string }) {
@@ -81,7 +81,7 @@ function ToolbarButton({ active, onClick, children, title }: { active?: boolean;
       type="button"
       onClick={onClick}
       title={title}
-      className={`p-1.5 rounded transition-colors ${active ? "bg-[#FFD700] text-black" : "text-gray-500 hover:bg-gray-100"}`}
+      className={`p-1.5 rounded transition-colors ${active ? "bg-[#0071e3] text-black" : "text-gray-500 hover:bg-gray-100"}`}
     >
       {children}
     </button>
@@ -131,7 +131,7 @@ export default function BdpInvitationsPage() {
   });
 
   useEffect(() => {
-    if (!user?.isAdmin) { router.push("/arag-bdp"); return; }
+    if (!user?.isAdmin) { router.push("/abcd-bdp"); return; }
     fetchRecipients();
   }, [user]);
 
@@ -353,7 +353,7 @@ export default function BdpInvitationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin w-8 h-8 border-4 border-[#FFD700] border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-[#0071e3] border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -372,7 +372,7 @@ export default function BdpInvitationsPage() {
             key={t.key}
             data-testid={`bdp-invite-tab-${t.key}`}
             onClick={() => switchTab(t.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t.key ? "bg-[#FFD700] text-black" : "text-gray-500 hover:bg-gray-50"}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t.key ? "bg-[#0071e3] text-black" : "text-gray-500 hover:bg-gray-50"}`}
           >
             {t.label}
           </button>
@@ -410,10 +410,10 @@ export default function BdpInvitationsPage() {
                 <div
                   key={r.code}
                   data-testid={`bdp-invite-recipient-${r.code}`}
-                  className={`p-3 border rounded-xl flex items-start gap-3 transition-colors ${selected.has(r.code) ? "border-[#FFD700] bg-yellow-50/30" : "border-gray-100"}`}
+                  className={`p-3 border rounded-xl flex items-start gap-3 transition-colors ${selected.has(r.code) ? "border-[#0071e3] bg-yellow-50/30" : "border-gray-100"}`}
                 >
                   <button onClick={() => toggleSelect(r.code)} className="mt-0.5 shrink-0">
-                    {selected.has(r.code) ? <CheckSquare size={18} className="text-[#FFD700]" /> : <Square size={18} className="text-gray-300" />}
+                    {selected.has(r.code) ? <CheckSquare size={18} className="text-[#0071e3]" /> : <Square size={18} className="text-gray-300" />}
                   </button>
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
@@ -513,7 +513,7 @@ export default function BdpInvitationsPage() {
               <button
                 onClick={generatePreview}
                 data-testid="bdp-invite-preview"
-                className="flex items-center gap-2 bg-[#FFD700] text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#e6c200] transition-colors"
+                className="flex items-center gap-2 bg-[#0071e3] text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#005bb5] transition-colors"
               >
                 <Eye size={14} />
                 Vorschau erzeugen
@@ -554,7 +554,7 @@ export default function BdpInvitationsPage() {
                       <strong>Betreff:</strong> {p.subject}
                     </div>
                     <div
-                      className="prose prose-xs max-w-none text-sm border-l-2 border-[#FFD700] pl-3"
+                      className="prose prose-xs max-w-none text-sm border-l-2 border-[#0071e3] pl-3"
                       dangerouslySetInnerHTML={{ __html: p.body }}
                     />
                   </div>

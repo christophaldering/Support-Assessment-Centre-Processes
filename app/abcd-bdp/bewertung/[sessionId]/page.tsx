@@ -172,10 +172,10 @@ export default function BdpScoringPage() {
       </div>
 
       <div className="flex gap-2 bg-white rounded-xl p-1 shadow-sm">
-        <button data-testid="tab-scoring" onClick={() => setActiveTab("scoring")} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "scoring" ? "bg-[#FFD700] text-black" : "text-gray-500"}`}>
+        <button data-testid="tab-scoring" onClick={() => setActiveTab("scoring")} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "scoring" ? "bg-[#0071e3] text-black" : "text-gray-500"}`}>
           {t("teamRating")}
         </button>
-        <button data-testid="tab-individual" onClick={() => setActiveTab("individual")} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "individual" ? "bg-[#FFD700] text-black" : "text-gray-500"}`}>
+        <button data-testid="tab-individual" onClick={() => setActiveTab("individual")} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "individual" ? "bg-[#0071e3] text-black" : "text-gray-500"}`}>
           {t("individualRating")}
         </button>
       </div>
@@ -201,7 +201,7 @@ export default function BdpScoringPage() {
                             data-testid={`bdp-open-case-${team.id}`}
                             onClick={() => openBusinessCase(team.id)}
                             disabled={loadingCase === team.id}
-                            className="block text-[10px] text-[#b8960a] hover:text-[#FFD700] mt-0.5 font-normal"
+                            className="block text-[10px] text-[#0058b0] hover:text-[#0071e3] mt-0.5 font-normal"
                           >
                             {loadingCase === team.id ? "..." : "Case"}
                           </button>
@@ -215,7 +215,7 @@ export default function BdpScoringPage() {
                         value={scores[criterion.id]?.[team.id] ?? ""}
                         onChange={e => setScore(criterion.id, team.id, parseInt(e.target.value) || 0)}
                         disabled={isReadOnly}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-center focus:ring-2 focus:ring-[#FFD700] disabled:bg-gray-50 disabled:text-gray-400"
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-center focus:ring-2 focus:ring-[#0071e3] disabled:bg-gray-50 disabled:text-gray-400"
                       />
                       <div className="w-12 text-right text-sm text-gray-400">{scores[criterion.id]?.[team.id] ?? 0}P</div>
                     </div>
@@ -223,7 +223,7 @@ export default function BdpScoringPage() {
                 </div>
 
                 <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full transition-all ${isValid ? "bg-green-400" : sum > 100 ? "bg-red-400" : "bg-[#FFD700]"}`} style={{ width: `${Math.min(sum, 100)}%` }} />
+                  <div className={`h-full transition-all ${isValid ? "bg-green-400" : sum > 100 ? "bg-red-400" : "bg-[#0071e3]"}`} style={{ width: `${Math.min(sum, 100)}%` }} />
                 </div>
               </div>
             );
@@ -240,7 +240,7 @@ export default function BdpScoringPage() {
                   onChange={() => handleSponsorToggle(team.id)}
                   disabled={isReadOnly}
                   data-testid={`bdp-sponsor-flag-${team.id}`}
-                  className="w-5 h-5 accent-[#FFD700]"
+                  className="w-5 h-5 accent-[#0071e3]"
                 />
                 <span className="text-sm">{team.displayName || team.code} — {t("iAmSponsor")}</span>
               </label>
@@ -264,7 +264,7 @@ export default function BdpScoringPage() {
                   data-testid="bdp-score-save"
                   onClick={handleSubmitScores}
                   disabled={saving || !allValid}
-                  className="w-full bg-[#FFD700] text-black font-bold py-4 rounded-2xl hover:bg-[#E6C200] transition-colors disabled:opacity-50"
+                  className="w-full bg-[#0071e3] text-black font-bold py-4 rounded-2xl hover:bg-[#005bb5] transition-colors disabled:opacity-50"
                 >
                   {saving ? t("saving") : t("saveRating")}
                 </button>
@@ -332,7 +332,7 @@ export default function BdpScoringPage() {
                               defaultValue={notes[`${p.id}_general`]?.contribution || 3}
                               onMouseUp={(e: any) => handleSaveNote(p.id, null, "", notes[`${p.id}_general`]?.generalNote || "", parseInt(e.target.value))}
                               disabled={isReadOnly}
-                              className="w-full accent-[#FFD700]"
+                              className="w-full accent-[#0071e3]"
                             />
                           </div>
                           <div>
@@ -344,7 +344,7 @@ export default function BdpScoringPage() {
                               defaultValue={notes[`${p.id}_general`]?.presence || 3}
                               onMouseUp={(e: any) => handleSaveNote(p.id, null, "", notes[`${p.id}_general`]?.generalNote || "", undefined, parseInt(e.target.value))}
                               disabled={isReadOnly}
-                              className="w-full accent-[#FFD700]"
+                              className="w-full accent-[#0071e3]"
                             />
                           </div>
                         </div>

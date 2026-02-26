@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { TourStep } from "@/lib/arag-bdp-tour";
+import { TourStep } from "@/lib/abcd-bdp-tour";
 import { useLanguage } from "@/app/providers/LanguageProvider";
 
 interface TourOverlayProps {
@@ -193,7 +193,7 @@ export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, envir
             top: targetRect.top - 4,
             width: targetRect.width + 8,
             height: targetRect.height + 8,
-            border: "2px solid #FFD700",
+            border: "2px solid #0071e3",
             borderRadius: "8px",
             boxShadow: "0 0 0 4px rgba(255,215,0,0.3)",
           }}
@@ -203,7 +203,7 @@ export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, envir
       <div
         ref={popoverRef}
         style={{ ...getPopoverPosition(), zIndex: 10001, width: "340px", maxWidth: "calc(100vw - 24px)" }}
-        className="bg-[#FFFBF0] rounded-xl shadow-2xl border border-[#FFD700]/30"
+        className="bg-[#f5f5f7] rounded-xl shadow-2xl border border-[#0071e3]/30"
         data-testid="tour-popover"
       >
         <div className="p-5">
@@ -219,7 +219,7 @@ export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, envir
             </button>
           </div>
 
-          <div className="h-0.5 w-8 bg-[#FFD700] rounded-full mb-3" />
+          <div className="h-0.5 w-8 bg-[#0071e3] rounded-full mb-3" />
 
           <p className="text-sm text-black/70 leading-relaxed mb-4">{step?.body}</p>
 
@@ -230,7 +230,7 @@ export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, envir
           )}
 
           {navigating && (
-            <p className="text-xs text-[#FFD700] font-medium mb-3">{t("tourPageLoading")}</p>
+            <p className="text-xs text-[#0071e3] font-medium mb-3">{t("tourPageLoading")}</p>
           )}
 
           <div className="flex items-center justify-between">
@@ -251,7 +251,7 @@ export default function TourOverlay({ steps, onClose, isDemoEnv, userCode, envir
               <button
                 onClick={goNext}
                 disabled={navigating}
-                className="px-4 py-1.5 text-sm rounded-lg bg-[#FFD700] text-black font-semibold hover:bg-[#e6c200] disabled:opacity-50 transition-colors"
+                className="px-4 py-1.5 text-sm rounded-lg bg-[#0071e3] text-black font-semibold hover:bg-[#005bb5] disabled:opacity-50 transition-colors"
                 data-testid="tour-next"
               >
                 {isLast ? t("tourFinish") : t("tourNext")}

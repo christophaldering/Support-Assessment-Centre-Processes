@@ -9,7 +9,7 @@ export default function BdpLoginPage() {
   const { t } = useLanguage();
   useEffect(() => { router.replace("/w/abcd"); }, [router]);
   return (
-    <div className="min-h-screen bg-[#FFFBF0] flex items-center justify-center">
+    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
       <div className="text-gray-400">{t("redirecting")}</div>
     </div>
   );

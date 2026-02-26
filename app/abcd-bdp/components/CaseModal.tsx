@@ -30,7 +30,7 @@ export default function CaseModal({ onClose, type, teamName, slides, pdfUrl }: C
         style={{ maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-3 bg-[#FFD700]">
+        <div className="flex items-center justify-between px-6 py-3 bg-[#0071e3]">
           <h3 className="font-bold text-black text-sm">Business Case — {teamName}</h3>
           <button
             onClick={onClose}

@@ -129,7 +129,7 @@ export default function NotificationBell({ variant = "desktop" }: { variant?: "d
               <button
                 data-testid="bdp-notification-mark-all"
                 onClick={markAllRead}
-                className="text-[11px] text-[#FFD700] hover:text-[#e6c200] font-semibold flex items-center gap-1"
+                className="text-[11px] text-[#0071e3] hover:text-[#005bb5] font-semibold flex items-center gap-1"
               >
                 <CheckCheck size={12} />
                 {t("markAllRead")}
@@ -148,7 +148,7 @@ export default function NotificationBell({ variant = "desktop" }: { variant?: "d
                   key={n.id}
                   data-testid={`bdp-notification-item-${n.id}`}
                   className={`px-4 py-3 border-b border-black/5 last:border-0 transition-colors ${
-                    n.read ? "bg-white" : "bg-[#FFFBF0]"
+                    n.read ? "bg-white" : "bg-[#f5f5f7]"
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -157,7 +157,7 @@ export default function NotificationBell({ variant = "desktop" }: { variant?: "d
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-black truncate">{n.title}</span>
                         {!n.read && (
-                          <span className="w-2 h-2 rounded-full bg-[#FFD700] shrink-0" />
+                          <span className="w-2 h-2 rounded-full bg-[#0071e3] shrink-0" />
                         )}
                       </div>
                       <p className="text-[11px] text-black/60 mt-0.5 line-clamp-2">{n.message}</p>
@@ -167,7 +167,7 @@ export default function NotificationBell({ variant = "desktop" }: { variant?: "d
                           <Link
                             href={n.link}
                             onClick={() => { markRead(n.id); setOpen(false); }}
-                            className="text-[10px] text-[#FFD700] hover:text-[#e6c200] font-semibold flex items-center gap-0.5"
+                            className="text-[10px] text-[#0071e3] hover:text-[#005bb5] font-semibold flex items-center gap-0.5"
                           >
                             {t("showNotification")} <ExternalLink size={9} />
                           </Link>

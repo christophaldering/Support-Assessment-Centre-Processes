@@ -30,7 +30,7 @@ export default function BdpSessionsPage() {
   if (!loaded) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin w-8 h-8 border-4 border-[#FFD700] border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-[#0071e3] border-t-transparent rounded-full" />
       </div>
     );
   }

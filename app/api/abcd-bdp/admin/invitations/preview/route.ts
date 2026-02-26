@@ -15,7 +15,7 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   const session = getBdpSession();
   if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
-  if (session.workspaceSlug && session.workspaceSlug !== "arag") return NextResponse.json({ error: "Workspace nicht erlaubt" }, { status: 403 });
+  if (session.workspaceSlug && session.workspaceSlug !== "abcd") return NextResponse.json({ error: "Workspace nicht erlaubt" }, { status: 403 });
 
   const body = await req.json();
   const parsed = schema.safeParse(body);
@@ -23,12 +23,12 @@ export async function POST(req: NextRequest) {
 
   const { recipients, subject, body: template, sessionName } = parsed.data;
   const link = "https://assessment-suite.replit.app/abcd-bdp/login";
-  const sender = "aestimamus / ARAG Projektteam";
+  const sender = "aestimamus / ABCD Projektteam";
 
   const previews = recipients.map(r => {
     const rendered = template
       .replace(/\{\{CODE\}\}/g, r.code)
-      .replace(/\{\{WORKSPACE\}\}/g, "ARAG")
+      .replace(/\{\{WORKSPACE\}\}/g, "ABCD")
       .replace(/\{\{LINK\}\}/g, link)
       .replace(/\{\{SESSION_OVERVIEW_LINK\}\}/g, link)
       .replace(/\{\{SESSION\}\}/g, sessionName || "Alle Sessions")
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     const renderedSubject = subject
       .replace(/\{\{CODE\}\}/g, r.code)
-      .replace(/\{\{WORKSPACE\}\}/g, "ARAG")
+      .replace(/\{\{WORKSPACE\}\}/g, "ABCD")
       .replace(/\{\{SESSION\}\}/g, sessionName || "Alle Sessions");
 
     return {

@@ -61,7 +61,7 @@ export default function BdpBewertungPage() {
               </h2>
               <div className="space-y-3">
                 {closedSessions.map(s => (
-                  <Link key={s.id} href={`/abcd-bdp/bewertung/${s.id}`} data-testid={`card-readonly-session-${s.id}`} className={`block bg-white rounded-2xl p-5 shadow-sm ${user?.environment === "demo" ? "hover:shadow-md transition-all border-l-4 border-[#FFD700]" : "opacity-75"}`}>
+                  <Link key={s.id} href={`/abcd-bdp/bewertung/${s.id}`} data-testid={`card-readonly-session-${s.id}`} className={`block bg-white rounded-2xl p-5 shadow-sm ${user?.environment === "demo" ? "hover:shadow-md transition-all border-l-4 border-[#0071e3]" : "opacity-75"}`}>
                     <div className="flex items-center justify-between">
                       <h3 className="font-bold">{s.name}</h3>
                       <span className={`text-xs px-3 py-1 rounded-full font-medium ${stateColor[s.state]}`}>{stateLabel[s.state]}</span>

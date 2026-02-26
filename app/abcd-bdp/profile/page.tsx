@@ -81,7 +81,7 @@ export default function BdpProfilePage() {
           <div>
             <h2 className="text-xl font-bold" data-testid="text-profile-code">{user.displayName || user.code}</h2>
             <p className="text-gray-500 text-sm">{user.role}</p>
-            {user.isAdmin && <span className="text-xs bg-[#FFD700] px-2 py-0.5 rounded-full font-bold">Admin</span>}
+            {user.isAdmin && <span className="text-xs bg-[#0071e3] px-2 py-0.5 rounded-full font-bold">Admin</span>}
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function BdpProfilePage() {
           </div>
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-500">{t("workspace")}</span>
-            <span className="font-medium" data-testid="text-profile-workspace">arag</span>
+            <span className="font-medium" data-testid="text-profile-workspace">abcd</span>
           </div>
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-500">{t("environment")}</span>
@@ -108,7 +108,7 @@ export default function BdpProfilePage() {
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <h2 className="font-bold text-lg mb-4">{t("uploadPhoto")}</h2>
         <div
-          className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#FFD700] transition-colors"
+          className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#0071e3] transition-colors"
           onClick={() => fileRef.current?.click()}
         >
           {displayAvatar ? (
@@ -147,7 +147,7 @@ export default function BdpProfilePage() {
                   key={preset.key}
                   data-testid={`button-preset-${preset.key}`}
                   onClick={() => setUiPreset(preset.key)}
-                  className={`py-2 px-3 rounded-xl text-sm font-medium transition-colors ${uiPreset === preset.key ? "bg-[#FFD700] text-black" : "bg-gray-100 text-gray-600"}`}
+                  className={`py-2 px-3 rounded-xl text-sm font-medium transition-colors ${uiPreset === preset.key ? "bg-[#0071e3] text-black" : "bg-gray-100 text-gray-600"}`}
                 >
                   {preset.label}
                 </button>
@@ -163,7 +163,7 @@ export default function BdpProfilePage() {
                   key={mode}
                   data-testid={`button-viewmode-${mode}`}
                   onClick={() => setViewMode(mode)}
-                  className={`py-2 px-3 rounded-xl text-sm font-medium transition-colors ${viewMode === mode ? "bg-[#FFD700] text-black" : "bg-gray-100 text-gray-600"}`}
+                  className={`py-2 px-3 rounded-xl text-sm font-medium transition-colors ${viewMode === mode ? "bg-[#0071e3] text-black" : "bg-gray-100 text-gray-600"}`}
                 >
                   {mode === "mobile" ? t("mobile") : mode === "tablet" ? t("tablet") : t("desktop")}
                 </button>
@@ -175,7 +175,7 @@ export default function BdpProfilePage() {
             data-testid="button-save-settings"
             onClick={handleSave}
             disabled={saving}
-            className="w-full bg-[#FFD700] text-black font-bold py-3 rounded-xl hover:bg-[#E6C200] transition-colors disabled:opacity-50 mt-2"
+            className="w-full bg-[#0071e3] text-black font-bold py-3 rounded-xl hover:bg-[#005bb5] transition-colors disabled:opacity-50 mt-2"
           >
             {saving ? t("saving") : saved ? t("saved") : t("saveSettings")}
           </button>
@@ -187,9 +187,9 @@ export default function BdpProfilePage() {
         <button
           data-testid="bdp-tour-restart"
           onClick={handleTourRestart}
-          className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-[#FFFBF0] border border-[#FFD700]/30 hover:border-[#FFD700] transition-colors text-sm font-medium"
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-[#f5f5f7] border border-[#0071e3]/30 hover:border-[#0071e3] transition-colors text-sm font-medium"
         >
-          <Compass size={18} className="text-[#FFD700]" />
+          <Compass size={18} className="text-[#0071e3]" />
           {t("restartTour")}
         </button>
       </div>

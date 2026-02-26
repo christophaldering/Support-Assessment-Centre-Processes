@@ -51,8 +51,8 @@ export default function BdpSessionDetailPage() {
         ) : (
           <div className="space-y-2">
             {teams.map((tm: any) => (
-              <div key={tm.id} data-testid={`text-team-${tm.code}`} className="p-3 bg-[#FFFBF0] rounded-xl flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#FFD700] rounded-lg flex items-center justify-center font-bold text-sm">{tm.code.replace("Team", "T")}</div>
+              <div key={tm.id} data-testid={`text-team-${tm.code}`} className="p-3 bg-[#f5f5f7] rounded-xl flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#0071e3] rounded-lg flex items-center justify-center font-bold text-sm">{tm.code.replace("Team", "T")}</div>
                 <span className="font-medium">{tm.displayName ? `${tm.displayName} (${tm.code})` : tm.code}</span>
               </div>
             ))}
@@ -64,9 +64,9 @@ export default function BdpSessionDetailPage() {
         <h2 className="font-bold text-lg mb-3">{t("observers")}</h2>
         <div className="space-y-2">
           {session.observerAssignments?.map((oa: any) => (
-            <div key={oa.id} className="p-3 bg-[#FFFBF0] rounded-xl flex items-center justify-between">
+            <div key={oa.id} className="p-3 bg-[#f5f5f7] rounded-xl flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center text-[#FFD700] font-bold text-sm">{oa.user.code}</div>
+                <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center text-[#0071e3] font-bold text-sm">{oa.user.code}</div>
                 <div>
                   <span className="font-medium">{oa.user.displayName || oa.user.code}</span>
                   <span className="text-xs text-gray-400 ml-2">{oa.user.role}</span>
@@ -78,7 +78,7 @@ export default function BdpSessionDetailPage() {
       </div>
 
       {session.state === "OPEN" && (
-        <Link href={`/abcd-bdp/bewertung/${session.id}`} data-testid="link-start-bewertung" className="block bg-[#FFD700] text-black font-bold py-4 rounded-2xl text-center hover:bg-[#E6C200] transition-colors">
+        <Link href={`/abcd-bdp/bewertung/${session.id}`} data-testid="link-start-bewertung" className="block bg-[#0071e3] text-black font-bold py-4 rounded-2xl text-center hover:bg-[#005bb5] transition-colors">
           {t("startRating")}
         </Link>
       )}

@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export async function GET() {
   const session = getBdpSession();
   if (!session?.isAdmin) return NextResponse.json({ error: "Keine Admin-Berechtigung" }, { status: 403 });
-  if (session.workspaceSlug && session.workspaceSlug !== "arag") return NextResponse.json({ error: "Workspace nicht erlaubt" }, { status: 403 });
+  if (session.workspaceSlug && session.workspaceSlug !== "abcd") return NextResponse.json({ error: "Workspace nicht erlaubt" }, { status: 403 });
 
   const users = await prisma.bdpUser.findMany({ orderBy: { code: "asc" } });
   const participants = await prisma.bdpParticipant.findMany({ orderBy: { code: "asc" } });

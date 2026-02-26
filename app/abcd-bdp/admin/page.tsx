@@ -42,7 +42,7 @@ export default function BdpAdminPage() {
   const [oaUserId, setOaUserId] = useState("");
 
   useEffect(() => {
-    if (!user?.isAdmin) { router.push("/arag-bdp"); return; }
+    if (!user?.isAdmin) { router.push("/abcd-bdp"); return; }
     refresh();
   }, [user]);
 
@@ -244,7 +244,7 @@ export default function BdpAdminPage() {
       <div className="overflow-x-auto">
         <div className="flex gap-1 bg-white rounded-xl p-1 shadow-sm min-w-max">
           {tabs.map(tb => (
-            <button key={tb.key} data-testid={`admin-tab-${tb.key}`} onClick={() => setTab(tb.key)} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === tb.key ? "bg-[#FFD700] text-black" : "text-gray-500 hover:bg-gray-50"}`}>
+            <button key={tb.key} data-testid={`admin-tab-${tb.key}`} onClick={() => setTab(tb.key)} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === tb.key ? "bg-[#0071e3] text-black" : "text-gray-500 hover:bg-gray-50"}`}>
               {tb.label}
             </button>
           ))}
@@ -255,7 +255,7 @@ export default function BdpAdminPage() {
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex gap-2">
             <input data-testid="input-new-session" value={newName} onChange={e => setNewName(e.target.value)} placeholder={t("newSession")} className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-            <button data-testid="bdp-admin-save" onClick={addSession} className="bg-[#FFD700] px-4 py-2 rounded-lg text-sm font-bold">{t("addSession")}</button>
+            <button data-testid="bdp-admin-save" onClick={addSession} className="bg-[#0071e3] px-4 py-2 rounded-lg text-sm font-bold">{t("addSession")}</button>
           </div>
           {sessions.map(s => (
             <div key={s.id} data-testid={`admin-session-row-${s.id}`} className="p-4 border border-gray-100 rounded-xl">
@@ -291,7 +291,7 @@ export default function BdpAdminPage() {
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex gap-2">
             <input data-testid="input-new-team-code" value={newCode} onChange={e => setNewCode(e.target.value)} placeholder={t("teamCode")} className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-            <button data-testid="bdp-admin-save" onClick={addTeam} className="bg-[#FFD700] px-4 py-2 rounded-lg text-sm font-bold">{t("addTeam")}</button>
+            <button data-testid="bdp-admin-save" onClick={addTeam} className="bg-[#0071e3] px-4 py-2 rounded-lg text-sm font-bold">{t("addTeam")}</button>
           </div>
           {teams.map(tm => (
             <div key={tm.id} data-testid={`admin-team-row-${tm.id}`} className="p-3 border border-gray-100 rounded-xl">
@@ -332,7 +332,7 @@ export default function BdpAdminPage() {
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex gap-2">
             <input data-testid="input-new-participant-code" value={newCode} onChange={e => setNewCode(e.target.value)} placeholder={t("participantCode")} className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-            <button data-testid="bdp-admin-save" onClick={addParticipant} className="bg-[#FFD700] px-4 py-2 rounded-lg text-sm font-bold">{t("addParticipant")}</button>
+            <button data-testid="bdp-admin-save" onClick={addParticipant} className="bg-[#0071e3] px-4 py-2 rounded-lg text-sm font-bold">{t("addParticipant")}</button>
           </div>
           {participants.map(p => (
             <div key={p.id} data-testid={`admin-participant-row-${p.id}`} className="p-3 border border-gray-100 rounded-xl flex items-center justify-between">
@@ -357,7 +357,7 @@ export default function BdpAdminPage() {
               <option value="MANAGEMENT_DIAGNOSTICS">MD</option>
               <option value="EXPERT">Expert (E)</option>
             </select>
-            <button data-testid="bdp-admin-save" onClick={addObserver} className="bg-[#FFD700] px-4 py-2 rounded-lg text-sm font-bold">+</button>
+            <button data-testid="bdp-admin-save" onClick={addObserver} className="bg-[#0071e3] px-4 py-2 rounded-lg text-sm font-bold">+</button>
           </div>
           {observers.map(o => (
             <div key={o.id} data-testid={`admin-observer-row-${o.id}`} className="p-3 border border-gray-100 rounded-xl">
@@ -365,7 +365,7 @@ export default function BdpAdminPage() {
                 <div>
                   <span className="font-bold">{o.code}</span>
                   <span className="text-xs text-gray-400 ml-2">{o.role}</span>
-                  {o.isAdmin && <span className="text-xs bg-[#FFD700] px-2 py-0.5 rounded-full ml-2">Admin</span>}
+                  {o.isAdmin && <span className="text-xs bg-[#0071e3] px-2 py-0.5 rounded-full ml-2">Admin</span>}
                 </div>
               </div>
               <div className="text-xs text-gray-400 mt-1">
@@ -389,7 +389,7 @@ export default function BdpAdminPage() {
               <option value="">{t("selectTeamPlaceholder")}</option>
               {teams.map(tm => <option key={tm.id} value={tm.id}>{tm.code}</option>)}
             </select>
-            <button data-testid="bdp-admin-assign" onClick={assignSessionTeam} className="bg-[#FFD700] px-4 py-2 rounded-lg text-sm font-bold">{t("assign")}</button>
+            <button data-testid="bdp-admin-assign" onClick={assignSessionTeam} className="bg-[#0071e3] px-4 py-2 rounded-lg text-sm font-bold">{t("assign")}</button>
           </div>
           <div className="space-y-2">
             {sessionTeams.map(st => (
@@ -416,7 +416,7 @@ export default function BdpAdminPage() {
               <option value="">{t("selectParticipantPlaceholder")}</option>
               {participants.map(p => <option key={p.id} value={p.id}>{p.code}</option>)}
             </select>
-            <button data-testid="bdp-admin-assign" onClick={assignTeamParticipant} className="bg-[#FFD700] px-4 py-2 rounded-lg text-sm font-bold">{t("assign")}</button>
+            <button data-testid="bdp-admin-assign" onClick={assignTeamParticipant} className="bg-[#0071e3] px-4 py-2 rounded-lg text-sm font-bold">{t("assign")}</button>
           </div>
           <div className="space-y-2">
             {teamParticipants.map(tp => (
@@ -443,7 +443,7 @@ export default function BdpAdminPage() {
               <option value="">{t("selectObserverPlaceholder")}</option>
               {observers.map(o => <option key={o.id} value={o.id}>{o.code} ({o.role})</option>)}
             </select>
-            <button data-testid="bdp-admin-assign" onClick={assignObserver} className="bg-[#FFD700] px-4 py-2 rounded-lg text-sm font-bold">{t("assign")}</button>
+            <button data-testid="bdp-admin-assign" onClick={assignObserver} className="bg-[#0071e3] px-4 py-2 rounded-lg text-sm font-bold">{t("assign")}</button>
           </div>
           <div className="space-y-2">
             {observerAssignments.map(oa => (
@@ -466,7 +466,7 @@ export default function BdpAdminPage() {
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex gap-2">
             <input data-testid="input-new-criterion" value={newName} onChange={e => setNewName(e.target.value)} placeholder={t("newCriterion")} className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-            <button data-testid="bdp-admin-save" onClick={addCriterion} className="bg-[#FFD700] px-4 py-2 rounded-lg text-sm font-bold">+</button>
+            <button data-testid="bdp-admin-save" onClick={addCriterion} className="bg-[#0071e3] px-4 py-2 rounded-lg text-sm font-bold">+</button>
           </div>
           {criteria.map((c, idx) => (
             <div key={c.id} data-testid={`admin-criterion-row-${c.id}`} className="p-3 border border-gray-100 rounded-xl flex items-center justify-between">
@@ -495,7 +495,7 @@ export default function BdpAdminPage() {
               {mappingType === "team" && teams.map(tm => <option key={tm.id} value={tm.id}>{tm.code}</option>)}
             </select>
             <input data-testid="input-real-name" value={mappingRealName} onChange={e => setMappingRealName(e.target.value)} placeholder={t("realName")} className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-            <button data-testid="bdp-admin-save" onClick={saveNameMapping} className="bg-[#FFD700] px-4 py-2 rounded-lg text-sm font-bold">{t("save")}</button>
+            <button data-testid="bdp-admin-save" onClick={saveNameMapping} className="bg-[#0071e3] px-4 py-2 rounded-lg text-sm font-bold">{t("save")}</button>
           </div>
           <div className="space-y-2">
             {nameMappings.map(m => (
@@ -528,22 +528,22 @@ export default function BdpAdminPage() {
             {observers.filter(o => o.role === "BOARD").map(o => <option key={o.id} value={o.id}>{o.code}</option>)}
           </select>
           <textarea data-testid="input-tie-rationale" value={tieRationale} onChange={e => setTieRationale(e.target.value)} placeholder={t("rationale")} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm h-20 resize-none" />
-          <button data-testid="bdp-admin-save" onClick={saveTieBreak} className="w-full bg-[#FFD700] py-3 rounded-xl font-bold">{t("saveTieBreak")}</button>
+          <button data-testid="bdp-admin-save" onClick={saveTieBreak} className="w-full bg-[#0071e3] py-3 rounded-xl font-bold">{t("saveTieBreak")}</button>
         </div>
       )}
 
       {tab === "settings" && (
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
           <label className="flex items-center gap-3">
-            <input type="checkbox" checked={config?.weightedAnalytics || false} onChange={e => updateConfig({ weightedAnalytics: e.target.checked })} className="w-5 h-5 accent-[#FFD700]" data-testid="checkbox-weighted" />
+            <input type="checkbox" checked={config?.weightedAnalytics || false} onChange={e => updateConfig({ weightedAnalytics: e.target.checked })} className="w-5 h-5 accent-[#0071e3]" data-testid="checkbox-weighted" />
             <span className="text-sm">{t("weightedAnalytics")}</span>
           </label>
           <label className="flex items-center gap-3">
-            <input type="checkbox" checked={config?.lockNotesOnClose ?? true} onChange={e => updateConfig({ lockNotesOnClose: e.target.checked })} className="w-5 h-5 accent-[#FFD700]" data-testid="checkbox-lock-notes" />
+            <input type="checkbox" checked={config?.lockNotesOnClose ?? true} onChange={e => updateConfig({ lockNotesOnClose: e.target.checked })} className="w-5 h-5 accent-[#0071e3]" data-testid="checkbox-lock-notes" />
             <span className="text-sm">{t("lockNotesOnClose")}</span>
           </label>
           <label className="flex items-center gap-3">
-            <input type="checkbox" checked={config?.enforceGatePassword || false} onChange={e => updateConfig({ enforceGatePassword: e.target.checked })} className="w-5 h-5 accent-[#FFD700]" data-testid="checkbox-gate-pw" />
+            <input type="checkbox" checked={config?.enforceGatePassword || false} onChange={e => updateConfig({ enforceGatePassword: e.target.checked })} className="w-5 h-5 accent-[#0071e3]" data-testid="checkbox-gate-pw" />
             <span className="text-sm">{t("enforceGatePassword")}</span>
           </label>
           <hr />

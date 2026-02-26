@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(lines.join("\n"), {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="arag-bdp-export.csv"`,
+        "Content-Disposition": `attachment; filename="abcd-bdp-export.csv"`,
       },
     });
   }

@@ -23,7 +23,7 @@ export default function BdpPrintPage() {
           if (!meRes.ok) { router.push("/w/abcd"); return; }
           const meData = await meRes.json();
           if (!meData.roles?.includes("ADMIN") && !meData.roles?.includes("WORKSPACE_ADMIN")) {
-            router.push("/arag-bdp"); return;
+            router.push("/abcd-bdp"); return;
           }
         }
         setIsAdmin(true);
@@ -76,7 +76,7 @@ export default function BdpPrintPage() {
         <p className="text-gray-400 text-sm mt-1">{new Date().toLocaleDateString(dateLocale, { year: "numeric", month: "long", day: "numeric" })}</p>
       </div>
 
-      <button onClick={() => window.print()} className="no-print mb-6 bg-[#FFD700] text-black px-6 py-2 rounded-lg font-bold" data-testid="button-print">
+      <button onClick={() => window.print()} className="no-print mb-6 bg-[#0071e3] text-black px-6 py-2 rounded-lg font-bold" data-testid="button-print">
         {t("print")}
       </button>
 

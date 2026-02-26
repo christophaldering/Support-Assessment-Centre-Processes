@@ -18,7 +18,7 @@ export default function AvatarCircle({ avatarUrl, code, size = "md" }: AvatarCir
         data-testid="bdp-avatar-image"
         src={avatarUrl}
         alt={code}
-        className="rounded-full object-cover ring-2 ring-transparent hover:ring-[#FFD700] transition-all shadow-sm"
+        className="rounded-full object-cover ring-2 ring-transparent hover:ring-[#0071e3] transition-all shadow-sm"
         style={{ width: px, height: px }}
       />
     );
@@ -27,7 +27,7 @@ export default function AvatarCircle({ avatarUrl, code, size = "md" }: AvatarCir
   return (
     <div
       data-testid="bdp-avatar-image"
-      className={`rounded-full bg-[#FFD700] flex items-center justify-center text-black font-bold ${fontSize} shrink-0 ring-2 ring-transparent hover:ring-[#FFD700]/50 transition-all`}
+      className={`rounded-full bg-[#0071e3] flex items-center justify-center text-black font-bold ${fontSize} shrink-0 ring-2 ring-transparent hover:ring-[#0071e3]/50 transition-all`}
       style={{ width: px, height: px }}
     >
       {code[0]}

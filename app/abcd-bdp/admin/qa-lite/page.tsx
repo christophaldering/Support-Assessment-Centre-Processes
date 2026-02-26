@@ -18,7 +18,7 @@ export default function QALitePage() {
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
-    if (!user?.isAdmin) { router.push("/arag-bdp"); }
+    if (!user?.isAdmin) { router.push("/abcd-bdp"); }
   }, [user]);
 
   const runTests = async () => {
@@ -160,7 +160,7 @@ export default function QALitePage() {
         <Link href="/abcd-bdp/admin" data-testid="link-back-admin" className="text-sm text-gray-400 hover:text-gray-600">← Admin</Link>
       </div>
 
-      <button data-testid="button-run-qa" onClick={runTests} disabled={running} className="w-full bg-[#FFD700] py-3 rounded-xl font-bold disabled:opacity-50">
+      <button data-testid="button-run-qa" onClick={runTests} disabled={running} className="w-full bg-[#0071e3] py-3 rounded-xl font-bold disabled:opacity-50">
         {running ? "Tests laufen..." : "Alle Tests ausführen"}
       </button>
 

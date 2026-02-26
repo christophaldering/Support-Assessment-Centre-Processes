@@ -17,7 +17,7 @@ export default function BdpQAPage() {
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
-    if (!user?.isAdmin) router.push("/arag-bdp");
+    if (!user?.isAdmin) router.push("/abcd-bdp");
   }, [user]);
 
   const runChecks = async () => {
@@ -198,7 +198,7 @@ export default function BdpQAPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold" data-testid="text-qa-title">Quality Assurance</h1>
-        <button data-testid="button-run-qa" onClick={runChecks} disabled={running} className="bg-[#FFD700] px-6 py-2 rounded-xl font-bold disabled:opacity-50">
+        <button data-testid="button-run-qa" onClick={runChecks} disabled={running} className="bg-[#0071e3] px-6 py-2 rounded-xl font-bold disabled:opacity-50">
           {running ? "Prüfung läuft..." : "QA starten"}
         </button>
       </div>
