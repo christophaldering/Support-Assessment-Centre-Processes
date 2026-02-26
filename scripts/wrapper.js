@@ -7,19 +7,51 @@ const PORT = 5000;
 const HEALTH_INTERVAL = 15000;
 const STARTUP_GRACE = 30000;
 const MAX_RESTART_DELAY = 60000;
+const PID_FILE = path.join(process.cwd(), ".next-server.pid");
 
 let childPid = null;
 let isStarting = false;
 let lastStartTime = 0;
 let consecutiveFailures = 0;
 
+function savePid(pid) {
+  try { fs.writeFileSync(PID_FILE, String(pid)); } catch {}
+}
+
+function loadSavedPid() {
+  try {
+    const pid = parseInt(fs.readFileSync(PID_FILE, "utf8").trim(), 10);
+    if (pid > 0) return pid;
+  } catch {}
+  return null;
+}
+
 function killChild() {
-  if (childPid) {
-    try { process.kill(-childPid, "SIGTERM"); } catch {}
-    try { process.kill(childPid, "SIGTERM"); } catch {}
-    childPid = null;
+  const savedPid = loadSavedPid();
+  const pidsToKill = new Set();
+  if (childPid) pidsToKill.add(childPid);
+  if (savedPid) pidsToKill.add(savedPid);
+
+  for (const pid of pidsToKill) {
+    try { process.kill(-pid, "SIGTERM"); } catch {}
+    try { process.kill(pid, "SIGTERM"); } catch {}
   }
+
+  childPid = null;
+
   try { execSync(`fuser -k ${PORT}/tcp 2>/dev/null`, { stdio: "ignore" }); } catch {}
+
+  try { fs.unlinkSync(PID_FILE); } catch {}
+
+  if (pidsToKill.size > 0) {
+    try {
+      execSync("sleep 1", { stdio: "ignore" });
+      for (const pid of pidsToKill) {
+        try { process.kill(-pid, "SIGKILL"); } catch {}
+        try { process.kill(pid, "SIGKILL"); } catch {}
+      }
+    } catch {}
+  }
 }
 
 function startServer() {
@@ -34,8 +66,8 @@ function startServer() {
   let cmd, args, cwd;
   if (hasStandalone) {
     try {
-      execSync("rsync -a --ignore-existing .next/static/ .next/standalone/.next/static/ 2>/dev/null || cp -rn .next/static .next/standalone/.next/static 2>/dev/null", { stdio: "ignore" });
-      execSync("rsync -a --ignore-existing public/ .next/standalone/public/ 2>/dev/null || cp -rn public .next/standalone/public 2>/dev/null", { stdio: "ignore" });
+      execSync("cp -rn .next/static .next/standalone/.next/static 2>/dev/null", { stdio: "ignore" });
+      execSync("cp -rn public .next/standalone/public 2>/dev/null", { stdio: "ignore" });
     } catch {}
     cmd = process.execPath;
     args = ["server.js"];
@@ -56,6 +88,7 @@ function startServer() {
   });
 
   childPid = child.pid;
+  savePid(child.pid);
   child.unref();
   lastStartTime = Date.now();
 
