@@ -69,6 +69,12 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.method === "HEAD") {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+
   res.writeHead(200, {
     "Content-Type": "text/html; charset=utf-8",
     "Cache-Control": "no-store, no-cache, must-revalidate",
