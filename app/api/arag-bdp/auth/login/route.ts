@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
     if (username === "Demo" && password === "Demo") {
       let demoUser = await prisma.bdpUser.findFirst({
-        where: { username: "Demo", environment: "demo" },
+        where: { username: "Demo", environment: "demo", workspace: "arag" },
       });
 
       if (!demoUser) {
@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
             environment: "demo",
             username: "Demo",
             passwordHash: "Demo",
+            workspace: "arag",
           },
         });
       }

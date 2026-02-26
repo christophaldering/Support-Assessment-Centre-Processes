@@ -92,6 +92,45 @@ export async function register() {
         }
       }
 
+      const abcdExists = await prisma.workspace.findUnique({ where: { slug: "abcd" } });
+      if (!abcdExists) {
+        const abcdAdminHash = await bcrypt.hash("Christoph", 10);
+        const abcdWs = await prisma.workspace.create({
+          data: {
+            slug: "abcd",
+            name: "ABCD",
+            status: "active",
+            aiEnabled: false,
+            adminPasswordHash: abcdAdminHash,
+            dataResidency: "EU",
+            theme: {
+              create: {
+                primaryColor: "#0071e3",
+                secondaryColor: "#1d1d1f",
+                accentColor: "#0071e3",
+                backgroundColor: "#f5f5f7",
+                textColor: "#1d1d1f",
+                fontFamily: "Inter",
+                fontFamilyHeading: "SF Pro Display",
+              },
+            },
+          },
+        });
+        const abcdDemoHash = await bcrypt.hash("demo", 10);
+        await prisma.user.create({
+          data: {
+            email: "demo@demo.de",
+            name: "Demo User",
+            passwordHash: abcdDemoHash,
+            roles: ["WORKSPACE_ADMIN"],
+            workspaceId: abcdWs.id,
+            forcePasswordChange: false,
+            status: "active",
+          },
+        });
+        console.log("[seed] Created abcd workspace + demo user");
+      }
+
       const count = await prisma.workspace.count();
       if (count <= 1) {
         console.log("[seed] No workspaces found, auto-seeding...");

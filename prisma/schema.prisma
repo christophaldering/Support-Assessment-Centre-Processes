@@ -996,11 +996,12 @@ model AiAuditLog {
 
 model BdpUser {
   id          String   @id @default(uuid())
-  code        String   @unique
+  code        String
   role        String
   displayName String?  @map("display_name")
   isAdmin     Boolean  @default(false) @map("is_admin")
   environment String   @default("live")
+  workspace   String   @default("arag")
   demoLock    Boolean  @default(false) @map("demo_lock")
   username    String?
   passwordHash String? @map("password_hash")
@@ -1019,6 +1020,7 @@ model BdpUser {
   tieBreakDecisions   BdpTieBreak[]
   notifications       BdpNotification[]
 
+  @@unique([code, workspace])
   @@map("bdp_users")
 }
 
@@ -1028,6 +1030,7 @@ model BdpSession {
   state             String   @default("DRAFT")
   transparencyMode  String   @default("aggregates_only") @map("transparency_mode")
   environment       String   @default("live")
+  workspace         String   @default("arag")
   summary           String?
   startedAt         DateTime? @map("started_at")
   closedAt          DateTime? @map("closed_at")
@@ -1047,9 +1050,10 @@ model BdpSession {
 
 model BdpTeam {
   id          String   @id @default(uuid())
-  code        String   @unique
+  code        String
   displayName String?  @map("display_name")
   environment     String   @default("live")
+  workspace       String   @default("arag")
   feedback        String?
   businessCaseUrl  String?  @map("business_case_url")
   businessCaseType String?  @map("business_case_type")
@@ -1062,20 +1066,23 @@ model BdpTeam {
   sponsorFlags     BdpSponsorFlag[]
   tieBreakWins     BdpTieBreak[]
 
+  @@unique([code, workspace])
   @@map("bdp_teams")
 }
 
 model BdpParticipant {
   id          String   @id @default(uuid())
-  code        String   @unique
+  code        String
   displayName String?  @map("display_name")
   environment String   @default("live")
+  workspace   String   @default("arag")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   teamParticipants BdpTeamParticipant[]
   individualNotes  BdpIndividualNote[]
 
+  @@unique([code, workspace])
   @@map("bdp_participants")
 }
 
@@ -1121,6 +1128,7 @@ model BdpCriterion {
   name      String
   sortOrder Int      @default(0) @map("sort_order")
   active    Boolean  @default(true)
+  workspace String   @default("arag")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -1195,6 +1203,7 @@ model BdpNameMapping {
   entityType String  @map("entity_type")
   entityId   String  @map("entity_id")
   realName   String  @map("real_name")
+  workspace  String  @default("arag")
 
   @@unique([entityType, entityId])
   @@map("bdp_name_mappings")
@@ -1236,6 +1245,7 @@ model BdpConfig {
   enforceGatePassword  Boolean @default(false) @map("enforce_gate_password")
   weightedAnalytics    Boolean @default(false) @map("weighted_analytics")
   lockNotesOnClose     Boolean @default(true) @map("lock_notes_on_close")
+  workspace            String  @default("arag")
 
   @@map("bdp_config")
 }

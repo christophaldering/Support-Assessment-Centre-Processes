@@ -1,0 +1,247 @@
+SPRINT ABCD-CLONE-01 — 1:1 DEMO-ZWILLING (ANONYM) MIT ZERO-REGRESSION + HARTESTER QS
+
+DU BIST REPLIT.
+DU ARBEITEST PRÄZISE UND KONSERVATIV.
+KEINE RÜCKFRAGEN.
+KEIN „KÖNNTE MAN“.
+KEIN GLOBAL REPLACE.
+KEINE ÄNDERUNGEN AM BESTEHENDEN ARAG WORKSPACE ODER DESSEN ROUTES.
+ALLES MUSS KOMPILIEREN.
+ALLES MUSS 100% FUNKTIONAL SEIN, BEVOR DU ES ALS „FERTIG“ MARKIERST.
+
+====================================================================
+ZIELBILD
+====================================================================
+
+Wir benötigen einen vollständig anonymisierten, extern demo-fähigen Zwilling („ABCD“), der funktional 1:1 wie „ARAG“ ist.
+
+- ARAG bleibt intern unverändert: /w/arag + /arag-bdp bleibt exakt wie bisher.
+- ABCD ist extern demo-fähig: /w/abcd + /abcd-bdp (oder workspace-scoped Route) – ohne Kundennamen in UI/URL.
+- Keine Daten-Leaks, keine Cross-Workspace Queries.
+- Demo kann vollständig durchgespielt werden (Sessions, Teams, Teilnehmer, Kriterien, Bewertung, Admin, Exporte soweit vorhanden).
+- „Freigabe“ erfolgt erst, wenn die QS-Checkliste zu 100% grün ist.
+
+====================================================================
+NICHT-VERHANDELBAR
+====================================================================
+
+1) „arag“ NICHT anfassen (keine Umbenennung, kein refactor, keine seed-Änderung, die arag beeinflusst).
+2) Keine globale Suchen/Ersetzen-Aktion.
+3) ABCD ist eigenständig:
+   - eigener Workspace-Slug: abcd
+   - eigene BDP Routes: /abcd-bdp (wenn BDP derzeit hardcoded auf arag-bdp)
+   - eigene BDP Tabellenzeilen (Sessions/Teams/Participants/etc.) – KEINE gemeinsamen IDs/Relationen.
+4) Erst freigeben, wenn alle Tests bestanden sind.
+
+====================================================================
+SCHRITT 0 — IST-STAND PRÜFEN (READ ONLY)
+====================================================================
+
+Bevor du irgendwas änderst, erst prüfen:
+
+- Existiert bereits ein Workspace "arag" in DB? (ja)
+- Gibt es bereits einen Workspace "abcd"? (wahrscheinlich nein)
+- Ist das BDP Tool hardcoded unter app/arag-bdp/*? (ja)
+- Nutzen die BDP APIs eine Workspace-Scope oder sind sie arag-fix? (prüfen)
+- Welche Redirects hängen an /w/arag/admin und /w/[slug]/login? (prüfen)
+- Welche Seeds laufen automatisch über instrumentation.ts? (prüfen)
+
+Ergebnis dieser Prüfung NICHT als Frage an mich zurückspielen, sondern direkt mit Umsetzung fortfahren.
+
+====================================================================
+SCHRITT 1 — DB: WORKSPACE "ABCD" ANLEGEN
+====================================================================
+
+1) Lege neuen Workspace an:
+
+Workspace.slug = "abcd"
+Workspace.name = "ABCD"
+Theme/Branding analog ARAG (gelb/schwarz) – aber Name "ABCD".
+FeatureFlags JSON 1:1 kopieren von arag → abcd (falls vorhanden).
+
+2) Kopiere (sofern vorhanden) workspace-gebundene Entities:
+- Theme
+- BrandRuleSet
+- WorkspaceStyleGuide
+- alle Workspace-spezifischen Konfigurationen
+
+WICHTIG: Wenn diese Tabellen Relationen enthalten, müssen sie auf den neuen Workspace zeigen.
+
+====================================================================
+SCHRITT 2 — BDP TOOL ROUTE: /abcd-bdp ALS KOPIE VON /arag-bdp
+====================================================================
+
+Da BDP aktuell „self-contained“ unter app/arag-bdp liegt, wird ein Zweitpfad benötigt.
+
+A) Dupliziere die komplette Route:
+- app/arag-bdp/**  → app/abcd-bdp/**
+
+B) In app/abcd-bdp/* gilt:
+- sichtbarer Client-Name überall: "ABCD" (nie ARAG)
+- Layout-Farben bleiben gelb/schwarz
+- Footer bleibt "Powered by aestimamus"
+
+C) Auth/Session:
+- Wenn BDP auth cookie bdp_session benutzt: muss identisch funktionieren.
+- ABER: Bei abcd müssen DB-Lookups workspace="abcd" nutzen.
+- Keine Query darf hart auf "arag" filtern.
+
+D) Redirects:
+- Login in Workspace "abcd" muss zu /abcd-bdp führen.
+- /w/abcd/admin muss (wie bei arag) isoliert werden:
+  Nicht-MASTER_ADMIN → redirect zu /abcd-bdp
+
+E) Gate:
+- Falls /arag-bdp/gate existiert:
+  Erstelle /abcd-bdp/gate analog (redirect → /anmeldung)
+  oder direkt zu /anmeldung?workspace=abcd (nur wenn existierende Parameterstruktur das zulässt, sonst nicht).
+
+====================================================================
+SCHRITT 3 — BDP APIs: ABCD-SAFE
+====================================================================
+
+Prüfe die BDP APIs unter app/api/arag-bdp/*:
+
+Wenn dort hardcoded "arag" oder Workspace nicht berücksichtigt:
+- erweitere APIs so, dass sie workspaceSlug als Parameter akzeptieren ODER
+- dupliziere API routes für abcd:
+  app/api/abcd-bdp/* (1:1 Kopie) mit Workspace-Fokus "abcd".
+
+WICHTIG:
+- Keine Änderung, die arag APIs brechen könnte.
+- Wenn du APIs generischer machst, dann mit Rückwärtskompatibilität:
+  /api/arag-bdp/* muss exakt weiter funktionieren.
+  /api/abcd-bdp/* muss neu hinzukommen oder via param sauber funktionieren.
+
+====================================================================
+SCHRITT 4 — BDP DATEN KOPIEREN: 1:1 CLONE (RELATIONEN REWIRED)
+====================================================================
+
+Du musst sämtliche BDP Tabellenzeilen von arag nach abcd kopieren,
+inkl. konsistenter Neuverknüpfung.
+
+Zu kopieren (mindestens):
+- BdpSession
+- BdpTeam
+- BdpParticipant
+- BdpCriterion
+- BdpObserverAssignment
+- BdpSponsorFlag
+- BdpTieBreak
+- BdpNameMapping
+- BdpTeamParticipant
+- BdpSessionTeam
+- BdpConfig
+- BdpRoleWeight
+- (optional) BdpScore, BdpIndividualNote – wenn Demo vollständig sein soll
+
+VORGABE:
+- IDs dürfen neu sein.
+- Relationen müssen auf die neuen IDs zeigen.
+- Workspace-Feld (oder Session-Feld, je nachdem) muss auf "abcd" zeigen.
+- KEIN Objekt darf weiterhin auf arag-IDs zeigen.
+
+NAMEN / ANONYMISIERUNG:
+- UI in ABCD darf keine „ARAG“-Strings enthalten.
+- Teams in ABCD nach europäischen Städten benennen (z.B. Lisbon, Vienna, Prague, Oslo, Valencia, Krakow).
+- Personen dürfen fiktiv/berühmt sein (Literatur/History), aber keine realen Kundennamen.
+- Codes (V1…/MD1/E1/TNxx) dürfen bleiben.
+
+====================================================================
+SCHRITT 5 — LOGIN FLOW
+====================================================================
+
+/anmeldung bleibt zentral.
+
+Beim Login:
+- Wenn workspace input = "abcd": erfolgreicher Login muss nach /abcd-bdp (nicht arag-bdp)
+- Wenn workspace input = "arag": unverändert nach /arag-bdp
+
+Wenn es bereits eine Redirect-Map gibt:
+- erweitere sie um abcd ohne arag zu verändern.
+
+====================================================================
+SCHRITT 6 — NOINDEX / DEMO SAFETY FÜR ABCD
+====================================================================
+
+Für abcd Landing + abcd-bdp:
+- setze <meta name="robots" content="noindex,nofollow" />
+- Optional: kleines Badge „DEMO“ im Header nur für abcd.
+
+WICHTIG:
+- Das darf arag nicht beeinflussen.
+
+====================================================================
+SCHRITT 7 — HARTESTE QS (MUSS 100% GRÜN SEIN)
+====================================================================
+
+Implementiere eine QS-Checkliste im Code (DEV-ONLY) UND führe manuell die Schritte aus.
+
+A) BUILD/TYPECHECK
+- npm run build (oder Replit build)
+- keine TS errors
+- keine lint errors (soweit im Projekt aktiv)
+
+B) ROUTING-SMOKE
+1) Öffne /anmeldung
+2) Login arag (demo@demo.de/demo oder bestehende creds) → landet auf /arag-bdp
+3) Login abcd (demo@demo.de/demo) → landet auf /abcd-bdp
+
+C) ISOLATION
+- Als Nicht-MASTER_ADMIN:
+  /w/arag/admin → redirect /arag-bdp (bestehend)
+  /w/abcd/admin → redirect /abcd-bdp (neu)
+- Als MASTER_ADMIN: Zugriff bleibt möglich.
+
+D) BDP FUNKTIONALITÄT ABCD
+- /abcd-bdp lädt ohne 500er
+- /abcd-bdp/sessions zeigt Sessions
+- /abcd-bdp/bewertung erreichbar
+- /abcd-bdp/profile erreichbar
+- /abcd-bdp/admin erreichbar (als Admin)
+- Admin Tabs funktionieren: Sessions/Teams/Teilnehmer/Beobachter/Kriterien/Namen/Tie-Break/Einstellungen/Export
+- Keine „leer weil falscher Cookie“-Probleme: bdp_session muss für abcd funktionieren
+
+E) DATA LEAK CHECK
+- In ABCD UI darf kein Team/Teilnehmer aus ARAG auftauchen.
+- In ARAG UI darf kein Team/Teilnehmer aus ABCD auftauchen.
+
+F) STRING SCAN
+- Suche zur Laufzeit (rendered UI) und im Repo:
+  "ARAG" darf in app/abcd-bdp/* nicht mehr vorkommen (außer ggf. in internen Kommentaren).
+- UI/Headers/Titles müssen "ABCD" anzeigen.
+
+G) API CHECK
+- Alle /api/abcd-bdp/* endpoints liefern 200 (wo relevant)
+- Keine 401 bei gültiger Session
+- Keine Cross-Workspace Query
+
+H) DB CONSISTENCY
+- Prüfe, dass jede ABCD Session nur ABCD Teams hat.
+- Jeder Participant ist einem ABCD Team zugeordnet.
+- Jede Assignment-Relation verweist nur auf ABCD.
+
+I) PERF / UX
+- Keine doppelten Nav Items
+- Keine broken links
+- Mobile & Desktop basic check
+
+FREIGABE-KRITERIUM:
+Erst wenn A bis I vollständig erfüllt sind, gilt Sprint als „released“.
+
+====================================================================
+DELIVERABLES
+====================================================================
+
+1) Neuer Workspace "abcd" in DB + Seed/Instrumentation (robust).
+2) Neue Route /w/abcd (falls vorhanden) analog.
+3) Neues Tool /abcd-bdp vollständig funktionsgleich.
+4) Anonymisierte Daten (Teams = EU Städte).
+5) QS-Checkliste dokumentiert und erfüllt.
+6) ARAG unverändert.
+
+====================================================================
+UMSETZEN
+====================================================================
+
+Jetzt: implementieren, testen, nur dann als „fertig“ markieren, wenn QS 100% grün.

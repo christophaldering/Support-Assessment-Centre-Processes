@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Bitte alle Felder ausfüllen." }, { status: 400 });
     }
 
-    if (workspaceSlug.toLowerCase() === "arag") {
-      const bdpResult = await tryBdpLogin(email.toLowerCase().trim(), password);
+    if (workspaceSlug.toLowerCase() === "arag" || workspaceSlug.toLowerCase() === "abcd") {
+      const bdpResult = await tryBdpLogin(email.toLowerCase().trim(), password, workspaceSlug.toLowerCase());
       if (bdpResult) return bdpResult;
     }
 
@@ -65,10 +65,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function tryBdpLogin(email: string, password: string): Promise<NextResponse | null> {
+async function tryBdpLogin(email: string, password: string, ws: string = "arag"): Promise<NextResponse | null> {
   try {
     const emailMapping = await prisma.bdpNameMapping.findFirst({
-      where: { entityType: "email", realName: email },
+      where: { entityType: "email", realName: email, workspace: ws },
     });
 
     if (!emailMapping) return null;
@@ -87,6 +87,7 @@ async function tryBdpLogin(email: string, password: string): Promise<NextRespons
       role: bdpUser.role,
       isAdmin: bdpUser.isAdmin,
       environment: bdpUser.environment,
+      workspaceSlug: ws,
     });
 
     cookies().set("bdp_session", sessionData, {
@@ -110,7 +111,7 @@ async function tryBdpLogin(email: string, password: string): Promise<NextRespons
         name: bdpUser.displayName || bdpUser.code,
         roles: [bdpUser.role],
         forcePasswordChange: false,
-        workspaceSlug: "arag",
+        workspaceSlug: ws,
       },
     });
   } catch {

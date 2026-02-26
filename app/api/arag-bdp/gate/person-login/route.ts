@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const { environment, code, password } = parsed.data;
 
     const user = await prisma.bdpUser.findFirst({
-      where: { code, environment },
+      where: { code, environment, workspace: "arag" },
     });
 
     if (user) {
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
         role: user.role,
         isAdmin: user.isAdmin,
         environment: user.environment,
+        workspaceSlug: "arag",
       });
 
       cookies().set("bdp_session", sessionData, {
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
     }
 
     const participant = await prisma.bdpParticipant.findFirst({
-      where: { code, environment },
+      where: { code, environment, workspace: "arag" },
     });
 
     if (participant) {
@@ -83,6 +84,7 @@ export async function POST(req: NextRequest) {
         role: "PARTICIPANT",
         isAdmin: false,
         environment: participant.environment,
+        workspaceSlug: "arag",
       });
 
       cookies().set("bdp_session", sessionData, {

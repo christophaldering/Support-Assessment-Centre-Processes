@@ -31,19 +31,20 @@ export async function POST(req: Request) {
 }
 
 async function deleteDemo() {
-  await prisma.bdpTieBreak.deleteMany({ where: { session: { environment: ENV } } });
-  await prisma.bdpIndividualNote.deleteMany({ where: { environment: ENV } });
-  await prisma.bdpSponsorFlag.deleteMany({ where: { environment: ENV } });
-  await prisma.bdpScore.deleteMany({ where: { environment: ENV } });
-  await prisma.bdpObserverAssignment.deleteMany({ where: { session: { environment: ENV } } });
-  await prisma.bdpSessionTeam.deleteMany({ where: { session: { environment: ENV } } });
-  await prisma.bdpTeamParticipant.deleteMany({ where: { team: { environment: ENV } } });
-  await prisma.bdpSession.deleteMany({ where: { environment: ENV } });
-  await prisma.bdpTeam.deleteMany({ where: { environment: ENV } });
-  await prisma.bdpParticipant.deleteMany({ where: { environment: ENV } });
+  const WS = "arag";
+  await prisma.bdpTieBreak.deleteMany({ where: { session: { environment: ENV, workspace: WS } } });
+  await prisma.bdpIndividualNote.deleteMany({ where: { environment: ENV, session: { workspace: WS } } });
+  await prisma.bdpSponsorFlag.deleteMany({ where: { environment: ENV, session: { workspace: WS } } });
+  await prisma.bdpScore.deleteMany({ where: { environment: ENV, session: { workspace: WS } } });
+  await prisma.bdpObserverAssignment.deleteMany({ where: { session: { environment: ENV, workspace: WS } } });
+  await prisma.bdpSessionTeam.deleteMany({ where: { session: { environment: ENV, workspace: WS } } });
+  await prisma.bdpTeamParticipant.deleteMany({ where: { team: { environment: ENV, workspace: WS } } });
+  await prisma.bdpSession.deleteMany({ where: { environment: ENV, workspace: WS } });
+  await prisma.bdpTeam.deleteMany({ where: { environment: ENV, workspace: WS } });
+  await prisma.bdpParticipant.deleteMany({ where: { environment: ENV, workspace: WS } });
   await prisma.bdpNotification.deleteMany({ where: { environment: ENV } });
-  await prisma.bdpUser.deleteMany({ where: { environment: ENV } });
-  const demoEntities = await prisma.bdpNameMapping.findMany();
+  await prisma.bdpUser.deleteMany({ where: { environment: ENV, workspace: WS } });
+  const demoEntities = await prisma.bdpNameMapping.findMany({ where: { workspace: WS } });
   const demoIds = demoEntities.filter(e => e.entityType.startsWith("demo_") || e.realName.includes("@arag-demo.eu") || e.realName.includes("@participants-demo.eu") || e.realName.includes("@demo.de")).map(e => e.id);
   if (demoIds.length > 0) {
     await prisma.bdpNameMapping.deleteMany({ where: { id: { in: demoIds } } });
@@ -51,7 +52,8 @@ async function deleteDemo() {
 }
 
 async function seedDemo() {
-  let criteria = await prisma.bdpCriterion.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } });
+  const WS = "arag";
+  let criteria = await prisma.bdpCriterion.findMany({ where: { active: true, workspace: WS }, orderBy: { sortOrder: "asc" } });
 
   if (criteria.length === 0) {
     const critNames = [
@@ -63,10 +65,10 @@ async function seedDemo() {
     ];
     for (let i = 0; i < critNames.length; i++) {
       await prisma.bdpCriterion.create({
-        data: { id: randomUUID(), name: critNames[i], sortOrder: i, active: true },
+        data: { id: randomUUID(), name: critNames[i], sortOrder: i, active: true, workspace: WS },
       });
     }
-    criteria = await prisma.bdpCriterion.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } });
+    criteria = await prisma.bdpCriterion.findMany({ where: { active: true, workspace: WS }, orderBy: { sortOrder: "asc" } });
   }
 
   const avatarMap: Record<string, string> = {
@@ -107,11 +109,12 @@ async function seedDemo() {
         username: def.code,
         passwordHash: def.pw,
         photoUrl: avatarMap[def.code] || null,
+        workspace: WS,
       },
     });
     users[def.code] = u;
-    await prisma.bdpNameMapping.create({ data: { entityType: "observer", entityId: u.id, realName: def.realName } });
-    await prisma.bdpNameMapping.create({ data: { entityType: "email", entityId: u.id, realName: def.email } });
+    await prisma.bdpNameMapping.create({ data: { entityType: "observer", entityId: u.id, realName: def.realName, workspace: WS } });
+    await prisma.bdpNameMapping.create({ data: { entityType: "email", entityId: u.id, realName: def.email, workspace: WS } });
   }
 
   const teamDefs = [
@@ -143,10 +146,11 @@ async function seedDemo() {
         environment: ENV,
         feedback: teamFeedback[i] || null,
         businessCaseType: "demo-generated",
+        workspace: WS,
       },
     });
     teams.push(t);
-    await prisma.bdpNameMapping.create({ data: { entityType: "team", entityId: t.id, realName: def.city } });
+    await prisma.bdpNameMapping.create({ data: { entityType: "team", entityId: t.id, realName: def.city, workspace: WS } });
   }
 
   const participantDefs = [
@@ -177,11 +181,11 @@ async function seedDemo() {
   const participants: any[] = [];
   for (const def of participantDefs) {
     const p = await prisma.bdpParticipant.create({
-      data: { id: randomUUID(), code: def.code, displayName: `${def.realName} (${def.code.replace("D-","")})`, environment: ENV },
+      data: { id: randomUUID(), code: def.code, displayName: `${def.realName} (${def.code.replace("D-","")})`, environment: ENV, workspace: WS },
     });
     participants.push(p);
-    await prisma.bdpNameMapping.create({ data: { entityType: "participant", entityId: p.id, realName: def.realName } });
-    await prisma.bdpNameMapping.create({ data: { entityType: "email", entityId: p.id, realName: def.email } });
+    await prisma.bdpNameMapping.create({ data: { entityType: "participant", entityId: p.id, realName: def.realName, workspace: WS } });
+    await prisma.bdpNameMapping.create({ data: { entityType: "email", entityId: p.id, realName: def.email, workspace: WS } });
   }
 
   const teamParticipantMap: Record<number, number[]> = {
@@ -227,6 +231,7 @@ async function seedDemo() {
         startedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         closedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         releasedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        workspace: WS,
       },
     });
     sessions.push(s);

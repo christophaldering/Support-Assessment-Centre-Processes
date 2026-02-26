@@ -27,12 +27,12 @@ export async function GET(req: NextRequest) {
   }
 
   const users = await prisma.bdpUser.findMany({
-    where: { environment },
+    where: { environment, workspace: "arag" },
     orderBy: { code: "asc" },
   });
 
   const participants = await prisma.bdpParticipant.findMany({
-    where: { environment },
+    where: { environment, workspace: "arag" },
     orderBy: { code: "asc" },
   });
 

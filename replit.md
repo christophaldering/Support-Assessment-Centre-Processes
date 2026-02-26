@@ -102,6 +102,22 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
       - Profile page: working photo upload with preview, tour restart button.
       - `/anmeldung` page removed; all login flows through `/arag-bdp/login`.
 
+    - **Sprint ABCD-CLONE-01 — Anonymized ABCD Workspace Clone**:
+      - Full clone of ARAG BDP tool at `/abcd-bdp/` + `/w/abcd` with zero ARAG branding
+      - Multi-tenant data isolation via `workspace` column on BdpUser, BdpSession, BdpTeam, BdpParticipant, BdpCriterion, BdpConfig, BdpNameMapping
+      - Compound unique constraints: `@@unique([code, workspace])` for multi-workspace support
+      - Auth helpers: `bdpEnvFilter(session)` and `bdpWorkspaceFilter(session)` in `lib/bdp-auth.ts`
+      - All ARAG API routes updated with workspace filters (backward-compatible, defaults to "arag")
+      - ABCD API routes at `/api/abcd-bdp/` with workspace="abcd"
+      - ABCD lobby at `/w/abcd` — blue (#0071e3) accent, Apple-inspired clean design
+      - ABCD demo teams: Lisbon, Vienna, Prague, Oslo, Valencia, Krakow (EU cities, different from ARAG)
+      - ABCD demo codes: A-V1..A-V7, A-MD1, A-E1, A-TN1..A-TN22 (A- prefix)
+      - ABCD workspace auto-created in `instrumentation.ts`
+      - Login flow: `/w/abcd/login` → tryBdpLogin with workspace="abcd" → `/w/abcd`
+      - Tour: `lib/abcd-bdp-tour.ts`, localStorage key `abcd_bdp_tourSeen_*`
+      - Gate cookie: `abcd_gate_session` (separate from ARAG's `arag_gate_session`)
+      - No ARAG branding leaks: all strings, URLs, colors, cookie names sanitized
+
 ## External Dependencies
 
 *   **PostgreSQL**: Primary database.

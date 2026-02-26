@@ -58,6 +58,11 @@ function WorkspaceLoginInner() {
         return;
       }
 
+      if (workspaceSlug === "abcd") {
+        router.push("/w/abcd");
+        return;
+      }
+
       if (data.user.roles.includes("CANDIDATE")) {
         router.push(`/w/${workspaceSlug}/assessment`);
       } else if (data.user.roles.length === 1 && data.user.roles[0] === "OBSERVER") {

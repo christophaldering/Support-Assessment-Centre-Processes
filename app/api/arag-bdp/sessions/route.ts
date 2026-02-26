@@ -23,7 +23,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
 
   const sessions = await prisma.bdpSession.findMany({
-    where: { environment: session.environment },
+    where: { environment: session.environment, workspace: session.workspaceSlug },
     include: {
       sessionTeams: { include: { team: true } },
       observerAssignments: { include: { user: true } },
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Ungültige Daten", details: parsed.error.flatten() }, { status: 400 });
 
   const created = await prisma.bdpSession.create({
-    data: { name: parsed.data.name, state: "DRAFT", environment: parsed.data.environment || session.environment },
+    data: { name: parsed.data.name, state: "DRAFT", environment: parsed.data.environment || session.environment, workspace: session.workspaceSlug },
   });
   return NextResponse.json(created);
 }

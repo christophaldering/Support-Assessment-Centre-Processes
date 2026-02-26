@@ -75,3 +75,11 @@ export function requireBdpAdmin(): BdpSession {
   if (!session.isAdmin) throw new Error("Keine Admin-Berechtigung");
   return session;
 }
+
+export function bdpEnvFilter(session: BdpSession) {
+  return { environment: session.environment, workspace: session.workspaceSlug };
+}
+
+export function bdpWorkspaceFilter(session: BdpSession) {
+  return { workspace: session.workspaceSlug };
+}
