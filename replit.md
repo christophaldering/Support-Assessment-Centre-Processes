@@ -18,7 +18,7 @@ Footer credit: "© Christoph Aldering · Private initiative – for training rea
 
 The platform is built on a modern full-stack architecture using Next.js 14 (App Router) with TypeScript, Prisma ORM, PostgreSQL, and Tailwind CSS.
 
-*   **Dev Server Proxy:** A custom Node.js proxy (`scripts/dev-server.js`) runs on port 5000 and proxies to the Next.js dev server on port 5001. It shows a "loading" page until all key pages are pre-compiled, preventing stale chunk loading errors. The workflow command is `node scripts/dev-server.js`.
+*   **Server Wrapper:** `scripts/wrapper.js` manages the Next.js server lifecycle. It spawns the server as a detached process (`detached: true`, `child.unref()`) so the workflow system's process management doesn't kill it. In production mode (when `.next/standalone` exists from `next build`), it runs the standalone server directly on port 5000 for fast startup (~100ms). In dev mode, it runs `next dev` on port 5000. A health check loop every 10 seconds auto-restarts the server if it stops responding. The workflow command is `node scripts/wrapper.js`.
 *   **Error Boundaries:** `app/global-error.tsx` and `app/error.tsx` provide auto-recovery for chunk loading failures. `public/chunk-recovery.js` adds JS-level error recovery.
 
 **Key Architectural Decisions:**

@@ -1,153 +1,103 @@
+const { spawn, execSync } = require("child_process");
+const path = require("path");
+const fs = require("fs");
 const http = require("http");
-const { spawn } = require("child_process");
 
 const PORT = 5000;
-const NEXT_PORT = 5001;
-let pagesWarmed = false;
+const HEALTH_INTERVAL = 15000;
+const STARTUP_GRACE = 30000;
+const MAX_RESTART_DELAY = 60000;
 
-const loadingHTML = `<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Executive Diagnostics Suite</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.c{text-align:center}
-.s{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#3b82f6;border-radius:50%;animation:r .7s linear infinite;margin:0 auto 1.5rem}
-@keyframes r{to{transform:rotate(360deg)}}
-h2{font-size:1rem;font-weight:500;opacity:.9;margin-bottom:.5rem}
-p{font-size:.8rem;opacity:.5}
-</style>
-</head>
-<body>
-<div class="c"><div class="s"></div><h2>Anwendung wird gestartet</h2><p>Bitte einen Moment warten...</p></div>
-<script>
-var c=0;
-function p(){
-fetch(window.location.href,{method:'HEAD',cache:'no-store'}).then(function(r){
-if(r.headers.get('x-app-ready')==='1'){window.location.reload()}
-else{c++;if(c<30)setTimeout(p,2000)}
-}).catch(function(){c++;if(c<30)setTimeout(p,2000)})
-}
-setTimeout(p,2000);
-</script>
-</body>
-</html>`;
+let childPid = null;
+let isStarting = false;
+let lastStartTime = 0;
+let consecutiveFailures = 0;
 
-function proxyRequest(req, res) {
-  const opts = {
-    hostname: "127.0.0.1",
-    port: NEXT_PORT,
-    path: req.url,
-    method: req.method,
-    headers: req.headers,
-  };
-  const proxyReq = http.request(opts, (proxyRes) => {
-    proxyRes.headers["x-app-ready"] = "1";
-    res.writeHead(proxyRes.statusCode, proxyRes.headers);
-    proxyRes.pipe(res);
-  });
-  proxyReq.on("error", () => {
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(loadingHTML);
-  });
-  req.pipe(proxyReq);
+function killChild() {
+  if (childPid) {
+    try { process.kill(-childPid, "SIGTERM"); } catch {}
+    try { process.kill(childPid, "SIGTERM"); } catch {}
+    childPid = null;
+  }
+  try { execSync(`fuser -k ${PORT}/tcp 2>/dev/null`, { stdio: "ignore" }); } catch {}
 }
 
-const server = http.createServer((req, res) => {
-  if (pagesWarmed) {
-    proxyRequest(req, res);
+function startServer() {
+  if (isStarting) return;
+  isStarting = true;
+
+  killChild();
+
+  const standaloneDir = path.join(process.cwd(), ".next", "standalone");
+  const hasStandalone = fs.existsSync(path.join(standaloneDir, "server.js"));
+
+  let cmd, args, cwd;
+  if (hasStandalone) {
+    try {
+      execSync("rsync -a --ignore-existing .next/static/ .next/standalone/.next/static/ 2>/dev/null || cp -rn .next/static .next/standalone/.next/static 2>/dev/null", { stdio: "ignore" });
+      execSync("rsync -a --ignore-existing public/ .next/standalone/public/ 2>/dev/null || cp -rn public .next/standalone/public 2>/dev/null", { stdio: "ignore" });
+    } catch {}
+    cmd = process.execPath;
+    args = ["server.js"];
+    cwd = standaloneDir;
+    console.log("[wrapper] Starting production server on port " + PORT);
   } else {
-    res.writeHead(200, {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      "x-app-ready": "0",
-    });
-    res.end(loadingHTML);
+    cmd = path.join(process.cwd(), "node_modules", ".bin", "next");
+    args = ["dev", "-p", String(PORT), "-H", "0.0.0.0"];
+    cwd = process.cwd();
+    console.log("[wrapper] Starting dev server on port " + PORT);
   }
-});
 
-server.on("upgrade", (req, socket, head) => {
-  if (!pagesWarmed) { socket.destroy(); return; }
-  const opts = {
-    hostname: "127.0.0.1",
-    port: NEXT_PORT,
-    path: req.url,
-    method: req.method,
-    headers: req.headers,
-  };
-  const proxyReq = http.request(opts);
-  proxyReq.on("upgrade", (proxyRes, proxySocket) => {
-    socket.write(
-      "HTTP/1.1 101 Switching Protocols\r\n" +
-      Object.entries(proxyRes.headers).map(([k, v]) => `${k}: ${v}`).join("\r\n") +
-      "\r\n\r\n"
-    );
-    proxySocket.pipe(socket);
-    socket.pipe(proxySocket);
-  });
-  proxyReq.on("error", () => socket.destroy());
-  proxyReq.end();
-});
-
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`[proxy] Listening on port ${PORT}, starting Next.js...`);
-  startNextJs();
-});
-
-function startNextJs() {
-  pagesWarmed = false;
-
-  const next = spawn("node_modules/.bin/next", ["dev", "-p", String(NEXT_PORT), "-H", "0.0.0.0"], {
+  const child = spawn(cmd, args, {
     stdio: "inherit",
-    env: { ...process.env, PORT: String(NEXT_PORT), NEXT_TELEMETRY_DISABLED: "1" },
+    cwd,
+    detached: true,
+    env: { ...process.env, PORT: String(PORT), HOSTNAME: "0.0.0.0", NEXT_TELEMETRY_DISABLED: "1" },
   });
 
-  next.on("exit", (code, signal) => {
-    console.log(`[proxy] Next.js exited: code=${code}, signal=${signal}`);
-    pagesWarmed = false;
-    console.log("[proxy] Restarting Next.js in 3s...");
-    setTimeout(startNextJs, 3000);
+  childPid = child.pid;
+  child.unref();
+  lastStartTime = Date.now();
+
+  child.on("exit", (code, signal) => {
+    console.log(`[wrapper] Server exited: code=${code} signal=${signal}`);
+    if (childPid === child.pid) childPid = null;
   });
 
-  async function fetchPage(url) {
-    return new Promise((resolve, reject) => {
-      const r = http.get(url, (res) => {
-        let data = "";
-        res.on("data", (d) => (data += d));
-        res.on("end", () => resolve(res.statusCode));
-      });
-      r.on("error", reject);
-      r.setTimeout(30000, () => { r.destroy(); reject(new Error("timeout")); });
-    });
-  }
-
-  async function waitAndWarm() {
-    for (let i = 0; i < 60; i++) {
-      try {
-        await fetchPage(`http://127.0.0.1:${NEXT_PORT}/`);
-        console.log("[proxy] Next.js ready, pre-warming pages...");
-        break;
-      } catch {
-        await new Promise((r) => setTimeout(r, 1000));
-      }
-    }
-
-    const warmPages = ["/", "/w/aestimamus/login", "/w/arag"];
-    for (const page of warmPages) {
-      try {
-        const code = await fetchPage(`http://127.0.0.1:${NEXT_PORT}${page}`);
-        console.log(`[proxy] Warmed ${page} → ${code}`);
-      } catch (e) {
-        console.log(`[proxy] Failed to warm ${page}: ${e.message}`);
-      }
-    }
-
-    pagesWarmed = true;
-    console.log("[proxy] All pages warmed, proxying traffic to Next.js");
-  }
-
-  waitAndWarm();
+  setTimeout(() => { isStarting = false; }, 5000);
 }
+
+function healthCheck() {
+  if (isStarting || Date.now() - lastStartTime < STARTUP_GRACE) return;
+
+  const req = http.get(`http://127.0.0.1:${PORT}/`, { timeout: 5000 }, (res) => {
+    res.resume();
+    const ok = res.statusCode >= 200 && res.statusCode < 400;
+    if (ok) {
+      consecutiveFailures = 0;
+    } else {
+      consecutiveFailures++;
+      console.log(`[wrapper] Health check status ${res.statusCode} (failure ${consecutiveFailures})`);
+      if (consecutiveFailures >= 3) {
+        const delay = Math.min(consecutiveFailures * 5000, MAX_RESTART_DELAY);
+        console.log(`[wrapper] Restarting after ${delay}ms backoff...`);
+        setTimeout(startServer, delay);
+        consecutiveFailures = 0;
+      }
+    }
+  });
+  req.on("error", () => {
+    consecutiveFailures++;
+    console.log(`[wrapper] Server unreachable (failure ${consecutiveFailures})`);
+    if (consecutiveFailures >= 3) {
+      const delay = Math.min(consecutiveFailures * 5000, MAX_RESTART_DELAY);
+      console.log(`[wrapper] Restarting after ${delay}ms backoff...`);
+      setTimeout(startServer, delay);
+      consecutiveFailures = 0;
+    }
+  });
+  req.on("timeout", () => { req.destroy(); });
+}
+
+startServer();
+setInterval(healthCheck, HEALTH_INTERVAL);
