@@ -3,7 +3,7 @@ const { spawn } = require("child_process");
 
 const PORT = 5000;
 const NEXT_PORT = 5001;
-let pagesWarmed = false;
+let nextReady = false;
 
 const loadingHTML = `<!DOCTYPE html>
 <html lang="de">
@@ -32,8 +32,8 @@ var c=0;
 function p(){
 fetch(window.location.href,{method:'HEAD',cache:'no-store'}).then(function(r){
 if(r.headers.get('x-app-ready')==='1'){window.location.reload()}
-else{c++;if(c<30)setTimeout(p,2000)}
-}).catch(function(){c++;if(c<30)setTimeout(p,2000)})
+else{c++;if(c<60)setTimeout(p,2000)}
+}).catch(function(){c++;if(c<60)setTimeout(p,2000)})
 }
 setTimeout(p,2000);
 </script>
@@ -64,7 +64,7 @@ function proxyRequest(req, res) {
 }
 
 const server = http.createServer((req, res) => {
-  if (pagesWarmed) {
+  if (nextReady) {
     proxyRequest(req, res);
     return;
   }
@@ -83,7 +83,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.on("upgrade", (req, socket, head) => {
-  if (!pagesWarmed) {
+  if (!nextReady) {
     socket.destroy();
     return;
   }
@@ -117,7 +117,7 @@ server.listen(PORT, "0.0.0.0", () => {
 
   const next = spawn("npx", ["next", "dev", "-p", String(NEXT_PORT), "-H", "0.0.0.0"], {
     stdio: "inherit",
-    env: { ...process.env, PORT: String(NEXT_PORT) },
+    env: { ...process.env, PORT: String(NEXT_PORT), NEXT_TELEMETRY_DISABLED: "1" },
   });
 
   next.on("exit", (code) => {
@@ -125,45 +125,28 @@ server.listen(PORT, "0.0.0.0", () => {
     process.exit(code || 1);
   });
 
-  async function fetchPage(url) {
-    return new Promise((resolve, reject) => {
-      const r = http.get(url, (res) => {
-        let data = "";
-        res.on("data", (d) => (data += d));
-        res.on("end", () => resolve(res.statusCode));
-      });
-      r.on("error", reject);
-      r.setTimeout(30000, () => {
-        r.destroy();
-        reject(new Error("timeout"));
-      });
-    });
-  }
-
-  async function waitAndWarm() {
-    for (let i = 0; i < 60; i++) {
+  async function waitForNext() {
+    for (let i = 0; i < 120; i++) {
       try {
-        await fetchPage(`http://127.0.0.1:${NEXT_PORT}/`);
-        console.log("[proxy] Next.js ready, pre-warming pages...");
-        break;
+        await new Promise((resolve, reject) => {
+          const r = http.get(`http://127.0.0.1:${NEXT_PORT}/`, (res) => {
+            let data = "";
+            res.on("data", (d) => (data += d));
+            res.on("end", () => resolve(res.statusCode));
+          });
+          r.on("error", reject);
+          r.setTimeout(10000, () => { r.destroy(); reject(new Error("timeout")); });
+        });
+        nextReady = true;
+        console.log("[proxy] Next.js ready, proxying traffic");
+        return;
       } catch {
         await new Promise((r) => setTimeout(r, 1000));
       }
     }
-
-    const warmPages = ["/", "/w/aestimamus/login", "/w/arag"];
-    for (const page of warmPages) {
-      try {
-        const code = await fetchPage(`http://127.0.0.1:${NEXT_PORT}${page}`);
-        console.log(`[proxy] Warmed ${page} → ${code}`);
-      } catch (e) {
-        console.log(`[proxy] Failed to warm ${page}: ${e.message}`);
-      }
-    }
-
-    pagesWarmed = true;
-    console.log("[proxy] All pages warmed, proxying traffic to Next.js");
+    console.log("[proxy] Next.js failed to start after 120s");
+    process.exit(1);
   }
 
-  waitAndWarm();
+  waitForNext();
 });
