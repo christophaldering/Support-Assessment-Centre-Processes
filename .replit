@@ -47,7 +47,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node scripts/dev-server.js"
+args = "node scripts/wrapper.js"
 waitForPort = 5000
 
 [agent]
