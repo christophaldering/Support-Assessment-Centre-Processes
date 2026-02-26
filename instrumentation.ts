@@ -36,7 +36,7 @@ export async function register() {
 
       const aragExists = await prisma.workspace.findUnique({ where: { slug: "arag" } });
       if (!aragExists) {
-        const aragAdminHash = await bcrypt.hash("ARAG2026", 10);
+        const aragAdminHash = await bcrypt.hash("Christoph", 10);
         const aragWs = await prisma.workspace.create({
           data: {
             slug: "arag",
@@ -58,12 +58,13 @@ export async function register() {
             },
           },
         });
+        const demoHash = await bcrypt.hash("demo", 10);
         await prisma.user.create({
           data: {
-            email: "demo@arag.de",
+            email: "demo@demo.de",
             name: "Demo User",
-            passwordHash: aragAdminHash,
-            roles: ["ADMIN", "WORKSPACE_ADMIN"],
+            passwordHash: demoHash,
+            roles: ["WORKSPACE_ADMIN"],
             workspaceId: aragWs.id,
             forcePasswordChange: false,
             status: "active",
@@ -71,17 +72,17 @@ export async function register() {
         });
         console.log("[seed] Created arag workspace + demo user");
       } else {
-        const demoUser = await prisma.user.findFirst({
-          where: { workspaceId: aragExists.id },
+        const demoUser = await prisma.user.findUnique({
+          where: { email_workspaceId: { email: "demo@demo.de", workspaceId: aragExists.id } },
         });
         if (!demoUser) {
-          const aragHash = await bcrypt.hash("ARAG2026", 10);
+          const demoHash = await bcrypt.hash("demo", 10);
           await prisma.user.create({
             data: {
-              email: "demo@arag.de",
+              email: "demo@demo.de",
               name: "Demo User",
-              passwordHash: aragHash,
-              roles: ["ADMIN", "WORKSPACE_ADMIN"],
+              passwordHash: demoHash,
+              roles: ["WORKSPACE_ADMIN"],
               workspaceId: aragExists.id,
               forcePasswordChange: false,
               status: "active",
@@ -93,7 +94,7 @@ export async function register() {
 
       const abcdExists = await prisma.workspace.findUnique({ where: { slug: "abcd" } });
       if (!abcdExists) {
-        const abcdAdminHash = await bcrypt.hash("ABCD2026", 10);
+        const abcdAdminHash = await bcrypt.hash("Christoph", 10);
         const abcdWs = await prisma.workspace.create({
           data: {
             slug: "abcd",
@@ -115,12 +116,13 @@ export async function register() {
             },
           },
         });
+        const abcdDemoHash = await bcrypt.hash("demo", 10);
         await prisma.user.create({
           data: {
-            email: "demo@abcd.de",
+            email: "demo@demo.de",
             name: "Demo User",
-            passwordHash: abcdAdminHash,
-            roles: ["ADMIN", "WORKSPACE_ADMIN"],
+            passwordHash: abcdDemoHash,
+            roles: ["WORKSPACE_ADMIN"],
             workspaceId: abcdWs.id,
             forcePasswordChange: false,
             status: "active",
