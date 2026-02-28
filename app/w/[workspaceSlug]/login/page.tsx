@@ -22,7 +22,7 @@ function WorkspaceLoginInner() {
   const { t } = useLanguage();
 
   const [mode, setMode] = useState<"login" | "activate">("login");
-  const [email, setEmail] = useState(workspaceSlug === "arag" ? "demo@demo.de" : "");
+  const [email, setEmail] = useState(workspaceSlug === "comp" ? "demo@demo.de" : "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [statusInfo, setStatusInfo] = useState<"pending" | "rejected" | null>(null);
@@ -53,8 +53,8 @@ function WorkspaceLoginInner() {
         return;
       }
 
-      if (workspaceSlug === "arag") {
-        router.push("/w/arag");
+      if (workspaceSlug === "comp") {
+        router.push("/w/comp");
         return;
       }
 

@@ -62,61 +62,61 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 *   All user passwords reset to "Christoph", googlemail account given ADMIN role
 *   **AI Governance (Phase 1 – Lite, Enterprise-Ready)**: Core LLM adapter in `server/llm/` with single entry point `generateLLMOutput()` and `transcribeAudio()`. ENV-based kill switch (`AI_DISABLED`, `AI_FEATURES_DISABLED`), provider routing via `ACTIVE_LLM_PROVIDER` (openai active, neuland stub, azure_eu placeholder). Strict OpenAI ENV usage (`AI_INTEGRATIONS_OPENAI_API_KEY` + `AI_INTEGRATIONS_OPENAI_BASE_URL`). Console logging for all AI requests with route/feature/task metadata. **All 19+ API routes fully migrated** — no direct OpenAI imports outside `server/llm/providers/openai.ts`. `lib/ai.ts` uses adapter internally. `lib/llm/` retained as re-export bridge for Phase 2 features (DB-backed config, Admin UI at `/admin/ai-governance`, audit logging via `ai_system_settings`/`ai_audit_log` tables). Old `lib/llm/providers/` removed (dead code). Architecture designed for Phase 2 extension without refactoring.
 *   Shared admin layout: All admin pages use consistent sidebar + terracotta gradient header via `layout.tsx` + `AdminSidebar.tsx`
-*   **ARAG BDP Evaluation Tool**: Complete self-contained module at `/arag-bdp/` for Business Development Pitch evaluation. Features:
-    - Entry point via `/arag-bdp/login` (username + password), `/arag-bdp/gate` redirects to `/arag-bdp/login`
+*   **COMP BDP Evaluation Tool**: Complete self-contained module at `/comp-bdp/` for Business Development Pitch evaluation. Features:
+    - Entry point via `/comp-bdp/login` (username + password), `/comp-bdp/gate` redirects to `/comp-bdp/login`
     - Anonymous code system: LIVE (V1-V6, MD1, E1, TN1-TN21, Team1-Team6), DEMO prefixed (D-V1..D-V6, D-MD1, D-E1, D-TN1..D-TN21, D-Team1..D-Team6) to avoid unique constraint conflicts
     - Forced-point scoring (100 pts/criterion across teams per session), server-side validation
     - Session governance: DRAFT → OPEN → CLOSED → RELEASED state machine
     - Individual candidate evaluation (per-criterion prose notes, contribution/presence markers)
     - Admin console: CRUD sessions/teams/participants/observers/criteria, state transitions, transparency mode, tie-break, export, name mappings
-    - Individual notes API: `/api/arag-bdp/notes/upsert` with Zod validation, locked in CLOSED/RELEASED
+    - Individual notes API: `/api/comp-bdp/notes/upsert` with Zod validation, locked in CLOSED/RELEASED
     - Export: CSV aggregate/JSON full (anon/named), print view with "Powered by aestimamus" footer
     - Export restrictions: admin-only, RELEASED-only, demo excluded by default (environment!="demo")
     - Demo exclusion: default exclude records with environment=="demo"; admin toggle "DEMO einschließen" in export tab
     - Mobile-first UI: bottom nav (Home/Sessions/Bewertung/Auswertung), hamburger menu, DEMO banner
     - DB: Prisma models prefixed `Bdp*` (15 tables), seeded via `prisma/bdp-seed.ts`
-    - API: All routes under `app/api/arag-bdp/`, auth via `bdp_session` HTTP-only cookie
-    - ARAG styling: yellow (#FFD700) accent, black text, warm background (#FFFBF0)
-    - QA page at `/arag-bdp/admin/qa` with automated PASS/FAIL checks
-    - Admin invitations page at `/arag-bdp/admin/invitations`: 3 tabs (Vorstände/Experte/Teilnehmer), TipTap rich text editor with templates and placeholders ({{CODE}}, {{WORKSPACE}}, {{LINK}}, {{SESSION}}, {{SENDER}}), email storage per recipient via BdpNameMapping, preview & copy mode (SendGrid send disabled for safety), session reference selector, QA checks at bottom
+    - API: All routes under `app/api/comp-bdp/`, auth via `bdp_session` HTTP-only cookie
+    - COMP styling: yellow (#FFD700) accent, black text, warm background (#FFFBF0)
+    - QA page at `/comp-bdp/admin/qa` with automated PASS/FAIL checks
+    - Admin invitations page at `/comp-bdp/admin/invitations`: 3 tabs (Vorstände/Experte/Teilnehmer), TipTap rich text editor with templates and placeholders ({{CODE}}, {{WORKSPACE}}, {{LINK}}, {{SESSION}}, {{SENDER}}), email storage per recipient via BdpNameMapping, preview & copy mode (SendGrid send disabled for safety), session reference selector, QA checks at bottom
     - Desktop sidebar + mobile hamburger both include "Einladungen" link (admin-only)
     - Demo auto-reset: on logout from demo environment, demo data is automatically reset to hard-coded defaults. Demo banner informs users: "Experimentieren erlaubt! Änderungen werden beim Abmelden zurückgesetzt."
-    - **Demo Environment (first-class)**: Strict LIVE/DEMO separation via `bdp_environment` cookie. All GET routes filter by `environment` scope. Admin-only LIVE/DEMO toggle in sidebar + hamburger menu (`data-testid="bdp-env-toggle"`). Demo seed creates 3 RELEASED sessions, 6 teams, 21 TN, 3 observers, full scores (sum=100), tie-break case, sponsor flags, individual notes. Reset via `/arag-bdp/admin/demo` page (`data-testid="bdp-demo-reset"`). LIVE data never touched during reset. API: `/api/arag-bdp/environment` (GET/POST), `/api/arag-bdp/admin/demo-reset` (POST).
-    - **Guided Tour System**: Role-specific tour steps (admin=10, observer=8, participant=6) via `lib/arag-bdp-tour.ts`. `TourOverlay.tsx` with SVG spotlight mask, popover positioning, Escape key. Auto-starts on first demo login. "Tour starten" in sidebar + hamburger. Tour restart from profile page clears localStorage and dispatches custom event.
+    - **Demo Environment (first-class)**: Strict LIVE/DEMO separation via `bdp_environment` cookie. All GET routes filter by `environment` scope. Admin-only LIVE/DEMO toggle in sidebar + hamburger menu (`data-testid="bdp-env-toggle"`). Demo seed creates 3 RELEASED sessions, 6 teams, 21 TN, 3 observers, full scores (sum=100), tie-break case, sponsor flags, individual notes. Reset via `/comp-bdp/admin/demo` page (`data-testid="bdp-demo-reset"`). LIVE data never touched during reset. API: `/api/comp-bdp/environment` (GET/POST), `/api/comp-bdp/admin/demo-reset` (POST).
+    - **Guided Tour System**: Role-specific tour steps (admin=10, observer=8, participant=6) via `lib/comp-bdp-tour.ts`. `TourOverlay.tsx` with SVG spotlight mask, popover positioning, Escape key. Auto-starts on first demo login. "Tour starten" in sidebar + hamburger. Tour restart from profile page clears localStorage and dispatches custom event.
     - **Sprint I18N-01 — Full DE/EN Internationalization**:
       - i18n infrastructure: `lib/i18n/translations.ts` (800+ lines, full DE/EN dictionary), `lib/i18n/language.ts` (cookie+localStorage persistence), `app/providers/LanguageProvider.tsx` (React context + `t()` + `useLanguage()`), `app/components/LanguageToggle.tsx` (DE/EN pill toggle)
-      - LanguageProvider wraps: BDP layout (`app/arag-bdp/layout.tsx`), ARAG lobby (`app/w/arag/page.tsx`), workspace login (`app/w/[workspaceSlug]/login/page.tsx`)
+      - LanguageProvider wraps: BDP layout (`app/comp-bdp/layout.tsx`), COMP lobby (`app/w/comp/page.tsx`), workspace login (`app/w/[workspaceSlug]/login/page.tsx`)
       - LanguageToggle in: BDP desktop header, BDP mobile header, lobby header, workspace login header
       - All ~25 files internationalized: sessions, bewertung, auswertung, profile, admin, export/print, login/gate redirects, lobby, StandardLanding, AppleLanding, LandingHero, HeroStrategicPanel, LandingCards, LandingCharts, JourneyTimeline, StrategicStoryboard, AmbivalenceDiagram, FrameworkVisual, NotificationBell, TourOverlay, CaseModal
-      - Language persists across navigation via `lang` cookie + `arag_lang` localStorage key
+      - Language persists across navigation via `lang` cookie + `comp_lang` localStorage key
       - Brand names (WHU Learning, Board Evaluation, Strategic Relevance, etc.) kept in English as proper nouns
     - **Sprint D4 — Avatar System + Business Case Viewer**:
       - `AvatarCircle.tsx` component: renders user avatar or gold initial circle (sm/md/lg). Used in layout sidebar, mobile header, profile page.
-      - Avatar upload API: `/api/arag-bdp/avatar` (POST multipart, GET signed URL). Stores in Object Storage at `.private/avatars/{userId}.{ext}`.
+      - Avatar upload API: `/api/comp-bdp/avatar` (POST multipart, GET signed URL). Stores in Object Storage at `.private/avatars/{userId}.{ext}`.
       - Demo SVG avatars: `/public/demo-avatars/` — 9 character-themed SVGs (curie, turing, arendt, lovelace, tesla, beauvoir, woolf, drucker, aurelius). Assigned via `photoUrl` in demo seed.
       - Business Case Viewer: `SlideViewer.tsx` (slide nav with dots), `CaseModal.tsx` (fullscreen modal). Demo cases in `lib/demo-business-cases.ts` with 5 slides per team (Strategic Vision, Market Analysis, Business Model, Financial Planning, Risk Analysis). Content matches character personalities with subtle humor.
-      - Business Case API: `/api/arag-bdp/business-case` (GET with teamId). Returns slides for demo-generated or signed PDF URL.
-      - Business Case Upload: `/api/arag-bdp/business-case/upload` (POST multipart, PDF only, max 15MB). Admin-only. Updates `BdpTeam.businessCaseUrl` and `businessCaseType="pdf"`.
+      - Business Case API: `/api/comp-bdp/business-case` (GET with teamId). Returns slides for demo-generated or signed PDF URL.
+      - Business Case Upload: `/api/comp-bdp/business-case/upload` (POST multipart, PDF only, max 15MB). Admin-only. Updates `BdpTeam.businessCaseUrl` and `businessCaseType="pdf"`.
       - Bewertung integration: "Case" link per team in first criterion row opens CaseModal.
       - Admin teams tab: shows business case type badge, PDF upload input per team.
       - Profile page: working photo upload with preview, tour restart button.
-      - `/anmeldung` page removed; all login flows through `/arag-bdp/login`.
+      - `/anmeldung` page removed; all login flows through `/comp-bdp/login`.
 
     - **Sprint ABCD-CLONE-01 — Anonymized ABCD Workspace Clone**:
-      - Full clone of ARAG BDP tool at `/abcd-bdp/` + `/w/abcd` with zero ARAG branding
+      - Full clone of COMP BDP tool at `/abcd-bdp/` + `/w/abcd` with zero COMP branding
       - Multi-tenant data isolation via `workspace` column on BdpUser, BdpSession, BdpTeam, BdpParticipant, BdpCriterion, BdpConfig, BdpNameMapping
       - Compound unique constraints: `@@unique([code, workspace])` for multi-workspace support
       - Auth helpers: `bdpEnvFilter(session)` and `bdpWorkspaceFilter(session)` in `lib/bdp-auth.ts`
-      - All ARAG API routes updated with workspace filters (backward-compatible, defaults to "arag")
+      - All COMP API routes updated with workspace filters (backward-compatible, defaults to "comp")
       - ABCD API routes at `/api/abcd-bdp/` with workspace="abcd"
       - ABCD lobby at `/w/abcd` — blue (#0071e3) accent, Apple-inspired clean design
-      - ABCD demo teams: Lisbon, Vienna, Prague, Oslo, Valencia, Krakow (EU cities, different from ARAG)
+      - ABCD demo teams: Lisbon, Vienna, Prague, Oslo, Valencia, Krakow (EU cities, different from COMP)
       - ABCD demo codes: A-V1..A-V7, A-MD1, A-E1, A-TN1..A-TN22 (A- prefix)
       - ABCD workspace auto-created in `instrumentation.ts`
       - Login flow: `/w/abcd/login` → tryBdpLogin with workspace="abcd" → `/w/abcd`
       - Tour: `lib/abcd-bdp-tour.ts`, localStorage key `abcd_bdp_tourSeen_*`
-      - Gate cookie: `abcd_gate_session` (separate from ARAG's `arag_gate_session`)
-      - No ARAG branding leaks: all strings, URLs, colors, cookie names sanitized
+      - Gate cookie: `abcd_gate_session` (separate from COMP's `comp_gate_session`)
+      - No COMP branding leaks: all strings, URLs, colors, cookie names sanitized
 
 ## External Dependencies
 

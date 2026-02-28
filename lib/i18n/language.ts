@@ -1,7 +1,7 @@
 export type Lang = "de" | "en";
 
 const COOKIE_NAME = "lang";
-const LS_KEY = "arag_lang";
+const LS_KEY = "comp_lang";
 
 export function getLang(): Lang {
   if (typeof window === "undefined") return "de";

@@ -216,7 +216,7 @@ export const translations = {
     noClosedSessions: "Keine abgeschlossenen Sessions.",
     individualNotes: "Individuelle Notizen",
 
-    // ARAG Lobby
+    // COMP Lobby
     presentation: "Darstellung",
     standard: "Standard",
     apple: "Apple",
@@ -233,7 +233,7 @@ export const translations = {
     observerDescription: "Bewertung der Teams und individuelle Teilnehmer-Notizen",
 
     // Landing - Standard
-    heroLabel: "ARAG SE",
+    heroLabel: "COMP SE",
     heroTitle: "Executive Potential\nJourney",
     heroSubtitle: "Business Development Pitch",
     heroDescription: "Strategische Entscheidungssimulation mit strukturierter Potenzialbeobachtung.",
@@ -339,7 +339,7 @@ export const translations = {
     tabExport: "Export",
 
     // Export print
-    printTitle: "ARAG Business Development Pitch",
+    printTitle: "COMP Business Development Pitch",
     rank: "Platz",
     total: "Gesamt",
     chartHint: "Darstellung der Bewertungsstruktur — keine echten Punktwerte.",
@@ -634,7 +634,7 @@ export const translations = {
     noClosedSessions: "No completed sessions.",
     individualNotes: "Individual notes",
 
-    // ARAG Lobby
+    // COMP Lobby
     presentation: "View",
     standard: "Standard",
     apple: "Apple",
@@ -651,7 +651,7 @@ export const translations = {
     observerDescription: "Team rating and individual participant notes",
 
     // Landing - Standard
-    heroLabel: "ARAG SE",
+    heroLabel: "COMP SE",
     heroTitle: "Executive Potential\nJourney",
     heroSubtitle: "Business Development Pitch",
     heroDescription: "Strategic decision simulation with structured potential observation.",
@@ -757,7 +757,7 @@ export const translations = {
     tabExport: "Export",
 
     // Export print
-    printTitle: "ARAG Business Development Pitch",
+    printTitle: "COMP Business Development Pitch",
     rank: "Rank",
     total: "Total",
     chartHint: "Illustration of the rating structure — not actual scores.",

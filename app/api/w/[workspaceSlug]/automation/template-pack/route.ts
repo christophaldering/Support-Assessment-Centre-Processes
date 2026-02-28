@@ -6,7 +6,7 @@ import { getUploadUrl, getSignedDownloadUrl } from "@/lib/object-storage";
 import {
   Document,
   Packer,
-  Paragraph,
+  Pcompraph,
   Table,
   TableRow,
   TableCell,
@@ -90,7 +90,7 @@ function buildExerciseDocx(
   if (brandRules?.documentRules?.headerFooter) {
     sectionHeaders["default"] = new Header({
       children: [
-        new Paragraph({
+        new Pcompraph({
           children: [new TextRun({ text: brandRules.documentRules.headerFooter, size: 16, italics: true, color: primaryColor })],
           alignment: AlignmentType.RIGHT,
         }),
@@ -101,7 +101,7 @@ function buildExerciseDocx(
   if (brandRules?.documentRules?.confidentialityNote) {
     sectionFooters["default"] = new Footer({
       children: [
-        new Paragraph({
+        new Pcompraph({
           children: [new TextRun({ text: brandRules.documentRules.confidentialityNote, size: 14, italics: true, color: "999999" })],
           alignment: AlignmentType.CENTER,
         }),
@@ -111,30 +111,30 @@ function buildExerciseDocx(
 
   const docSections: Array<Record<string, unknown>> = [];
 
-  const coverChildren: Paragraph[] = [
-    new Paragraph({ text: "" }),
-    new Paragraph({ text: "" }),
-    new Paragraph({ text: "" }),
-    new Paragraph({
+  const coverChildren: Pcompraph[] = [
+    new Pcompraph({ text: "" }),
+    new Pcompraph({ text: "" }),
+    new Pcompraph({ text: "" }),
+    new Pcompraph({
       children: [new TextRun({ text: packTitle, bold: true, size: 52, color: primaryColor })],
       alignment: AlignmentType.CENTER,
     }),
-    new Paragraph({ text: "" }),
-    new Paragraph({
+    new Pcompraph({ text: "" }),
+    new Pcompraph({
       children: [new TextRun({ text: "Übungsmaterialien", size: 36, color: secondaryColor })],
       alignment: AlignmentType.CENTER,
     }),
-    new Paragraph({ text: "" }),
-    new Paragraph({ text: "" }),
-    new Paragraph({
+    new Pcompraph({ text: "" }),
+    new Pcompraph({ text: "" }),
+    new Pcompraph({
       children: [new TextRun({ text: workspaceName, size: 24 })],
       alignment: AlignmentType.CENTER,
     }),
-    new Paragraph({
+    new Pcompraph({
       children: [new TextRun({ text: formatDate(new Date()), size: 24 })],
       alignment: AlignmentType.CENTER,
     }),
-    new Paragraph({
+    new Pcompraph({
       children: [new TextRun({ text: `${exercises.length} Übungen enthalten`, size: 20, italics: true, color: "888888" })],
       alignment: AlignmentType.CENTER,
     }),
@@ -142,8 +142,8 @@ function buildExerciseDocx(
 
   if (brandRules?.typography?.headingFont) {
     coverChildren.push(
-      new Paragraph({ text: "" }),
-      new Paragraph({
+      new Pcompraph({ text: "" }),
+      new Pcompraph({
         children: [new TextRun({ text: `Schriftart: ${brandRules.typography.headingFont}`, size: 16, italics: true, color: "AAAAAA" })],
         alignment: AlignmentType.CENTER,
       })
@@ -158,10 +158,10 @@ function buildExerciseDocx(
   });
 
   for (const exercise of exercises) {
-    const children: Paragraph[] = [];
+    const children: Pcompraph[] = [];
 
     children.push(
-      new Paragraph({
+      new Pcompraph({
         children: [new TextRun({ text: exercise.title, bold: true, size: 32, color: primaryColor })],
         heading: HeadingLevel.HEADING_1,
         alignment: AlignmentType.LEFT,
@@ -176,49 +176,49 @@ function buildExerciseDocx(
 
     if (metaLine) {
       children.push(
-        new Paragraph({
+        new Pcompraph({
           children: [new TextRun({ text: metaLine, size: 18, italics: true, color: "666666" })],
         })
       );
     }
-    children.push(new Paragraph({ text: "" }));
+    children.push(new Pcompraph({ text: "" }));
 
     if (exercise.scenario) {
       children.push(
-        new Paragraph({
+        new Pcompraph({
           children: [new TextRun({ text: "Szenario", bold: true, size: 24, color: secondaryColor })],
           heading: HeadingLevel.HEADING_2,
         }),
-        new Paragraph({ children: [new TextRun({ text: exercise.scenario, size: 20 })] }),
-        new Paragraph({ text: "" })
+        new Pcompraph({ children: [new TextRun({ text: exercise.scenario, size: 20 })] }),
+        new Pcompraph({ text: "" })
       );
     }
 
     if (exercise.instructions && includeCandidateInstructions) {
       children.push(
-        new Paragraph({
+        new Pcompraph({
           children: [new TextRun({ text: "Anweisungen", bold: true, size: 24, color: secondaryColor })],
           heading: HeadingLevel.HEADING_2,
         }),
-        new Paragraph({ children: [new TextRun({ text: exercise.instructions, size: 20 })] }),
-        new Paragraph({ text: "" })
+        new Pcompraph({ children: [new TextRun({ text: exercise.instructions, size: 20 })] }),
+        new Pcompraph({ text: "" })
       );
     }
 
     if (exercise.candidateInstructions && includeCandidateInstructions) {
       children.push(
-        new Paragraph({
+        new Pcompraph({
           children: [new TextRun({ text: "Kandidaten-Anweisungen", bold: true, size: 24, color: secondaryColor })],
           heading: HeadingLevel.HEADING_2,
         }),
-        new Paragraph({ children: [new TextRun({ text: exercise.candidateInstructions, size: 20 })] }),
-        new Paragraph({ text: "" })
+        new Pcompraph({ children: [new TextRun({ text: exercise.candidateInstructions, size: 20 })] }),
+        new Pcompraph({ text: "" })
       );
     }
 
     if (exercise.evaluationCriteria && exercise.evaluationCriteria.length > 0) {
       children.push(
-        new Paragraph({
+        new Pcompraph({
           children: [new TextRun({ text: "Bewertungskriterien", bold: true, size: 24, color: secondaryColor })],
           heading: HeadingLevel.HEADING_2,
         })
@@ -228,13 +228,13 @@ function buildExerciseDocx(
         new TableRow({
           children: [
             new TableCell({
-              children: [new Paragraph({ children: [new TextRun({ text: "#", bold: true, size: 18, color: "FFFFFF" })] })],
+              children: [new Pcompraph({ children: [new TextRun({ text: "#", bold: true, size: 18, color: "FFFFFF" })] })],
               borders: cellBorders,
               width: { size: 10, type: WidthType.PERCENTAGE },
               shading: { fill: primaryColor },
             }),
             new TableCell({
-              children: [new Paragraph({ children: [new TextRun({ text: "Kriterium", bold: true, size: 18, color: "FFFFFF" })] })],
+              children: [new Pcompraph({ children: [new TextRun({ text: "Kriterium", bold: true, size: 18, color: "FFFFFF" })] })],
               borders: cellBorders,
               width: { size: 90, type: WidthType.PERCENTAGE },
               shading: { fill: primaryColor },
@@ -245,12 +245,12 @@ function buildExerciseDocx(
           new TableRow({
             children: [
               new TableCell({
-                children: [new Paragraph({ children: [new TextRun({ text: `${idx + 1}`, size: 18 })] })],
+                children: [new Pcompraph({ children: [new TextRun({ text: `${idx + 1}`, size: 18 })] })],
                 borders: cellBorders,
                 width: { size: 10, type: WidthType.PERCENTAGE },
               }),
               new TableCell({
-                children: [new Paragraph({ children: [new TextRun({ text: criterion, size: 18 })] })],
+                children: [new Pcompraph({ children: [new TextRun({ text: criterion, size: 18 })] })],
                 borders: cellBorders,
                 width: { size: 90, type: WidthType.PERCENTAGE },
               }),
@@ -265,17 +265,17 @@ function buildExerciseDocx(
           width: { size: 100, type: WidthType.PERCENTAGE },
         })
       );
-      children.push(new Paragraph({ text: "" }));
+      children.push(new Pcompraph({ text: "" }));
     }
 
     if (exercise.observerSheet && includeObserverSheets) {
       children.push(
-        new Paragraph({
+        new Pcompraph({
           children: [new TextRun({ text: "Beobachtungsbogen", bold: true, size: 24, color: secondaryColor })],
           heading: HeadingLevel.HEADING_2,
         }),
-        new Paragraph({ children: [new TextRun({ text: exercise.observerSheet, size: 20 })] }),
-        new Paragraph({ text: "" })
+        new Pcompraph({ children: [new TextRun({ text: exercise.observerSheet, size: 20 })] }),
+        new Pcompraph({ text: "" })
       );
 
       const ratingTable = new Table({
@@ -283,19 +283,19 @@ function buildExerciseDocx(
           new TableRow({
             children: [
               new TableCell({
-                children: [new Paragraph({ children: [new TextRun({ text: "Kompetenz", bold: true, size: 18, color: "FFFFFF" })] })],
+                children: [new Pcompraph({ children: [new TextRun({ text: "Kompetenz", bold: true, size: 18, color: "FFFFFF" })] })],
                 borders: cellBorders,
                 width: { size: 40, type: WidthType.PERCENTAGE },
                 shading: { fill: primaryColor },
               }),
               new TableCell({
-                children: [new Paragraph({ children: [new TextRun({ text: "Bewertung", bold: true, size: 18, color: "FFFFFF" })] })],
+                children: [new Pcompraph({ children: [new TextRun({ text: "Bewertung", bold: true, size: 18, color: "FFFFFF" })] })],
                 borders: cellBorders,
                 width: { size: 20, type: WidthType.PERCENTAGE },
                 shading: { fill: primaryColor },
               }),
               new TableCell({
-                children: [new Paragraph({ children: [new TextRun({ text: "Beobachtungen / Evidenz", bold: true, size: 18, color: "FFFFFF" })] })],
+                children: [new Pcompraph({ children: [new TextRun({ text: "Beobachtungen / Evidenz", bold: true, size: 18, color: "FFFFFF" })] })],
                 borders: cellBorders,
                 width: { size: 40, type: WidthType.PERCENTAGE },
                 shading: { fill: primaryColor },
@@ -306,17 +306,17 @@ function buildExerciseDocx(
             new TableRow({
               children: [
                 new TableCell({
-                  children: [new Paragraph({ children: [new TextRun({ text: "", size: 18 })] })],
+                  children: [new Pcompraph({ children: [new TextRun({ text: "", size: 18 })] })],
                   borders: cellBorders,
                   width: { size: 40, type: WidthType.PERCENTAGE },
                 }),
                 new TableCell({
-                  children: [new Paragraph({ children: [new TextRun({ text: "", size: 18 })] })],
+                  children: [new Pcompraph({ children: [new TextRun({ text: "", size: 18 })] })],
                   borders: cellBorders,
                   width: { size: 20, type: WidthType.PERCENTAGE },
                 }),
                 new TableCell({
-                  children: [new Paragraph({ children: [new TextRun({ text: "", size: 18 })] })],
+                  children: [new Pcompraph({ children: [new TextRun({ text: "", size: 18 })] })],
                   borders: cellBorders,
                   width: { size: 40, type: WidthType.PERCENTAGE },
                 }),
@@ -327,7 +327,7 @@ function buildExerciseDocx(
         width: { size: 100, type: WidthType.PERCENTAGE },
       });
       children.push(ratingTable);
-      children.push(new Paragraph({ text: "" }));
+      children.push(new Pcompraph({ text: "" }));
     }
 
     docSections.push({

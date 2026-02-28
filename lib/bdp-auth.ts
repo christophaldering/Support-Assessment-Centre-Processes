@@ -25,7 +25,7 @@ export function getBdpSession(): BdpSession | null {
         return {
           ...parsed,
           authSource: "bdp_session",
-          workspaceSlug: parsed.workspaceSlug || "arag",
+          workspaceSlug: parsed.workspaceSlug || "comp",
           environment: envOverride || parsed.environment || "live",
         } as BdpSession;
       }
@@ -46,7 +46,7 @@ export function getBdpSession(): BdpSession | null {
       isAdmin,
       environment: envOverride || "live",
       authSource: "platform",
-      workspaceSlug: platformSession.workspaceSlug || "arag",
+      workspaceSlug: platformSession.workspaceSlug || "comp",
     };
   } catch {}
 

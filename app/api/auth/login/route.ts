@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Bitte alle Felder ausfüllen." }, { status: 400 });
     }
 
-    if (workspaceSlug.toLowerCase() === "arag" || workspaceSlug.toLowerCase() === "abcd") {
+    if (workspaceSlug.toLowerCase() === "comp" || workspaceSlug.toLowerCase() === "abcd") {
       const bdpResult = await tryBdpLogin(email.toLowerCase().trim(), password, workspaceSlug.toLowerCase());
       if (bdpResult) return bdpResult;
     }
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function tryBdpLogin(email: string, password: string, ws: string = "arag"): Promise<NextResponse | null> {
+async function tryBdpLogin(email: string, password: string, ws: string = "comp"): Promise<NextResponse | null> {
   try {
     const emailMapping = await prisma.bdpNameMapping.findFirst({
       where: { entityType: "email", realName: email, workspace: ws },

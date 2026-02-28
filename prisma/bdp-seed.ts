@@ -9,7 +9,7 @@ export async function seedBdp() {
     return;
   }
 
-  console.log("[bdp-seed] Seeding ARAG BDP data...");
+  console.log("[bdp-seed] Seeding COMP BDP data...");
 
   const users = await Promise.all([
     prisma.bdpUser.create({ data: { code: "V1", role: "BOARD", environment: "live" } }),
@@ -110,12 +110,12 @@ export async function seedBdp() {
 
   await prisma.bdpConfig.create({
     data: {
-      projectKey: "ARAG_BDP",
+      projectKey: "COMP_BDP",
       enforceGatePassword: false,
       weightedAnalytics: false,
       lockNotesOnClose: true,
     },
   });
 
-  console.log("[bdp-seed] ARAG BDP seed complete.");
+  console.log("[bdp-seed] COMP BDP seed complete.");
 }

@@ -34,16 +34,16 @@ export async function register() {
         }
       }
 
-      const aragExists = await prisma.workspace.findUnique({ where: { slug: "arag" } });
-      if (!aragExists) {
-        const aragAdminHash = await bcrypt.hash("Christoph", 10);
-        const aragWs = await prisma.workspace.create({
+      const compExists = await prisma.workspace.findUnique({ where: { slug: "comp" } });
+      if (!compExists) {
+        const compAdminHash = await bcrypt.hash("Christoph", 10);
+        const compWs = await prisma.workspace.create({
           data: {
-            slug: "arag",
-            name: "ARAG",
+            slug: "comp",
+            name: "COMP",
             status: "active",
             aiEnabled: false,
-            adminPasswordHash: aragAdminHash,
+            adminPasswordHash: compAdminHash,
             dataResidency: "EU",
             theme: {
               create: {
@@ -65,15 +65,15 @@ export async function register() {
             name: "Demo User",
             passwordHash: demoHash,
             roles: ["WORKSPACE_ADMIN"],
-            workspaceId: aragWs.id,
+            workspaceId: compWs.id,
             forcePasswordChange: false,
             status: "active",
           },
         });
-        console.log("[seed] Created arag workspace + demo user");
+        console.log("[seed] Created comp workspace + demo user");
       } else {
         const demoUser = await prisma.user.findUnique({
-          where: { email_workspaceId: { email: "demo@demo.de", workspaceId: aragExists.id } },
+          where: { email_workspaceId: { email: "demo@demo.de", workspaceId: compExists.id } },
         });
         if (!demoUser) {
           const demoHash = await bcrypt.hash("demo", 10);
@@ -83,12 +83,12 @@ export async function register() {
               name: "Demo User",
               passwordHash: demoHash,
               roles: ["WORKSPACE_ADMIN"],
-              workspaceId: aragExists.id,
+              workspaceId: compExists.id,
               forcePasswordChange: false,
               status: "active",
             },
           });
-          console.log("[seed] Created demo user in existing arag workspace");
+          console.log("[seed] Created demo user in existing comp workspace");
         }
       }
 

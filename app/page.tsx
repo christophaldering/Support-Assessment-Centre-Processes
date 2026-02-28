@@ -519,8 +519,8 @@ export default function LandingPage() {
         const data = await res.json();
         if (data.user.forcePasswordChange) {
           router.push(`/w/${slugLower}/change-password`);
-        } else if (slugLower === "arag") {
-          router.push("/w/arag");
+        } else if (slugLower === "comp") {
+          router.push("/w/comp");
         } else if (data.user.roles.includes("CANDIDATE")) {
           router.push(`/w/${slugLower}/assessment`);
         } else if (data.user.roles.length === 1 && data.user.roles[0] === "OBSERVER") {

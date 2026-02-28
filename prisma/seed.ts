@@ -205,19 +205,19 @@ async function main() {
   }
 }
 
-async function ensureWorkspaceArag() {
+async function ensureWorkspaceComp() {
   const adminHash = await bcrypt.hash("Christoph", 10);
-  const existing = await prisma.workspace.findUnique({ where: { slug: "arag" } });
+  const existing = await prisma.workspace.findUnique({ where: { slug: "comp" } });
   let workspaceId: string;
 
   if (existing) {
     workspaceId = existing.id;
-    console.log("Seed: arag workspace already exists, skipping.");
+    console.log("Seed: comp workspace already exists, skipping.");
   } else {
     const workspace = await prisma.workspace.create({
       data: {
-        slug: "arag",
-        name: "ARAG",
+        slug: "comp",
+        name: "COMP",
         status: "active",
         aiEnabled: false,
         adminPasswordHash: adminHash,
@@ -236,7 +236,7 @@ async function ensureWorkspaceArag() {
       },
     });
     workspaceId = workspace.id;
-    console.log(`Seed: Created workspace "arag" (${workspace.id})`);
+    console.log(`Seed: Created workspace "comp" (${workspace.id})`);
   }
 
   const demoHash = await bcrypt.hash("demo", 10);
@@ -256,13 +256,13 @@ async function ensureWorkspaceArag() {
         status: "active",
       },
     });
-    console.log(`Seed: Created demo user "demo@demo.de" in arag workspace (${user.id})`);
+    console.log(`Seed: Created demo user "demo@demo.de" in comp workspace (${user.id})`);
   } else {
     await prisma.user.update({
       where: { id: existingDemo.id },
       data: { passwordHash: demoHash, forcePasswordChange: false, status: "active" },
     });
-    console.log("Seed: Demo user already exists in arag, updated password.");
+    console.log("Seed: Demo user already exists in comp, updated password.");
   }
 }
 
@@ -272,7 +272,7 @@ async function seedBdp() {
 }
 
 main()
-  .then(() => ensureWorkspaceArag())
+  .then(() => ensureWorkspaceComp())
   .then(() => seedBdp())
   .catch((e) => {
     console.error(e);
