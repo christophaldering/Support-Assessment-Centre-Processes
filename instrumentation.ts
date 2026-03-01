@@ -6,6 +6,104 @@ export async function register() {
     const prisma = new PrismaClient();
 
     try {
+      // ── ONE-TIME CLEANUP: Remove ARAG workspace, aestimamus refs, standardize passwords ──
+      const aragWs = await prisma.workspace.findUnique({ where: { slug: "arag" } });
+      if (aragWs) {
+        console.log("[cleanup] Removing ARAG workspace and all related data...");
+        const wsId = aragWs.id;
+
+        // BDP data (workspace='arag')
+        const bdpSessionIds = (await prisma.$queryRawUnsafe(`SELECT id FROM bdp_sessions WHERE workspace='arag'`) as any[]).map((s: any) => s.id);
+        const bdpTeamIds = (await prisma.$queryRawUnsafe(`SELECT id FROM bdp_teams WHERE workspace='arag'`) as any[]).map((t: any) => t.id);
+        const bdpCriterionIds = (await prisma.$queryRawUnsafe(`SELECT id FROM bdp_criteria WHERE workspace='arag'`) as any[]).map((c: any) => c.id);
+        const bdpUserIds = (await prisma.$queryRawUnsafe(`SELECT id FROM bdp_users WHERE workspace='arag'`) as any[]).map((u: any) => u.id);
+
+        if (bdpSessionIds.length > 0) {
+          const sIds = bdpSessionIds.map((id: string) => `'${id}'`).join(",");
+          await prisma.$executeRawUnsafe(`DELETE FROM bdp_scores WHERE session_id IN (${sIds})`);
+          await prisma.$executeRawUnsafe(`DELETE FROM bdp_observer_assignments WHERE session_id IN (${sIds})`);
+          await prisma.$executeRawUnsafe(`DELETE FROM bdp_sponsor_flags WHERE session_id IN (${sIds})`);
+          await prisma.$executeRawUnsafe(`DELETE FROM bdp_individual_notes WHERE session_id IN (${sIds})`);
+          await prisma.$executeRawUnsafe(`DELETE FROM bdp_tie_breaks WHERE session_id IN (${sIds})`);
+          await prisma.$executeRawUnsafe(`DELETE FROM bdp_session_teams WHERE session_id IN (${sIds})`);
+        }
+        if (bdpCriterionIds.length > 0) {
+          const cIds = bdpCriterionIds.map((id: string) => `'${id}'`).join(",");
+          await prisma.$executeRawUnsafe(`DELETE FROM bdp_role_weights WHERE criterion_id IN (${cIds})`);
+        }
+        if (bdpUserIds.length > 0) {
+          const uIds = bdpUserIds.map((id: string) => `'${id}'`).join(",");
+          await prisma.$executeRawUnsafe(`DELETE FROM bdp_notifications WHERE user_id IN (${uIds})`);
+        }
+        if (bdpTeamIds.length > 0) {
+          const tIds = bdpTeamIds.map((id: string) => `'${id}'`).join(",");
+          await prisma.$executeRawUnsafe(`DELETE FROM bdp_team_participants WHERE team_id IN (${tIds})`);
+        }
+
+        for (const tbl of ["bdp_participants","bdp_teams","bdp_sessions","bdp_criteria","bdp_name_mappings","bdp_config","bdp_users"]) {
+          await prisma.$executeRawUnsafe(`DELETE FROM ${tbl} WHERE workspace='arag'`);
+        }
+
+        // Workspace-level data
+        for (const tbl of ["audit_logs","consent_records","consent_templates","audio_recordings","reports","usage_events","access_requests","ai_audit_log","ai_system_settings","workspace_style_guides","brand_rule_sets","exercise_recommendations","predictive_profiles","development_blueprints","diagnostic_hypotheses","observation_sheet_templates","exercise_library_items","case_studies","clients","report_templates","scale_definitions","requirements_analyses"]) {
+          try { await prisma.$executeRawUnsafe(`DELETE FROM ${tbl} WHERE workspace_id='${wsId}'`); } catch {}
+        }
+
+        const models = await prisma.$queryRawUnsafe(`SELECT id FROM competency_models WHERE workspace_id='${wsId}'`) as any[];
+        for (const m of models) {
+          try { await prisma.$executeRawUnsafe(`DELETE FROM competency_nodes WHERE model_id='${m.id}'`); } catch {}
+          try { await prisma.$executeRawUnsafe(`DELETE FROM weighting_profiles WHERE model_id='${m.id}'`); } catch {}
+        }
+        await prisma.$executeRawUnsafe(`DELETE FROM competency_models WHERE workspace_id='${wsId}'`);
+
+        const assessments = await prisma.$queryRawUnsafe(`SELECT id FROM assessments WHERE workspace_id='${wsId}'`) as any[];
+        for (const a of assessments) {
+          for (const sub of ["observer_ratings","consolidated_scores","exercises","exercise_competency_mappings","documents","self_assessments","self_assessment_responses","portal_documents","collaboration_events","shared_observer_notes","presence_sessions","mtmm_snapshots"]) {
+            try { await prisma.$executeRawUnsafe(`DELETE FROM ${sub} WHERE assessment_id='${a.id}'`); } catch {}
+          }
+        }
+        await prisma.$executeRawUnsafe(`DELETE FROM assessments WHERE workspace_id='${wsId}'`);
+
+        const userIds = await prisma.$queryRawUnsafe(`SELECT id FROM users WHERE workspace_id='${wsId}'`) as any[];
+        for (const u of userIds) {
+          await prisma.$executeRawUnsafe(`DELETE FROM password_reset_tokens WHERE user_id='${u.id}'`);
+        }
+        await prisma.$executeRawUnsafe(`DELETE FROM users WHERE workspace_id='${wsId}'`);
+        await prisma.$executeRawUnsafe(`DELETE FROM themes WHERE workspace_id='${wsId}'`);
+        await prisma.$executeRawUnsafe(`DELETE FROM workspaces WHERE id='${wsId}'`);
+        console.log("[cleanup] ARAG workspace fully removed.");
+      }
+
+      // ── ONE-TIME CLEANUP: Rename aestimamus workspace to main ──
+      const aestWs = await prisma.workspace.findUnique({ where: { slug: "aestimamus" } });
+      if (aestWs) {
+        console.log("[cleanup] Renaming aestimamus workspace to main...");
+        await prisma.$executeRawUnsafe(`UPDATE workspaces SET slug='main', name='Executive Diagnostics Suite' WHERE slug='aestimamus'`);
+        await prisma.$executeRawUnsafe(`DELETE FROM users WHERE email='christoph.aldering@aestimamus.com'`).catch(() => {});
+        await prisma.$executeRawUnsafe(`DELETE FROM access_requests WHERE email ILIKE '%aestimamus%'`).catch(() => {});
+        await prisma.$executeRawUnsafe(`UPDATE requirements_analyses SET transcript = REPLACE(transcript::text, 'aestimamus', 'Executive Diagnostics Suite') WHERE transcript::text ILIKE '%aestimamus%'`).catch(() => {});
+        await prisma.$executeRawUnsafe(`UPDATE brand_rule_sets SET name = REPLACE(name, 'aestimamus', 'Executive Diagnostics Suite') WHERE name ILIKE '%aestimamus%'`).catch(() => {});
+        await prisma.$executeRawUnsafe(`UPDATE workspace_style_guides SET title = REPLACE(title, 'aestimamus', 'Executive Diagnostics Suite') WHERE title ILIKE '%aestimamus%'`).catch(() => {});
+        await prisma.$executeRawUnsafe(`UPDATE workspace_style_guides SET file_object_path = REPLACE(file_object_path, 'aestimamus', 'main') WHERE file_object_path ILIKE '%aestimamus%'`).catch(() => {});
+        await prisma.$executeRawUnsafe(`UPDATE workspace_style_guides SET analysis_json = REPLACE(analysis_json::text, 'aestimamus', 'Executive Diagnostics Suite')::jsonb WHERE analysis_json::text ILIKE '%aestimamus%'`).catch(() => {});
+        console.log("[cleanup] aestimamus renamed to main.");
+      }
+
+      // ── ONE-TIME CLEANUP: Standardize all passwords to #Sammy2026 ──
+      const newHash = await bcrypt.hash("#Sammy2026", 10);
+      const sampleUser = await prisma.user.findFirst();
+      if (sampleUser) {
+        const isAlready = await bcrypt.compare("#Sammy2026", sampleUser.passwordHash);
+        if (!isAlready) {
+          console.log("[cleanup] Updating all passwords to #Sammy2026...");
+          await prisma.$executeRawUnsafe(`UPDATE users SET password_hash = '${newHash}'`);
+          await prisma.$executeRawUnsafe(`UPDATE workspaces SET admin_password_hash = '${newHash}'`);
+          await prisma.$executeRawUnsafe(`UPDATE bdp_users SET password_hash = '${newHash}'`);
+          console.log("[cleanup] All passwords updated.");
+        }
+      }
+      // ── END CLEANUP ──
+
       const workspace = await prisma.workspace.findUnique({ where: { slug: "main" } });
       if (workspace) {
         const candidateExists = await prisma.user.findFirst({
