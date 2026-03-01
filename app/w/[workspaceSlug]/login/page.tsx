@@ -127,9 +127,6 @@ function WorkspaceLoginInner() {
             <h1 className="text-2xl font-bold text-brand-navy mb-2">
               {mode === "login" ? t("loginTitle") : t("firstLogin")}
             </h1>
-            <p className="text-sm text-slate-500">
-              {t("workspace")}: <strong>{workspaceSlug}</strong>
-            </p>
             <div className="h-1 w-10 bg-brand-blue mx-auto rounded-full mt-4" />
           </div>
 
