@@ -305,7 +305,7 @@ function CompLobbyInner() {
             </div>
 
             <p className={`text-center text-xs pb-4 ${viewMode === "apple" ? "text-white/20" : "text-gray-400"}`}>
-              {t("poweredBy")} <span className="font-semibold text-[#A6473B]">aestimamus</span>
+              {t("poweredBy")} <span className="font-semibold text-[#A6473B]">Executive Diagnostics Suite</span>
             </p>
           </div>
         </main>

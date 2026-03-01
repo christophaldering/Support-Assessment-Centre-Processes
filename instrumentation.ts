@@ -6,7 +6,7 @@ export async function register() {
     const prisma = new PrismaClient();
 
     try {
-      const workspace = await prisma.workspace.findUnique({ where: { slug: "aestimamus" } });
+      const workspace = await prisma.workspace.findUnique({ where: { slug: "main" } });
       if (workspace) {
         const candidateExists = await prisma.user.findFirst({
           where: { email: "kandidat@test.de", workspaceId: workspace.id },
@@ -139,8 +139,8 @@ export async function register() {
 
         const workspace = await prisma.workspace.create({
           data: {
-            slug: "aestimamus",
-            name: "aestimamus",
+            slug: "main",
+            name: "Executive Diagnostics Suite",
             status: "active",
             adminPasswordHash: adminHash,
             dataResidency: "EU",
@@ -160,7 +160,7 @@ export async function register() {
 
         await prisma.user.create({
           data: {
-            email: "christoph.aldering@aestimamus.com",
+            email: "christoph.aldering@googlemail.com",
             name: "Christoph Aldering",
             passwordHash: adminHash,
             roles: ["ADMIN"],

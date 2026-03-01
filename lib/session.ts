@@ -35,7 +35,7 @@ export function setWorkspaceAuth(workspaceSlug: string) {
 }
 
 export function getWorkspaceAuth(): string | null {
-  if (DEV_BYPASS) return "aestimamus";
+  if (DEV_BYPASS) return "main";
   return cookies().get(WORKSPACE_COOKIE)?.value ?? null;
 }
 
@@ -70,7 +70,7 @@ export function getUserSession(): UserSession | null {
   if (DEV_BYPASS) {
     return {
       userId: "dev-bypass-user",
-      workspaceSlug: "aestimamus",
+      workspaceSlug: "main",
       roles: ["ADMIN"],
     };
   }

@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
       decidedBy: getDisplayName("observer", tb.decidedById, tb.decidedBy.code),
       rationale: tb.rationale,
     })),
-    poweredBy: "aestimamus",
+    poweredBy: "Executive Diagnostics Suite",
   };
 
   return NextResponse.json(exportData);

@@ -313,7 +313,7 @@ function BdpLayoutInner({ children }: { children: ReactNode }) {
           </main>
 
           <footer className="text-center py-2 text-xs text-gray-400 border-t border-gray-100">
-            Powered by <span className="font-semibold text-[#A6473B]">aestimamus</span>
+            Powered by <span className="font-semibold text-[#A6473B]">Executive Diagnostics Suite</span>
           </footer>
         </div>
       </div>

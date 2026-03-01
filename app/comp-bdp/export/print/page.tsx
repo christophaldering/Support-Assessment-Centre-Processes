@@ -158,10 +158,10 @@ export default function BdpPrintPage() {
       <footer className="mt-12 pt-4 border-t border-gray-200 text-center text-xs text-gray-400 print:fixed print:bottom-0 print:left-0 print:right-0 print:py-2 print:bg-white">
         <div className="flex items-center justify-center gap-2">
           <svg width="80" height="16" viewBox="0 0 80 16" className="inline-block">
-            <text x="0" y="12" fontSize="11" fontWeight="bold" fill="#A6473B" fontFamily="sans-serif">aestimamus</text>
+            <text x="0" y="12" fontSize="11" fontWeight="bold" fill="#A6473B" fontFamily="sans-serif">Executive Diagnostics Suite</text>
           </svg>
         </div>
-        <p className="mt-1">{t("poweredBy")} aestimamus</p>
+        <p className="mt-1">{t("poweredBy")} Executive Diagnostics Suite</p>
       </footer>
     </div>
   );

@@ -10,7 +10,7 @@ Preferred communication style: Simple, everyday language.
 Design language: German default with full DE/EN internationalization (Sprint I18N-01 complete)
 Dual branding:
 - Neutral platform: dark navy (#0f172a), blue accent (#3b82f6), clean/minimal
-- aestimamus workspace: Terrakotta Rot (#A6473B) primary, Wein Rot (#5F1A11) dark, Lagune Türkis (#297587) accent, Tiefsee Türkis (#115560) accent dark, Lagune Medium (#B5D6DE), Lagune Hell (#EFF4F5) light bg, Satoshi font (Fontshare), pure white backgrounds. Full style guide uploaded and analyzed.
+- Main workspace (Executive Diagnostics Suite): Terrakotta Rot (#A6473B) primary, Wein Rot (#5F1A11) dark, Lagune Türkis (#297587) accent, Tiefsee Türkis (#115560) accent dark, Lagune Medium (#B5D6DE), Lagune Hell (#EFF4F5) light bg, Satoshi font (Fontshare), pure white backgrounds. Full style guide uploaded and analyzed.
 Default passwords: "Christoph" for all access
 Footer credit: "© Christoph Aldering · Private initiative – for training reasons only – no data from reality so far!"
 
@@ -48,12 +48,12 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 
 ## Recent Changes (Feb 2026)
 
-*   **aestimamus Style Guide integration**: Full corporate design style guide uploaded and analyzed. Theme updated to Terrakotta Rot (#A6473B), Lagune Türkis (#297587), Satoshi font. Brand rule set created. Style Guide upload feature added to Corporate Design page.
+*   **Style Guide integration**: Full corporate design style guide uploaded and analyzed. Theme updated to Terrakotta Rot (#A6473B), Lagune Türkis (#297587), Satoshi font. Brand rule set created. Style Guide upload feature added to Corporate Design page.
 *   **Gutachten-Generator**: New standalone module for report/assessment generation with three types (One-Pager, Ergebnisbericht, Gesamtauswertung). Supports PPTX template upload, auto-anonymization, AI structure analysis. API at `/api/w/[slug]/report-templates`.
 *   **Exercise scope & scenario linking**: Exercises now have scope (general/client/project/candidate) and can be linked to overarching case study scenarios. Case studies support `isOverarchingScenario` flag. UI filters and badges added.
 *   **Rich demo data seeded**: 4 assessments (various statuses), 14+ users (candidates, observers, moderators), 2 competency models with 11 competencies, 2 requirements analyses, 8 exercise library items, 2 observation sheet templates.
 *   **Dashboard activity feed**: Live activity timeline on dashboard showing assessment creation, candidate assignments, exercise linking, and rating progress.
-*   **Design refresh**: Cockpit header, sidebar, KPI cards, quick actions updated with aestimamus branding colors and Satoshi font.
+*   **Design refresh**: Cockpit header, sidebar, KPI cards, quick actions updated with corporate branding colors and Satoshi font.
 *   Feature flag system implemented for phased module releases
 *   All R1–R6 modules released: Users, Assessments, Requirements, Competencies, Exercise Library, Modul-Designer, Case-Studio, Observation Sheets, Analytics, Reports, Audio, Consents, Theme, Brand Rules, Intelligence, Gutachten-Generator
 *   Login error messages improved (German, specific per error type)
@@ -70,7 +70,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
     - Individual candidate evaluation (per-criterion prose notes, contribution/presence markers)
     - Admin console: CRUD sessions/teams/participants/observers/criteria, state transitions, transparency mode, tie-break, export, name mappings
     - Individual notes API: `/api/comp-bdp/notes/upsert` with Zod validation, locked in CLOSED/RELEASED
-    - Export: CSV aggregate/JSON full (anon/named), print view with "Powered by aestimamus" footer
+    - Export: CSV aggregate/JSON full (anon/named), print view with "Powered by Executive Diagnostics Suite" footer
     - Export restrictions: admin-only, RELEASED-only, demo excluded by default (environment!="demo")
     - Demo exclusion: default exclude records with environment=="demo"; admin toggle "DEMO einschließen" in export tab
     - Mobile-first UI: bottom nav (Home/Sessions/Bewertung/Auswertung), hamburger menu, DEMO banner

@@ -6,21 +6,21 @@ const prisma = new PrismaClient();
 async function main() {
   const adminHash = await bcrypt.hash("Christoph", 10);
 
-  const existing = await prisma.workspace.findUnique({ where: { slug: "aestimamus" } });
+  const existing = await prisma.workspace.findUnique({ where: { slug: "main" } });
   let workspaceId: string;
 
   if (existing) {
     workspaceId = existing.id;
     if (!existing.aiEnabled) {
       await prisma.workspace.update({ where: { id: existing.id }, data: { aiEnabled: true } });
-      console.log("Seed: Enabled AI for aestimamus workspace.");
+      console.log("Seed: Enabled AI for main workspace.");
     }
-    console.log("Seed: aestimamus workspace already exists, skipping workspace creation.");
+    console.log("Seed: main workspace already exists, skipping workspace creation.");
   } else {
     const workspace = await prisma.workspace.create({
       data: {
-        slug: "aestimamus",
-        name: "aestimamus",
+        slug: "main",
+        name: "Executive Diagnostics Suite",
         status: "active",
         aiEnabled: true,
         adminPasswordHash: adminHash,
@@ -43,13 +43,13 @@ async function main() {
   }
 
   const existingAdmin = await prisma.user.findUnique({
-    where: { email_workspaceId: { email: "christoph.aldering@aestimamus.com", workspaceId } },
+    where: { email_workspaceId: { email: "christoph.aldering@googlemail.com", workspaceId } },
   });
 
   if (!existingAdmin) {
     const user = await prisma.user.create({
       data: {
-        email: "christoph.aldering@aestimamus.com",
+        email: "christoph.aldering@googlemail.com",
         name: "Christoph Aldering",
         passwordHash: adminHash,
         roles: ["WORKSPACE_ADMIN"],

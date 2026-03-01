@@ -212,7 +212,7 @@ export default function AppleLanding({ onSelectEnv, envLockedNote }: Props) {
       <footer className="bg-black border-t border-white/5 py-8">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between">
           <p className="text-base text-white/20">
-            {t("poweredBy")} <span className="font-semibold text-[#A6473B]">aestimamus</span>
+            {t("poweredBy")} <span className="font-semibold text-[#A6473B]">Executive Diagnostics Suite</span>
           </p>
           <p className="text-base text-white/15">COMP SE</p>
         </div>

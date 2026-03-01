@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   const { recipients, subject, body: template, sessionName } = parsed.data;
   const link = "https://assessment-suite.replit.app/comp-bdp/login";
-  const sender = "aestimamus / COMP Projektteam";
+  const sender = "Executive Diagnostics Suite / COMP Projektteam";
 
   const previews = recipients.map(r => {
     const rendered = template

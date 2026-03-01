@@ -73,7 +73,7 @@ export default function StandardLanding({ onSelectEnv, envLockedNote }: Props) {
       <footer className="bg-black border-t border-white/10 py-6">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between">
           <p className="text-xs text-gray-500">
-            {t("poweredBy")} <span className="font-semibold text-[#A6473B]">aestimamus</span>
+            {t("poweredBy")} <span className="font-semibold text-[#A6473B]">Executive Diagnostics Suite</span>
           </p>
           <p className="text-xs text-gray-600">COMP SE</p>
         </div>

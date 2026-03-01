@@ -184,7 +184,7 @@ function AbcdLobbyInner() {
               <p className="text-amber-600 text-sm bg-amber-50 rounded-lg p-3">{t("demoLockedNote")}</p>
             )}
             <p className="text-center text-xs text-gray-400">
-              {t("poweredBy")} <span className="font-semibold text-[#A6473B]">aestimamus</span>
+              {t("poweredBy")} <span className="font-semibold text-[#A6473B]">Executive Diagnostics Suite</span>
             </p>
           </div>
         </main>
@@ -277,7 +277,7 @@ function AbcdLobbyInner() {
             </div>
 
             <p className="text-center text-xs pb-4 text-gray-400">
-              {t("poweredBy")} <span className="font-semibold text-[#A6473B]">aestimamus</span>
+              {t("poweredBy")} <span className="font-semibold text-[#A6473B]">Executive Diagnostics Suite</span>
             </p>
           </div>
         </main>
