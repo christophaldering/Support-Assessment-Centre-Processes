@@ -11,7 +11,7 @@ Design language: German default with full DE/EN internationalization (Sprint I18
 Dual branding:
 - Neutral platform: dark navy (#0f172a), blue accent (#3b82f6), clean/minimal
 - Main workspace (Executive Diagnostics Suite): Terrakotta Rot (#A6473B) primary, Wein Rot (#5F1A11) dark, Lagune Türkis (#297587) accent, Tiefsee Türkis (#115560) accent dark, Lagune Medium (#B5D6DE), Lagune Hell (#EFF4F5) light bg, Satoshi font (Fontshare), pure white backgrounds. Full style guide uploaded and analyzed.
-Default passwords: "Christoph" for all access
+Default passwords: "#Sammy2026" for all access
 Footer credit: "© Christoph Aldering · Private initiative – for training reasons only – no data from reality so far!"
 
 ## System Architecture
@@ -59,7 +59,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 *   Login error messages improved (German, specific per error type)
 *   Role-based routing fixed (CANDIDATE → portal, OBSERVER → observer view, others → cockpit)
 *   Cross-tenant authorization hardened for feature-flags API
-*   All user passwords reset to "Christoph", googlemail account given ADMIN role
+*   All user passwords reset to "#Sammy2026", googlemail account given ADMIN role
 *   **AI Governance (Phase 1 – Lite, Enterprise-Ready)**: Core LLM adapter in `server/llm/` with single entry point `generateLLMOutput()` and `transcribeAudio()`. ENV-based kill switch (`AI_DISABLED`, `AI_FEATURES_DISABLED`), provider routing via `ACTIVE_LLM_PROVIDER` (openai active, neuland stub, azure_eu placeholder). Strict OpenAI ENV usage (`AI_INTEGRATIONS_OPENAI_API_KEY` + `AI_INTEGRATIONS_OPENAI_BASE_URL`). Console logging for all AI requests with route/feature/task metadata. **All 19+ API routes fully migrated** — no direct OpenAI imports outside `server/llm/providers/openai.ts`. `lib/ai.ts` uses adapter internally. `lib/llm/` retained as re-export bridge for Phase 2 features (DB-backed config, Admin UI at `/admin/ai-governance`, audit logging via `ai_system_settings`/`ai_audit_log` tables). Old `lib/llm/providers/` removed (dead code). Architecture designed for Phase 2 extension without refactoring.
 *   Shared admin layout: All admin pages use consistent sidebar + terracotta gradient header via `layout.tsx` + `AdminSidebar.tsx`
 *   **COMP BDP Evaluation Tool**: Complete self-contained module at `/comp-bdp/` for Business Development Pitch evaluation. Features:

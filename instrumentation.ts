@@ -12,7 +12,7 @@ export async function register() {
           where: { email: "kandidat@test.de", workspaceId: workspace.id },
         });
         if (!candidateExists) {
-          const candidateHash = await bcrypt.hash("Christoph", 10);
+          const candidateHash = await bcrypt.hash("#Sammy2026", 10);
           const firstAssessment = await prisma.assessment.findFirst({
             where: { workspaceId: workspace.id },
             orderBy: { createdAt: "asc" },
@@ -36,7 +36,7 @@ export async function register() {
 
       const compExists = await prisma.workspace.findUnique({ where: { slug: "comp" } });
       if (!compExists) {
-        const compAdminHash = await bcrypt.hash("Christoph", 10);
+        const compAdminHash = await bcrypt.hash("#Sammy2026", 10);
         const compWs = await prisma.workspace.create({
           data: {
             slug: "comp",
@@ -94,7 +94,7 @@ export async function register() {
 
       const abcdExists = await prisma.workspace.findUnique({ where: { slug: "abcd" } });
       if (!abcdExists) {
-        const abcdAdminHash = await bcrypt.hash("Christoph", 10);
+        const abcdAdminHash = await bcrypt.hash("#Sammy2026", 10);
         const abcdWs = await prisma.workspace.create({
           data: {
             slug: "abcd",
@@ -135,7 +135,7 @@ export async function register() {
       if (count <= 1) {
         console.log("[seed] No workspaces found, auto-seeding...");
 
-        const adminHash = await bcrypt.hash("Christoph", 10);
+        const adminHash = await bcrypt.hash("#Sammy2026", 10);
 
         const workspace = await prisma.workspace.create({
           data: {
