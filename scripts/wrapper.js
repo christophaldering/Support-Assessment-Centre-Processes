@@ -161,7 +161,7 @@ function startServer() {
   const standaloneDir = path.join(process.cwd(), ".next", "standalone");
   const hasStandalone = fs.existsSync(path.join(standaloneDir, "server.js"));
 
-  let cmd, args, cwd, serverPort;
+  let cmd, args, cwd;
   if (hasStandalone) {
     try {
       execSync("cp -rn .next/static .next/standalone/.next/static 2>/dev/null", { stdio: "ignore" });
@@ -170,13 +170,11 @@ function startServer() {
     cmd = process.execPath;
     args = ["server.js"];
     cwd = standaloneDir;
-    serverPort = PORT;
-    console.log("[wrapper] Starting production server on port " + PORT);
+    console.log("[wrapper] Starting production server on port " + INTERNAL_PORT);
   } else {
     cmd = path.join(process.cwd(), "node_modules", ".bin", "next");
     args = ["dev", "-p", String(INTERNAL_PORT), "-H", "0.0.0.0"];
     cwd = process.cwd();
-    serverPort = INTERNAL_PORT;
     console.log("[wrapper] Starting dev server on port " + INTERNAL_PORT);
   }
 
@@ -184,7 +182,7 @@ function startServer() {
     stdio: "inherit",
     cwd,
     detached: true,
-    env: { ...process.env, PORT: String(serverPort), HOSTNAME: "0.0.0.0", NEXT_TELEMETRY_DISABLED: "1" },
+    env: { ...process.env, PORT: String(INTERNAL_PORT), HOSTNAME: "0.0.0.0", NEXT_TELEMETRY_DISABLED: "1" },
   });
 
   childPid = child.pid;
@@ -197,17 +195,18 @@ function startServer() {
     if (childPid === child.pid) childPid = null;
   });
 
-  if (!hasStandalone) {
-    waitForServer(() => {
+  waitForServer(() => {
+    if (!hasStandalone) {
       warmup(() => {
         serverReady = true;
         isStarting = false;
       });
-    });
-  } else {
-    serverReady = true;
-    setTimeout(() => { isStarting = false; }, 5000);
-  }
+    } else {
+      console.log("[wrapper] Production server ready, accepting connections");
+      serverReady = true;
+      isStarting = false;
+    }
+  });
 }
 
 function healthCheck() {
