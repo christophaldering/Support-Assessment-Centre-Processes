@@ -58,7 +58,7 @@ integrations = ["javascript_object_storage:2.0.0", "javascript_openai_ai_integra
 [userenv]
 
 [userenv.shared]
-MASTER_ADMIN_PASSWORD_HASH = "$2b$10$T55C0zILIOSnvJdNQNkC0.hfoD6eBvVx/iozmxYbUR2xJteNyz4SS"
+MASTER_ADMIN_PASSWORD_HASH = "$2b$10$n/tLg0U5w9nrJPL.MR5keeD7/W3evelVXf1J3NrmGurNRj90wiliG"
 AI_DISABLED = "false"
 AI_FEATURES_DISABLED = ""
 ACTIVE_LLM_PROVIDER = "openai"

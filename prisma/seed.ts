@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminHash = await bcrypt.hash("#Sammy2026", 10);
+  const adminHash = await bcrypt.hash("#Sammy2024", 10);
 
   const existing = await prisma.workspace.findUnique({ where: { slug: "main" } });
   let workspaceId: string;
@@ -206,7 +206,7 @@ async function main() {
 }
 
 async function ensureWorkspaceComp() {
-  const adminHash = await bcrypt.hash("#Sammy2026", 10);
+  const adminHash = await bcrypt.hash("#Sammy2024", 10);
   const existing = await prisma.workspace.findUnique({ where: { slug: "comp" } });
   let workspaceId: string;
 

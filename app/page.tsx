@@ -25,7 +25,7 @@ export default function RootLandingPage() {
     setError("");
 
     // Targeted credentials
-    if (email === "christoph.aldering@googlemail.com" && password === "#Sammy2026") {
+    if (email === "christoph.aldering@googlemail.com" && password === "#Sammy2024") {
       sessionStorage.setItem("root_access", "true");
       router.push("/landing");
     } else {
