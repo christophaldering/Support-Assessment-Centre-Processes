@@ -65,16 +65,19 @@ function proxyRequest(clientReq, clientRes) {
 .c{text-align:center}.s{width:32px;height:32px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:r .8s linear infinite;margin:0 auto 1.5rem}
 @keyframes r{to{transform:rotate(360deg)}}h2{color:#e2e8f0;font-size:1.125rem;font-weight:500;margin:0 0 .5rem}p{font-size:.875rem;margin:0}</style>
 </head><body><div class="c"><div class="s"></div><h2>Executive Diagnostics</h2><p>Wird geladen...</p></div>
-<script>setTimeout(function(){location.reload()},2000)</script></body></html>`);
+<script>setTimeout(function(){location.reload()},5000)</script></body></html>`);
     return;
   }
+
+  const fwdHeaders = Object.assign({}, clientReq.headers);
+  delete fwdHeaders["host"];
 
   const opts = {
     hostname: "127.0.0.1",
     port: INTERNAL_PORT,
     path: clientReq.url,
     method: clientReq.method,
-    headers: { ...clientReq.headers, host: "127.0.0.1:" + INTERNAL_PORT },
+    headers: fwdHeaders,
     timeout: 30000,
   };
 
@@ -84,9 +87,14 @@ function proxyRequest(clientReq, clientRes) {
   });
 
   proxyReq.on("error", (err) => {
+    console.log("[wrapper] Proxy error: " + err.message);
     if (!clientRes.headersSent) {
-      clientRes.writeHead(502, { "Content-Type": "text/plain" });
-      clientRes.end("Server temporarily unavailable");
+      clientRes.writeHead(502, { "Content-Type": "text/html; charset=utf-8" });
+      clientRes.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Loading...</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#94a3b8;font-family:system-ui,-apple-system,sans-serif}
+.c{text-align:center}h2{color:#e2e8f0;font-size:1.125rem;font-weight:500;margin:0 0 .5rem}p{font-size:.875rem;margin:0}</style>
+</head><body><div class="c"><h2>Executive Diagnostics</h2><p>Verbindung wird hergestellt...</p></div>
+<script>setTimeout(function(){location.reload()},3000)</script></body></html>`);
     }
   });
 
@@ -136,7 +144,7 @@ function warmup(callback) {
     for (let i = 1; i < chunks.length; i++) fetchUrl(chunks[i], 0);
   }, 2000);
 
-  setTimeout(() => { if (!called) { called = true; console.log("[wrapper] Warmup timeout, accepting connections anyway"); callback(); } }, 30000);
+  setTimeout(() => { if (!called) { called = true; console.log("[wrapper] Warmup timeout, accepting connections anyway"); callback(); } }, 120000);
 }
 
 function waitForServer(callback) {
@@ -246,12 +254,14 @@ const proxy = http.createServer(proxyRequest);
 
 proxy.on("upgrade", (req, socket, head) => {
   if (!serverReady) { socket.destroy(); return; }
+  const wsHeaders = Object.assign({}, req.headers);
+  delete wsHeaders["host"];
   const opts = {
     hostname: "127.0.0.1",
     port: INTERNAL_PORT,
     path: req.url,
     method: req.method,
-    headers: { ...req.headers, host: "127.0.0.1:" + INTERNAL_PORT },
+    headers: wsHeaders,
   };
   const proxyReq = http.request(opts);
   proxyReq.on("upgrade", (proxyRes, proxySocket, proxyHead) => {

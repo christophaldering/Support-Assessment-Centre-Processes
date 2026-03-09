@@ -8,14 +8,15 @@ npx prisma generate
 echo "=== Cleaning previous build ==="
 rm -rf .next
 
-echo "=== Building Next.js (with increased memory) ==="
-export NODE_OPTIONS="--max-old-space-size=2048"
+echo "=== Building Next.js ==="
+export NODE_OPTIONS="--max-old-space-size=4096"
 npx next build 2>&1
 BUILD_EXIT=$?
 
 if [ $BUILD_EXIT -ne 0 ]; then
   echo "=== Build failed (exit $BUILD_EXIT), cleaning corrupted artifacts ==="
   rm -rf .next
+  echo "=== Server will start in dev mode ==="
 fi
 
 echo "=== Build step complete ==="
