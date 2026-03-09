@@ -8,8 +8,9 @@ npx prisma generate
 echo "=== Cleaning previous build ==="
 rm -rf .next
 
-echo "=== Attempting Next.js build ==="
-timeout 180 npx next build 2>&1
+echo "=== Building Next.js (with increased memory) ==="
+export NODE_OPTIONS="--max-old-space-size=2048"
+npx next build 2>&1
 BUILD_EXIT=$?
 
 if [ $BUILD_EXIT -ne 0 ]; then
