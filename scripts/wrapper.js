@@ -4,6 +4,7 @@ const fs = require("fs");
 const http = require("http");
 
 const PORT = 5000;
+const INTERNAL_PORT = 5001;
 const HEALTH_INTERVAL = 15000;
 const STARTUP_GRACE = 30000;
 const MAX_RESTART_DELAY = 60000;
@@ -13,6 +14,7 @@ let childPid = null;
 let isStarting = false;
 let lastStartTime = 0;
 let consecutiveFailures = 0;
+let serverReady = false;
 
 function savePid(pid) {
   try { fs.writeFileSync(PID_FILE, String(pid)); } catch {}
@@ -39,6 +41,7 @@ function killChild() {
 
   childPid = null;
 
+  try { execSync(`fuser -k ${INTERNAL_PORT}/tcp 2>/dev/null`, { stdio: "ignore" }); } catch {}
   try { execSync(`fuser -k ${PORT}/tcp 2>/dev/null`, { stdio: "ignore" }); } catch {}
 
   try { fs.unlinkSync(PID_FILE); } catch {}
@@ -54,16 +57,111 @@ function killChild() {
   }
 }
 
+function proxyRequest(clientReq, clientRes) {
+  if (!serverReady) {
+    clientRes.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+    clientRes.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Loading...</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#94a3b8;font-family:system-ui,-apple-system,sans-serif}
+.c{text-align:center}.s{width:32px;height:32px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:r .8s linear infinite;margin:0 auto 1.5rem}
+@keyframes r{to{transform:rotate(360deg)}}h2{color:#e2e8f0;font-size:1.125rem;font-weight:500;margin:0 0 .5rem}p{font-size:.875rem;margin:0}</style>
+</head><body><div class="c"><div class="s"></div><h2>Executive Diagnostics</h2><p>Wird geladen...</p></div>
+<script>setTimeout(function(){location.reload()},2000)</script></body></html>`);
+    return;
+  }
+
+  const opts = {
+    hostname: "127.0.0.1",
+    port: INTERNAL_PORT,
+    path: clientReq.url,
+    method: clientReq.method,
+    headers: { ...clientReq.headers, host: "127.0.0.1:" + INTERNAL_PORT },
+    timeout: 30000,
+  };
+
+  const proxyReq = http.request(opts, (proxyRes) => {
+    clientRes.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(clientRes, { end: true });
+  });
+
+  proxyReq.on("error", (err) => {
+    if (!clientRes.headersSent) {
+      clientRes.writeHead(502, { "Content-Type": "text/plain" });
+      clientRes.end("Server temporarily unavailable");
+    }
+  });
+
+  proxyReq.on("timeout", () => { proxyReq.destroy(); });
+
+  clientReq.pipe(proxyReq, { end: true });
+}
+
+function warmup(callback) {
+  console.log("[wrapper] Warming up root page...");
+  const chunks = [
+    "/",
+    "/_next/static/chunks/app/page.js",
+    "/_next/static/chunks/app/error.js",
+    "/_next/static/chunks/app/global-error.js",
+    "/_next/static/chunks/app-pages-internals.js",
+  ];
+
+  let completed = 0;
+  let called = false;
+
+  function done() {
+    completed++;
+    if (completed >= 1 && !called) {
+      called = true;
+      console.log("[wrapper] Warmup complete, accepting connections");
+      callback();
+    }
+  }
+
+  function fetchUrl(urlPath, attempt) {
+    if (attempt > 20) { done(); return; }
+    const req = http.get({ hostname: "127.0.0.1", port: INTERNAL_PORT, path: urlPath, timeout: 15000 }, (res) => {
+      res.resume();
+      if (res.statusCode === 200) {
+        done();
+      } else {
+        setTimeout(() => fetchUrl(urlPath, attempt + 1), 500);
+      }
+    });
+    req.on("error", () => { setTimeout(() => fetchUrl(urlPath, attempt + 1), 500); });
+    req.on("timeout", () => { req.destroy(); setTimeout(() => fetchUrl(urlPath, attempt + 1), 500); });
+  }
+
+  fetchUrl("/", 0);
+  setTimeout(() => {
+    for (let i = 1; i < chunks.length; i++) fetchUrl(chunks[i], 0);
+  }, 2000);
+
+  setTimeout(() => { if (!called) { called = true; console.log("[wrapper] Warmup timeout, accepting connections anyway"); callback(); } }, 30000);
+}
+
+function waitForServer(callback) {
+  const check = () => {
+    const req = http.get({ hostname: "127.0.0.1", port: INTERNAL_PORT, path: "/", timeout: 3000 }, (res) => {
+      res.resume();
+      callback();
+    });
+    req.on("error", () => setTimeout(check, 500));
+    req.on("timeout", () => { req.destroy(); setTimeout(check, 500); });
+  };
+  check();
+}
+
 function startServer() {
   if (isStarting) return;
   isStarting = true;
+  serverReady = false;
 
   killChild();
 
   const standaloneDir = path.join(process.cwd(), ".next", "standalone");
   const hasStandalone = fs.existsSync(path.join(standaloneDir, "server.js"));
 
-  let cmd, args, cwd;
+  let cmd, args, cwd, serverPort;
   if (hasStandalone) {
     try {
       execSync("cp -rn .next/static .next/standalone/.next/static 2>/dev/null", { stdio: "ignore" });
@@ -72,19 +170,21 @@ function startServer() {
     cmd = process.execPath;
     args = ["server.js"];
     cwd = standaloneDir;
+    serverPort = PORT;
     console.log("[wrapper] Starting production server on port " + PORT);
   } else {
     cmd = path.join(process.cwd(), "node_modules", ".bin", "next");
-    args = ["dev", "-p", String(PORT), "-H", "0.0.0.0"];
+    args = ["dev", "-p", String(INTERNAL_PORT), "-H", "0.0.0.0"];
     cwd = process.cwd();
-    console.log("[wrapper] Starting dev server on port " + PORT);
+    serverPort = INTERNAL_PORT;
+    console.log("[wrapper] Starting dev server on port " + INTERNAL_PORT);
   }
 
   const child = spawn(cmd, args, {
     stdio: "inherit",
     cwd,
     detached: true,
-    env: { ...process.env, PORT: String(PORT), HOSTNAME: "0.0.0.0", NEXT_TELEMETRY_DISABLED: "1" },
+    env: { ...process.env, PORT: String(serverPort), HOSTNAME: "0.0.0.0", NEXT_TELEMETRY_DISABLED: "1" },
   });
 
   childPid = child.pid;
@@ -97,13 +197,24 @@ function startServer() {
     if (childPid === child.pid) childPid = null;
   });
 
-  setTimeout(() => { isStarting = false; }, 5000);
+  if (!hasStandalone) {
+    waitForServer(() => {
+      warmup(() => {
+        serverReady = true;
+        isStarting = false;
+      });
+    });
+  } else {
+    serverReady = true;
+    setTimeout(() => { isStarting = false; }, 5000);
+  }
 }
 
 function healthCheck() {
-  if (isStarting || Date.now() - lastStartTime < STARTUP_GRACE) return;
+  if (isStarting || !serverReady || Date.now() - lastStartTime < STARTUP_GRACE) return;
 
-  const req = http.get(`http://127.0.0.1:${PORT}/`, { timeout: 5000 }, (res) => {
+  const port = serverReady ? INTERNAL_PORT : PORT;
+  const req = http.get(`http://127.0.0.1:${port}/`, { timeout: 5000 }, (res) => {
     res.resume();
     const ok = res.statusCode >= 200 && res.statusCode < 400;
     if (ok) {
@@ -132,5 +243,32 @@ function healthCheck() {
   req.on("timeout", () => { req.destroy(); });
 }
 
-startServer();
+const proxy = http.createServer(proxyRequest);
+
+proxy.on("upgrade", (req, socket, head) => {
+  if (!serverReady) { socket.destroy(); return; }
+  const opts = {
+    hostname: "127.0.0.1",
+    port: INTERNAL_PORT,
+    path: req.url,
+    method: req.method,
+    headers: { ...req.headers, host: "127.0.0.1:" + INTERNAL_PORT },
+  };
+  const proxyReq = http.request(opts);
+  proxyReq.on("upgrade", (proxyRes, proxySocket, proxyHead) => {
+    socket.write("HTTP/1.1 101 Switching Protocols\r\n" +
+      Object.entries(proxyRes.headers).map(([k,v]) => k + ": " + v).join("\r\n") + "\r\n\r\n");
+    if (proxyHead && proxyHead.length) socket.write(proxyHead);
+    proxySocket.pipe(socket);
+    socket.pipe(proxySocket);
+  });
+  proxyReq.on("error", () => { socket.destroy(); });
+  proxyReq.end();
+});
+
+proxy.listen(PORT, "0.0.0.0", () => {
+  console.log("[wrapper] Proxy listening on port " + PORT);
+  startServer();
+});
+
 setInterval(healthCheck, HEALTH_INTERVAL);
