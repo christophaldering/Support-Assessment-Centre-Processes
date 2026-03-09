@@ -13,12 +13,6 @@ export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const rootAuth = sessionStorage.getItem("root_access");
-    if (rootAuth === "true") {
-      router.replace("/landing");
-      return;
-    }
-
     fetch("/api/candidate-portal/auth/me")
       .then((r) => r.json())
       .then((d) => {
