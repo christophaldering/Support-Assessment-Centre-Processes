@@ -1,7 +1,7 @@
 import {
   Document,
   Packer,
-  Pcompraph,
+  Paragraph,
   Table,
   TableRow,
   TableCell,
@@ -105,14 +105,14 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
 
   const headerCell = (text: string) =>
     new TableCell({
-      children: [new Pcompraph({ children: [new TextRun({ text, bold: true, size: 20, color: headingColor })] })],
+      children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: 20, color: headingColor })] })],
       borders: cellBorders,
       width: { size: 20, type: WidthType.PERCENTAGE },
     });
 
   const dataCell = (text: string) =>
     new TableCell({
-      children: [new Pcompraph({ children: [new TextRun({ text, size: 20 })] })],
+      children: [new Paragraph({ children: [new TextRun({ text, size: 20 })] })],
       borders: cellBorders,
       width: { size: 20, type: WidthType.PERCENTAGE },
     });
@@ -148,81 +148,81 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
     width: { size: 100, type: WidthType.PERCENTAGE },
   });
 
-  const sections: Pcompraph[] = [];
+  const sections: Paragraph[] = [];
 
   sections.push(
-    new Pcompraph({
+    new Paragraph({
       text: `Diagnostik-Bericht: ${data.assessmentName}`,
       heading: HeadingLevel.TITLE,
       alignment: AlignmentType.CENTER,
     })
   );
   sections.push(
-    new Pcompraph({
+    new Paragraph({
       text: `Kandidat: ${data.candidateName} | ${data.workspaceName} | ${formatDate(data.generatedAt)}`,
       alignment: AlignmentType.CENTER,
     })
   );
-  sections.push(new Pcompraph({ text: "" }));
+  sections.push(new Paragraph({ text: "" }));
 
   sections.push(
-    new Pcompraph({
+    new Paragraph({
       text: `1. Executive Summary${aiLabel("executive_summary", data.aiSections)}`,
       heading: HeadingLevel.HEADING_1,
     })
   );
   sections.push(
-    new Pcompraph({
+    new Paragraph({
       text:
         data.assessmentDescription ||
         `Dieser Bericht fasst die Ergebnisse des Assessment Centers "${data.assessmentName}" für ${data.candidateName} zusammen.`,
     })
   );
-  sections.push(new Pcompraph({ text: "" }));
+  sections.push(new Paragraph({ text: "" }));
 
   sections.push(
-    new Pcompraph({
+    new Paragraph({
       text: "2. Kompetenzprofil",
       heading: HeadingLevel.HEADING_1,
     })
   );
 
   sections.push(
-    new Pcompraph({
+    new Paragraph({
       text: `3. Stärken & Entwicklungsfelder${aiLabel("strengths", data.aiSections)}`,
       heading: HeadingLevel.HEADING_1,
     })
   );
   sections.push(
-    new Pcompraph({
+    new Paragraph({
       text: "Top 3 Stärken:",
       heading: HeadingLevel.HEADING_2,
     })
   );
   for (const s of strengths) {
     sections.push(
-      new Pcompraph({
+      new Paragraph({
         children: [new TextRun({ text: `• ${s}` })],
       })
     );
   }
   sections.push(
-    new Pcompraph({
+    new Paragraph({
       text: "Top 3 Entwicklungsfelder:",
       heading: HeadingLevel.HEADING_2,
     })
   );
   for (const d of devAreas) {
     sections.push(
-      new Pcompraph({
+      new Paragraph({
         children: [new TextRun({ text: `• ${d}` })],
       })
     );
   }
-  sections.push(new Pcompraph({ text: "" }));
+  sections.push(new Paragraph({ text: "" }));
 
   sections.push(
-    new Pcompraph({
+    new Paragraph({
       text: "4. Evidenz-Zusammenfassung",
       heading: HeadingLevel.HEADING_1,
     })
@@ -235,14 +235,14 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
   }
   Array.from(exerciseGroups.entries()).forEach(([exercise, notes]) => {
     sections.push(
-      new Pcompraph({
+      new Paragraph({
         text: exercise,
         heading: HeadingLevel.HEADING_2,
       })
     );
     for (const n of notes) {
       sections.push(
-        new Pcompraph({
+        new Paragraph({
           children: [
             new TextRun({
               text: `${n.competencyName} (${n.observerName}${n.rating !== undefined ? `, Bewertung: ${n.rating}` : ""}): `,
@@ -254,34 +254,34 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
       );
     }
   });
-  sections.push(new Pcompraph({ text: "" }));
+  sections.push(new Paragraph({ text: "" }));
 
   if (data.aiRecommendations) {
     sections.push(
-      new Pcompraph({
+      new Paragraph({
         text: `5. Empfehlungen${aiLabel("recommendations", data.aiSections)}`,
         heading: HeadingLevel.HEADING_1,
       })
     );
-    sections.push(new Pcompraph({ text: data.aiRecommendations }));
-    sections.push(new Pcompraph({ text: "" }));
+    sections.push(new Paragraph({ text: data.aiRecommendations }));
+    sections.push(new Paragraph({ text: "" }));
   }
 
   const observers = Array.from(new Set(data.evidenceNotes.map((e) => e.observerName)));
   sections.push(
-    new Pcompraph({
+    new Paragraph({
       text: "6. Assessment-Metadaten",
       heading: HeadingLevel.HEADING_1,
     })
   );
-  sections.push(new Pcompraph({ text: `Assessment: ${data.assessmentName}` }));
-  sections.push(new Pcompraph({ text: `Kandidat: ${data.candidateName}` }));
+  sections.push(new Paragraph({ text: `Assessment: ${data.assessmentName}` }));
+  sections.push(new Paragraph({ text: `Kandidat: ${data.candidateName}` }));
   if (data.candidateEmail) {
-    sections.push(new Pcompraph({ text: `E-Mail: ${data.candidateEmail}` }));
+    sections.push(new Paragraph({ text: `E-Mail: ${data.candidateEmail}` }));
   }
-  sections.push(new Pcompraph({ text: `Datum: ${formatDate(data.generatedAt)}` }));
-  sections.push(new Pcompraph({ text: `Beobachter: ${observers.join(", ") || "Keine"}` }));
-  sections.push(new Pcompraph({ text: `Workspace: ${data.workspaceName}` }));
+  sections.push(new Paragraph({ text: `Datum: ${formatDate(data.generatedAt)}` }));
+  sections.push(new Paragraph({ text: `Beobachter: ${observers.join(", ") || "Keine"}` }));
+  sections.push(new Paragraph({ text: `Workspace: ${data.workspaceName}` }));
 
   const docSectionHeaders: Record<string, unknown> = {};
   const docSectionFooters: Record<string, unknown> = {};
@@ -289,7 +289,7 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
   if (data.brandRules?.documentRules?.headerFooter) {
     docSectionHeaders["default"] = new Header({
       children: [
-        new Pcompraph({
+        new Paragraph({
           children: [new TextRun({ text: data.brandRules.documentRules.headerFooter, size: 16, italics: true, color: headingColor || "666666" })],
           alignment: AlignmentType.RIGHT,
         }),
@@ -300,7 +300,7 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
   if (data.brandRules?.documentRules?.confidentialityNote) {
     docSectionFooters["default"] = new Footer({
       children: [
-        new Pcompraph({
+        new Paragraph({
           children: [new TextRun({ text: data.brandRules.documentRules.confidentialityNote, size: 14, italics: true, color: "999999" })],
           alignment: AlignmentType.CENTER,
         }),
@@ -318,30 +318,30 @@ export async function generateDocx(data: ReportData): Promise<Buffer> {
       headers: docSectionHeaders,
       footers: docSectionFooters,
       children: [
-        new Pcompraph({ text: "" }),
-        new Pcompraph({ text: "" }),
-        new Pcompraph({ text: "" }),
-        new Pcompraph({
+        new Paragraph({ text: "" }),
+        new Paragraph({ text: "" }),
+        new Paragraph({ text: "" }),
+        new Paragraph({
           children: [new TextRun({ text: data.assessmentName, bold: true, size: 52, color: headingColor })],
           alignment: AlignmentType.CENTER,
         }),
-        new Pcompraph({ text: "" }),
-        new Pcompraph({
+        new Paragraph({ text: "" }),
+        new Paragraph({
           children: [new TextRun({ text: `Diagnostik-Bericht`, size: 36, color: brandColors?.secondary?.replace("#", "") || headingColor })],
           alignment: AlignmentType.CENTER,
         }),
-        new Pcompraph({ text: "" }),
-        new Pcompraph({ text: "" }),
-        new Pcompraph({
+        new Paragraph({ text: "" }),
+        new Paragraph({ text: "" }),
+        new Paragraph({
           children: [new TextRun({ text: data.workspaceName, size: 24 })],
           alignment: AlignmentType.CENTER,
         }),
-        new Pcompraph({
+        new Paragraph({
           children: [new TextRun({ text: formatDate(data.generatedAt), size: 24 })],
           alignment: AlignmentType.CENTER,
         }),
-        new Pcompraph({ text: "" }),
-        new Pcompraph({
+        new Paragraph({ text: "" }),
+        new Paragraph({
           children: [new TextRun({ text: data.brandRules?.typography?.headingFont ? `Schriftart: ${data.brandRules.typography.headingFont}` : "", size: 16, italics: true, color: "AAAAAA" })],
           alignment: AlignmentType.CENTER,
         }),
