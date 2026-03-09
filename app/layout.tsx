@@ -27,7 +27,9 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de" suppressHydrationWarning>
-      <head suppressHydrationWarning />
+      <head suppressHydrationWarning>
+        <script src="/chunk-recovery.js" defer={false} />
+      </head>
       <body suppressHydrationWarning className="overscroll-none">{children}</body>
     </html>
   );

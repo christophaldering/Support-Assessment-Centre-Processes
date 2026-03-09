@@ -1,7 +1,9 @@
+const isDev = process.env.NODE_ENV !== "production";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: "standalone",
+  ...(isDev ? {} : { output: "standalone" }),
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = config.externals || [];
