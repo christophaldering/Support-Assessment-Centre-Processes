@@ -18,7 +18,11 @@ Footer credit: "© Christoph Aldering · Private initiative – for training rea
 
 The platform is built on a modern full-stack architecture using Next.js 14 (App Router) with TypeScript, Prisma ORM, PostgreSQL, and Tailwind CSS.
 
-*   **Server Wrapper:** `scripts/wrapper.js` manages the Next.js server lifecycle. It spawns the server as a detached process (`detached: true`, `child.unref()`) so the workflow system's process management doesn't kill it. In production mode (when `.next/standalone` exists from `next build`), it runs the standalone server directly on port 5000 for fast startup (~100ms). In dev mode, it runs `next dev` on port 5000. A health check loop every 10 seconds auto-restarts the server if it stops responding. The workflow command is `node scripts/wrapper.js`.
+*   **Server Wrapper:** `scripts/wrapper.js` manages the Next.js server lifecycle with two distinct modes:
+    - **Production mode** (when `.next/standalone/server.js` exists): Starts the standalone server directly on port 5000 — no proxy, no loading page, minimal overhead. If standalone is missing in a deployment environment (`REPL_DEPLOYMENT` set), exits fatally.
+    - **Dev mode** (no standalone build): Runs a proxy on port 5000 forwarding to `next dev` on port 5001, with a loading page during warmup and auto-refresh. Health checks every 15s with auto-restart on failure.
+    The workflow command is `node scripts/wrapper.js`.
+*   **Build Script:** `scripts/build.sh` runs `next build` with 4GB heap (`--max-old-space-size=4096`). Preserves existing working builds on failure (backs up `.next` before building, restores on failure). Fresh build failures exit non-zero to prevent deployment without a valid build.
 *   **Error Boundaries:** `app/global-error.tsx` and `app/error.tsx` provide auto-recovery for chunk loading failures. `public/chunk-recovery.js` adds JS-level error recovery.
 
 **Key Architectural Decisions:**
