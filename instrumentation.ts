@@ -102,6 +102,28 @@ export async function register() {
           console.log("[cleanup] All passwords updated.");
         }
       }
+      // ── ENSURE ADMIN USER EXISTS IN MAIN WORKSPACE ──
+      const mainWs = await prisma.workspace.findUnique({ where: { slug: "main" } });
+      if (mainWs) {
+        const adminUser = await prisma.user.findFirst({
+          where: { email: "christoph.aldering@googlemail.com", workspaceId: mainWs.id },
+        });
+        if (!adminUser) {
+          const adminHash = await bcrypt.hash("#Sammy2024", 10);
+          await prisma.user.create({
+            data: {
+              email: "christoph.aldering@googlemail.com",
+              name: "Christoph Aldering",
+              passwordHash: adminHash,
+              roles: ["ADMIN"],
+              workspaceId: mainWs.id,
+              forcePasswordChange: false,
+              status: "active",
+            },
+          });
+          console.log("[seed] Created admin user christoph.aldering@googlemail.com in main workspace.");
+        }
+      }
       // ── END CLEANUP ──
 
       const workspace = await prisma.workspace.findUnique({ where: { slug: "main" } });
