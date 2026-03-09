@@ -152,6 +152,30 @@ export async function register() {
           });
           console.log("[seed] Created test candidate: kandidat@test.de");
         }
+
+        const varexiaCandidateExists = await prisma.user.findFirst({
+          where: { email: "candidate@varexia-demo.com", workspaceId: workspace.id },
+        });
+        if (!varexiaCandidateExists) {
+          const firstAssessment = await prisma.assessment.findFirst({
+            where: { workspaceId: workspace.id },
+            orderBy: { createdAt: "asc" },
+          });
+          await prisma.user.create({
+            data: {
+              id: "varexia-candidate-001",
+              email: "candidate@varexia-demo.com",
+              name: "Sarah Chen",
+              passwordHash: "FIRST_ACCESS_NO_PASSWORD",
+              roles: ["CANDIDATE"],
+              workspaceId: workspace.id,
+              forcePasswordChange: false,
+              status: "active",
+              assessmentId: firstAssessment?.id ?? null,
+            },
+          });
+          console.log("[seed] Created demo candidate: candidate@varexia-demo.com (first-access, no password)");
+        }
       }
 
       const compExists = await prisma.workspace.findUnique({ where: { slug: "comp" } });

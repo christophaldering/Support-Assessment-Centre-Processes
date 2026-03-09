@@ -60,7 +60,18 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 *   Role-based routing fixed (CANDIDATE → portal, OBSERVER → observer view, others → cockpit)
 *   Cross-tenant authorization hardened for feature-flags API
 *   All user passwords reset to "#Sammy2024", googlemail account given ADMIN role
-*   **Candidate Portal Demo Content**: All assessments in the main workspace auto-seeded with portal documents (Willkommen & Ablaufplan, Hinweise zur Vorbereitung, exercise-specific briefings, Feedback-Leitfaden) and self-assessments (Selbsteinschätzung Führungskompetenzen with 5-point Likert, Persönliche Reflexion with open questions). All phases (preparation, execution, followup) unlocked. Admin user linked to first assessment for portal preview.
+*   **Candidate Portal Demo Content**: All assessments in the main workspace auto-seeded with portal documents and self-assessments. All phases unlocked. Admin user linked to first assessment for portal preview.
+*   **Apple-Inspired Candidate Portal**: Standalone candidate experience at `/candidate-access` (login) and `/candidate/*` (portal). Features:
+    - Dedicated auth flow: email → first-access password setup or login, HTTP-only cookie `candidate_portal_session`
+    - Home screen with 4 module cards: Welcome, Presentation Task, Employee Conversation, Data Room
+    - Welcome page: personal welcome, exercise flow explanation, preparation guidelines
+    - Presentation task: Varexia SE CSO strategic review scenario with full context
+    - Employee conversation: simulated 1:1 with Lars Nielsen (Logistics CEO), role constellation and tensions
+    - Data Room: premium executive data room with 29 documents across 7 categories, derived from Varexia case study. Category sidebar, search/filter, document detail views, viewed-state tracking
+    - Apple-inspired design: white/off-white surfaces, subtle shadows, restrained accent, generous whitespace, desktop-first
+    - Seeded demo candidate: `candidate@varexia-demo.com` (first-access, set password on first visit)
+    - Routes: `/candidate-access`, `/candidate/home`, `/candidate/welcome`, `/candidate/presentation`, `/candidate/conversation`, `/candidate/data-room`, `/candidate/data-room/[docSlug]`
+    - Content source files: `lib/candidate-portal/content.ts`, `lib/candidate-portal/data-room-content.ts`, `lib/candidate-portal/auth.ts`
 *   **AI Governance (Phase 1 – Lite, Enterprise-Ready)**: Core LLM adapter in `server/llm/` with single entry point `generateLLMOutput()` and `transcribeAudio()`. ENV-based kill switch (`AI_DISABLED`, `AI_FEATURES_DISABLED`), provider routing via `ACTIVE_LLM_PROVIDER` (openai active, neuland stub, azure_eu placeholder). Strict OpenAI ENV usage (`AI_INTEGRATIONS_OPENAI_API_KEY` + `AI_INTEGRATIONS_OPENAI_BASE_URL`). Console logging for all AI requests with route/feature/task metadata. **All 19+ API routes fully migrated** — no direct OpenAI imports outside `server/llm/providers/openai.ts`. `lib/ai.ts` uses adapter internally. `lib/llm/` retained as re-export bridge for Phase 2 features (DB-backed config, Admin UI at `/admin/ai-governance`, audit logging via `ai_system_settings`/`ai_audit_log` tables). Old `lib/llm/providers/` removed (dead code). Architecture designed for Phase 2 extension without refactoring.
 *   Shared admin layout: All admin pages use consistent sidebar + terracotta gradient header via `layout.tsx` + `AdminSidebar.tsx`
 *   **COMP BDP Evaluation Tool**: Complete self-contained module at `/comp-bdp/` for Business Development Pitch evaluation. Features:
