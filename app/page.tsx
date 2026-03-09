@@ -92,9 +92,19 @@ export default function RootLandingPage() {
           </form>
         </div>
         
-        <p className="text-center text-[10px] text-slate-600 mt-8 uppercase tracking-[0.2em]">
-          Protected Access &middot; Executive Diagnostics Platform
-        </p>
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <a
+            href="/data-room"
+            className="text-sm text-slate-400 hover:text-blue-400 transition-colors flex items-center gap-1.5"
+            data-testid="link-data-room"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+            Data Room
+          </a>
+          <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em]">
+            Protected Access &middot; Executive Diagnostics Platform
+          </p>
+        </div>
       </div>
     </div>
   );
