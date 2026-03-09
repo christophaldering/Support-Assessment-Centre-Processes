@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // output: "standalone",
+  output: "standalone",
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = config.externals || [];

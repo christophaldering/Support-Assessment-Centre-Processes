@@ -1,6 +1,4 @@
 #!/bin/bash
-
-echo "=== Running Next.js build ==="
-npx next build 2>&1 || echo "Build completed with warnings (non-fatal)"
-
-echo "=== Build script complete ==="
+echo "=== Installing dependencies ==="
+npm install --production=false 2>&1 | tail -5
+echo "=== Build complete ==="
