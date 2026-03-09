@@ -1,0 +1,449 @@
+You are working inside an existing production-grade Next.js 14 / TypeScript / Prisma / PostgreSQL / Tailwind application called “Executive Diagnostics Platform”.
+
+Your job is to build a PREMIUM APPLE-INSPIRED CANDIDATE DATA ROOM for executive assessments, reusing the existing architecture, auth patterns, design system, candidate portal patterns, and object storage approach wherever possible.
+
+IMPORTANT:
+- Do NOT build a disconnected prototype.
+- Do NOT replace the current system.
+- Extend the existing platform cleanly and production-safely.
+- Reuse existing candidate portal foundations if available.
+- Keep all current working features intact.
+- The final result must be robust, elegant, tested, and actually usable.
+
+==================================================
+1. GOAL
+==================================================
+
+Build a modern, premium, Apple-inspired “Executive Data Room” for candidates.
+
+Use case:
+A candidate in an executive assessment receives access via email address and password.
+After login, the candidate can enter a stylish data room where documents are structured clearly, easy to browse, easy to search, and easy to read.
+
+This Data Room must support:
+- candidate login
+- secure document access
+- structured categories
+- search + filters
+- viewed-state tracking
+- optional release logic by assessment phase
+- admin upload + metadata assignment
+- elegant document detail pages
+- premium visual design with calm, restrained, Apple-like aesthetic
+
+The Data Room should be suitable for uploading and structuring all documents of a case study like “VAREXIA”.
+
+==================================================
+2. ARCHITECTURAL STRATEGY
+==================================================
+
+Before coding, inspect the existing codebase and adapt the solution to the CURRENT architecture.
+
+Specifically inspect and reuse where possible:
+- existing candidate portal routes and auth flow
+- any existing /candidate-access or /candidate/* pages
+- any existing data room implementation
+- object storage upload patterns
+- Prisma document models
+- workspace + assessment assignment logic
+- design tokens / typography / branding layer
+- RBAC and session handling
+- existing multilingual DE/EN infrastructure
+- existing admin layouts and sidebar patterns
+
+Do NOT create parallel redundant systems if equivalent foundations already exist.
+Instead:
+- refactor lightly if needed
+- extend existing candidate-portal content architecture into a reusable real document system
+
+==================================================
+3. DESIGN DIRECTION — APPLE-INSPIRED
+==================================================
+
+Design language:
+- premium, quiet, minimal, intelligent
+- generous whitespace
+- subtle hierarchy
+- restrained shadows
+- rounded corners
+- very clean typography
+- almost no visual noise
+- desktop-first, mobile still good
+- feel like Apple product pages + iCloud Drive + premium board portal
+
+Use existing branding constraints:
+- German default language, full DE/EN support
+- Neutral platform design can remain dark navy in global contexts if already used
+- Main data room experience should use mostly:
+  - white / off-white surfaces
+  - soft gray dividers
+  - restrained terracotta / lagoon accents only where useful
+  - no heavy gradients
+  - no clutter
+- Use Satoshi font if already wired in system
+- Preserve footer:
+  “© Christoph Aldering · Private initiative – for training reasons only – no data from reality so far!”
+
+UX principles:
+- one clear thing per screen
+- search always visible
+- candidate should never feel lost
+- document labels should be clear and human-readable
+- pages should feel premium and calm
+
+==================================================
+4. INFORMATION ARCHITECTURE
+==================================================
+
+Create a reusable information architecture for executive case-study documents.
+
+Recommended top-level categories:
+1. Unternehmen & Strategie
+2. Finanzen & Kapitalmarkt
+3. Retail & Operations
+4. Transformation & Investitionen
+5. Governance, Risiko & Compliance
+6. People, Kultur & Kommunikation
+7. Presse, Markt & externe Signale
+
+Model categories in a reusable way so future case studies can have different categories.
+
+Each document should support:
+- title
+- slug
+- short description / abstract
+- category
+- tags
+- document type (PDF, DOCX, PPTX, XLSX, image, note, external link)
+- confidentiality label
+- “important” flag
+- “new” flag
+- sort order
+- estimated reading time
+- page count (optional/manual)
+- source label
+- availability mode:
+  - always available
+  - scheduled release
+  - phase-based release
+- visible from / visible until
+- linked workspace
+- linked assessment
+- linked candidate(s) optional
+- uploaded file URL / storage path
+- preview image optional
+- textual teaser / summary optional
+
+==================================================
+5. USER FLOWS
+==================================================
+
+A) Candidate flow
+- candidate opens dedicated login page
+- enters email + password
+- first-access password setup supported if architecture already has it
+- after login lands on candidate home or directly on data room
+- sees:
+  - hero/header with calm welcome
+  - search bar
+  - category sidebar
+  - featured / recommended docs
+  - recent docs
+  - all docs list / cards
+- can open detail page for each document
+- can mark doc as read automatically on open
+- progress and viewed-state are saved per candidate
+- can filter by category, tag, type, “new”, “important”, “read/unread”
+
+B) Admin / workspace flow
+- admin can create and manage data room documents
+- upload files through a clean admin UI
+- assign metadata and categories
+- assign to workspace / assessment / candidate scope
+- define release settings
+- reorder featured docs
+- preview candidate experience
+
+==================================================
+6. REQUIRED SCREENS
+==================================================
+
+Build these pages cleanly:
+
+CANDIDATE
+1. Candidate access/login page
+2. Candidate data room landing page
+3. Category view
+4. Document detail page
+5. Optional “recently viewed” page or block
+6. Empty states / no results state
+
+ADMIN
+7. Data room admin overview
+8. Upload / create document page
+9. Edit document page
+10. Category management page (simple CRUD if missing)
+11. Candidate preview mode
+
+==================================================
+7. DOCUMENT PRESENTATION
+==================================================
+
+Candidate-facing document cards must look premium and calm.
+
+Each card can show:
+- title
+- short 1–2 line description
+- category badge
+- tags
+- read/unread state
+- “neu” or “wichtig” badge where applicable
+- file type icon
+- estimated reading time
+
+Document detail page should include:
+- document title
+- metadata row
+- abstract / why this matters
+- file viewer area or download/open section
+- related docs section
+- navigation to previous/next doc
+- optional “belongs to this area” context block
+
+Where practical:
+- inline PDF viewing if secure and easy
+- otherwise clean “open document” CTA
+- never expose ugly raw storage URLs
+- preserve secure access
+
+==================================================
+8. VAREXIA STARTER CONTENT MODEL
+==================================================
+
+Seed a DEMO/VAREXIA structure that mirrors the logic of the uploaded Varexia case materials.
+
+Create demo categories and a representative set of seeded demo documents aligned to a case like:
+- strategic overview
+- financial snapshots
+- analyst / market pressure
+- retail performance issues
+- compliance / governance signals
+- people / internal communication topics
+- leadership simulation background
+
+Use human-readable seeded entries inspired by a Varexia-style case context, for example:
+- Strategische Gesamtübersicht
+- SWOT-Analyse & operative Quick Wins
+- Finanzstatus & Covenant-Sensitivität
+- Retail Performance Snapshot
+- Governance- und Leak-Risiken
+- Town Hall / interne Signale
+- Interaktionssimulation: Bereichsleiter Retail Commercial Steering
+
+Do NOT hardcode everything as fake static content forever.
+Seed demo content through DB so it can later be replaced with real uploaded files.
+
+==================================================
+9. DATA MODEL / PRISMA
+==================================================
+
+Extend Prisma schema carefully.
+
+You likely need models similar to:
+- DataRoomCategory
+- DataRoomDocument
+- DataRoomDocumentAssignment
+- DataRoomDocumentView
+- DataRoomCollection or FeaturedBlock (optional)
+
+Requirements:
+- multi-tenant safe
+- workspace-aware
+- assessment-aware where relevant
+- candidate-specific viewed-state
+- release logic support
+- clean indexes
+- slugs unique within sensible scope
+- soft-delete support if appropriate
+
+Do not break existing migrations.
+Create a clean migration.
+
+==================================================
+10. AUTH / SECURITY
+==================================================
+
+Must be secure.
+
+Requirements:
+- only authenticated candidates can access candidate data room
+- only documents assigned/released to them are visible
+- admin pages only for authorized internal roles
+- storage access should not leak documents publicly if avoidable
+- if signed URLs are already used elsewhere, reuse that pattern
+- server-side authorization on every document fetch
+- no client-only security assumptions
+
+Default demo password logic may remain compatible with current system conventions where appropriate, but do not weaken auth.
+
+==================================================
+11. I18N
+==================================================
+
+Full German default, English ready.
+
+All user-facing strings must go through existing i18n infrastructure if present.
+At minimum support:
+- DE fully
+- EN fully for newly added components
+
+Use clean labels, not technical jargon.
+
+==================================================
+12. VISUAL DETAILS
+==================================================
+
+Design specifics:
+- Sidebar category nav on desktop
+- Top search + filter bar
+- Cards in calm grid/list hybrid
+- Document detail page with wide readable content column
+- Soft borders, subtle elevation, large radius
+- Minimal iconography
+- Intelligent spacing
+- excellent hover states
+- polished loading skeletons
+- beautiful empty states
+- no overloaded tables in candidate view
+
+Admin can be more practical, but still clean.
+
+==================================================
+13. ADMIN UPLOAD EXPERIENCE
+==================================================
+
+Create an admin upload workflow that is extremely simple.
+
+Flow:
+- upload file
+- enter title
+- enter description
+- choose category
+- add tags
+- choose scope:
+  - workspace-wide
+  - assessment-specific
+  - candidate-specific
+- choose release mode:
+  - always
+  - scheduled
+  - phase-based
+- set “important” / “new” / sort order / featured
+- save
+- preview as candidate
+
+Support common file types:
+- PDF
+- DOCX
+- PPTX
+- XLSX
+- image files
+- optional external link entry
+
+If full preview generation is too heavy, at least support manual preview image upload or file-type thumbnail fallback.
+
+==================================================
+14. CANDIDATE EXPERIENCE DETAILS
+==================================================
+
+Candidate home/data room page should include:
+- elegant intro section
+- “Empfohlener Einstieg”
+- “Neu für Sie”
+- “Zuletzt geöffnet”
+- category overview tiles
+- all-documents section
+
+Add viewed-state logic:
+- document becomes “viewed” when opened
+- store last opened timestamp
+- optional read progress placeholder for future use
+
+Add search:
+- full text search over title, description, tags, category label
+- responsive filtering
+- no full page reload required
+
+==================================================
+15. PERFORMANCE
+==================================================
+
+Keep it fast and production-sensible.
+
+Requirements:
+- server components where useful
+- client components only where needed
+- paginated or incremental lists if dataset grows
+- optimized file fetch patterns
+- no giant client-side payloads
+- loading states polished
+- no hydration chaos
+
+==================================================
+16. QA / VALIDATION
+==================================================
+
+After implementation, run a REAL verification pass.
+
+You must:
+- inspect all routes
+- verify auth
+- verify candidate can only see allowed docs
+- verify admin upload works
+- verify i18n strings
+- verify mobile and desktop layouts
+- verify no broken imports
+- verify migrations
+- verify type safety
+- verify lint/build
+- verify no existing portal flows are broken
+
+Create or extend a QA page/checklist if useful.
+
+At the end, provide a concise implementation summary:
+- what was reused
+- what was added
+- data model changes
+- routes added/changed
+- how to test locally
+- demo credentials
+- known limitations if any
+
+==================================================
+17. DELIVERY STANDARD
+==================================================
+
+This is not a mockup.
+This must be a working implementation inside the existing app.
+
+Quality bar:
+- premium
+- coherent
+- elegant
+- secure
+- maintainable
+- visually impressive but restrained
+- admin-friendly
+- candidate-friendly
+
+Make smart product decisions where the spec leaves room.
+Favor clarity over feature bloat.
+Favor reuse over parallel systems.
+Favor Apple-like restraint over enterprise clutter.
+
+Now begin by:
+1. auditing the existing codebase for related candidate portal / data room functionality
+2. proposing the minimal clean architecture extension
+3. implementing it fully
+4. validating it thoroughly
+5. summarizing exactly what you changed
