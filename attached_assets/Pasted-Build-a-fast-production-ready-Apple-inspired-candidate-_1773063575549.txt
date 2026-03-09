@@ -1,0 +1,426 @@
+Build a fast, production-ready, Apple-inspired candidate portal inside the existing Executive Diagnostics Platform codebase. Do not create a prototype, mock, placeholder flow, or concept-only shell. Implement a fully working, tested, polished candidate experience that is immediately usable for a real assessment simulation.
+
+CONTEXT
+We already have an existing Next.js 14 / App Router / TypeScript / Prisma / PostgreSQL platform with authentication, RBAC, workspace logic, design system foundations, and corporate theming. Use the existing architecture wherever it reduces implementation effort, but do NOT get trapped in overengineering or in old portal complexity. The goal is a pragmatic, fast, beautiful, fully functioning candidate portal for a single concrete use case.
+
+GOAL
+Create a new lightweight candidate portal experience with:
+1. a login / first-access flow using email + self-defined password
+2. a clean candidate home screen
+3. exactly these content modules in this order:
+   - Welcome screen
+   - Presentation task
+   - Simulated employee conversation
+   - Data Room / case study
+4. the Data Room must open as a dedicated premium-style separate screen / experience and feel like a professional executive data room
+5. the whole experience must feel Apple-inspired: calm, premium, minimal, highly legible, lots of whitespace, excellent typography, restrained but elegant interaction design
+6. everything must be fully wired, seeded, testable, and working end-to-end
+
+IMPORTANT DELIVERY PRINCIPLE
+Do not stop at architecture, scaffolding, or partial implementation.
+Do not leave TODOs.
+Do not leave dead links.
+Do not create fake buttons.
+Do not create “coming soon” pages.
+Do not provide unfinished API routes.
+Do not provide pages that render but are not connected to data.
+Deliver a running feature that works end to end.
+
+DESIGN DIRECTION
+Reflect the work from the perspective of a highly experienced product designer with deep Apple sensibility:
+- quiet confidence
+- premium simplicity
+- elegant spacing
+- strict visual hierarchy
+- subtle shadows only where helpful
+- no noisy enterprise dashboard look
+- no cluttered tables on the main candidate home
+- cards, panels, document tiles, strong typography
+- mobile responsive, but optimized especially for desktop/laptop because candidates will use larger screens for the case materials
+
+Use the existing platform’s style system where useful, but for this portal experience prefer a lighter, calmer, more Apple-like layer:
+- bright, clean surfaces
+- white / off-white backgrounds
+- subtle gray separators
+- restrained accent use
+- keep typography crisp and modern
+- no visual overload
+
+CORE FUNCTIONAL REQUIREMENTS
+
+A. NEW CANDIDATE ACCESS FLOW
+Implement a dedicated portal entry route for this use case, separate from the generic old candidate flow if necessary.
+
+Suggested routes:
+- /candidate-access
+- /candidate-access/set-password
+- /candidate/home
+- /candidate/presentation
+- /candidate/conversation
+- /candidate/data-room
+
+Requirements:
+1. Candidate enters email address
+2. System identifies existing candidate record or seeded demo candidate
+3. If no password exists yet, candidate is guided into a “set your password” flow
+4. Password is stored securely using existing best-practice hashing already used in platform auth or equivalent secure implementation
+5. Candidate can then log in with email + password
+6. Use HTTP-only cookie session where consistent with platform architecture
+7. Keep implementation secure but simple and pragmatic
+8. Provide one or more seeded candidates so flow is immediately testable
+
+Do NOT implement email sending now unless already trivial in codebase.
+For pragmatic speed, support:
+- seeded candidate account(s)
+- first-login password setup directly in the browser flow
+- clear UX copy
+
+B. CANDIDATE HOME
+After successful login, candidate lands on a premium, minimal home page.
+
+Must contain:
+1. warm welcome section
+2. short orientation copy
+3. clear module sequence
+4. four prominent cards / steps in this exact order:
+   - Welcome
+   - Presentation Task
+   - Simulated Employee Conversation
+   - Data Room
+5. each module card shows:
+   - title
+   - short description
+   - status badge (e.g. Available)
+   - CTA button
+6. top area should include candidate name/email in a restrained way
+7. logout must work
+8. no irrelevant enterprise navigation
+9. no admin/cockpit elements leak into this experience
+
+C. WELCOME SCREEN
+Create a polished welcome page with:
+- headline
+- short personal welcome text
+- explanation of the exercise flow
+- approximate order of modules
+- calm, premium visual presentation
+- clear CTA back to home or to next step
+
+D. PRESENTATION TASK PAGE
+Create a dedicated page for the presentation task.
+This page must feel complete and usable, not generic.
+
+Content structure:
+- title
+- situational context
+- task description
+- expectations / framing
+- optional preparation hints
+- CTA back to home
+- CTA to next module
+
+Implementation:
+- content should be stored in a maintainable way, ideally as seeded DB content or a local structured config if faster and cleaner
+- content must not be hardcoded in random JSX blocks if this creates maintenance mess
+- keep architecture simple but structured
+
+E. SIMULATED EMPLOYEE CONVERSATION PAGE
+Create a dedicated page for the simulated employee conversation.
+Same quality standard as presentation task page.
+
+Content structure:
+- title
+- context
+- role constellation
+- objective of the conversation
+- key tensions / discussion points
+- CTA back
+- CTA onward
+
+Again:
+- store content cleanly
+- page must be fully working and styled
+- no placeholders
+
+F. DATA ROOM / CASE STUDY EXPERIENCE
+This is the most important part.
+Build a separate premium data room screen that opens from candidate home.
+
+Route:
+- /candidate/data-room
+
+MANDATORY EXPERIENCE GOAL
+This must feel like a real executive case-study data room, not like a folder dump.
+
+INFORMATION ARCHITECTURE
+Use the already uploaded VAREXIA case study PDF as source material and structure the Data Room around these folders / sections:
+1. Company Overview
+2. Market & Competition
+3. Products & Business Model
+4. Financial Performance
+5. Operations
+6. Internal Perspectives
+7. Key Challenges
+
+Within these sections, break the content into professional “documents” or “document cards” derived from the case study material. Do not just embed the full PDF and call it done.
+
+PRAGMATIC IMPLEMENTATION APPROACH
+Implement a high-quality simulated data room using structured extracted content from the existing VAREXIA case study:
+- create document metadata
+- create category structure
+- create document detail views
+- optionally include the original PDF as a source download or reference asset
+- but the main UX must be structured document navigation, not just raw PDF viewing
+
+DOCUMENT TYPES TO INCLUDE
+Convert the case material into a curated data room collection such as:
+- Company Snapshot
+- Business Unit Overview
+- Group Financial KPI Overview
+- Balance Sheet Summary
+- Cash Flow FY2025
+- Stress Scenario 2026
+- Analyst / Market Commentary
+- CFO Note to Supervisory Board
+- Investor Relations Update
+- Supervisory Board Reflection
+- Analyst Clarification Request
+- Regional Operations Escalation
+- Finance BP Note
+- HR Warning Note
+- Works Council / field escalation
+- Customer Escalation
+- Commercial Workshop Summary
+- Internal Learning Reflection
+- CIO Clarification
+- Regional CEO escalation
+- Steering Committee Minutes
+- CHRO reflection
+- Pulse Survey results
+- Rating Agency exchange
+- Leadership workshop summary
+- Leadership newsletter excerpt
+
+DATA ROOM UI REQUIREMENTS
+1. Dedicated landing area for Data Room
+2. Clean hero / header area
+3. Left-side category navigation on desktop
+4. Main area with document cards or document list
+5. Search/filter if feasible without much overhead
+6. “Viewed” state for documents
+7. Document detail panel/page with premium reading layout
+8. Easy back navigation
+9. Optional “Open original PDF” if useful
+10. Responsive but desktop-first
+11. Strong readability
+12. No cluttered admin file-manager feeling
+
+DOCUMENT MODEL
+Implement a clean local content model for the data room. Could be:
+- DB seeded table if straightforward
+- or a typed local content source in /lib or /content if faster and safer for today
+The key is maintainability and clean structure.
+
+Suggested model:
+- id
+- slug
+- title
+- category
+- type
+- shortDescription
+- readingTime
+- sourceReference
+- body/content
+- order
+- isImportant
+
+TRACKING
+Implement lightweight viewed-state tracking per candidate session/user if easy.
+At minimum:
+- local persisted viewed state or DB-backed viewed state
+- display count like “Documents viewed 6 / 24”
+This is highly desirable.
+
+G. CONTENT MANAGEMENT FOR TODAY
+Populate the portal with realistic default content immediately.
+Do not wait for future admin tooling.
+Seed or ship all required content now so the system is demo-ready and usable after implementation.
+
+H. AUTHORIZATION / ISOLATION
+Ensure only candidate users can access these pages.
+No cockpit/admin leakage.
+If needed, introduce a simple dedicated candidate portal layout.
+
+I. APPLE-LIKE LAYOUT SYSTEM
+Create a dedicated layout for the candidate portal:
+- restrained top bar
+- no noisy sidebar unless needed in data room
+- elegant spacing
+- premium cards
+- polished empty/loading/error states
+- calm transitions if already easy
+- no gratuitous animation
+
+TECHNICAL REQUIREMENTS
+
+1. Respect existing codebase architecture
+- Next.js App Router
+- TypeScript
+- Prisma/Postgres if needed
+- existing auth/session patterns where sensible
+- existing UI primitives if helpful
+
+2. Keep solution pragmatic
+Do not overbuild a generic CMS.
+Do not introduce massive new abstractions unless clearly justified.
+
+3. Clean code
+- clear folder structure
+- reusable components where beneficial
+- no duplicated messy logic
+- typed data structures
+- robust null/error handling
+
+4. Security
+- secure password storage
+- server-side access checks
+- no sensitive content leakage
+- safe session handling
+
+5. Performance
+- pages should load fast
+- avoid heavy unnecessary client-side logic
+- avoid giant monolithic components
+
+SUGGESTED IMPLEMENTATION STRUCTURE
+Use best judgment, but a sensible structure could be:
+
+app/
+  candidate-access/
+  candidate/
+    layout.tsx
+    home/
+    welcome/
+    presentation/
+    conversation/
+    data-room/
+      page.tsx
+      [docSlug]/
+components/
+  candidate/
+    CandidateTopBar.tsx
+    CandidateHomeCard.tsx
+    CandidateStepList.tsx
+    CandidateWelcomePanel.tsx
+    DataRoomSidebar.tsx
+    DataRoomDocumentCard.tsx
+    DataRoomDocumentView.tsx
+    DataRoomHeader.tsx
+lib/
+  candidate-portal/
+    auth.ts
+    content.ts
+    data-room-content.ts
+    viewed-state.ts
+
+Use server components where helpful. Use client components only where interaction requires it.
+
+CONTENT EXTRACTION TASK
+Use the already available VAREXIA case study material to curate the data room structure and document bodies.
+Do not merely dump PDF text.
+Reframe the content into readable executive-style document summaries while preserving the substance and tensions from the source case.
+Where useful, include compact callout boxes, key figures, internal memo styling, or document metadata to create realism.
+
+Do not fabricate major facts beyond the case.
+Minor editorial restructuring for readability is allowed.
+If the original PDF asset is available in the repo context, expose it as “Original case file” or “Source PDF”.
+If not, still implement the structured data room from the extracted content.
+
+SEED DATA
+Create everything needed for instant testing:
+- at least 1 seeded candidate user
+- seeded candidate content
+- seeded data room documents
+- optional second candidate for robustness
+- clear default credentials / first-access path documented in code comments and README update
+
+Include practical test seed examples such as:
+- email: candidate@varexia-demo.com
+- initial flow: first access sets password
+If existing platform conventions demand a different seed model, adapt accordingly.
+
+UX COPY
+All portal copy should be in polished English for this use case unless existing architecture strongly prefers multilingual handling. Keep text professional, clear, and calm.
+
+ERROR / EDGE CASE HANDLING
+Handle all of these gracefully:
+- unknown email
+- password missing
+- wrong password
+- unauthorized access
+- direct deep-link without login
+- no content found for a document
+- broken session
+- empty viewed state
+- mobile layout fallback
+
+QUALITY BAR
+This must feel like a finished mini-product inside the platform, not a rough internal prototype.
+
+TESTING REQUIREMENTS
+You must not stop after coding.
+You must test the implementation thoroughly.
+
+At minimum:
+1. Run lint if available
+2. Run typecheck if available
+3. Run build if feasible
+4. Run app locally
+5. Manually verify all critical flows
+6. Fix all discovered blocking issues before stopping
+
+MANDATORY TEST CHECKLIST
+Verify and document that all of the following work:
+- candidate access page loads
+- seeded candidate recognized
+- first-password setup works
+- login works
+- session persists
+- logout works
+- candidate home renders correctly
+- welcome page works
+- presentation task page works
+- conversation page works
+- data room opens
+- category navigation works
+- document detail pages work
+- viewed state works
+- unauthorized user cannot access candidate routes
+- layout works on desktop and acceptable on mobile
+- no broken links
+- no console errors that indicate broken functionality
+- no TypeScript errors in implemented feature scope
+
+DELIVERABLE FORMAT INSIDE REPLIT
+When implementation is complete, provide:
+1. a short implementation summary
+2. exact routes created
+3. seeded test credentials / first-access instructions
+4. any architectural notes that matter
+5. concise test report with PASS/FAIL per critical item
+6. list of any non-blocking limitations only if truly unavoidable
+
+STRICT DO-NOTs
+- do not leave dummy pages
+- do not leave unimplemented buttons
+- do not handwave testing
+- do not merely describe what should be done
+- do not produce a half-finished “MVP shell”
+- do not degrade the design into enterprise clutter
+- do not reuse old portal UI if it looks materially worse than the new candidate experience
+- do not ask for more input unless absolutely technically necessary
+- do not postpone content population
+- do not hide behind “future improvement”
+
+SUCCESS CRITERION
+At the end, I should be able to enter the candidate portal, set a password, log in, see a beautiful Apple-like candidate home, open the welcome page, open the presentation task, open the simulated employee conversation, and enter a convincing structured VAREXIA data room with categorized documents and readable content — all in a way that feels polished, coherent, and actually ready to use today.
