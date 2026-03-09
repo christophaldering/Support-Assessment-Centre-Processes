@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, Mail, BarChart3, ClipboardList, Newspaper, BookOpen, Clock, CheckCircle2, Star } from "lucide-react";
-import type { DataRoomDocument } from "@/lib/candidate-portal/data-room-content";
+import {
+  FileText, Mail, BarChart3, ClipboardList, Newspaper, BookOpen,
+  Clock, CheckCircle2, Star, Sparkles, Download, File
+} from "lucide-react";
 
 const typeIcons: Record<string, typeof FileText> = {
   memo: ClipboardList,
@@ -13,37 +15,53 @@ const typeIcons: Record<string, typeof FileText> = {
   briefing: BookOpen,
   minutes: ClipboardList,
   article: Newspaper,
+  pdf: File,
+  presentation: FileText,
 };
 
-const typeColors: Record<string, string> = {
-  memo: "bg-blue-50 text-blue-600",
-  report: "bg-purple-50 text-purple-600",
-  email: "bg-amber-50 text-amber-600",
-  analysis: "bg-emerald-50 text-emerald-600",
-  survey: "bg-pink-50 text-pink-600",
-  briefing: "bg-indigo-50 text-indigo-600",
-  minutes: "bg-orange-50 text-orange-600",
-  article: "bg-cyan-50 text-cyan-600",
-};
-
-interface DataRoomDocumentCardProps {
-  document: DataRoomDocument;
-  isViewed: boolean;
+export interface DataRoomDocumentData {
+  id: string;
+  slug: string;
+  title: string;
+  shortDescription: string | null;
+  documentType: string | null;
+  category: string | null;
+  categoryLabel: string | null;
+  categoryColor: string | null;
+  categoryIcon: string | null;
+  tags: string[];
+  isImportant: boolean;
+  isNew: boolean;
+  readingTime: number | null;
+  viewed: boolean;
+  hasFile?: boolean;
+  hasTextSummary?: boolean;
+  sortOrder?: number;
+  viewedAt?: string | null;
+  lastOpenedAt?: string | null;
 }
 
-export default function DataRoomDocumentCard({ document, isViewed }: DataRoomDocumentCardProps) {
-  const Icon = typeIcons[document.type] || FileText;
-  const colorClass = typeColors[document.type] || "bg-gray-50 text-gray-600";
+interface DataRoomDocumentCardProps {
+  document: DataRoomDocumentData;
+}
+
+export default function DataRoomDocumentCard({ document }: DataRoomDocumentCardProps) {
+  const docType = document.documentType || "report";
+  const Icon = typeIcons[docType] || FileText;
+  const catColor = document.categoryColor || "#6b7280";
 
   return (
     <Link
       href={`/candidate/data-room/${document.slug}`}
-      className="group block bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-gray-200 transition-all duration-200"
+      className="group block bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-gray-100/50 hover:border-gray-200 hover:-translate-y-[1px] transition-all duration-300"
       data-testid={`card-document-${document.slug}`}
     >
       <div className="flex items-start gap-4">
-        <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${colorClass}`}>
-          <Icon className="w-4.5 h-4.5" />
+        <div
+          className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ backgroundColor: `${catColor}10`, color: catColor }}
+        >
+          <Icon className="w-[18px] h-[18px]" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -51,24 +69,52 @@ export default function DataRoomDocumentCard({ document, isViewed }: DataRoomDoc
               {document.title}
             </h3>
             {document.isImportant && (
-              <Star className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="currentColor" />
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 flex-shrink-0 border border-amber-100" data-testid={`badge-important-${document.slug}`}>
+                <Star className="w-2.5 h-2.5" fill="currentColor" />
+                Wichtig
+              </span>
+            )}
+            {document.isNew && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 flex-shrink-0 border border-blue-100" data-testid={`badge-new-${document.slug}`}>
+                <Sparkles className="w-2.5 h-2.5" />
+                Neu
+              </span>
             )}
           </div>
-          <p className="text-[12.5px] text-gray-500 leading-relaxed line-clamp-2 mb-3">
-            {document.shortDescription}
-          </p>
-          <div className="flex items-center gap-3">
-            <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${colorClass}`}>
-              {document.type.charAt(0).toUpperCase() + document.type.slice(1)}
-            </span>
-            <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
-              <Clock className="w-3 h-3" />
-              {document.readingTime} min
-            </span>
-            {isViewed && (
+          {document.shortDescription && (
+            <p className="text-[12.5px] text-gray-500 leading-relaxed line-clamp-2 mb-3">
+              {document.shortDescription}
+            </p>
+          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            {document.categoryLabel && (
+              <span
+                className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: `${catColor}10`, color: catColor }}
+              >
+                {document.categoryLabel}
+              </span>
+            )}
+            {docType && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-gray-400 font-medium">
+                {docType.charAt(0).toUpperCase() + docType.slice(1)}
+              </span>
+            )}
+            {document.readingTime && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                <Clock className="w-3 h-3" />
+                {document.readingTime} Min.
+              </span>
+            )}
+            {document.hasFile && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                <Download className="w-3 h-3" />
+              </span>
+            )}
+            {document.viewed && (
               <span className="inline-flex items-center gap-1 text-[11px] text-emerald-500 font-medium" data-testid={`badge-viewed-${document.slug}`}>
                 <CheckCircle2 className="w-3 h-3" />
-                Viewed
+                Gelesen
               </span>
             )}
           </div>

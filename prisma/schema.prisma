@@ -55,6 +55,8 @@ model Workspace {
   caseStudies        CaseStudy[]
   aiSystemSettings   AiSystemSettings?
   aiAuditLogs        AiAuditLog[]
+  dataRoomCategories DataRoomCategory[]
+  dataRoomDocuments  PortalDocument[]   @relation("WorkspacePortalDocuments")
 
   @@map("workspaces")
 }
@@ -132,6 +134,7 @@ model User {
   assessment          Assessment? @relation(fields: [assessmentId], references: [id])
   passwordResetTokens PasswordResetToken[]
   uploadedDocuments   Document[]
+  documentViews       DataRoomDocumentView[]
 
   @@unique([email, workspaceId])
   @@map("users")
@@ -894,31 +897,86 @@ model DemoRequest {
   @@map("demo_requests")
 }
 
+model DataRoomCategory {
+  id          String   @id @default(uuid())
+  slug        String
+  label       String
+  labelEn     String?  @map("label_en")
+  icon        String?
+  color       String?
+  sortOrder   Int      @default(0) @map("sort_order")
+  workspaceId String   @map("workspace_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  documents   PortalDocument[]
+
+  @@unique([slug, workspaceId])
+  @@index([workspaceId, sortOrder])
+  @@map("data_room_categories")
+}
+
 model PortalDocument {
-  id              String   @id @default(uuid())
-  assessmentId    String   @map("assessment_id")
-  exerciseId      String?  @map("exercise_id")
-  category        String   @default("general")
-  title           String
-  description     String?
-  objectPath      String?  @map("object_path")
-  fileName        String?  @map("file_name")
-  fileSize        Int?     @map("file_size")
-  mimeType        String?  @map("mime_type")
-  releaseStatus   String   @default("locked") @map("release_status")
-  releasedAt      DateTime? @map("released_at")
-  alwaysAvailable Boolean  @default(false) @map("always_available")
-  releaseStart    DateTime? @map("release_start")
-  releaseEnd      DateTime? @map("release_end")
-  downloadAllowed Boolean  @default(true) @map("download_allowed")
-  sortOrder       Int      @default(0) @map("sort_order")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                  String   @id @default(uuid())
+  assessmentId        String   @map("assessment_id")
+  workspaceId         String?  @map("workspace_id")
+  exerciseId          String?  @map("exercise_id")
+  categoryId          String?  @map("category_id")
+  category            String   @default("general")
+  slug                String?
+  title               String
+  description         String?
+  shortDescription    String?  @map("short_description")
+  textSummary         String?  @map("text_summary")
+  objectPath          String?  @map("object_path")
+  fileName            String?  @map("file_name")
+  fileSize            Int?     @map("file_size")
+  mimeType            String?  @map("mime_type")
+  documentType        String   @default("pdf") @map("document_type")
+  confidentialityLabel String? @map("confidentiality_label")
+  tags                String[] @default([])
+  isImportant         Boolean  @default(false) @map("is_important")
+  isNew               Boolean  @default(false) @map("is_new")
+  readingTime         Int?     @map("reading_time")
+  pageCount           Int?     @map("page_count")
+  sourceLabel         String?  @map("source_label")
+  previewImagePath    String?  @map("preview_image_path")
+  releaseStatus       String   @default("released") @map("release_status")
+  releasedAt          DateTime? @map("released_at")
+  alwaysAvailable     Boolean  @default(true) @map("always_available")
+  releaseStart        DateTime? @map("release_start")
+  releaseEnd          DateTime? @map("release_end")
+  visibleFrom         DateTime? @map("visible_from")
+  visibleUntil        DateTime? @map("visible_until")
+  downloadAllowed     Boolean  @default(true) @map("download_allowed")
+  sortOrder           Int      @default(0) @map("sort_order")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
-  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessment          Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  workspace           Workspace? @relation("WorkspacePortalDocuments", fields: [workspaceId], references: [id])
+  dataRoomCategory    DataRoomCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  views               DataRoomDocumentView[]
 
+  @@unique([slug, assessmentId])
   @@index([assessmentId, category])
+  @@index([workspaceId, categoryId])
   @@map("portal_documents")
+}
+
+model DataRoomDocumentView {
+  id          String   @id @default(uuid())
+  documentId  String   @map("document_id")
+  userId      String   @map("user_id")
+  viewedAt    DateTime @default(now()) @map("viewed_at")
+  lastOpenedAt DateTime @default(now()) @map("last_opened_at")
+
+  document    PortalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, userId])
+  @@index([userId])
+  @@map("data_room_document_views")
 }
 
 model SelfAssessment {
