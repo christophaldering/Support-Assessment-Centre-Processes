@@ -383,6 +383,49 @@ export async function register() {
       } else {
         console.log(`[seed] ${count} workspace(s) found, skipping seed.`);
       }
+
+      // ── SEED PORTAL DEMO CONTENT (runs after all workspaces/assessments exist) ──
+      const mainWsForPortal = await prisma.workspace.findUnique({ where: { slug: "main" } });
+      if (mainWsForPortal) {
+        const mainAssessments = await prisma.assessment.findMany({ where: { workspaceId: mainWsForPortal.id }, include: { portalDocuments: true, selfAssessments: true } });
+        for (const a of mainAssessments) {
+          if (a.portalDocuments.length === 0) {
+            if (!a.workflowConfig) {
+              await prisma.assessment.update({ where: { id: a.id }, data: { workflowConfig: { unlockedPhases: ["preparation", "execution", "followup"] }, status: "active" } });
+            }
+            const exercises = await prisma.exercise.findMany({ where: { assessmentId: a.id } });
+            const caseEx = exercises.find((e: any) => e.type === "case_study");
+            const simEx = exercises.find((e: any) => ["behavior_simulation", "role_play", "in_tray"].includes(e.type));
+            const docs = [
+              { assessmentId: a.id, category: "preparation", title: "Willkommen & Ablaufplan", description: "Übersicht über den gesamten Assessment-Ablauf, Zeitplan und organisatorische Hinweise.", releaseStatus: "released", alwaysAvailable: true, sortOrder: 1 },
+              { assessmentId: a.id, category: "preparation", title: "Hinweise zur Vorbereitung", description: "Tipps und Empfehlungen zur optimalen Vorbereitung auf das Assessment Center.", releaseStatus: "released", alwaysAvailable: true, sortOrder: 2 },
+              { assessmentId: a.id, category: "info", title: "Feedback-Leitfaden", description: "Informationen zum Feedback-Prozess und wie Sie Ihre Ergebnisse interpretieren können.", releaseStatus: "released", alwaysAvailable: true, sortOrder: 5 },
+            ];
+            if (caseEx) docs.push({ assessmentId: a.id, category: "general", title: `${caseEx.name} — Briefing`, description: "Hintergrundinformationen und Aufgabenstellung.", releaseStatus: "released", alwaysAvailable: true, sortOrder: 3 });
+            if (simEx) docs.push({ assessmentId: a.id, category: "general", title: `${simEx.name} — Rollenanweisung`, description: "Ihre Rolle und die Ausgangssituation.", releaseStatus: "released", alwaysAvailable: true, sortOrder: 4 });
+            await prisma.portalDocument.createMany({ data: docs });
+            console.log(`[seed] Created ${docs.length} portal documents for "${a.name}"`);
+          }
+          if (a.selfAssessments.length === 0) {
+            await prisma.selfAssessment.createMany({
+              data: [
+                { assessmentId: a.id, title: "Selbsteinschätzung Führungskompetenzen", description: "Bitte schätzen Sie Ihre eigenen Führungskompetenzen ein.", releaseStatus: "released", alwaysAvailable: true, sortOrder: 1, schemaJson: { type: "likert", scale: { min: 1, max: 5, labels: ["Trifft nicht zu", "Trifft wenig zu", "Teils/teils", "Trifft überwiegend zu", "Trifft voll zu"] }, questions: [{ id: "q1", text: "Ich kann eine klare strategische Vision entwickeln und kommunizieren." }, { id: "q2", text: "Ich treffe auch unter Unsicherheit fundierte Entscheidungen." }, { id: "q3", text: "Ich kann Veränderungsprozesse aktiv gestalten." }, { id: "q4", text: "Ich kommuniziere klar und überzeugend." }, { id: "q5", text: "Ich fördere aktiv die Entwicklung meiner Mitarbeiter." }] } },
+                { assessmentId: a.id, title: "Persönliche Reflexion", description: "Bitte beantworten Sie die folgenden Fragen in eigenen Worten.", releaseStatus: "released", alwaysAvailable: true, sortOrder: 2, schemaJson: { type: "open", questions: [{ id: "r1", text: "Was war Ihre größte berufliche Herausforderung in den letzten 12 Monaten?" }, { id: "r2", text: "Welche Führungskompetenz möchten Sie am stärksten weiterentwickeln?" }, { id: "r3", text: "Beschreiben Sie eine Situation, in der Sie ein Team durch eine Veränderung geführt haben." }] } },
+              ],
+            });
+            console.log(`[seed] Created 2 self-assessments for "${a.name}"`);
+          }
+        }
+        const adminForPortal = await prisma.user.findFirst({ where: { email: "christoph.aldering@googlemail.com", workspaceId: mainWsForPortal.id } });
+        if (adminForPortal && !adminForPortal.assessmentId) {
+          const firstAssessment = await prisma.assessment.findFirst({ where: { workspaceId: mainWsForPortal.id }, orderBy: { createdAt: "asc" } });
+          if (firstAssessment) {
+            await prisma.user.update({ where: { id: adminForPortal.id }, data: { assessmentId: firstAssessment.id } });
+            console.log("[seed] Linked admin user to assessment for portal preview.");
+          }
+        }
+      }
+
     } catch (err) {
       console.error("[seed] Auto-seed error:", err);
     } finally {
