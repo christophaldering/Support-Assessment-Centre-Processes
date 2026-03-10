@@ -22,6 +22,8 @@ const nextConfig = {
       "/api/w/\\[workspaceSlug\\]/case-studies/upload": ["./lib/pdf-extract.mjs"],
       "/api/w/\\[workspaceSlug\\]/requirements-analysis/extract": ["./lib/pdf-extract.mjs"],
       "/api/w/\\[workspaceSlug\\]/case-studies/\\[caseStudyId\\]/export-pdf": ["./node_modules/pdfkit/js/data/**/*"],
+      "/instrumentation": ["./node_modules/pdfkit/js/data/**/*", "./assets/varexia-logo.png"],
+      "/api/candidate-portal/data-room/documents/\\[slug\\]/file": ["./node_modules/pdfkit/js/data/**/*"],
     },
   },
   eslint: {

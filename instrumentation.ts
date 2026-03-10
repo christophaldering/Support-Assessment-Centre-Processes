@@ -617,6 +617,71 @@ export async function register() {
         } else {
           console.log(`[seed] Data room categories already exist (${existingCategories}), skipping data room seed.`);
         }
+
+        // ── ENSURE DATA ROOM PDFs EXIST ──
+        const docsWithoutPdf = await prisma.portalDocument.findMany({
+          where: {
+            workspaceId: mainWsForPortal.id,
+            category: "data-room",
+            objectPath: null,
+            textSummary: { not: null },
+          },
+          include: { dataRoomCategory: true },
+        });
+
+        if (docsWithoutPdf.length > 0) {
+          console.log(`[seed] Generating PDFs for ${docsWithoutPdf.length} data room documents without files...`);
+          try {
+            const { generatePdfBuffer } = await import("./lib/pdf-generator");
+            const { uploadToObjectStorage } = await import("./lib/object-storage");
+            const pathMod = await import("path");
+            const fsMod = await import("fs");
+
+            const logoPaths = [
+              pathMod.join(process.cwd(), "assets", "varexia-logo.png"),
+              pathMod.join(__dirname, "assets", "varexia-logo.png"),
+              pathMod.join(__dirname, "..", "assets", "varexia-logo.png"),
+            ];
+            const logoPath = logoPaths.find(p => fsMod.existsSync(p)) || null;
+
+            let pdfSuccess = 0;
+            for (const doc of docsWithoutPdf) {
+              try {
+                const pdfBuffer = await generatePdfBuffer({
+                  title: doc.title,
+                  shortDescription: doc.shortDescription,
+                  textSummary: doc.textSummary,
+                  documentType: doc.documentType,
+                  confidentialityLabel: doc.confidentialityLabel,
+                  categoryLabel: doc.dataRoomCategory?.label || null,
+                  categoryColor: doc.dataRoomCategory?.color || null,
+                }, logoPath);
+
+                const objectPath = `.private/portal/${doc.assessmentId}/dataroom_${doc.slug}.pdf`;
+                await uploadToObjectStorage(objectPath, pdfBuffer, "application/pdf");
+
+                await prisma.portalDocument.update({
+                  where: { id: doc.id },
+                  data: {
+                    objectPath,
+                    fileName: `${doc.slug}.pdf`,
+                    fileSize: pdfBuffer.length,
+                    mimeType: "application/pdf",
+                    downloadAllowed: true,
+                  },
+                });
+
+                pdfSuccess++;
+                console.log(`[seed] PDF: "${doc.title}" (${(pdfBuffer.length / 1024).toFixed(0)} KB)`);
+              } catch (pdfErr) {
+                console.error(`[seed] PDF failed for "${doc.title}":`, pdfErr);
+              }
+            }
+            console.log(`[seed] PDF generation complete: ${pdfSuccess}/${docsWithoutPdf.length} succeeded.`);
+          } catch (importErr) {
+            console.error("[seed] PDF generation skipped (module load error):", importErr);
+          }
+        }
       }
 
     } catch (err) {
