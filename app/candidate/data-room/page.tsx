@@ -2,42 +2,99 @@
 
 import { useState, useEffect, useMemo } from "react";
 import DataRoomHeader from "@/components/candidate/DataRoomHeader";
-import DataRoomSidebar, { type DataRoomCategoryItem } from "@/components/candidate/DataRoomSidebar";
+import type { DataRoomCategoryItem } from "@/components/candidate/DataRoomSidebar";
 import DataRoomDocumentCard, { type DataRoomDocumentData } from "@/components/candidate/DataRoomDocumentCard";
-import { Star, Sparkles, Clock, FileText, Loader2 } from "lucide-react";
+import {
+  Building2, TrendingUp, ShoppingCart, Rocket, Shield, Users, Newspaper,
+  FileText, ChevronRight, Folder
+} from "lucide-react";
 
-function DocumentSkeleton() {
+const iconMap: Record<string, typeof Building2> = {
+  Building2,
+  TrendingUp,
+  ShoppingCart,
+  Rocket,
+  Shield,
+  Users,
+  Newspaper,
+  FileText,
+  Folder,
+};
+
+function getIconComponent(iconName: string | null) {
+  if (!iconName) return Folder;
+  return iconMap[iconName] || Folder;
+}
+
+function FolderSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse">
-      <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-xl bg-gray-100" />
-        <div className="flex-1 space-y-2">
-          <div className="h-4 bg-gray-100 rounded-lg w-2/3" />
-          <div className="h-3 bg-gray-50 rounded-lg w-full" />
-          <div className="h-3 bg-gray-50 rounded-lg w-1/2" />
-        </div>
-      </div>
+    <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
+      <div className="w-12 h-12 rounded-2xl bg-gray-100 mb-4" />
+      <div className="h-4 bg-gray-100 rounded-lg w-2/3 mb-2" />
+      <div className="h-3 bg-gray-50 rounded-lg w-1/3" />
     </div>
   );
 }
 
-function SectionTitle({ icon, title, count }: { icon: React.ReactNode; title: string; count: number }) {
-  if (count === 0) return null;
+function CategoryFolderCard({
+  category,
+  documentCount,
+  onClick,
+  index,
+}: {
+  category: DataRoomCategoryItem;
+  documentCount: number;
+  onClick: () => void;
+  index: number;
+}) {
+  const IconComponent = getIconComponent(category.icon);
+  const color = category.color || "#6B7280";
+
   return (
-    <div className="flex items-center gap-2 mb-3 mt-8 first:mt-0">
-      {icon}
-      <h2 className="text-[15px] font-semibold text-gray-800">{title}</h2>
-      <span className="text-[11px] text-gray-400 tabular-nums">({count})</span>
-    </div>
+    <button
+      onClick={onClick}
+      className="group relative bg-white rounded-2xl border border-gray-100 p-6 text-left transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-lg hover:shadow-gray-200/50 hover:border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2"
+      style={{
+        animationDelay: `${index * 60}ms`,
+        animation: "fadeInUp 0.5s ease-out both",
+      }}
+      data-testid={`button-folder-${category.slug}`}
+    >
+      <div
+        className="absolute top-0 left-0 w-full h-1 rounded-t-2xl opacity-80"
+        style={{ backgroundColor: color }}
+      />
+
+      <div
+        className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110"
+        style={{ backgroundColor: `${color}14` }}
+      >
+        <IconComponent
+          className="w-6 h-6 transition-colors duration-300"
+          style={{ color }}
+        />
+      </div>
+
+      <h3 className="text-[15px] font-semibold text-gray-900 mb-1 tracking-tight">
+        {category.label}
+      </h3>
+
+      <div className="flex items-center justify-between">
+        <span className="text-[13px] text-gray-400 tabular-nums">
+          {documentCount} {documentCount === 1 ? "Dokument" : "Dokumente"}
+        </span>
+        <ChevronRight className="w-4 h-4 text-gray-300 transition-all duration-300 group-hover:text-gray-500 group-hover:translate-x-0.5" />
+      </div>
+    </button>
   );
 }
 
 export default function DataRoomPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [documents, setDocuments] = useState<DataRoomDocumentData[]>([]);
   const [categories, setCategories] = useState<DataRoomCategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -69,8 +126,8 @@ export default function DataRoomPage() {
   const filteredDocs = useMemo(() => {
     let docs = [...documents];
 
-    if (activeCategory) {
-      const cat = categories.find((c) => c.slug === activeCategory);
+    if (selectedCategory) {
+      const cat = categories.find((c) => c.slug === selectedCategory);
       if (cat) {
         docs = docs.filter(
           (d) => d.category === cat.slug || d.categoryLabel === cat.label
@@ -91,141 +148,110 @@ export default function DataRoomPage() {
     }
 
     return docs;
-  }, [activeCategory, searchQuery, documents, categories]);
+  }, [selectedCategory, searchQuery, documents, categories]);
 
-  const importantDocs = useMemo(() => filteredDocs.filter((d) => d.isImportant), [filteredDocs]);
-  const newDocs = useMemo(() => filteredDocs.filter((d) => d.isNew && !d.isImportant), [filteredDocs]);
-  const recentlyViewed = useMemo(
-    () =>
-      filteredDocs
-        .filter((d) => d.viewed && d.lastOpenedAt)
-        .sort((a, b) => new Date(b.lastOpenedAt!).getTime() - new Date(a.lastOpenedAt!).getTime())
-        .slice(0, 5),
-    [filteredDocs]
-  );
-  const remainingDocs = useMemo(
-    () =>
-      filteredDocs.filter(
-        (d) =>
-          !d.isImportant &&
-          !(d.isNew && !d.isImportant)
-      ),
-    [filteredDocs]
-  );
+  const isSearching = searchQuery.trim().length > 0;
+  const showFolderGrid = !isSearching && !selectedCategory;
 
-  const showSections = !searchQuery.trim() && !activeCategory;
+  const selectedCategoryData = selectedCategory
+    ? categories.find((c) => c.slug === selectedCategory)
+    : null;
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
       <DataRoomHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      <div className="flex gap-8">
-        <aside className="hidden lg:block w-56 flex-shrink-0">
-          <div className="sticky top-24">
-            <DataRoomSidebar
-              categories={categories}
-              categoryCounts={categoryCounts}
-              activeCategory={activeCategory}
-              onCategorySelect={setActiveCategory}
-              totalCount={documents.length}
-            />
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="grid-folders-loading">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <FolderSkeleton key={i} />
+          ))}
+        </div>
+      ) : isSearching ? (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="w-4 h-4 text-gray-400" />
+            <span className="text-[14px] text-gray-500">
+              {filteredDocs.length} {filteredDocs.length === 1 ? "Ergebnis" : "Ergebnisse"} für &ldquo;{searchQuery}&rdquo;
+            </span>
           </div>
-        </aside>
-
-        <div className="flex-1 min-w-0">
-          <div className="lg:hidden mb-4">
-            <select
-              value={activeCategory || ""}
-              onChange={(e) => setActiveCategory(e.target.value || null)}
-              className="w-full px-3.5 py-2.5 text-[13px] border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gray-100 appearance-none"
-              data-testid="select-category-mobile"
-            >
-              <option value="">Alle Dokumente ({documents.length})</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.slug}>
-                  {cat.label} ({categoryCounts[cat.slug] ?? 0})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {loading ? (
-            <div className="grid gap-3" data-testid="grid-documents-loading">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <DocumentSkeleton key={i} />
-              ))}
-            </div>
-          ) : filteredDocs.length === 0 ? (
+          {filteredDocs.length === 0 ? (
             <div className="text-center py-20">
               <FileText className="w-10 h-10 text-gray-200 mx-auto mb-3" />
               <p className="text-[15px] font-medium text-gray-400 mb-1" data-testid="text-no-results">
                 Keine Dokumente gefunden
               </p>
               <p className="text-[13px] text-gray-300">
-                Versuchen Sie einen anderen Suchbegriff oder wählen Sie eine andere Kategorie.
+                Versuchen Sie einen anderen Suchbegriff.
               </p>
             </div>
-          ) : showSections ? (
-            <div>
-              {importantDocs.length > 0 && (
-                <>
-                  <SectionTitle
-                    icon={<Star className="w-4 h-4 text-amber-400" fill="currentColor" />}
-                    title="Empfohlener Einstieg"
-                    count={importantDocs.length}
-                  />
-                  <div className="grid gap-3" data-testid="grid-important-documents">
-                    {importantDocs.map((doc) => (
-                      <DataRoomDocumentCard key={doc.id} document={doc} />
-                    ))}
-                  </div>
-                </>
-              )}
+          ) : (
+            <div className="grid gap-3" data-testid="grid-search-results">
+              {filteredDocs.map((doc) => (
+                <DataRoomDocumentCard key={doc.id} document={doc} />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : showFolderGrid ? (
+        <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="grid-category-folders">
+            {categories.map((cat, index) => (
+              <CategoryFolderCard
+                key={cat.id}
+                category={cat}
+                documentCount={categoryCounts[cat.slug] || 0}
+                onClick={() => setSelectedCategory(cat.slug)}
+                index={index}
+              />
+            ))}
+          </div>
+        </div>
+      ) : selectedCategoryData ? (
+        <div style={{ animation: "fadeInUp 0.3s ease-out both" }}>
+          <div className="flex items-center gap-2 mb-6 text-[14px]" data-testid="nav-breadcrumb">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+              data-testid="button-breadcrumb-dataroom"
+            >
+              Data Room
+            </button>
+            <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
+            <span className="text-gray-700 font-medium">{selectedCategoryData.label}</span>
+          </div>
 
-              {newDocs.length > 0 && (
+          <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+            {(() => {
+              const IconComp = getIconComponent(selectedCategoryData.icon);
+              const color = selectedCategoryData.color || "#6B7280";
+              return (
                 <>
-                  <SectionTitle
-                    icon={<Sparkles className="w-4 h-4 text-blue-500" />}
-                    title="Neu für Sie"
-                    count={newDocs.length}
-                  />
-                  <div className="grid gap-3" data-testid="grid-new-documents">
-                    {newDocs.map((doc) => (
-                      <DataRoomDocumentCard key={doc.id} document={doc} />
-                    ))}
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                    style={{ backgroundColor: `${color}14` }}
+                  >
+                    <IconComp className="w-7 h-7" style={{ color }} />
+                  </div>
+                  <div>
+                    <h2 className="text-[20px] font-semibold text-gray-900 tracking-tight" data-testid="text-category-title">
+                      {selectedCategoryData.label}
+                    </h2>
+                    <p className="text-[13px] text-gray-400 tabular-nums">
+                      {categoryCounts[selectedCategoryData.slug] || 0} Dokumente in dieser Kategorie
+                    </p>
                   </div>
                 </>
-              )}
+              );
+            })()}
+          </div>
 
-              {recentlyViewed.length > 0 && (
-                <>
-                  <SectionTitle
-                    icon={<Clock className="w-4 h-4 text-gray-400" />}
-                    title="Zuletzt geöffnet"
-                    count={recentlyViewed.length}
-                  />
-                  <div className="grid gap-3" data-testid="grid-recent-documents">
-                    {recentlyViewed.map((doc) => (
-                      <DataRoomDocumentCard key={doc.id} document={doc} />
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {remainingDocs.length > 0 && (
-                <>
-                  <SectionTitle
-                    icon={<FileText className="w-4 h-4 text-gray-400" />}
-                    title="Alle weiteren Dokumente"
-                    count={remainingDocs.length}
-                  />
-                  <div className="grid gap-3" data-testid="grid-remaining-documents">
-                    {remainingDocs.map((doc) => (
-                      <DataRoomDocumentCard key={doc.id} document={doc} />
-                    ))}
-                  </div>
-                </>
-              )}
+          {filteredDocs.length === 0 ? (
+            <div className="text-center py-16">
+              <FileText className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+              <p className="text-[15px] font-medium text-gray-400" data-testid="text-no-results">
+                Keine Dokumente in dieser Kategorie
+              </p>
             </div>
           ) : (
             <div className="grid gap-3" data-testid="grid-documents">
@@ -235,7 +261,7 @@ export default function DataRoomPage() {
             </div>
           )}
         </div>
-      </div>
+      ) : null}
 
       <footer className="mt-16 pt-8 border-t border-gray-100 text-center">
         <p className="text-[12px] text-gray-300">
