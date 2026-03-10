@@ -68,7 +68,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "No file attached" }, { status: 404 });
   }
 
-  if (!doc.downloadAllowed) {
+  const wantsUrl = req.nextUrl.searchParams.get("url") === "1";
+
+  if (!wantsUrl && !doc.downloadAllowed) {
     return NextResponse.json({ error: "Download not allowed for this document" }, { status: 403 });
   }
 
@@ -76,6 +78,10 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     const downloadUrl = doc.objectPath.startsWith("/objects/")
       ? await getSignedDownloadUrl(doc.objectPath)
       : await getSignedDownloadUrlForPath(doc.objectPath);
+
+    if (wantsUrl) {
+      return NextResponse.json({ url: downloadUrl });
+    }
 
     return NextResponse.redirect(downloadUrl);
   } catch {

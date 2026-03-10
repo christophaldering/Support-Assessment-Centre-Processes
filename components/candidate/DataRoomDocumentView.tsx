@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft, ArrowRight, Clock, Star, Sparkles,
   FileText, Mail, BarChart3, ClipboardList, Newspaper, BookOpen,
-  Download, File, Shield, ChevronRight
+  Download, File, Shield, ChevronRight, Eye, FileType, Maximize2, Minimize2
 } from "lucide-react";
 
 const typeIcons: Record<string, typeof FileText> = {
@@ -353,6 +353,29 @@ export default function DataRoomDocumentView({ document, prevDoc, nextDoc }: Dat
   const Icon = typeIcons[docType] || FileText;
   const catColor = document.categoryColor || "#6b7280";
 
+  const hasPdf = document.hasFile && document.mimeType === "application/pdf";
+  const hasText = !!(document.textSummary || document.description);
+
+  const [viewMode, setViewMode] = useState<"pdf" | "text">(hasPdf ? "pdf" : "text");
+  const [expanded, setExpanded] = useState(false);
+  const [pdfDirectUrl, setPdfDirectUrl] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(hasPdf);
+
+  const fileApiUrl = `/api/candidate-portal/data-room/documents/${document.slug}/file`;
+
+  useEffect(() => {
+    if (!hasPdf) return;
+    setPdfLoading(true);
+    setPdfDirectUrl(null);
+    fetch(`${fileApiUrl}?url=1`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.url) setPdfDirectUrl(data.url);
+      })
+      .catch(() => {})
+      .finally(() => setPdfLoading(false));
+  }, [hasPdf, fileApiUrl]);
+
   const parsedBlocks = useMemo(() => {
     const raw = document.textSummary || document.description || "";
     if (!raw) return [];
@@ -360,7 +383,7 @@ export default function DataRoomDocumentView({ document, prevDoc, nextDoc }: Dat
   }, [document.textSummary, document.description]);
 
   const handleDownload = () => {
-    window.open(`/api/candidate-portal/data-room/documents/${document.slug}/file`, "_blank");
+    window.open(fileApiUrl, "_blank");
   };
 
   return (
@@ -405,7 +428,7 @@ export default function DataRoomDocumentView({ document, prevDoc, nextDoc }: Dat
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto px-6 pt-10 pb-16">
+      <div className={expanded ? "px-4 pt-4 pb-16" : "max-w-4xl mx-auto px-6 pt-10 pb-16"}>
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm shadow-gray-100/80">
           <div className="relative">
             <div
@@ -504,7 +527,60 @@ export default function DataRoomDocumentView({ document, prevDoc, nextDoc }: Dat
             </div>
           </div>
 
-          {document.hasFile && document.downloadAllowed && (
+          {(hasPdf && hasText) && (
+            <div className="px-10 py-3 bg-gray-50/40 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                <button
+                  onClick={() => setViewMode("pdf")}
+                  className={`inline-flex items-center gap-1.5 text-[12px] font-medium px-3.5 py-1.5 rounded-md transition-all duration-200 ${
+                    viewMode === "pdf"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  data-testid="button-view-pdf"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Dokument
+                </button>
+                <button
+                  onClick={() => setViewMode("text")}
+                  className={`inline-flex items-center gap-1.5 text-[12px] font-medium px-3.5 py-1.5 rounded-md transition-all duration-200 ${
+                    viewMode === "text"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  data-testid="button-view-text"
+                >
+                  <FileType className="w-3.5 h-3.5" />
+                  Textansicht
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                {viewMode === "pdf" && (
+                  <button
+                    onClick={() => setExpanded(!expanded)}
+                    className="inline-flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-700 px-2 py-1.5 rounded-md hover:bg-gray-100 transition-all"
+                    data-testid="button-toggle-expand"
+                  >
+                    {expanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                    {expanded ? "Verkleinern" : "Vergrößern"}
+                  </button>
+                )}
+                {document.downloadAllowed && (
+                  <button
+                    onClick={handleDownload}
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-white bg-gray-800 hover:bg-gray-900 rounded-lg px-4 py-2 shadow-sm transition-all duration-200 hover:shadow-md"
+                    data-testid="button-download-file"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {(!hasPdf || !hasText) && document.hasFile && document.downloadAllowed && (
             <div className="px-10 py-4 bg-gray-50/40 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm">
@@ -533,27 +609,61 @@ export default function DataRoomDocumentView({ document, prevDoc, nextDoc }: Dat
             </div>
           )}
 
-          <div className="px-10 py-10">
-            {parsedBlocks.length > 0 ? (
-              <div data-testid="text-document-body">
-                {parsedBlocks.map((block, i) => (
-                  <RenderBlock key={i} block={block} catColor={catColor} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-16" data-testid="text-document-body">
-                <File className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                <p className="text-[15px] text-gray-400">
-                  Dieses Dokument enthält keinen Textinhalt.
-                </p>
-                {document.hasFile && (
-                  <p className="text-[13px] text-gray-400 mt-2">
-                    Bitte laden Sie die Datei herunter, um den Inhalt einzusehen.
+          {hasPdf && viewMode === "pdf" ? (
+            <div className="relative" data-testid="pdf-viewer-container">
+              {pdfLoading ? (
+                <div className={`w-full flex items-center justify-center ${expanded ? "h-[calc(100vh-200px)]" : "h-[700px]"}`}>
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin mx-auto mb-3" />
+                    <p className="text-[13px] text-gray-400">PDF wird geladen…</p>
+                  </div>
+                </div>
+              ) : pdfDirectUrl ? (
+                <iframe
+                  src={`${pdfDirectUrl}#toolbar=1&navpanes=0&scrollbar=1`}
+                  className={`w-full border-0 ${expanded ? "h-[calc(100vh-200px)]" : "h-[700px]"}`}
+                  title={document.title}
+                  data-testid="pdf-viewer-iframe"
+                />
+              ) : (
+                <div className={`w-full flex items-center justify-center ${expanded ? "h-[calc(100vh-200px)]" : "h-[700px]"}`}>
+                  <div className="text-center">
+                    <File className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                    <p className="text-[13px] text-gray-400 mb-2">PDF konnte nicht geladen werden</p>
+                    <button
+                      onClick={handleDownload}
+                      className="inline-flex items-center gap-1.5 text-[12px] font-medium text-gray-600 hover:text-gray-900 underline"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Stattdessen herunterladen
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="px-10 py-10">
+              {parsedBlocks.length > 0 ? (
+                <div data-testid="text-document-body">
+                  {parsedBlocks.map((block, i) => (
+                    <RenderBlock key={i} block={block} catColor={catColor} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16" data-testid="text-document-body">
+                  <File className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                  <p className="text-[15px] text-gray-400">
+                    Dieses Dokument enthält keinen Textinhalt.
                   </p>
-                )}
-              </div>
-            )}
-          </div>
+                  {document.hasFile && (
+                    <p className="text-[13px] text-gray-400 mt-2">
+                      Bitte laden Sie die Datei herunter, um den Inhalt einzusehen.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between mt-10 gap-4">
