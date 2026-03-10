@@ -68,9 +68,10 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "No file attached" }, { status: 404 });
   }
 
+  const wantsInline = req.nextUrl.searchParams.get("inline") === "1";
   const wantsUrl = req.nextUrl.searchParams.get("url") === "1";
 
-  if (!wantsUrl && !doc.downloadAllowed) {
+  if (!wantsInline && !wantsUrl && !doc.downloadAllowed) {
     return NextResponse.json({ error: "Download not allowed for this document" }, { status: 403 });
   }
 
@@ -78,6 +79,22 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     const downloadUrl = doc.objectPath.startsWith("/objects/")
       ? await getSignedDownloadUrl(doc.objectPath)
       : await getSignedDownloadUrlForPath(doc.objectPath);
+
+    if (wantsInline) {
+      const upstream = await fetch(downloadUrl);
+      if (!upstream.ok) {
+        return NextResponse.json({ error: "Failed to fetch file" }, { status: 502 });
+      }
+      const contentType = doc.mimeType === "application/pdf" ? "application/pdf" : (doc.mimeType || "application/octet-stream");
+      const headers: Record<string, string> = {
+        "Content-Type": contentType,
+        "Content-Disposition": `inline; filename="${doc.fileName || "document.pdf"}"`,
+        "Cache-Control": "private, max-age=300",
+      };
+      const cl = upstream.headers.get("content-length");
+      if (cl) headers["Content-Length"] = cl;
+      return new NextResponse(upstream.body, { status: 200, headers });
+    }
 
     if (wantsUrl) {
       return NextResponse.json({ url: downloadUrl });

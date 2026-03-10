@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft, ArrowRight, Clock, Star, Sparkles,
   FileText, Mail, BarChart3, ClipboardList, Newspaper, BookOpen,
@@ -358,23 +358,9 @@ export default function DataRoomDocumentView({ document, prevDoc, nextDoc }: Dat
 
   const [viewMode, setViewMode] = useState<"pdf" | "text">(hasPdf ? "pdf" : "text");
   const [expanded, setExpanded] = useState(false);
-  const [pdfDirectUrl, setPdfDirectUrl] = useState<string | null>(null);
-  const [pdfLoading, setPdfLoading] = useState(hasPdf);
 
   const fileApiUrl = `/api/candidate-portal/data-room/documents/${document.slug}/file`;
-
-  useEffect(() => {
-    if (!hasPdf) return;
-    setPdfLoading(true);
-    setPdfDirectUrl(null);
-    fetch(`${fileApiUrl}?url=1`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.url) setPdfDirectUrl(data.url);
-      })
-      .catch(() => {})
-      .finally(() => setPdfLoading(false));
-  }, [hasPdf, fileApiUrl]);
+  const pdfInlineUrl = `${fileApiUrl}?inline=1`;
 
   const parsedBlocks = useMemo(() => {
     const raw = document.textSummary || document.description || "";
@@ -611,35 +597,12 @@ export default function DataRoomDocumentView({ document, prevDoc, nextDoc }: Dat
 
           {hasPdf && viewMode === "pdf" ? (
             <div className="relative" data-testid="pdf-viewer-container">
-              {pdfLoading ? (
-                <div className={`w-full flex items-center justify-center ${expanded ? "h-[calc(100vh-200px)]" : "h-[700px]"}`}>
-                  <div className="text-center">
-                    <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin mx-auto mb-3" />
-                    <p className="text-[13px] text-gray-400">PDF wird geladen…</p>
-                  </div>
-                </div>
-              ) : pdfDirectUrl ? (
-                <iframe
-                  src={`${pdfDirectUrl}#toolbar=1&navpanes=0&scrollbar=1`}
-                  className={`w-full border-0 ${expanded ? "h-[calc(100vh-200px)]" : "h-[700px]"}`}
-                  title={document.title}
-                  data-testid="pdf-viewer-iframe"
-                />
-              ) : (
-                <div className={`w-full flex items-center justify-center ${expanded ? "h-[calc(100vh-200px)]" : "h-[700px]"}`}>
-                  <div className="text-center">
-                    <File className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                    <p className="text-[13px] text-gray-400 mb-2">PDF konnte nicht geladen werden</p>
-                    <button
-                      onClick={handleDownload}
-                      className="inline-flex items-center gap-1.5 text-[12px] font-medium text-gray-600 hover:text-gray-900 underline"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      Stattdessen herunterladen
-                    </button>
-                  </div>
-                </div>
-              )}
+              <iframe
+                src={pdfInlineUrl}
+                className={`w-full border-0 ${expanded ? "h-[calc(100vh-200px)]" : "h-[700px]"}`}
+                title={document.title}
+                data-testid="pdf-viewer-iframe"
+              />
             </div>
           ) : (
             <div className="px-10 py-10">
