@@ -1,8 +1,10 @@
 const isDev = process.env.NODE_ENV !== "production";
+const distDir = process.env.NEXT_BUILD_DIR || ".next";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  distDir,
   ...(isDev ? {} : { output: "standalone" }),
   webpack: (config, { isServer }) => {
     if (isServer) {
@@ -17,8 +19,8 @@ const nextConfig = {
       bodySizeLimit: "50mb",
     },
     outputFileTracingIncludes: {
-      "/api/w/\\[workspaceSlug\\]/case-studies/upload": ["./lib/pdf-extract.mjs", "./node_modules/pdfjs-dist/**/*"],
-      "/api/w/\\[workspaceSlug\\]/requirements-analysis/extract": ["./lib/pdf-extract.mjs", "./node_modules/pdfjs-dist/**/*"],
+      "/api/w/\\[workspaceSlug\\]/case-studies/upload": ["./lib/pdf-extract.mjs"],
+      "/api/w/\\[workspaceSlug\\]/requirements-analysis/extract": ["./lib/pdf-extract.mjs"],
       "/api/w/\\[workspaceSlug\\]/case-studies/\\[caseStudyId\\]/export-pdf": ["./node_modules/pdfkit/js/data/**/*"],
     },
   },

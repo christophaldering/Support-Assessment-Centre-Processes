@@ -22,7 +22,7 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
     - **Production mode** (when `.next/standalone/server.js` exists): Starts the standalone server directly on port 5000 — no proxy, no loading page, minimal overhead. If standalone is missing in a deployment environment (`REPL_DEPLOYMENT` set), exits fatally.
     - **Dev mode** (no standalone build): Runs a proxy on port 5000 forwarding to `next dev` on port 5001, with a loading page during warmup and auto-refresh. Health checks every 15s with auto-restart on failure.
     The workflow command is `node scripts/wrapper.js`.
-*   **Build Script:** `scripts/build.sh` runs `next build` with 4GB heap (`--max-old-space-size=4096`). Preserves existing working builds on failure (backs up `.next` before building, restores on failure). Fresh build failures exit non-zero to prevent deployment without a valid build.
+*   **Build Script:** `scripts/build.sh` uses isolated build strategy: builds into `.next-build` (via `NEXT_BUILD_DIR` env var in `next.config.js`) to avoid conflicts with running dev server writing to `.next/`. Uses 8GB heap (`--max-old-space-size=8192`). After successful build, renames internal `.next-build` paths to `.next` in standalone output (server.js + required-server-files.json), copies static assets, then atomically swaps `.next-build` → `.next`. Preserves existing working builds on failure. `pdfjs-dist/**/*` removed from `outputFileTracingIncludes` (caused OOM during trace collection — 99MB, 404 files).
 *   **Error Boundaries:** `app/global-error.tsx` and `app/error.tsx` provide auto-recovery for chunk loading failures. `public/chunk-recovery.js` adds JS-level error recovery.
 
 **Key Architectural Decisions:**
