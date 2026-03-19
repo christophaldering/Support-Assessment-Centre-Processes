@@ -631,14 +631,6 @@ export default function LandingPage() {
           <span className="font-serif text-lg font-bold tracking-tight" data-testid="text-logo">
             Executive Diagnostics Suite
           </span>
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="#prozess" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navProcess}</a>
-            <a href="#uebungen" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navExercises}</a>
-            <a href="#fallstudien" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navCaseStudies}</a>
-            <a href="#kandidaten" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navCandidates}</a>
-            <a href="#frameworks" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navFrameworks}</a>
-            <a href="/tour" className="text-xs font-medium text-brand-blue hover:text-blue-400 transition-colors">{l.navTour}</a>
-          </nav>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setLang(lang === "de" ? "en" : "de")}
@@ -646,13 +638,6 @@ export default function LandingPage() {
               data-testid="button-lang-toggle"
             >
               {lang === "de" ? "EN" : "DE"}
-            </button>
-            <button
-              onClick={() => { setActiveMode("workspace"); setError(""); setTimeout(() => loginRef.current?.scrollIntoView({ behavior: "smooth" }), 50); }}
-              className="text-xs font-medium text-white bg-brand-blue hover:bg-brand-blue-dark rounded-full px-5 py-1.5 transition-colors"
-              data-testid="nav-login"
-            >
-              {l.navLogin}
             </button>
           </div>
         </div>
