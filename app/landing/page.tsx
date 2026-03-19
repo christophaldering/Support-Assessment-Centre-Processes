@@ -9,13 +9,6 @@ type Lang = "de" | "en";
 
 const t = {
   de: {
-    navProcess: "Unser Prozess",
-    navExercises: "\u00dcbungsbibliothek",
-    navCaseStudies: "Fallstudien",
-    navCandidates: "Kandidatenportal",
-    navFrameworks: "Frameworks",
-    navTour: "Produkt-Tour",
-    navLogin: "Anmelden",
     heroBadge: "Diagnostik-Plattform",
     heroTitle1: "Augmented",
     heroTitle2: "Diagnostics.",
@@ -223,13 +216,6 @@ const t = {
     footerSub: "Mandantenf\u00e4hig \u00b7 Enterprise-Grade \u00b7 Made with ambition",
   },
   en: {
-    navProcess: "Our Process",
-    navExercises: "Exercise Library",
-    navCaseStudies: "Case Studies",
-    navCandidates: "Candidate Portal",
-    navFrameworks: "Frameworks",
-    navTour: "Product Tour",
-    navLogin: "Sign In",
     heroBadge: "Diagnostics Platform",
     heroTitle1: "Augmented",
     heroTitle2: "Diagnostics.",
@@ -576,10 +562,6 @@ export default function LandingPage() {
     setCandidateEmail("");
     setCandidatePassword("");
     setError("");
-  };
-
-  const scrollToLogin = () => {
-    loginRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const processSteps = [
@@ -1166,23 +1148,18 @@ export default function LandingPage() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
                 {accessCards.map((card) => (
-                  <button
+                  <div
                     key={card.id}
-                    onClick={() => { setActiveMode(card.id); setError(""); }}
-                    className="group bg-white rounded-2xl border border-slate-200 p-6 text-left transition-all hover:shadow-xl hover:-translate-y-1 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    data-testid={`button-access-${card.id}`}
+                    className="bg-white rounded-2xl border border-slate-200 p-6 text-left"
+                    data-testid={`card-access-${card.id}`}
                   >
                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient} text-white flex items-center justify-center mb-4`}>
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d={card.icon} /></svg>
                     </div>
-                    <h3 className="text-lg font-bold text-slate-800 group-hover:text-slate-900 font-serif">{card.title}</h3>
+                    <h3 className="text-lg font-bold text-slate-800 font-serif">{card.title}</h3>
                     <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mt-0.5">{card.subtitle}</p>
                     <p className="text-sm text-slate-500 mt-3 leading-relaxed">{card.description}</p>
-                    <div className="mt-4 flex items-center text-sm font-medium text-blue-600 group-hover:text-blue-700">
-                      {l.loginBtn}
-                      <svg className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-                    </div>
-                  </button>
+                  </div>
                 ))}
               </div>
 
