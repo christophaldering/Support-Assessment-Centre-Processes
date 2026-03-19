@@ -28,7 +28,18 @@ fi
 
 if [ "$SKIP_INSTALL" = false ]; then
   echo "=== Installing dependencies ==="
-  npm install --production=false 2>&1 | tail -5
+  # Use PIPESTATUS to detect npm install failures even when piping output
+  npm install --production=false 2>&1 | tail -20
+  INSTALL_EXIT=${PIPESTATUS[0]}
+  if [ $INSTALL_EXIT -ne 0 ]; then
+    echo "=== npm install failed (exit $INSTALL_EXIT) ==="
+    if [ -d ".next/standalone" ]; then
+      echo "=== Previous build exists, continuing without reinstall ==="
+    else
+      echo "=== FATAL: npm install failed and no previous build to fall back to. ==="
+      exit 1
+    fi
+  fi
 
   echo "=== Generating Prisma client ==="
   npx prisma generate
