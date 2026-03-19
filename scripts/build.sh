@@ -1,11 +1,30 @@
 #!/bin/bash
+#
+# Build script for Executive Diagnostics Platform
+#
+# Flags:
+#   --skip-install       Skip npm install + prisma generate (explicit)
+#   --force-install      Force npm install even if node_modules exists
+#
+# Auto-detection: If node_modules/ exists and --force-install is not set,
+# npm install is automatically skipped (safe for Replit VM deployments which
+# copy node_modules from the workspace).
 
 SKIP_INSTALL=false
+FORCE_INSTALL=false
+
 for arg in "$@"; do
-  if [ "$arg" = "--skip-install" ]; then
-    SKIP_INSTALL=true
-  fi
+  case "$arg" in
+    --skip-install)  SKIP_INSTALL=true ;;
+    --force-install) FORCE_INSTALL=true ;;
+  esac
 done
+
+# Auto-detect: skip install if node_modules is already present (and not forced)
+if [ "$SKIP_INSTALL" = false ] && [ "$FORCE_INSTALL" = false ] && [ -d "node_modules" ]; then
+  echo "=== node_modules present — skipping npm install (use --force-install to override) ==="
+  SKIP_INSTALL=true
+fi
 
 if [ "$SKIP_INSTALL" = false ]; then
   echo "=== Installing dependencies ==="
@@ -14,7 +33,7 @@ if [ "$SKIP_INSTALL" = false ]; then
   echo "=== Generating Prisma client ==="
   npx prisma generate
 else
-  echo "=== Skipping npm install and prisma generate (--skip-install) ==="
+  echo "=== Skipping npm install and prisma generate ==="
 fi
 
 echo "=== Building Next.js ==="
@@ -40,7 +59,7 @@ if [ $BUILD_EXIT -ne 0 ]; then
 else
   echo "=== Build succeeded, preparing standalone ==="
 
-  mv .next-build/standalone/.next-build .next-build/standalone/.next 2>/dev/null
+  mv .next-build/standalone/.next-build .next-build/standalone/.next 2>/dev/null || true
 
   node -e "
     const fs = require('fs');
