@@ -1,0 +1,118 @@
+/* ============================================================
+   EDS Design Tokens — Executive Diagnostics Suite
+   Single source of truth for all design constants.
+   ============================================================ */
+
+:root {
+  /* ── Brand Colors ── */
+  --eds-terracotta:       #A6473B;
+  --eds-terracotta-dk:    #5F1A11;
+  --eds-terracotta-lt:    #C97A72;
+  --eds-terracotta-ghost: rgba(166, 71, 59, 0.08);
+  --eds-lagune:           #297587;
+  --eds-lagune-dk:        #115560;
+  --eds-lagune-md:        #B5D6DE;
+  --eds-lagune-light:     #EFF4F5;
+  --eds-white:            #FFFFFF;
+
+  /* ── Semantic Surface Colors ── */
+  --eds-bg-app:           #F8F9FA;
+  --eds-bg-surface:       #FFFFFF;
+  --eds-bg-elevated:      #FFFFFF;
+  --eds-bg-sunken:        #F1F3F5;
+  --eds-bg-overlay:       rgba(15, 23, 42, 0.48);
+
+  /* ── Semantic Text Colors ── */
+  --eds-text-primary:     #0F172A;
+  --eds-text-secondary:   #475569;
+  --eds-text-tertiary:    #94A3B8;
+  --eds-text-disabled:    #CBD5E1;
+  --eds-text-inverse:     #FFFFFF;
+  --eds-text-brand:       var(--eds-terracotta);
+  --eds-text-accent:      var(--eds-lagune);
+
+  /* ── Semantic Border Colors ── */
+  --eds-border:           #E2E8F0;
+  --eds-border-strong:    #CBD5E1;
+  --eds-border-focus:     var(--eds-terracotta);
+
+  /* ── Status Colors ── */
+  --eds-status-green:     #16A34A;
+  --eds-status-green-bg:  #DCFCE7;
+  --eds-status-amber:     #D97706;
+  --eds-status-amber-bg:  #FEF3C7;
+  --eds-status-red:       #DC2626;
+  --eds-status-red-bg:    #FEE2E2;
+  --eds-status-blue:      #2563EB;
+  --eds-status-blue-bg:   #DBEAFE;
+  --eds-status-gray:      #64748B;
+  --eds-status-gray-bg:   #F1F5F9;
+
+  /* ── Shell Dimensions ── */
+  --eds-rail-width:       52px;
+  --eds-context-width:    220px;
+  --eds-ai-panel-width:   280px;
+  --eds-topbar-height:    44px;
+
+  /* ── Spacing Scale (4px base) ── */
+  --eds-space-1:   4px;
+  --eds-space-2:   8px;
+  --eds-space-3:   12px;
+  --eds-space-4:   16px;
+  --eds-space-5:   20px;
+  --eds-space-6:   24px;
+  --eds-space-8:   32px;
+  --eds-space-10:  40px;
+  --eds-space-12:  48px;
+
+  /* ── Border Radius ── */
+  --eds-radius-sm:  4px;
+  --eds-radius-md:  6px;
+  --eds-radius-lg:  8px;
+  --eds-radius-xl:  12px;
+  --eds-radius-2xl: 16px;
+  --eds-radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --eds-shadow-xs:  0 1px 2px rgba(15, 23, 42, 0.06);
+  --eds-shadow-sm:  0 1px 3px rgba(15, 23, 42, 0.1), 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eds-shadow-md:  0 4px 6px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.06);
+  --eds-shadow-lg:  0 10px 15px rgba(15, 23, 42, 0.1), 0 4px 6px rgba(15, 23, 42, 0.05);
+  --eds-shadow-xl:  0 20px 25px rgba(15, 23, 42, 0.1), 0 10px 10px rgba(15, 23, 42, 0.04);
+
+  /* ── Typography ── */
+  --eds-font-sans:  'Satoshi', 'Inter', system-ui, sans-serif;
+  --eds-font-serif: 'Georgia', serif;
+  --eds-font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+
+  --eds-text-xs:    11px;
+  --eds-text-sm:    12px;
+  --eds-text-base:  13px;
+  --eds-text-md:    14px;
+  --eds-text-lg:    16px;
+  --eds-text-xl:    18px;
+  --eds-text-2xl:   20px;
+  --eds-text-3xl:   24px;
+
+  /* ── Transitions ── */
+  --eds-transition-fast:   100ms ease;
+  --eds-transition-base:   160ms ease;
+  --eds-transition-slow:   240ms ease;
+
+  /* ── Z-Index Scale ── */
+  --eds-z-base:       0;
+  --eds-z-raised:     10;
+  --eds-z-dropdown:   100;
+  --eds-z-sticky:     200;
+  --eds-z-overlay:    300;
+  --eds-z-modal:      400;
+  --eds-z-toast:      500;
+
+  /* ── Legacy aliases (keep existing --ae-* working) ── */
+  --ae-primary:       var(--eds-terracotta);
+  --ae-primary-dark:  var(--eds-terracotta-dk);
+  --ae-accent:        var(--eds-lagune);
+  --ae-accent-dark:   var(--eds-lagune-dk);
+  --ae-accent-medium: var(--eds-lagune-md);
+  --ae-accent-light:  var(--eds-lagune-light);
+}
