@@ -47,11 +47,12 @@ name = "Start application"
 author = "agent"
 
 [workflows.workflow.metadata]
-outputType = "console"
+outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash scripts/build-and-start.sh --rebuild"
+args = "bash scripts/build-and-start.sh"
+waitForPort = 5000
 
 [agent]
 stack = "MOCKUP_JS"
@@ -72,3 +73,7 @@ ACTIVE_LLM_PROVIDER = "openai"
 
 [userenv.development]
 DEV_BYPASS_AUTH = "true"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 360000
