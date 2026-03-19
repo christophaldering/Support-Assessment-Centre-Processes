@@ -11,69 +11,86 @@ function toLanding(req: NextRequest) {
   return NextResponse.redirect(new URL("/landing", req.url));
 }
 
+// Workspace login-area pages that must stay publicly reachable
+const PUBLIC_WORKSPACE_AREAS = new Set([
+  "login",
+  "change-password",
+  "reset-password",
+  "request-access",
+]);
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ── /master and /master/* ──────────────────────────────────────────────────
-  if (pathname === "/master" || pathname.startsWith("/master/")) {
-    const ok = req.cookies.get(MASTER_COOKIE)?.value === AUTH_TOKEN;
-    return ok ? NextResponse.next() : toLanding(req);
+  // ── Always public ──────────────────────────────────────────────────────────
+  if (
+    pathname === "/" ||
+    pathname === "/landing" ||
+    pathname.startsWith("/landing/")
+  ) {
+    return NextResponse.next();
   }
 
-  // ── /w/[slug]/* ───────────────────────────────────────────────────────────
+  // Candidate login entry — public so candidates can authenticate
+  if (pathname === "/candidate-access") {
+    return NextResponse.next();
+  }
+
+  // CompBDP login + gate — public so observers/participants can authenticate
+  if (
+    pathname.startsWith("/comp-bdp/login") ||
+    pathname.startsWith("/comp-bdp/gate")
+  ) {
+    return NextResponse.next();
+  }
+
+  // Workspace-specific login pages — public per workspace
   if (pathname.startsWith("/w/")) {
-    const parts = pathname.split("/"); // ["", "w", slug, area?, ...]
-    const area = parts[3];
-
-    // Public workspace pages — no auth needed
-    const publicAreas = new Set([
-      "login",
-      "change-password",
-      "reset-password",
-      "request-access",
-    ]);
-    if (area && publicAreas.has(area)) {
+    const area = pathname.split("/")[3];
+    if (area && PUBLIC_WORKSPACE_AREAS.has(area)) {
       return NextResponse.next();
     }
-
-    // Everything else in /w/* requires a valid session
-    const hasMaster = req.cookies.get(MASTER_COOKIE)?.value === AUTH_TOKEN;
-    const hasWorkspace = !!req.cookies.get(WORKSPACE_COOKIE)?.value;
-    const hasUser = !!req.cookies.get(USER_COOKIE)?.value;
-
-    if (!hasMaster && !hasWorkspace && !hasUser) {
-      return toLanding(req);
-    }
-    return NextResponse.next();
   }
 
-  // ── /candidate/* ──────────────────────────────────────────────────────────
+  // ── Cookie helpers ─────────────────────────────────────────────────────────
+  const hasMaster = req.cookies.get(MASTER_COOKIE)?.value === AUTH_TOKEN;
+  const hasWorkspace = !!req.cookies.get(WORKSPACE_COOKIE)?.value;
+  const hasUser = !!req.cookies.get(USER_COOKIE)?.value;
+  const hasCandidate = !!req.cookies.get(CANDIDATE_COOKIE)?.value;
+  const hasBdp = !!req.cookies.get(BDP_COOKIE)?.value;
+
+  // ── /master and /master/* — master cookie required ─────────────────────────
+  if (pathname === "/master" || pathname.startsWith("/master/")) {
+    return hasMaster ? NextResponse.next() : toLanding(req);
+  }
+
+  // ── /w/* — workspace or user or master session required ───────────────────
+  if (pathname.startsWith("/w/")) {
+    return hasMaster || hasWorkspace || hasUser
+      ? NextResponse.next()
+      : toLanding(req);
+  }
+
+  // ── /candidate/* — candidate session required ──────────────────────────────
   if (pathname.startsWith("/candidate/")) {
-    const ok = !!req.cookies.get(CANDIDATE_COOKIE)?.value;
-    return ok ? NextResponse.next() : toLanding(req);
+    return hasCandidate ? NextResponse.next() : toLanding(req);
   }
 
-  // ── /comp-bdp/* ───────────────────────────────────────────────────────────
+  // ── /comp-bdp/* — BDP session required ────────────────────────────────────
   if (pathname.startsWith("/comp-bdp/")) {
-    const publicCompPaths = ["/comp-bdp/login", "/comp-bdp/gate"];
-    if (publicCompPaths.some((p) => pathname.startsWith(p))) {
-      return NextResponse.next();
-    }
-    const ok = !!req.cookies.get(BDP_COOKIE)?.value;
-    if (!ok) {
-      return NextResponse.redirect(new URL("/comp-bdp/login", req.url));
-    }
+    return hasBdp
+      ? NextResponse.next()
+      : NextResponse.redirect(new URL("/comp-bdp/login", req.url));
+  }
+
+  // ── Everything else (tour, data-room, …) — any valid session required ─────
+  if (hasMaster || hasWorkspace || hasUser || hasCandidate || hasBdp) {
     return NextResponse.next();
   }
-
-  return NextResponse.next();
+  return toLanding(req);
 }
 
 export const config = {
-  matcher: [
-    "/master/:path*",
-    "/w/:path*",
-    "/candidate/:path*",
-    "/comp-bdp/:path*",
-  ],
+  // Catch every route except Next.js internals, static assets, and API routes
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|api/).*)"],
 };
