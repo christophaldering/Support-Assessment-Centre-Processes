@@ -50,6 +50,55 @@ The platform is built on a modern full-stack architecture using Next.js 14 (App 
 *   **Feature Flag System:** Module-level release management (`lib/feature-flags.ts`). Each workspace stores `featureFlags` (JSON) controlling which modules are visible to regular users. Admins see all modules with "Kommt bald" badges on unreleased ones. Managed via "Modul-Freigabe" section in dashboard and API at `/api/w/[slug]/feature-flags`. Workspace-scoped authorization enforced.
 *   **Release Strategy:** Phased rollout approach — R1 (Login, Users, Assessments), R2 (Requirements, Competencies, Scales), R3 (Exercise Library, Observation Sheets, Observer Rating), R4 (Consolidation, Reports, Analytics), R5 (Portal, Consent, Audio, Collaboration), R6 (Intelligence modules).
 
+## Recent Changes (Mar 2026 — Shell Refactoring, 10-Step Plan)
+
+### Admin UI Shell — Vollständiges Redesign (Schritte 1–10)
+
+**Step 1: Design Token System**
+- `styles/tokens.css`: Komplettes `--eds-*` Token-System (Farben, Abstände, Radien, Schatten, Dimensionen, Typografie)
+- `app/globals.css`: Importiert Tokens, `@keyframes` für pulse/spin/shimmer, `.eds-skeleton` Hilfsklasse
+- Legacy `--ae-*` Vars als Aliase auf `--eds-*` gemappt
+
+**Step 2: 4-Zonen Shell-Architektur**
+- `components/shell/ShellClient.tsx`: Haupt-Shell-Container (52px Rail + 220px Context + 1fr Main + 280px AI)
+- `components/shell/IconRail.tsx`: Linke Icon-Navigation mit Tooltips
+- `components/shell/TopBar.tsx`: Globale Titelzeile mit Command-Palette-Button und User-Avatar
+- `components/shell/ContextPanel.tsx`: Kontextpanel mit Live-Assessment-Liste, Kandidatenzahl, Sub-Navigation
+- `components/shell/AIPanel.tsx`: KI-Assistent mit Streaming-Chat (OpenAI GPT-4o via SSE)
+- `app/w/[workspaceSlug]/admin/layout.tsx`: Nutzt jetzt `ShellClient` statt altem `AdminSidebar`
+- `app/w/[workspaceSlug]/admin/AdminSidebar.tsx`: GELÖSCHT (Step 9 Cleanup)
+
+**Step 3: Command Palette**
+- `components/shell/CommandPalette.tsx`: Custom-Implementierung ohne externe Bibliothek (npm-Issue mit tiptap)
+- `app/api/w/[workspaceSlug]/search/route.ts`: Such-API für Assessments, Kandidaten, Kompetenzmodelle
+
+**Step 4: Context Panel Live Data**
+- Assessments aus `/api/w/${slug}/assessments` mit `_count.candidates` mapping
+- Status-Dot, Kandidatenzahl ("TN") und Assessment-Sub-Navigation im Detail-View
+
+**Step 5: AI Panel Streaming**
+- `components/shell/AIPanel.tsx`: Chat-UI mit Streaming, Gesprächsverlauf, Lösch-Button
+- `app/api/w/[workspaceSlug]/ai/chat/route.ts`: SSE-Streaming via `openai` SDK (GPT-4o), System-Prompt für Diagnostik-Kontext
+
+**Step 6: DataRoom → CaseStudy**
+- `app/w/[workspaceSlug]/admin/case-study/page.tsx`: Redirect `/case-study` → `/data-room`
+- Context Panel Navigation: "Case Study" als Label für den Data-Room-Link
+
+**Step 7: Portal Home Tiles**
+- `app/w/[workspaceSlug]/portal/page.tsx`: Redirect zu `/portal/home`
+- `app/w/[workspaceSlug]/portal/home/page.tsx`: Kachel-Dashboard für Kandidaten (Assessment, Case Study, Observer, Profil)
+
+**Step 8: Observer Shell**
+- `app/w/[workspaceSlug]/observer/layout.tsx`: Schlanker 44px-Header mit Workspace-Name, Cockpit-Link, Logout
+
+**Step 9: Cleanup**
+- `AdminSidebar.tsx` gelöscht, unused imports aus `layout.tsx` entfernt
+
+**Step 10: SSE Realtime**
+- `app/api/w/[workspaceSlug]/realtime/route.ts`: Server-Sent Events mit Assessment-Status-Snapshot alle 30s, Ping alle 25s
+
+---
+
 ## Recent Changes (Feb 2026)
 
 *   **Style Guide integration**: Full corporate design style guide uploaded and analyzed. Theme updated to Terrakotta Rot (#A6473B), Lagune Türkis (#297587), Satoshi font. Brand rule set created. Style Guide upload feature added to Corporate Design page.

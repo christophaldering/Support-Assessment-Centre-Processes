@@ -1,124 +1,225 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
-interface InsightCard {
+interface Message {
   id: string;
-  type: "info" | "warning" | "action";
-  text: string;
-  action?: { label: string; href: string };
-}
-
-const MOCK_INSIGHTS: InsightCard[] = [
-  {
-    id: "1",
-    type: "info",
-    text: "Wählen Sie ein Assessment aus dem Context Panel, um KI-Insights zu erhalten.",
-  },
-];
-
-function InsightCardView({ card }: { card: InsightCard }) {
-  const borderColors = {
-    info:    "var(--eds-lagune)",
-    warning: "var(--eds-status-amber)",
-    action:  "var(--eds-terracotta)",
-  };
-
-  const bgColors = {
-    info:    "var(--eds-lagune-light)",
-    warning: "var(--eds-status-amber-bg)",
-    action:  "var(--eds-terracotta-ghost)",
-  };
-
-  return (
-    <div
-      style={{
-        borderRadius: "var(--eds-radius-md)",
-        background: bgColors[card.type],
-        borderLeft: `3px solid ${borderColors[card.type]}`,
-        padding: "10px 12px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "6px",
-      }}
-    >
-      <p
-        style={{
-          fontSize: "var(--eds-text-sm)",
-          color: "var(--eds-text-secondary)",
-          lineHeight: "1.4",
-          margin: 0,
-        }}
-      >
-        {card.text}
-      </p>
-      {card.action && (
-        <a
-          href={card.action.href}
-          style={{
-            fontSize: "var(--eds-text-xs)",
-            color: borderColors[card.type],
-            fontWeight: 500,
-            textDecoration: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "3px",
-          }}
-        >
-          {card.action.label}
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </a>
-      )}
-    </div>
-  );
+  role: "user" | "assistant";
+  content: string;
+  streaming?: boolean;
 }
 
 interface AIPanelProps {
   workspaceSlug: string;
 }
 
+function UserBubble({ text }: { text: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div
+        style={{
+          background: "var(--eds-terracotta)",
+          color: "#fff",
+          borderRadius: "var(--eds-radius-md) var(--eds-radius-md) 2px var(--eds-radius-md)",
+          padding: "8px 11px",
+          maxWidth: "85%",
+          fontSize: "var(--eds-text-sm)",
+          lineHeight: "1.45",
+        }}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function AiBubble({ text, streaming }: { text: string; streaming?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
+      <div
+        style={{
+          width: "22px",
+          height: "22px",
+          borderRadius: "50%",
+          background: "var(--eds-lagune-light)",
+          border: "1px solid var(--eds-lagune)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          marginTop: "1px",
+        }}
+      >
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--eds-lagune)" strokeWidth="2.5">
+          <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1H1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z" />
+        </svg>
+      </div>
+      <div
+        style={{
+          background: "var(--eds-bg-sunken)",
+          borderRadius: "2px var(--eds-radius-md) var(--eds-radius-md) var(--eds-radius-md)",
+          padding: "8px 11px",
+          maxWidth: "85%",
+          fontSize: "var(--eds-text-sm)",
+          lineHeight: "1.45",
+          color: "var(--eds-text-primary)",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+        }}
+      >
+        {text || (streaming ? (
+          <span
+            style={{
+              display: "inline-flex",
+              gap: "3px",
+              alignItems: "center",
+              height: "14px",
+            }}
+          >
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                style={{
+                  width: "4px",
+                  height: "4px",
+                  borderRadius: "50%",
+                  background: "var(--eds-text-tertiary)",
+                  animation: `pulse 1s ease-in-out ${i * 0.15}s infinite`,
+                }}
+              />
+            ))}
+          </span>
+        ) : "")}
+        {streaming && text && (
+          <span
+            style={{
+              display: "inline-block",
+              width: "2px",
+              height: "13px",
+              background: "var(--eds-terracotta)",
+              marginLeft: "2px",
+              animation: "pulse 0.8s ease-in-out infinite",
+              verticalAlign: "text-bottom",
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AIPanel({ workspaceSlug }: AIPanelProps) {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "welcome",
+      role: "assistant",
+      content: "Hallo! Ich bin Ihr Diagnostik-Assistent. Wie kann ich Sie heute bei Ihrem Assessment unterstützen?",
+    },
+  ]);
   const [query, setQuery] = useState("");
-  const [insights, setInsights] = useState<InsightCard[]>(MOCK_INSIGHTS);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleQuery = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim() || isLoading) return;
+    const text = query.trim();
+    if (!text || isStreaming) return;
 
-    const userQuery = query.trim();
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
     setQuery("");
-    setIsLoading(true);
+    setMessages((prev) => [...prev, userMsg]);
 
-    const userCard: InsightCard = {
-      id: Date.now().toString(),
-      type: "info",
-      text: `Anfrage: ${userQuery}`,
-    };
-    setInsights((prev) => [...prev, userCard]);
+    const assistantId = (Date.now() + 1).toString();
+    setMessages((prev) => [
+      ...prev,
+      { id: assistantId, role: "assistant", content: "", streaming: true },
+    ]);
+    setIsStreaming(true);
 
     try {
-      const resp = await fetch(`/api/w/${workspaceSlug}/ai-chat`, {
+      const historyForApi = messages
+        .filter((m) => m.id !== "welcome")
+        .map((m) => ({ role: m.role, content: m.content }));
+      historyForApi.push({ role: "user", content: text });
+
+      const resp = await fetch(`/api/w/${workspaceSlug}/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userQuery }),
+        body: JSON.stringify({ messages: historyForApi }),
       });
 
-      if (resp.ok) {
-        const data = await resp.json();
-        const aiCard: InsightCard = {
-          id: (Date.now() + 1).toString(),
-          type: "action",
-          text: data.response ?? data.message ?? "Keine Antwort erhalten.",
-        };
-        setInsights((prev) => [...prev, aiCard]);
+      if (!resp.ok || !resp.body) {
+        throw new Error(`HTTP ${resp.status}`);
       }
-    } catch {
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const payload = line.slice(6).trim();
+            if (payload === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(payload);
+              if (parsed.text) {
+                accumulated += parsed.text;
+                const snapshot = accumulated;
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId ? { ...m, content: snapshot, streaming: true } : m
+                  )
+                );
+              }
+            } catch {}
+          }
+        }
+      }
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId ? { ...m, streaming: false } : m
+        )
+      );
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Verbindungsfehler";
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, content: `Fehler: ${errMsg}`, streaming: false }
+            : m
+        )
+      );
     } finally {
-      setIsLoading(false);
+      setIsStreaming(false);
+      inputRef.current?.focus();
     }
+  };
+
+  const handleClear = () => {
+    setMessages([
+      {
+        id: "welcome-" + Date.now(),
+        role: "assistant",
+        content: "Chat zurückgesetzt. Wie kann ich Ihnen helfen?",
+      },
+    ]);
   };
 
   return (
@@ -136,7 +237,7 @@ export default function AIPanel({ workspaceSlug }: AIPanelProps) {
     >
       <div
         style={{
-          padding: "12px 14px",
+          padding: "11px 14px",
           borderBottom: "1px solid var(--eds-border)",
           display: "flex",
           alignItems: "center",
@@ -146,11 +247,12 @@ export default function AIPanel({ workspaceSlug }: AIPanelProps) {
       >
         <span
           style={{
-            width: "8px",
-            height: "8px",
+            width: "7px",
+            height: "7px",
             borderRadius: "50%",
-            background: "var(--eds-terracotta)",
+            background: isStreaming ? "var(--eds-status-green)" : "var(--eds-terracotta)",
             flexShrink: 0,
+            animation: isStreaming ? "pulse 1s ease-in-out infinite" : "none",
           }}
         />
         <span
@@ -163,75 +265,51 @@ export default function AIPanel({ workspaceSlug }: AIPanelProps) {
         >
           Diagnostik-Assistent
         </span>
-        <span
+        <button
+          onClick={handleClear}
+          title="Chat löschen"
           style={{
-            fontSize: "var(--eds-text-xs)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
             color: "var(--eds-text-tertiary)",
-            background: "var(--eds-bg-sunken)",
-            borderRadius: "var(--eds-radius-full)",
-            padding: "2px 6px",
+            padding: "2px",
+            display: "flex",
+            alignItems: "center",
+            borderRadius: "var(--eds-radius-sm)",
           }}
         >
-          KI
-        </span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6M14 11v6" />
+            <path d="M9 6V4h6v2" />
+          </svg>
+        </button>
       </div>
 
       <div
+        ref={scrollRef}
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "12px",
+          padding: "14px 12px",
           display: "flex",
           flexDirection: "column",
-          gap: "8px",
+          gap: "10px",
         }}
       >
-        {insights.map((card) => (
-          <InsightCardView key={card.id} card={card} />
-        ))}
-
-        {isLoading && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 0",
-            }}
-          >
-            <div
-              style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: "var(--eds-terracotta)",
-                animation: "pulse 0.8s ease-in-out infinite",
-              }}
-            />
-            <div
-              style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: "var(--eds-terracotta)",
-                animation: "pulse 0.8s ease-in-out 0.15s infinite",
-              }}
-            />
-            <div
-              style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: "var(--eds-terracotta)",
-                animation: "pulse 0.8s ease-in-out 0.3s infinite",
-              }}
-            />
-          </div>
+        {messages.map((msg) =>
+          msg.role === "user" ? (
+            <UserBubble key={msg.id} text={msg.content} />
+          ) : (
+            <AiBubble key={msg.id} text={msg.content} streaming={msg.streaming} />
+          )
         )}
       </div>
 
       <form
-        onSubmit={handleQuery}
+        onSubmit={handleSubmit}
         style={{
           borderTop: "1px solid var(--eds-border)",
           padding: "10px 12px",
@@ -241,11 +319,13 @@ export default function AIPanel({ workspaceSlug }: AIPanelProps) {
         }}
       >
         <input
+          ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Frage stellen…"
           data-testid="ai-panel-input"
+          disabled={isStreaming}
           style={{
             flex: 1,
             fontSize: "var(--eds-text-sm)",
@@ -257,20 +337,19 @@ export default function AIPanel({ workspaceSlug }: AIPanelProps) {
             outline: "none",
             fontFamily: "var(--eds-font-sans)",
           }}
-          disabled={isLoading}
         />
         <button
           type="submit"
-          disabled={!query.trim() || isLoading}
+          disabled={!query.trim() || isStreaming}
           data-testid="ai-panel-submit"
           style={{
             width: "32px",
             height: "32px",
             borderRadius: "var(--eds-radius-md)",
-            background: query.trim() ? "var(--eds-terracotta)" : "var(--eds-bg-sunken)",
+            background: query.trim() && !isStreaming ? "var(--eds-terracotta)" : "var(--eds-bg-sunken)",
             border: "none",
-            color: query.trim() ? "#fff" : "var(--eds-text-tertiary)",
-            cursor: query.trim() ? "pointer" : "not-allowed",
+            color: query.trim() && !isStreaming ? "#fff" : "var(--eds-text-tertiary)",
+            cursor: query.trim() && !isStreaming ? "pointer" : "not-allowed",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -278,10 +357,23 @@ export default function AIPanel({ workspaceSlug }: AIPanelProps) {
             transition: "background var(--eds-transition-base)",
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M22 2L11 13" />
-            <path d="M22 2L15 22 11 13 2 9l20-7z" />
-          </svg>
+          {isStreaming ? (
+            <div
+              style={{
+                width: "14px",
+                height: "14px",
+                border: "2px solid var(--eds-border)",
+                borderTop: "2px solid var(--eds-terracotta)",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 2L11 13" />
+              <path d="M22 2L15 22 11 13 2 9l20-7z" />
+            </svg>
+          )}
         </button>
       </form>
     </aside>

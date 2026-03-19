@@ -104,8 +104,14 @@ export default function ContextPanel({ workspaceSlug, workspaceName }: ContextPa
     fetch(`/api/w/${workspaceSlug}/assessments`)
       .then((r) => r.json())
       .then((data) => {
-        const list = Array.isArray(data) ? data : (data.assessments ?? []);
-        setAssessments(list.slice(0, 8));
+        const raw: Record<string, unknown>[] = Array.isArray(data) ? data : (data.assessments ?? []);
+        const mapped: Assessment[] = raw.slice(0, 8).map((a) => ({
+          id: a.id as string,
+          name: (a.name ?? a.title) as string,
+          status: a.status as string,
+          candidateCount: (a._count as Record<string, number> | undefined)?.candidates,
+        }));
+        setAssessments(mapped);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -119,6 +125,8 @@ export default function ContextPanel({ workspaceSlug, workspaceName }: ContextPa
 
   const sectionItems: { label: string; href: string; match?: string }[] = [
     { label: "Dashboard", href: base, match: base },
+    { label: "Assessments", href: `${base}/assessments`, match: `${base}/assessments` },
+    { label: "Case Study", href: `${base}/data-room`, match: `${base}/data-room` },
     { label: "Übungen & Module", href: `${base}/modules`, match: `${base}/modules` },
     { label: "Baustein-Bibliothek", href: `${base}/exercise-library`, match: `${base}/exercise-library` },
     { label: "Analytics & Berichte", href: `${base}/analytics`, match: `${base}/analytics` },
@@ -186,11 +194,18 @@ export default function ContextPanel({ workspaceSlug, workspaceName }: ContextPa
             >
               {activeAssessment.name}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
-              <StatusDot status={activeAssessment.status} />
-              <span style={{ fontSize: "var(--eds-text-xs)", color: "var(--eds-text-tertiary)", textTransform: "capitalize" }}>
-                {activeAssessment.status}
-              </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <StatusDot status={activeAssessment.status} />
+                <span style={{ fontSize: "var(--eds-text-xs)", color: "var(--eds-text-tertiary)", textTransform: "capitalize" }}>
+                  {activeAssessment.status}
+                </span>
+              </div>
+              {activeAssessment.candidateCount !== undefined && (
+                <span style={{ fontSize: "var(--eds-text-xs)", color: "var(--eds-text-tertiary)" }}>
+                  · {activeAssessment.candidateCount} TN
+                </span>
+              )}
             </div>
           </div>
         ) : (

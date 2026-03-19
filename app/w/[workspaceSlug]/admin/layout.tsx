@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { getWorkspaceAuth, hasMasterAuth, getUserSession } from "@/lib/session";
-import { getModuleFlags } from "@/lib/feature-flags";
 import ShellClient from "@/components/shell/ShellClient";
 
 export const dynamic = "force-dynamic";
