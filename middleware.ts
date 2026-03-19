@@ -31,11 +31,6 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Candidate login entry — public so candidates can authenticate
-  if (pathname === "/candidate-access") {
-    return NextResponse.next();
-  }
-
   // CompBDP login + gate — public so observers/participants can authenticate
   if (
     pathname.startsWith("/comp-bdp/login") ||
