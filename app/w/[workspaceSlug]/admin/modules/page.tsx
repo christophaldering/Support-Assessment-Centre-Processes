@@ -156,6 +156,9 @@ function ModulesHubContent() {
     scenarioContext: "",
   });
 
+  const [confirmDeleteLibItem, setConfirmDeleteLibItem] = useState<LibraryItem | null>(null);
+  const [deletingLibItem, setDeletingLibItem] = useState(false);
+
   const savedBlueprints = useCallback(() => {
     try {
       const key = `baustein_blueprints_${workspaceSlug}`;
@@ -300,6 +303,26 @@ function ModulesHubContent() {
     setSuccess(`"${bp.name}" aus Bibliothek übernommen.`);
     setView("hub");
     setTimeout(() => setSuccess(""), 3000);
+  }
+
+  async function deleteLibraryItem(item: LibraryItem) {
+    setDeletingLibItem(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/exercise-library/${item.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Löschen fehlgeschlagen");
+      }
+      setLibraryItems((prev) => prev.filter((i) => i.id !== item.id));
+      setConfirmDeleteLibItem(null);
+      setSuccess(`"${item.title}" wurde gelöscht.`);
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError(err.message || "Fehler beim Löschen.");
+    } finally {
+      setDeletingLibItem(false);
+    }
   }
 
   async function generateWithAI() {
@@ -812,7 +835,7 @@ Antworte in folgendem JSON-Format:
                     {libraryItems.map((item) => {
                       const alreadyAdopted = blueprints.some((b) => b.sourceId === item.id && b.sourceType === "library");
                       return (
-                        <div key={item.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors" data-testid={`card-lib-item-${item.id}`}>
+                        <div key={item.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors group" data-testid={`card-lib-item-${item.id}`}>
                           <div className="flex items-center gap-3 flex-1 min-w-0">
                             <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-lg shrink-0">
                               {typeIcon(item.exerciseType)}
@@ -829,27 +852,39 @@ Antworte in folgendem JSON-Format:
                               {item.description && <p className="text-xs text-slate-500 mt-1 line-clamp-1">{item.description}</p>}
                             </div>
                           </div>
-                          {alreadyAdopted ? (
-                            <span className="text-[10px] text-green-600 font-medium shrink-0 ml-2">✓ Bereits übernommen</span>
-                          ) : (
+                          <div className="flex items-center gap-2 shrink-0 ml-2">
+                            {alreadyAdopted ? (
+                              <span className="text-[10px] text-green-600 font-medium">✓ Bereits übernommen</span>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSelectedLibraryItem(item);
+                                  setLibraryAdaptForm({
+                                    name: item.title,
+                                    description: item.description || "",
+                                    instructions: "",
+                                    duration: 45,
+                                    targetLevel: item.targetLevels?.[0] || "Manager",
+                                    scenarioContext: "",
+                                  });
+                                }}
+                                className="text-xs font-medium text-brand-blue hover:underline"
+                                data-testid={`button-select-lib-${item.id}`}
+                              >
+                                Auswählen →
+                              </button>
+                            )}
                             <button
-                              onClick={() => {
-                                setSelectedLibraryItem(item);
-                                setLibraryAdaptForm({
-                                  name: item.title,
-                                  description: item.description || "",
-                                  instructions: "",
-                                  duration: 45,
-                                  targetLevel: item.targetLevels?.[0] || "Manager",
-                                  scenarioContext: "",
-                                });
-                              }}
-                              className="shrink-0 ml-2 text-xs font-medium text-brand-blue hover:underline"
-                              data-testid={`button-select-lib-${item.id}`}
+                              onClick={() => setConfirmDeleteLibItem(item)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-red-50 hover:!opacity-100 text-red-500"
+                              data-testid={`button-delete-lib-${item.id}`}
+                              title="Aus Bibliothek löschen"
                             >
-                              Auswählen →
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                              </svg>
                             </button>
-                          )}
+                          </div>
                         </div>
                       );
                     })}
@@ -1248,6 +1283,37 @@ Antworte in folgendem JSON-Format:
                   data-testid="button-save-edit"
                 >
                   Speichern
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {confirmDeleteLibItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" data-testid="modal-confirm-delete-lib">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 max-w-sm w-full mx-4">
+              <h3 className="text-base font-semibold text-slate-800 mb-2" data-testid="text-confirm-delete-title">Wirklich löschen?</h3>
+              <p className="text-sm text-slate-600 mb-5">
+                Der Bibliothekseintrag{" "}
+                <span className="font-medium text-slate-800">"{confirmDeleteLibItem.title}"</span>{" "}
+                wird dauerhaft gelöscht und kann nicht wiederhergestellt werden.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setConfirmDeleteLibItem(null)}
+                  disabled={deletingLibItem}
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                  data-testid="button-cancel-delete-lib"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => deleteLibraryItem(confirmDeleteLibItem)}
+                  disabled={deletingLibItem}
+                  className="px-4 py-2 text-sm font-medium text-white rounded-lg bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
+                  data-testid="button-confirm-delete-lib"
+                >
+                  {deletingLibItem ? "Löschen..." : "Löschen"}
                 </button>
               </div>
             </div>
