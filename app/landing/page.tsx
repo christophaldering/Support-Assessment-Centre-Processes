@@ -637,7 +637,6 @@ export default function LandingPage() {
             <a href="#fallstudien" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navCaseStudies}</a>
             <a href="#kandidaten" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navCandidates}</a>
             <a href="#frameworks" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{l.navFrameworks}</a>
-            <a href="/tour" className="text-xs font-medium text-brand-blue hover:text-blue-400 transition-colors">{l.navTour}</a>
           </nav>
           <div className="flex items-center gap-3">
             <button

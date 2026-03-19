@@ -1,13 +1,20 @@
 #!/bin/bash
 # Combined build + start script
-# Builds if no standalone exists, then starts production server
+# Builds if no standalone exists (or --rebuild is passed), then starts production server
 
-set -e
+FORCE_REBUILD=false
+for arg in "$@"; do
+  [ "$arg" = "--rebuild" ] && FORCE_REBUILD=true
+done
 
 STANDALONE=".next/standalone/server.js"
 
-if [ ! -f "$STANDALONE" ]; then
-  echo "[build-start] No standalone build found — running build now..."
+if [ ! -f "$STANDALONE" ] || [ "$FORCE_REBUILD" = "true" ]; then
+  if [ "$FORCE_REBUILD" = "true" ]; then
+    echo "[build-start] --rebuild flag set — forcing fresh build..."
+  else
+    echo "[build-start] No standalone build found — running build now..."
+  fi
   echo "[build-start] This takes 3-6 minutes. App will start after build completes."
 
   export NODE_OPTIONS="--max-old-space-size=8192"
