@@ -64,6 +64,33 @@ export default function AssessmentManagementPage() {
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
+  const [deleteClientError, setDeleteClientError] = useState("");
+
+  const handleDeleteClient = async (clientId: string) => {
+    setDeletingClientId(clientId);
+    setDeleteClientError("");
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/clients/${clientId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        if (activeClientFilter === clientId) {
+          setActiveClientFilter(null);
+        }
+        fetchClients();
+        fetchAssessments();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setDeleteClientError(data.error || "Fehler beim Löschen des Kunden.");
+      }
+    } catch {
+      setDeleteClientError("Fehler beim Löschen des Kunden.");
+    } finally {
+      setDeletingClientId(null);
+    }
+  };
+
   const fetchAssessments = useCallback(async () => {
     try {
       let url = `/api/w/${workspaceSlug}/assessments`;
@@ -296,21 +323,47 @@ export default function AssessmentManagementPage() {
             >
               Allgemein
             </button>
-            {clients.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setActiveClientFilter(c.id)}
-                data-testid={`button-filter-client-${c.id}`}
-                className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                  activeClientFilter === c.id
-                    ? "bg-brand-navy text-white border-brand-navy"
-                    : "text-slate-600 border-slate-200 hover:border-slate-300 bg-white"
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
+            {clients
+              .filter((c) => !c._count || c._count.assessments > 0)
+              .map((c) => (
+                <div
+                  key={c.id}
+                  className={`group relative flex items-center text-xs font-medium rounded-full border transition-colors ${
+                    activeClientFilter === c.id
+                      ? "bg-brand-navy text-white border-brand-navy"
+                      : "text-slate-600 border-slate-200 hover:border-slate-300 bg-white"
+                  }`}
+                >
+                  <button
+                    onClick={() => setActiveClientFilter(c.id)}
+                    data-testid={`button-filter-client-${c.id}`}
+                    className="px-3 py-1.5"
+                  >
+                    {c.name}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClient(c.id);
+                    }}
+                    data-testid={`button-delete-client-${c.id}`}
+                    disabled={deletingClientId === c.id}
+                    title={`${c.name} löschen`}
+                    className={`pr-2 pl-0 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity ${
+                      activeClientFilter === c.id
+                        ? "text-white/70 hover:text-white"
+                        : "text-slate-400 hover:text-slate-700"
+                    }`}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
           </div>
+        )}
+
+        {deleteClientError && (
+          <p className="text-sm text-red-500 mb-2" data-testid="text-delete-client-error">{deleteClientError}</p>
         )}
 
         {error && <p className="text-sm text-red-500 mb-4" data-testid="text-error">{error}</p>}
