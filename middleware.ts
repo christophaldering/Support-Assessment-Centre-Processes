@@ -32,7 +32,7 @@ export function middleware(req: NextRequest) {
       "reset-password",
       "request-access",
     ]);
-    if (!area || publicAreas.has(area)) {
+    if (area && publicAreas.has(area)) {
       return NextResponse.next();
     }
 
