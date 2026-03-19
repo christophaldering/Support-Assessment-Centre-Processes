@@ -446,8 +446,15 @@ function DetailModal({
   const handleDelete = async () => {
     if (!confirm("Diese Übung wirklich löschen?")) return;
     setDeleting(true);
+    setError("");
     try {
-      await fetch(`/api/w/${slug}/exercise-library/${item.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/w/${slug}/exercise-library/${item.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || "Fehler beim Löschen");
+        return;
+      }
+      onUpdated?.();
       onClose();
     } catch {
       setError("Fehler beim Löschen");

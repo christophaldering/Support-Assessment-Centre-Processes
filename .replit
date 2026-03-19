@@ -61,7 +61,3 @@ DEV_BYPASS_AUTH = "true"
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 360000
-
-[[ports]]
-localPort = 5000
-externalPort = 80
