@@ -47,11 +47,12 @@ name = "Start application"
 author = "agent"
 
 [workflows.workflow.metadata]
-outputType = "console"
+outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash scripts/build-and-start.sh --rebuild"
+args = "bash scripts/build-and-start.sh"
+waitForPort = 5000
 
 [agent]
 stack = "MOCKUP_JS"
