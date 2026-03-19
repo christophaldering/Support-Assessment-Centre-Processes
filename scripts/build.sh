@@ -1,12 +1,25 @@
 #!/bin/bash
-echo "=== Installing dependencies ==="
-npm install --production=false 2>&1 | tail -5
 
-echo "=== Generating Prisma client ==="
-npx prisma generate
+SKIP_INSTALL=false
+for arg in "$@"; do
+  if [ "$arg" = "--skip-install" ]; then
+    SKIP_INSTALL=true
+  fi
+done
+
+if [ "$SKIP_INSTALL" = false ]; then
+  echo "=== Installing dependencies ==="
+  npm install --production=false 2>&1 | tail -5
+
+  echo "=== Generating Prisma client ==="
+  npx prisma generate
+else
+  echo "=== Skipping npm install and prisma generate (--skip-install) ==="
+fi
 
 echo "=== Building Next.js ==="
 export NODE_OPTIONS="--max-old-space-size=8192"
+export NEXT_TELEMETRY_DISABLED=1
 
 rm -rf .next-build
 
@@ -40,10 +53,10 @@ else
     }
   "
 
-  sed -i 's/\"distDir\":\".\/.next-build\"/\"distDir\":\".\/.next\"/g' .next-build/standalone/server.js
+  sed -i 's/\"distDir\":\".\/.next-build\"/\"distDir\":\".\/.next\"/g' .next-build/standalone/server.js 2>/dev/null || true
 
-  cp -rn .next-build/static .next-build/standalone/.next/static 2>/dev/null
-  cp -rn public .next-build/standalone/public 2>/dev/null
+  cp -rn .next-build/static .next-build/standalone/.next/static 2>/dev/null || true
+  cp -rn public .next-build/standalone/public 2>/dev/null || true
 
   echo "=== Swapping .next ==="
   rm -rf .next-old
