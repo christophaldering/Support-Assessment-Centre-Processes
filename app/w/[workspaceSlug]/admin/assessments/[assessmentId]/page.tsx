@@ -821,10 +821,20 @@ export default function AssessmentDetailPage() {
   };
 
   const handleDeleteExercise = async (exId: string) => {
+    const confirmed = window.confirm("Möchten Sie diesen Baustein wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.");
+    if (!confirmed) return;
     try {
-      await fetch(`${apiBase}/exercises/${exId}`, { method: "DELETE" });
+      const res = await fetch(`${apiBase}/exercises/${exId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const msg = data?.error || `Fehler ${res.status}`;
+        alert(`Baustein konnte nicht gelöscht werden: ${msg}`);
+        return;
+      }
       fetchExercises();
-    } catch {}
+    } catch {
+      alert("Baustein konnte nicht gelöscht werden. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.");
+    }
   };
 
   const handleUploadExerciseDoc = async (exerciseId: string) => {
