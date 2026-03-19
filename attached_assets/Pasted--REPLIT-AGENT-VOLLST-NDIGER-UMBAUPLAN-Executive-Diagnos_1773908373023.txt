@@ -1,0 +1,480 @@
+# REPLIT AGENT — VOLLSTÄNDIGER UMBAUPLAN
+## Executive Diagnostics Suite (EDS) · Architektur-Refactoring
+
+> **Verbindliche Direktive. Kein Feature wird hinzugefügt, bevor die Architektur steht.
+> Lies dieses Dokument vollständig, bevor du eine einzige Zeile Code schreibst.**
+
+---
+
+## 0. KONTEXT & ZIEL
+
+Du arbeitest an einem bestehenden Next.js 14 (App Router) SaaS-Produkt für
+Executive Assessment Centers. Die Codebasis läuft, alle Features existieren.
+
+**Deine Aufgabe ist kein Rewrite — es ist ein strukturiertes Refactoring.**
+Die Datenbankschicht (Prisma/PostgreSQL), die KI-Infrastruktur (server/llm/)
+und alle Business-Logic-APIs bleiben unverändert. Du baust die
+Präsentations- und Navigationsschicht von Grund auf neu.
+
+**Ziel:** Eine shell-basierte, rollen-adaptive, command-first UI die
+Weltklasse-Tools wie Linear, Vercel Dashboard und Raycast als Referenz hat —
+nicht Applysia oder klassische HR-Software.
+
+---
+
+## 1. DESIGN-PRINZIPIEN — NICHT VERHANDELBAR
+
+### 1.1 Command-first statt Navigation-first
+- `⌘K` (Command Palette) ist der primäre Navigationsweg für Power-User
+- Die Sidebar ist Orientierung, nicht Hauptweg
+- Jede Aktion muss per Tastatur erreichbar sein
+
+### 1.2 Rollen-adaptive Shell
+- **NICHT:** Dieselbe App mit gesperrten Bereichen
+- **JA:** Grundlegend verschiedene Shell-Konfigurationen je Rolle,
+  die denselben Datenkern nutzen
+- Rollen: `MASTER_ADMIN`, `WORKSPACE_ADMIN`, `MODERATOR`, `OBSERVER`,
+  `PROJECT_OFFICE`, `CLIENT`, `CANDIDATE`
+
+### 1.3 KI als Infrastruktur, nicht als Tab
+- Kein Menüpunkt "Intelligence" oder "KI-Features"
+- Der KI-Assistent ist ein kontextueller Panel — immer rechts, immer aktiv,
+  kennt den aktuellen Assessment-Kontext
+- KI-Outputs streamen (Vercel AI SDK, `ReadableStream`) — kein Spinner,
+  keine Ladeseite
+
+### 1.4 Konsistente Design-Sprache
+**Farben (CSS Custom Properties — zentral definieren!):**
+```css
+--eds-terracotta:     #A6473B;  /* Primary Brand */
+--eds-terracotta-dk:  #5F1A11;  /* Dark */
+--eds-lagune:         #297587;  /* Accent */
+--eds-lagune-dk:      #115560;  /* Accent Dark */
+--eds-lagune-md:      #B5D6DE;
+--eds-lagune-light:   #EFF4F5;  /* Light BG */
+--eds-white:          #FFFFFF;
+```
+**Font:** Satoshi (Fontshare CDN) — bereits konfiguriert, sicherstellen dass
+alle Komponenten es nutzen
+
+**Abstände:** 4px Raster. Padding-Einheiten: 8, 12, 16, 20, 24, 32px
+
+---
+
+## 2. SHELL-ARCHITEKTUR — DIE NEUE GRUNDSTRUKTUR
+
+Ersetze die bestehende Sidebar-Navigation vollständig durch folgendes Layout.
+
+### 2.1 Drei-Zonen-Shell (Desktop, ≥ 1280px)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  TOPBAR (44px)  Breadcrumb · ⌘K · Actions · Avatar          │
+├────┬────────────┬──────────────────────────┬─────────────────┤
+│    │            │                          │                 │
+│ I  │  CONTEXT   │    MAIN CONTENT          │   AI PANEL      │
+│ C  │  PANEL     │    (flex, scrollable)    │   (280px)       │
+│ O  │  (220px)   │                          │                 │
+│ N  │            │                          │                 │
+│    │            │                          │                 │
+│ R  │            │                          │                 │
+│ A  │            │                          │                 │
+│ I  │            │                          │                 │
+│ L  │            │                          │                 │
+│(52)│            │                          │                 │
+└────┴────────────┴──────────────────────────┴─────────────────┘
+```
+
+### 2.2 Icon Rail (52px breit)
+- Max. 7 Icons, darunter ein Separator + Settings-Icon (unten)
+- Icons: SVG, 16×16px, `stroke` (kein fill), `var(--color-text-tertiary)`
+- Aktiver Zustand: Terracotta-Hintergrund (`--eds-terracotta`), weißes Icon
+- Kein Text, nur Tooltip (title-Attribut)
+
+**Icon-Belegung je Rolle:**
+
+| Icon | Bedeutung | Sichtbar für |
+|------|-----------|--------------|
+| ⊞ Grid | Assessments | Admin, Mod, Observer, Client |
+| ◎ Person | People (Kandidaten + Observer) | Admin, Mod |
+| ⊡ Layers | Content (Übungen, Module, Vorlagen) | Admin, Mod |
+| ∿ Chart | Insights (Analytics, Reports) | Admin, Mod, Client |
+| ⬡ Hex | Plattform (Workspaces, Audit) | MASTER_ADMIN only |
+| ─ | Separator | — |
+| ⚙ Gear | Workspace-Einstellungen | Admin |
+
+### 2.3 Context Panel (220px)
+- Zeigt kontextabhängig: Liste der Assessments ODER Unternavigation des
+  geöffneten Assessments
+- Sektion "Aktuelle Assessments": farbige Status-Dots, Badge für aktive
+- Sektion "Assessment-Kontext" (wenn eines geöffnet):
+  - Übersicht
+  - Kandidaten
+  - Beobachtungen (Observer-Rating)
+  - Konsolidierung
+  - Ergebnisse
+  - Portal-Verwaltung ← Module freischalten
+  - Fallstudie-Verwaltung ← Data Room für diese Übung konfigurieren
+  - Tools (Gutachten, Audio, Einladungen)
+
+### 2.4 Main Content Area
+- Weiß, scrollable, padding: 24px 28px
+- Page-Header: Titel (16px/500) + Subtitle (12px, muted) + Actions rechts
+- KPI-Karten-Grid (3 Spalten, `gap: 12px`, `border-radius: 8px`,
+  `background: var(--color-background-secondary)`)
+
+### 2.5 AI Panel (280px, rechts)
+- Header: Terracotta-Dot + "Diagnostik-Assistent" + Kontext-Badge
+- Body: gestreamte Insights-Karten mit Action-Tags
+- Footer: Eingabefeld für freie Anfragen an die KI
+- KI-Responses via Vercel AI SDK streamen — **kein** `await response.json()`
+  bei langen Antworten
+
+---
+
+## 3. COMMAND PALETTE — IMPLEMENTIERUNG
+
+### 3.1 Bibliothek
+Nutze `cmdk` (npm: `cmdk`). Wrap in eigene Komponente
+`components/shell/CommandPalette.tsx`.
+
+### 3.2 Trigger
+- `⌘K` (Mac) / `Ctrl+K` (Windows/Linux) global
+- Button in der Topbar: `⌘K Suche…`
+- Escape schließt
+
+### 3.3 Inhalt der Palette
+```
+Gruppen (in dieser Reihenfolge):
+1. Letzte Assessments (dynamisch, aus DB)
+2. Kandidaten suchen (fuzzy search auf Name/E-Mail)
+3. Schnellaktionen (Neues Assessment, Observer einladen, Gutachten erstellen)
+4. Navigation (alle Seiten, filterbar)
+5. Einstellungen
+```
+
+### 3.4 Integration
+- Globaler Shortcut: `useEffect` im Root-Layout mit `keydown`-Listener
+- State: Zustand/Jotai-Atom `commandPaletteOpenAtom`
+- Ergebnisse: API-Route `GET /api/search?q=...` mit Prisma-Fulltext
+
+---
+
+## 4. KANDIDATEN-PORTAL — BEGRIFFSKLÄRUNG & STRUKTURKORREKTUR
+
+### 4.1 Das Problem (bisherige Benennung)
+Der Begriff "Data Room" wird aktuell für **zwei völlig verschiedene Dinge**
+verwendet. Das **muss** korrigiert werden:
+
+| Bisheriger Begriff | Bedeutung | Neuer Begriff |
+|-------------------|-----------|---------------|
+| "Data Room" (Route /candidate/data-room) | Übungstyp: Dokumente für Fallstudie | **Fallstudie** oder **Case Study** |
+| "Kandidaten-Portal" (allgemein) | Die Shell mit allen AC-Modulen | **Kandidaten-Portal** (bleibt) |
+
+### 4.2 Was ist was — unmissverständlich
+
+**Kandidaten-Portal** (`/portal/*` oder `/mein-ac/*`):
+- Die gesamte Kandidaten-Shell
+- Zeigt dem Kandidaten alle für ihn freigeschalteten Module als Kacheln
+- Vergleichbar: personalisierte Startseite
+- Konfiguriert vom Admin unter "Portal-Verwaltung"
+
+**Fallstudie / Case Study** (Übungstyp `CASE_STUDY`):
+- **Eine** Kachel im Portal — eine Übung unter mehreren
+- Stellt dem Kandidaten ein Dokumentenpaket bereit
+- Analog einem Due-Diligence-Datenraum: Unternehmensdaten, Finanzberichte,
+  Strategiedokumente etc.
+- Der Admin kann den Namen der Kachel frei wählen: "Fallstudie Varexia SE",
+  "Unternehmensanalyse", "Strategieprojekt", etc.
+- Route: `/portal/uebung/[slug]` statt `/candidate/data-room`
+
+### 4.3 Umbenennungen im Code
+```
+VORHER                              NACHHER
+/candidate/data-room             →  /portal/uebung/[exerciseSlug]
+/candidate/data-room/[docSlug]   →  /portal/uebung/[exerciseSlug]/dokument/[docSlug]
+/w/[slug]/admin/data-room        →  /w/[slug]/admin/portal/fallstudie
+DataRoomCategory                 →  CaseStudyCategory (Prisma-Modell, Migration!)
+PortalDocument                   →  CaseStudyDocument (Prisma-Modell, Migration!)
+"Data Room" in UI-Texten         →  "Fallstudie" oder "Case Study"
+```
+
+**WICHTIG:** Datenbankmigrationen erstellen, nicht manuell umbenennen.
+Prisma `renameTable` in der Migration.
+
+### 4.4 Portal-Startseite (Kachel-Übersicht)
+```
+Route: /portal/home
+Inhalt: Grid aller freigeschalteten Module als Apple-inspirierte Kacheln
+Kachel-Typen (Enum PortalModuleType):
+  - WELCOME         (Begrüßung & Ablauf)
+  - PRESENTATION    (Präsentationsaufgabe)
+  - ROLE_PLAY       (Rollenspiel / Mitarbeitergespräch)
+  - CASE_STUDY      (Fallstudie mit Dokumentenpaket ← früher "Data Room")
+  - SELF_ASSESSMENT (Selbstbeurteilung)
+  - CUSTOM          (freie Übung)
+```
+
+---
+
+## 5. REIHENFOLGE DER UMSETZUNG
+
+Arbeite **strikt sequenziell**. Commit nach jedem abgeschlossenen Schritt.
+Baue nie Schritt N+1 bevor N vollständig funktioniert.
+
+---
+
+### SCHRITT 1 — Design-Token-System (ca. 30 min)
+
+1. Erstelle `styles/tokens.css` mit allen CSS Custom Properties
+   (Farben, Radien, Schatten, Spacing-Scale)
+2. Importiere in `app/globals.css`
+3. Ersetze alle hardcodierten Farbwerte in bestehenden Komponenten
+   durch die neuen Tokens (Suche nach `#A6473B`, `#297587` etc.)
+4. Sicherstellen: Satoshi-Font lädt korrekt in allen Layouts
+
+**Abnahme:** `globals.css` importiert tokens.css,
+`styles/tokens.css` existiert mit allen EDS-Variablen.
+
+---
+
+### SCHRITT 2 — Shell-Grundstruktur (ca. 2h)
+
+1. Erstelle `components/shell/Shell.tsx` — das Grid-Layout (4 Zonen)
+2. Erstelle `components/shell/IconRail.tsx` — Icon-Navigation mit
+   rollenbasierter Filterung
+3. Erstelle `components/shell/ContextPanel.tsx` — Assessment-Liste +
+   Kontext-Unternavigation (statisch zuerst, dynamisch in Schritt 4)
+4. Erstelle `components/shell/TopBar.tsx` — Breadcrumb, ⌘K-Button,
+   Action-Buttons, Avatar
+5. Erstelle `components/shell/AIPanel.tsx` — Header, Body (Insights),
+   Footer (Input) — zunächst mit Mock-Daten
+6. Ersetze das bestehende Layout in `app/w/[workspaceSlug]/layout.tsx`
+   durch die neue Shell
+
+**Die alte Sidebar-Komponente wird deaktiviert (nicht gelöscht — noch nicht).**
+
+**Abnahme:** `/w/[slug]/` zeigt die neue 4-Zonen-Shell.
+Alle bestehenden Seiten rendern korrekt im Main-Content-Bereich.
+
+---
+
+### SCHRITT 3 — Command Palette (ca. 1h)
+
+1. `npm install cmdk`
+2. Erstelle `components/shell/CommandPalette.tsx`
+3. Globaler Shortcut-Listener im Root-Layout
+4. Erstelle API-Route `GET /api/w/[slug]/search?q=...`:
+   - Sucht in: Assessments (Name), Kandidaten (Name, E-Mail),
+     Kompetenzmodelle (Name)
+   - Gibt max. 5 Ergebnisse je Kategorie zurück
+5. Implementiere die 5 Gruppen (Letzte Assessments, Kandidaten suchen,
+   Schnellaktionen, Navigation, Einstellungen)
+
+**Abnahme:** `⌘K` öffnet Palette, Eingabe liefert Ergebnisse,
+Enter navigiert zur Seite.
+
+---
+
+### SCHRITT 4 — Context Panel (dynamisch) (ca. 1h)
+
+1. Context Panel liest aktuellen Workspace-Slug aus URL
+2. Lädt Assessment-Liste via `GET /api/w/[slug]/assessments` (existiert)
+3. Erkennt automatisch aus der URL, welches Assessment offen ist
+4. Zeigt Kontext-Unternavigation für das offene Assessment
+5. Status-Dots: grün = aktiv, amber = in Vorbereitung, grau = abgeschlossen
+
+**Abnahme:** Context Panel zeigt echte Daten, aktives Assessment
+ist hervorgehoben.
+
+---
+
+### SCHRITT 5 — AI Panel (live) (ca. 2h)
+
+1. Erstelle API-Route `GET /api/w/[slug]/ai-briefing?assessmentId=...`
+   - Nutzt bestehenden LLM-Adapter (`server/llm/`)
+   - Prompt: "Du bist Diagnostik-Assistent. Assessment-Daten: [JSON].
+     Gib 3 konkrete Handlungsempfehlungen als JSON-Array zurück."
+   - Antwortet als Stream (Vercel AI SDK `streamText`)
+2. AI Panel konsumiert den Stream und rendert Insight-Karten progressiv
+3. Eingabefeld sendet freie Anfragen an `POST /api/w/[slug]/ai-chat`
+4. Insights sind klickbar (Action-Tags) und lösen Navigation oder
+   Aktionen aus
+
+**Abnahme:** AI Panel zeigt echte, gestreamte Insights für das
+aktuelle Assessment.
+
+---
+
+### SCHRITT 6 — Begriffstrennung Data Room / Fallstudie (ca. 2h)
+
+1. Erstelle Prisma-Migration:
+   - `DataRoomCategory` → `CaseStudyCategory`
+   - `DataRoomDocumentView` → `CaseStudyDocumentView`
+   - Spalte `categoryId` auf `PortalDocument` bleibt, nur Relation umbenennen
+2. Benenne API-Routen um:
+   - `/api/candidate-portal/data-room/...` → `/api/portal/case-study/...`
+   - `/api/w/[slug]/admin/data-room/...` → `/api/w/[slug]/admin/case-study/...`
+3. Benenne Frontend-Routen um:
+   - `/candidate/data-room` → `/portal/uebung/[slug]`
+   - `/candidate/data-room/[docSlug]` → `/portal/uebung/[slug]/dokument/[docSlug]`
+4. Aktualisiere alle UI-Texte: "Data Room" → "Fallstudie" wo es den
+   Übungstyp meint
+5. Admin-Interface: "Fallstudie-Verwaltung" statt "Data Room" in der
+   Kontext-Navigation
+
+**Redirects einrichten** für alte URLs (Next.js `redirects` in
+`next.config.js`) damit bestehende Links nicht brechen.
+
+**Abnahme:** Alte URLs leiten um, neue URLs funktionieren,
+Datenbank enthält umbenannte Tabellen.
+
+---
+
+### SCHRITT 7 — Portal-Startseite (Kachelübersicht) (ca. 2h)
+
+1. Erstelle `/portal/home` als neue Portal-Startseite
+2. Kachel-Grid: `display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))`
+3. Jede Kachel zeigt: Icon, Titel (konfigurierbar!), Status-Badge
+   (Verfügbar / Gesperrt / Abgeschlossen), kurze Beschreibung
+4. Kacheltypen aus Enum `PortalModuleType` (s. Abschnitt 4.4)
+5. Fallstudie-Kachel: zeigt Anzahl der verfügbaren Dokumente als Badge
+6. Admin-Konfiguration: In "Portal-Verwaltung" kann Admin per Assessment
+   - Kacheln aktivieren/deaktivieren
+   - Reihenfolge festlegen (drag & drop)
+   - Titel der Kachel anpassen
+   - Zeitgesteuerte Freischaltung setzen (existiert bereits)
+
+**Abnahme:** Portal zeigt Kachelübersicht, Fallstudie ist eine Kachel
+unter mehreren, nicht die Startseite.
+
+---
+
+### SCHRITT 8 — Observer-Shell (fokussiert) (ca. 1h)
+
+Observer bekommen eine vereinfachte Shell:
+- Icon Rail: nur 3 Icons (Meine Assessments, Bewerten, Ergebnisse)
+- Kein AI Panel (Datenschutz — Observer sollen keine KI-Insights sehen)
+- Context Panel: nur zugewiesene Assessments
+- Offline-first Rating bleibt exakt wie bisher
+
+**Abnahme:** Observer-Login landet in vereinfachter Shell.
+
+---
+
+### SCHRITT 9 — Aufräumen & Alte Sidebar entfernen (ca. 30 min)
+
+1. Lösche alte Sidebar-Komponenten (die in Schritt 2 deaktivierten)
+2. Prüfe: keine toten Imports, keine ungenutzten CSS-Klassen
+3. Führe `next build` aus — 0 Fehler, 0 Warnungen
+
+---
+
+### SCHRITT 10 — Realtime-Upgrade (Polling → SSE) (ca. 2h)
+
+Das bestehende Polling-basierte Kollaborationssystem wird auf
+Server-Sent Events umgestellt.
+
+1. Erstelle API-Route `GET /api/w/[slug]/events` als SSE-Endpoint:
+   ```typescript
+   // Sendet Events für:
+   // - rating_submitted (Observer hat Rating abgegeben)
+   // - candidate_progress (Kandidat schließt Modul ab)
+   // - observer_presence (Observer ist online/offline)
+   ```
+2. Client-seitiger Hook `useAssessmentEvents(assessmentId)` mit
+   `EventSource`-API
+3. Context Panel und Kandidaten-Liste reagieren live auf Events
+4. Fallback: bei SSE-Fehler automatisch auf Polling zurückfallen
+
+**Abnahme:** Zwei Browserfenster offen — Rating in Fenster A erscheint
+ohne Refresh in Fenster B.
+
+---
+
+## 6. WAS NICHT ANGERÜHRT WIRD
+
+Die folgenden Bereiche bleiben **vollständig unverändert**:
+
+- `server/llm/` — LLM-Adapter, alle Provider
+- `prisma/schema.prisma` — außer den Umbenennungen in Schritt 6
+- Alle `/api/` Business-Logic-Routes (außer Umbenennungen)
+- `lib/ai.ts`, `lib/feature-flags.ts`
+- COMP BDP Tool (`/comp-bdp/`) und ABCD-Clone (`/abcd-bdp/`) —
+  komplett unverändert
+- Gutachten-Generator Business Logic
+- Audio-Transkriptions-Pipeline
+- RBAC/Auth-System (`lib/auth.ts`, Cookie-Handling)
+- Consent-Management
+- Report-Generierung (DOCX, PDF, PPTX)
+
+---
+
+## 7. QUALITÄTSKRITERIEN — ABNAHME DES GESAMTEN REFACTORINGS
+
+Folgende Prüfpunkte müssen **alle** erfüllt sein:
+
+```
+[ ] next build läuft durch — 0 TypeScript-Fehler, 0 Warnungen
+[ ] ⌘K öffnet Command Palette von jeder Seite aus
+[ ] Icon Rail zeigt rollenbasiert korrekte Icons
+[ ] Context Panel zeigt echte Assessment-Daten
+[ ] AI Panel streamt Insights (kein JSON-await bei langen Antworten)
+[ ] Route /candidate/data-room leitet auf /portal/uebung/[slug] um
+[ ] Admin-UI: "Fallstudie" statt "Data Room" wo Übungstyp gemeint
+[ ] Portal zeigt Kachelübersicht als Startseite
+[ ] Observer-Login landet in vereinfachter 3-Icon-Shell
+[ ] Alle Prisma-Migrationen laufen durch (kein manuelles SQL)
+[ ] Satoshi-Font lädt in allen Shells
+[ ] CSS Custom Properties genutzt — kein hardcodiertes #A6473B im JSX
+[ ] COMP BDP Tool funktioniert unverändert
+[ ] Mobile: Shell kollabiert zu Bottom-Nav (≤ 768px)
+```
+
+---
+
+## 8. MOBILE-VERHALTEN (≤ 768px)
+
+Die Shell kollabiert:
+- Icon Rail + Context Panel: **ausgeblendet**
+- AI Panel: **ausgeblendet** (separat aufrufbar per FAB-Button)
+- Stattdessen: **Bottom Navigation Bar** (5 Icons, fix unten)
+- TopBar bleibt, aber kompakter (kein Breadcrumb-Text, nur Back-Button)
+
+Bestehende Mobile-Implementierungen in COMP BDP bleiben als Referenz erhalten.
+
+---
+
+## 9. COMMIT-STRATEGIE
+
+Nach jedem der 10 Schritte: `git commit` mit aussagekräftiger Message:
+
+```
+feat(shell): implement icon rail with role-based visibility [Step 2]
+feat(search): add command palette with cmdk [Step 3]
+refactor(portal): rename DataRoom → CaseStudy, add redirects [Step 6]
+feat(portal): implement module tile overview as portal home [Step 7]
+```
+
+Kein "WIP"-Commit in den Main-Branch. Jeder Schritt ist eigenständig lauffähig.
+
+---
+
+## 10. FALLS DU UNSICHER BIST
+
+Wenn du an einem Punkt unsicher bist:
+1. Orientiere dich an Linear.app (Navigation), Vercel Dashboard (Shell),
+   Raycast (Command Palette) als visuelle Referenz
+2. Im Zweifel: weniger ist mehr — lieber eine Komponente weglassen
+   als halbfertig bauen
+3. Frag nie nach Bestätigung für Entscheidungen, die in diesem Dokument
+   bereits getroffen sind
+4. Frag nach Bestätigung bei: Datenbankschema-Änderungen die über
+   Schritt 6 hinausgehen, Änderungen an Auth/Cookie-Logik,
+   Änderungen an COMP BDP / ABCD-Modulen
+
+---
+
+*© Christoph Aldering · Private initiative – for training reasons only –
+no data from reality so far!*
+*Architekturkonzept: Claude Sonnet 4.6, März 2026*
