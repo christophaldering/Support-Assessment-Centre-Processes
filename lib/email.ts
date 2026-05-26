@@ -85,6 +85,89 @@ export async function sendAccessApprovedEmail(
   });
 }
 
+export async function sendDataRoomMagicLinkEmail(
+  toEmail: string,
+  recipientName: string,
+  magicLinkUrl: string,
+  expiresAt: Date,
+  dataRoomSlug: string
+) {
+  const { client, fromEmail } = await getSendGridClient();
+
+  const expiryFormatted = expiresAt.toLocaleString("de-DE", {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "Europe/Berlin",
+  });
+
+  await client.send({
+    to: toEmail,
+    from: fromEmail,
+    subject: `Ihr persönlicher Zugang zum Datenraum – ${dataRoomSlug}`,
+    html: `
+      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 540px; margin: 0 auto; color: #1a1a1a; background: #ffffff;">
+
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #A6473B 0%, #5F1A11 100%); padding: 28px 32px; border-radius: 12px 12px 0 0;">
+          <p style="color: rgba(255,255,255,0.7); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 6px; font-weight: 700;">
+            Executive Diagnostics Suite
+          </p>
+          <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 700; line-height: 1.3;">
+            Ihr Datenraum-Zugang
+          </h1>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 32px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
+          <p style="font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
+            Guten Tag ${recipientName},
+          </p>
+          <p style="font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
+            Sie wurden eingeladen, auf den Datenraum <strong style="color: #A6473B;">${dataRoomSlug}</strong> zuzugreifen.
+            Mit dem folgenden Link gelangen Sie direkt hinein — ohne Passwort.
+          </p>
+
+          <!-- CTA Button -->
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${magicLinkUrl}"
+               style="display: inline-block; background: linear-gradient(135deg, #A6473B 0%, #5F1A11 100%); color: #ffffff;
+                      text-decoration: none; padding: 14px 36px; border-radius: 10px; font-size: 15px; font-weight: 700;
+                      letter-spacing: 0.02em; box-shadow: 0 4px 14px rgba(166,71,59,0.35);">
+              Jetzt Datenraum öffnen →
+            </a>
+          </div>
+
+          <!-- Expiry info -->
+          <div style="background: #fff8f7; border: 1px solid #fde8e6; border-radius: 8px; padding: 14px 16px; margin: 0 0 24px;">
+            <p style="font-size: 13px; color: #5F1A11; margin: 0; font-weight: 600;">
+              ⏱ Dieser Link ist gültig bis: ${expiryFormatted} Uhr
+            </p>
+          </div>
+
+          <!-- Fallback URL -->
+          <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 6px;">
+            Falls der Button nicht funktioniert, kopieren Sie bitte diese Adresse in Ihren Browser:
+          </p>
+          <p style="font-size: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+                     padding: 10px 12px; word-break: break-all; color: #1a2332; margin: 0 0 24px;">
+            ${magicLinkUrl}
+          </p>
+
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px;" />
+
+          <!-- GDPR notice -->
+          <p style="font-size: 11px; color: #94a3b8; line-height: 1.6; margin: 0;">
+            <strong>Datenschutzhinweis:</strong> Diese Einladungsmail wurde auf Ihre E-Mail-Adresse ausgestellt.
+            Bitte leiten Sie diesen Link nicht an Dritte weiter. Nach Ablauf des Gültigkeitsdatums ist der Zugang
+            automatisch deaktiviert. Bei Fragen wenden Sie sich bitte an den Workspace-Administrator.<br /><br />
+            Diese E-Mail wurde automatisch versandt · Executive Diagnostics Suite
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
 export async function sendAccessRejectedEmail(
   toEmail: string,
   userName: string,

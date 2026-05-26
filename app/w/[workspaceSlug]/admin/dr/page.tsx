@@ -46,6 +46,9 @@ export default function DataRoomLinksPage() {
   const [links, setLinks] = useState<LinkEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [sentId, setSentId] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<{ id: string; msg: string } | null>(null);
 
   const [form, setForm] = useState({
     label: "",
@@ -56,6 +59,8 @@ export default function DataRoomLinksPage() {
   });
   const [creating, setCreating] = useState(false);
   const [newUrl, setNewUrl] = useState<string | null>(null);
+  const [newLinkId, setNewLinkId] = useState<string | null>(null);
+  const [newLinkEmail, setNewLinkEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadLinks = () => {
@@ -73,11 +78,14 @@ export default function DataRoomLinksPage() {
     e.preventDefault();
     setError(null);
     setNewUrl(null);
+    setNewLinkId(null);
+    setNewLinkEmail(null);
     if (!form.label || !form.dataRoomSlug || !form.expiresAt) {
       setError("Label, Datenraum-Slug und Ablaufdatum sind Pflichtfelder.");
       return;
     }
     setCreating(true);
+    const emailAtCreation = form.email;
     try {
       const res = await fetch(`/api/w/${params.workspaceSlug}/admin/dr/links`, {
         method: "POST",
@@ -87,6 +95,8 @@ export default function DataRoomLinksPage() {
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Fehler beim Erstellen");
       setNewUrl(data.url);
+      setNewLinkId(data.id || null);
+      setNewLinkEmail(emailAtCreation || null);
       setForm({ label: "", email: "", dataRoomSlug: "varexia", expiresAt: "", multiUse: true });
       loadLinks();
     } catch (err: unknown) {
@@ -111,6 +121,26 @@ export default function DataRoomLinksPage() {
     copyToClipboard(url);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSend = async (id: string, email: string | null) => {
+    setSendError(null);
+    setSendingId(id);
+    try {
+      const res = await fetch(
+        `/api/w/${params.workspaceSlug}/admin/dr/links/${id}/send`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Versand fehlgeschlagen");
+      setSentId(id);
+      setTimeout(() => setSentId(null), 4000);
+    } catch (err: unknown) {
+      setSendError({ id, msg: err instanceof Error ? err.message : "Unbekannter Fehler" });
+      setTimeout(() => setSendError(null), 6000);
+    } finally {
+      setSendingId(null);
+    }
   };
 
   return (
@@ -187,7 +217,7 @@ export default function DataRoomLinksPage() {
 
         {newUrl && (
           <div style={S.successBox}>
-            <div style={S.successLabel}>✓ Link erstellt — jetzt kopieren:</div>
+            <div style={S.successLabel}>✓ Link erstellt — jetzt kopieren oder direkt versenden:</div>
             <div style={S.urlRow}>
               <code style={S.urlCode}>{newUrl}</code>
               <button
@@ -197,7 +227,31 @@ export default function DataRoomLinksPage() {
               >
                 Kopieren
               </button>
+              {newLinkId && newLinkEmail && (
+                <button
+                  onClick={() => handleSend(newLinkId, newLinkEmail)}
+                  disabled={sendingId === newLinkId}
+                  style={{
+                    background: sentId === newLinkId ? "#15803d" : sendError?.id === newLinkId ? "#991b1b" : "#A6473B",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "6px 14px",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: sendingId === newLinkId ? "default" : "pointer",
+                    whiteSpace: "nowrap" as const,
+                    opacity: sendingId === newLinkId ? 0.7 : 1,
+                  }}
+                  data-testid="button-send-new"
+                >
+                  {sendingId === newLinkId ? "Sende…" : sentId === newLinkId ? "✓ Gesendet" : `Per Mail senden (${newLinkEmail})`}
+                </button>
+              )}
             </div>
+            {sendError?.id === newLinkId && (
+              <p style={{ fontSize: 12, color: "#991b1b", margin: "8px 0 0" }}>{sendError.msg}</p>
+            )}
           </div>
         )}
       </section>
@@ -258,6 +312,24 @@ export default function DataRoomLinksPage() {
                         {copiedId === l.id ? "✓ Kopiert" : "Link kopieren"}
                       </button>
                     )}
+                    {!l.revoked && !expired && l.email && (
+                      <button
+                        onClick={() => handleSend(l.id, l.email)}
+                        disabled={sendingId === l.id}
+                        style={{
+                          ...S.btnSmall,
+                          background: sentId === l.id ? "#f0fdf4" : sendError?.id === l.id ? "#fef2f2" : "#fff8f7",
+                          color: sentId === l.id ? "#15803d" : sendError?.id === l.id ? "#991b1b" : "#A6473B",
+                          borderColor: sentId === l.id ? "#bbf7d0" : sendError?.id === l.id ? "#fecaca" : "#f5c2bb",
+                          fontWeight: 600,
+                          opacity: sendingId === l.id ? 0.6 : 1,
+                        }}
+                        title={sendError?.id === l.id ? sendError.msg : `E-Mail senden an ${l.email}`}
+                        data-testid={`button-send-${l.id}`}
+                      >
+                        {sendingId === l.id ? "Sende…" : sentId === l.id ? "✓ Gesendet" : sendError?.id === l.id ? "✗ Fehler" : "Per Mail senden"}
+                      </button>
+                    )}
                     {!l.revoked && (
                       <button
                         onClick={() => handleRevoke(l.id)}
@@ -268,6 +340,11 @@ export default function DataRoomLinksPage() {
                       </button>
                     )}
                   </div>
+                  {sendError?.id === l.id && (
+                    <div style={{ gridColumn: "1 / -1", fontSize: 12, color: "#991b1b", background: "#fef2f2", borderRadius: 6, padding: "6px 10px", marginTop: 4 }}>
+                      {sendError.msg}
+                    </div>
+                  )}
                 </div>
               );
             })}
