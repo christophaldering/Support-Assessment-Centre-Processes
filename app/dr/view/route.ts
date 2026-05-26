@@ -153,6 +153,13 @@ const TRACKING_SCRIPT = `
   window.drTrackNoteSave = function (docId, charCount) {
     enqueue("note_save", { docId: docId, charCount: charCount || null }, null);
   };
+  window.drTrackComplete = function (docId, elapsedMs) {
+    enqueue("session_complete", { docId: docId }, elapsedMs || null);
+    flush(false);
+  };
+  window.drTrackResume = function (docId) {
+    enqueue("session_resume", { docId: docId }, null);
+  };
 })();
 </script>
 <!-- ── End Tracking Script ────────────────────────────────────────────────── -->`;

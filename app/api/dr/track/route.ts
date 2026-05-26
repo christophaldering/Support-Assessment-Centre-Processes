@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 const ALLOWED = new Set([
   "session_start", "session_end", "open", "leave",
   "search", "flag", "unflag", "note_save", "heartbeat",
+  "session_complete", "session_resume",
 ]);
 
 export async function POST(req: NextRequest) {

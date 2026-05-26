@@ -28,6 +28,8 @@ type LinkMeta = {
 const TYPE_LABEL: Record<string, string> = {
   session_start: "Sitzung gestartet",
   session_end: "Sitzung beendet",
+  session_complete: "✓ Bearbeitung beendet",
+  session_resume: "↩ Weiter bearbeitet",
   open: "Dokument geöffnet",
   leave: "Dokument verlassen",
   search: "Suche",
@@ -44,6 +46,8 @@ const TYPE_COLOR: Record<string, string> = {
   note_save: "#6b8cce",
   session_start: "#5a7a52",
   session_end: "#5a7a52",
+  session_complete: "#2f7a4a",
+  session_resume: "#94a3b8",
   leave: "#94a3b8",
 };
 
