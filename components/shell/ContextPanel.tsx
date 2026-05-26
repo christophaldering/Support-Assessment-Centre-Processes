@@ -128,6 +128,7 @@ export default function ContextPanel({ workspaceSlug, workspaceName }: ContextPa
     { label: "Assessments", href: `${base}/assessments`, match: `${base}/assessments` },
     { label: "Case Study", href: `${base}/data-room`, match: `${base}/data-room` },
     { label: "Datenraum (ConVia)", href: `${base}/dr`, match: `${base}/dr` },
+    { label: "ConVia Einrichtung", href: `${base}/dr/setup`, match: `${base}/dr/setup` },
     { label: "Übungen & Module", href: `${base}/modules`, match: `${base}/modules` },
     { label: "Baustein-Bibliothek", href: `${base}/exercise-library`, match: `${base}/exercise-library` },
     { label: "Analytics & Berichte", href: `${base}/analytics`, match: `${base}/analytics` },
