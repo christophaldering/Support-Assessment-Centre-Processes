@@ -47,9 +47,15 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // ── /dr/[token] — ConVia Datenraum entry: token IS the credential, always public ──
-  if (/^\/dr\/[^/]+\/?$/.test(pathname)) {
-    return NextResponse.next();
+  // ── /dr/* — ConVia Datenraum ──────────────────────────────────────────────
+  if (pathname.startsWith("/dr/")) {
+    // /dr/<token> is the entry point — the token IS the credential, no cookie needed
+    if (/^\/dr\/[^/]+\/?$/.test(pathname)) {
+      return NextResponse.next();
+    }
+    // All other /dr/* sub-routes (e.g. /dr/view) require a valid dr_session cookie
+    const hasDr = !!req.cookies.get("dr_session")?.value;
+    return hasDr ? NextResponse.next() : toLanding(req);
   }
 
   // ── Cookie helpers ─────────────────────────────────────────────────────────

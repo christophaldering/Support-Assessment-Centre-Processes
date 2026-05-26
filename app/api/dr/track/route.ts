@@ -29,26 +29,27 @@ export async function POST(req: NextRequest) {
 
   const slice = events.slice(0, 200);
 
-  await prisma.dataRoomEvent.createMany({
-    data: slice
-      .filter((e: unknown) => {
-        const ev = e as Record<string, unknown>;
-        return typeof ev?.type === "string" && ALLOWED.has(ev.type);
-      })
-      .map((e: unknown) => {
-        const ev = e as Record<string, unknown>;
-        return {
-          linkId: link.id,
-          type: String(ev.type),
-          payload: ev.payload != null ? String(ev.payload).slice(0, 20000) : null,
-          durationMs: typeof ev.durationMs === "number" && Number.isFinite(ev.durationMs)
-            ? Math.round(ev.durationMs)
-            : null,
-          seq: typeof ev.seq === "number" && Number.isFinite(ev.seq) ? ev.seq : null,
-          clientTs: ev.clientTs ? new Date(String(ev.clientTs)) : null,
-        };
-      }),
-  });
+  const rows = slice
+    .filter((e: unknown) => {
+      const ev = e as Record<string, unknown>;
+      return typeof ev?.type === "string" && ALLOWED.has(ev.type);
+    })
+    .map((e: unknown) => {
+      const ev = e as Record<string, unknown>;
+      const rawTs = ev.clientTs ? new Date(String(ev.clientTs)) : null;
+      return {
+        linkId: link.id,
+        type: String(ev.type),
+        payload: ev.payload != null ? String(ev.payload).slice(0, 20000) : null,
+        durationMs: typeof ev.durationMs === "number" && Number.isFinite(ev.durationMs)
+          ? Math.round(ev.durationMs)
+          : null,
+        seq: typeof ev.seq === "number" && Number.isFinite(ev.seq) ? ev.seq : null,
+        clientTs: rawTs && !isNaN(rawTs.getTime()) ? rawTs : null,
+      };
+    });
 
-  return NextResponse.json({ ok: true, stored: slice.length });
+  await prisma.dataRoomEvent.createMany({ data: rows });
+
+  return NextResponse.json({ ok: true, stored: rows.length });
 }
