@@ -2,8 +2,13 @@
  * GET /api/w/[workspaceSlug]/admin/dr/file-status
  *
  * Reads private/convia/ConVia_Datenraum.html and returns a diagnostic
- * snapshot: whether the file exists, is the placeholder, has the required
- * <head> tag, and contains the tracking script markers.
+ * snapshot used by the setup guide page.
+ *
+ * Note on tracking script:
+ *   app/dr/view/route.ts auto-injects the canonical tracking script
+ *   server-side whenever "window.drTrackOpen" is absent from the source
+ *   HTML.  So `hasTrackingScript` being false is NOT a blocker — the
+ *   server handles it.  The field is reported for informational purposes.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
@@ -50,10 +55,17 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 
     const html = await readFile(HTML_PATH, "utf-8");
 
-    isPlaceholder = html.includes("PLATZHALTER") || html.includes("Ersetze den gesamten");
+    isPlaceholder =
+      html.includes("PLATZHALTER") ||
+      html.includes("Ersetze den gesamten") ||
+      html.includes("Platzhalter-Ansicht");
+
     hasHead = /<head[\s>]/i.test(html);
+
+    // Tracking script: either embedded in file OR auto-injected by server.
+    // We report what's in the file itself; the server always injects if absent.
     hasTrackingScript = html.includes("drTrackOpen") && html.includes("drTrackLeave");
-    hasDrToken = html.includes("__DR_TOKEN") || html.includes("DR_TOKEN");
+    hasDrToken = html.includes("__DR_TOKEN");
 
     const hooks = ["drTrackOpen", "drTrackLeave", "drTrackSearch", "drTrackFlag", "drTrackNoteSave"];
     hasAllHooks = hooks.every((h) => html.includes(h));
@@ -61,14 +73,17 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     // file doesn't exist or can't be read
   }
 
-  const ready = exists && !isPlaceholder && hasHead && hasTrackingScript;
+  // Ready = file present + not placeholder + has <head> (tracking is auto-injected by server)
+  const ready = exists && !isPlaceholder && hasHead;
 
   return NextResponse.json({
     ok: true,
     exists,
     isPlaceholder,
     hasHead,
+    // trackingScript: whether the SOURCE file has the script (server auto-injects if false)
     hasTrackingScript,
+    trackingAutoInjected: exists && !hasTrackingScript,
     hasDrToken,
     hasAllHooks,
     sizeBytes,

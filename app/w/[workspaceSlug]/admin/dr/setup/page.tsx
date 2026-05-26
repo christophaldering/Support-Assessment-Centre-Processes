@@ -141,13 +141,21 @@ export default function DataRoomSetupPage() {
                 detail={!status.hasHead ? "Zwingend erforderlich — Token-Injektion greift nur mit <head>" : "Token wird automatisch injiziert"}
               />
               <StatusRow
-                ok={status.hasTrackingScript}
-                label="Tracking-Script eingebunden"
-                detail={!status.hasTrackingScript ? "drTrackOpen / drTrackLeave nicht gefunden" : "Alle Kern-Hooks verfügbar"}
+                ok={true}
+                label={
+                  status.hasTrackingScript
+                    ? "Tracking-Script in Datei eingebunden"
+                    : "Tracking-Script wird vom Server auto-injiziert"
+                }
+                detail={
+                  status.hasTrackingScript
+                    ? "Alle Kern-Hooks direkt in der HTML-Datei verfügbar"
+                    : "app/dr/view/route.ts injiziert das Script automatisch vor </head> — kein manuelles Einbetten nötig"
+                }
               />
               <StatusRow
-                ok={status.hasAllHooks}
-                label="Alle 5 Tracking-Hooks verfügbar"
+                ok={status.hasAllHooks || !status.hasTrackingScript}
+                label={status.hasAllHooks ? "Alle 5 Tracking-Hooks in Datei" : "Tracking-Hooks via Auto-Injektion verfügbar"}
                 detail="drTrackOpen, drTrackLeave, drTrackSearch, drTrackFlag, drTrackNoteSave"
               />
             </div>
