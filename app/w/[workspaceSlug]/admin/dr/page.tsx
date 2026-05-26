@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 type LinkEntry = {
@@ -17,6 +17,19 @@ type LinkEntry = {
   lastUsedAt: string | null;
   createdAt: string;
   _count: { events: number };
+};
+
+type LiveSession = {
+  linkId: string;
+  label: string;
+  email: string | null;
+  dataRoomSlug: string;
+  currentDoc: string | null;
+  currentDocOpenedAt: string | null;
+  sessionStartedAt: string | null;
+  sessionDurationMs: number | null;
+  lastHeartbeat: string;
+  secondsSinceHeartbeat: number;
 };
 
 const BASE_URL = typeof window !== "undefined"
@@ -39,6 +52,16 @@ function fmtDate(iso: string | null) {
   return new Date(iso).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
 }
 
+function fmtDurMs(ms: number | null) {
+  if (!ms || ms < 0) return "—";
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}h ${m % 60}m`;
+  if (m > 0) return `${m}m ${s % 60}s`;
+  return `${s}s`;
+}
+
 export default function DataRoomLinksPage() {
   const params = useParams() as { workspaceSlug: string };
   const router = useRouter();
@@ -49,6 +72,11 @@ export default function DataRoomLinksPage() {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sentId, setSentId] = useState<string | null>(null);
   const [sendError, setSendError] = useState<{ id: string; msg: string } | null>(null);
+
+  // Live sessions state
+  const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
+  const [liveCheckedAt, setLiveCheckedAt] = useState<Date | null>(null);
+  const liveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [form, setForm] = useState({
     label: "",
@@ -72,7 +100,26 @@ export default function DataRoomLinksPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadLinks(); }, [params.workspaceSlug]);
+  const loadLive = () => {
+    fetch(`/api/w/${params.workspaceSlug}/admin/dr/links/live`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) {
+          setLiveSessions(d.active || []);
+          setLiveCheckedAt(new Date());
+        }
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadLinks();
+    loadLive();
+    liveIntervalRef.current = setInterval(loadLive, 15_000);
+    return () => {
+      if (liveIntervalRef.current) clearInterval(liveIntervalRef.current);
+    };
+  }, [params.workspaceSlug]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,6 +190,8 @@ export default function DataRoomLinksPage() {
     }
   };
 
+  const activeLinkIds = new Set(liveSessions.map((s) => s.linkId));
+
   return (
     <div style={S.wrap}>
       <header style={S.header}>
@@ -153,6 +202,61 @@ export default function DataRoomLinksPage() {
         </div>
       </header>
 
+      {/* ── Live-Sitzungen ───────────────────────────────────────────────── */}
+      <section style={{ ...S.card, marginBottom: 20, borderColor: liveSessions.length > 0 ? "#b6e8d0" : "var(--eds-border,#e2e8f0)" }}>
+        <div style={S.liveHeader}>
+          <div style={S.liveTitleRow}>
+            <span style={{ ...S.liveDot, background: liveSessions.length > 0 ? "#16a34a" : "#94a3b8", boxShadow: liveSessions.length > 0 ? "0 0 0 3px #bbf7d040" : "none" }} />
+            <h2 style={{ ...S.h2, margin: 0 }}>
+              Aktive Nutzer jetzt
+              {liveSessions.length > 0 && (
+                <span style={S.liveCount}>{liveSessions.length}</span>
+              )}
+            </h2>
+          </div>
+          <span style={S.liveChecked}>
+            {liveCheckedAt
+              ? `Aktualisiert ${liveCheckedAt.toLocaleTimeString("de-DE")} · alle 15s`
+              : "Prüfe…"}
+          </span>
+        </div>
+
+        {liveSessions.length === 0 ? (
+          <p style={S.empty}>Kein Kandidat ist gerade im Datenraum aktiv.</p>
+        ) : (
+          <div style={S.liveGrid}>
+            {liveSessions.map((s) => (
+              <div key={s.linkId} style={S.liveCard} data-testid={`live-session-${s.linkId}`}>
+                <div style={S.liveCardTop}>
+                  <span style={S.liveActiveDot} title="Aktiv — Heartbeat empfangen" />
+                  <span style={S.liveName}>{s.label}</span>
+                  {s.email && <span style={S.liveEmail}>{s.email}</span>}
+                </div>
+                <div style={S.liveDocRow}>
+                  <span style={S.liveDocLabel}>Aktuelles Dokument:</span>
+                  <span style={S.liveDoc}>{s.currentDoc || "—"}</span>
+                </div>
+                <div style={S.liveMeta}>
+                  {s.sessionDurationMs && (
+                    <span style={S.liveMetaChip}>⏱ {fmtDurMs(s.sessionDurationMs)}</span>
+                  )}
+                  <span style={S.liveMetaChip}>♡ vor {s.secondsSinceHeartbeat}s</span>
+                  <span style={S.liveMetaChip}>{s.dataRoomSlug}</span>
+                </div>
+                <button
+                  onClick={() => router.push(`/w/${params.workspaceSlug}/admin/dr/${s.linkId}`)}
+                  style={S.liveViewBtn}
+                  data-testid={`live-view-${s.linkId}`}
+                >
+                  Auswertung →
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Neuen Link erstellen ─────────────────────────────────────────── */}
       <section style={S.card}>
         <h2 style={S.h2}>Neuen Link erstellen</h2>
         <form onSubmit={handleCreate} style={S.form}>
@@ -256,6 +360,7 @@ export default function DataRoomLinksPage() {
         )}
       </section>
 
+      {/* ── Vorhandene Links ─────────────────────────────────────────────── */}
       <section style={{ ...S.card, marginTop: 20 }}>
         <h2 style={S.h2}>Vorhandene Links ({links.length})</h2>
         {loading ? (
@@ -274,14 +379,27 @@ export default function DataRoomLinksPage() {
             </div>
             {links.map((l) => {
               const expired = new Date(l.expiresAt) < new Date();
+              const isLive = activeLinkIds.has(l.id);
               const status = l.revoked ? "Gesperrt" : expired ? "Abgelaufen" : "Aktiv";
               const statusColor = l.revoked ? "#991b1b" : expired ? "#92400e" : "#15803d";
               const statusBg = l.revoked ? "#fef2f2" : expired ? "#fffbeb" : "#f0fdf4";
-              const token = links.find((x) => x.id === l.id);
               return (
-                <div key={l.id} style={S.tableRow} data-testid={`row-link-${l.id}`}>
+                <div
+                  key={l.id}
+                  style={{ ...S.tableRow, background: isLive ? "#f0fdf4" : undefined }}
+                  data-testid={`row-link-${l.id}`}
+                >
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 13 }}>{l.label}</div>
+                    <div style={{ fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                      {isLive && (
+                        <span
+                          style={{ width: 8, height: 8, borderRadius: "50%", background: "#16a34a", display: "inline-block", flexShrink: 0, boxShadow: "0 0 0 2px #bbf7d0" }}
+                          title="Gerade aktiv im Datenraum"
+                          data-testid={`live-dot-${l.id}`}
+                        />
+                      )}
+                      {l.label}
+                    </div>
                     {l.email && <div style={{ fontSize: 11, color: "#7f8da3" }}>{l.email}</div>}
                   </div>
                   <div style={{ fontSize: 13 }}>{l.dataRoomSlug}</div>
@@ -363,6 +481,25 @@ const S: Record<string, React.CSSProperties> = {
   sub: { fontSize: 13, color: "var(--eds-text-muted,#7f8da3)", marginTop: 4 },
   card: { background: "#fff", border: "1px solid var(--eds-border,#e2e8f0)", borderRadius: 16, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,.04)" },
   h2: { fontSize: 16, fontWeight: 700, margin: "0 0 18px" },
+  // Live section
+  liveHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  liveTitleRow: { display: "flex", alignItems: "center", gap: 10 },
+  liveDot: { width: 10, height: 10, borderRadius: "50%", flexShrink: 0, transition: "background .3s, box-shadow .3s" },
+  liveCount: { display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#16a34a", color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 999, width: 20, height: 20, marginLeft: 8 },
+  liveChecked: { fontSize: 11, color: "var(--eds-text-muted,#94a3b8)" },
+  liveGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 12 },
+  liveCard: { background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 },
+  liveCardTop: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" },
+  liveActiveDot: { width: 8, height: 8, borderRadius: "50%", background: "#16a34a", flexShrink: 0, boxShadow: "0 0 0 2px #bbf7d0", animation: "pulse 2s infinite" },
+  liveName: { fontWeight: 700, fontSize: 14 },
+  liveEmail: { fontSize: 11, color: "#5a6a82" },
+  liveDocRow: { display: "flex", flexDirection: "column", gap: 2 },
+  liveDocLabel: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "#5a7a52" },
+  liveDoc: { fontSize: 12, color: "#1a2332", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
+  liveMeta: { display: "flex", gap: 6, flexWrap: "wrap" },
+  liveMetaChip: { fontSize: 11, background: "#fff", border: "1px solid #bbf7d0", borderRadius: 999, padding: "2px 8px", color: "#15803d" },
+  liveViewBtn: { alignSelf: "flex-start", marginTop: 2, background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "var(--eds-accent,#A6473B)", padding: 0 },
+  // Form
   form: { display: "flex", flexDirection: "column", gap: 14 },
   formRow: { display: "flex", flexDirection: "column", gap: 4 },
   label: { fontSize: 12, fontWeight: 600, color: "var(--eds-text-muted,#5a6a82)" },
