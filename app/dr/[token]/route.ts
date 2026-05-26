@@ -58,5 +58,14 @@ export async function GET(
     maxAge: 60 * 60 * 4,
   });
 
-  return NextResponse.redirect(new URL("/dr/view", req.url));
+  // Use the public base URL so the redirect goes to the real domain,
+  // not the internal 0.0.0.0 address which Safari / browsers block.
+  const base =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    (req.headers.get("x-forwarded-host")
+      ? `https://${req.headers.get("x-forwarded-host")}`
+      : null) ||
+    `https://${req.headers.get("host") || "www.diagnostic-suite.de"}`;
+
+  return NextResponse.redirect(new URL("/dr/view", base));
 }
