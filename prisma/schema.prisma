@@ -1325,3 +1325,41 @@ model BdpNotification {
   @@index([userId, read])
   @@map("bdp_notifications")
 }
+
+model DataRoomAccessLink {
+  id           String   @id @default(cuid())
+  token        String   @unique
+  label        String
+  email        String?
+  dataRoomSlug String   @map("data_room_slug")
+  expiresAt    DateTime @map("expires_at")
+  multiUse     Boolean  @default(true) @map("multi_use")
+  revoked      Boolean  @default(false)
+  firstUsedAt  DateTime? @map("first_used_at")
+  lastUsedAt   DateTime? @map("last_used_at")
+  useCount     Int      @default(0) @map("use_count")
+  workspace    String   @default("main")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  events       DataRoomEvent[]
+
+  @@index([workspace, expiresAt])
+  @@index([dataRoomSlug])
+  @@map("data_room_access_links")
+}
+
+model DataRoomEvent {
+  id         String   @id @default(cuid())
+  link       DataRoomAccessLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  linkId     String   @map("link_id")
+  type       String
+  payload    String?  @db.Text
+  durationMs Int?     @map("duration_ms")
+  seq        Int?
+  clientTs   DateTime? @map("client_ts")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([linkId, createdAt])
+  @@index([type])
+  @@map("data_room_events")
+}

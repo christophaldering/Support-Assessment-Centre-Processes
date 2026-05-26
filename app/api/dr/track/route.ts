@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from "next/server";
+import { resolveLink } from "@/lib/dr/tokens";
+import { prisma } from "@/lib/db";
+
+const ALLOWED = new Set([
+  "session_start", "session_end", "open", "leave",
+  "search", "flag", "unflag", "note_save", "heartbeat",
+]);
+
+export async function POST(req: NextRequest) {
+  let data: unknown;
+  try {
+    data = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false }, { status: 400 });
+  }
+
+  const body = data as Record<string, unknown>;
+  const token = String(body?.token || "");
+  const events = Array.isArray(body?.events) ? body.events : [];
+
+  const link = await resolveLink(token);
+  if (!link) {
+    return NextResponse.json({ ok: false, reason: "invalid_or_expired" }, { status: 403 });
+  }
+  if (!events.length) {
+    return NextResponse.json({ ok: true, stored: 0 });
+  }
+
+  const slice = events.slice(0, 200);
+
+  await prisma.dataRoomEvent.createMany({
+    data: slice
+      .filter((e: unknown) => {
+        const ev = e as Record<string, unknown>;
+        return typeof ev?.type === "string" && ALLOWED.has(ev.type);
+      })
+      .map((e: unknown) => {
+        const ev = e as Record<string, unknown>;
+        return {
+          linkId: link.id,
+          type: String(ev.type),
+          payload: ev.payload != null ? String(ev.payload).slice(0, 20000) : null,
+          durationMs: typeof ev.durationMs === "number" && Number.isFinite(ev.durationMs)
+            ? Math.round(ev.durationMs)
+            : null,
+          seq: typeof ev.seq === "number" && Number.isFinite(ev.seq) ? ev.seq : null,
+          clientTs: ev.clientTs ? new Date(String(ev.clientTs)) : null,
+        };
+      }),
+  });
+
+  return NextResponse.json({ ok: true, stored: slice.length });
+}

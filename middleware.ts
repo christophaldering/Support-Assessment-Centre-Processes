@@ -47,6 +47,11 @@ export function middleware(req: NextRequest) {
     }
   }
 
+  // ── /dr/* — ConVia Datenraum: token-based, always public ──────────────────
+  if (pathname.startsWith("/dr/")) {
+    return NextResponse.next();
+  }
+
   // ── Cookie helpers ─────────────────────────────────────────────────────────
   const hasMaster = req.cookies.get(MASTER_COOKIE)?.value === AUTH_TOKEN;
   const hasWorkspace = !!req.cookies.get(WORKSPACE_COOKIE)?.value;
