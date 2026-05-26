@@ -79,7 +79,7 @@ export default function DataRoomLinksPage() {
   const [form, setForm] = useState({
     label: "",
     email: "",
-    dataRoomSlug: "varexia",
+    dataRoomSlug: "korena",
     expiresAt: "",
     multiUse: true,
   });
@@ -280,14 +280,16 @@ export default function DataRoomLinksPage() {
             />
           </div>
           <div style={S.formRow}>
-            <label style={S.label}>Datenraum-Slug *</label>
-            <input
+            <label style={S.label}>Datenraum *</label>
+            <select
               style={S.input}
               value={form.dataRoomSlug}
               onChange={(e) => setForm({ ...form, dataRoomSlug: e.target.value })}
-              placeholder="varexia"
               data-testid="input-slug"
-            />
+            >
+              <option value="korena">KORENA Group eG — aestimamus Executive Audit</option>
+              <option value="convia">ConVia — Vertraulicher Datenraum</option>
+            </select>
           </div>
           <div style={S.formRow}>
             <label style={S.label}>Ablaufdatum *</label>

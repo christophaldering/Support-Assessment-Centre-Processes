@@ -174,16 +174,25 @@ export async function GET(_req: NextRequest) {
     });
   }
 
-  const htmlPath = path.join(process.cwd(), "private", "convia", "ConVia_Datenraum.html");
+  // Resolve HTML file: prefer private/datarooms/{slug}/index.html,
+  // fall back to legacy private/convia/ConVia_Datenraum.html for backward compat.
+  const slug = (link.dataRoomSlug || "convia").toLowerCase().replace(/[^a-z0-9-]/g, "");
+  const newPath    = path.join(process.cwd(), "private", "datarooms", slug, "index.html");
+  const legacyPath = path.join(process.cwd(), "private", "convia", "ConVia_Datenraum.html");
   let html: string;
 
   try {
-    html = await readFile(htmlPath, "utf-8");
+    html = await readFile(newPath, "utf-8");
   } catch {
-    return new NextResponse(MISSING_HTML, {
-      status: 503,
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-    });
+    // fallback to legacy ConVia location
+    try {
+      html = await readFile(legacyPath, "utf-8");
+    } catch {
+      return new NextResponse(MISSING_HTML, {
+        status: 503,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
   }
 
   // Step 1: inject token variables immediately after opening <head> tag
