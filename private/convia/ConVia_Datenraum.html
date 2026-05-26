@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ConVia Datenraum</title>
+
+  <!--
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║  PLATZHALTER — Ersetze den gesamten <body>-Inhalt durch den echten  ║
+    ║  ConVia-Datenraum-HTML-Inhalt. Das Tracking-Script in diesem <head> ║
+    ║  bleibt unverändert — es wird automatisch mit window.__DR_TOKEN     ║
+    ║  versorgt, das der Route-Handler vor diesem Tag injiziert.          ║
+    ╚══════════════════════════════════════════════════════════════════════╝
+  -->
+
+  <!-- ── ConVia Datenraum Tracking Script ─────────────────────────────── -->
+  <script>
+  (function () {
+    "use strict";
+
+    // ── Config ────────────────────────────────────────────────────────────
+    var TRACK_URL     = "/api/dr/track";
+    var HB_INTERVAL   = 30000; // heartbeat every 30 s
+    var FLUSH_DELAY   = 800;   // batch-flush delay in ms
+    var MAX_BATCH     = 50;    // max events per POST
+
+    // ── State ─────────────────────────────────────────────────────────────
+    var token         = (typeof window.__DR_TOKEN !== "undefined") ? window.__DR_TOKEN : null;
+    var queue         = [];
+    var seq           = 0;
+    var flushTimer    = null;
+    var hbTimer       = null;
+    var sessionStart  = Date.now();
+
+    // Per-document open tracking: { docId -> openedAt (ms) }
+    var openTimes     = {};
+
+    // ── Core: enqueue & flush ─────────────────────────────────────────────
+    function enqueue(type, payload, durationMs) {
+      if (!token) return;
+      var ev = { type: type, seq: ++seq, clientTs: new Date().toISOString() };
+      if (payload  != null) ev.payload    = typeof payload === "string" ? payload : JSON.stringify(payload);
+      if (durationMs != null) ev.durationMs = Math.round(durationMs);
+      queue.push(ev);
+      scheduleFlush();
+    }
+
+    function scheduleFlush() {
+      if (flushTimer) return;
+      flushTimer = setTimeout(flush, FLUSH_DELAY);
+    }
+
+    function flush(useBeacon) {
+      if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+      if (!queue.length || !token) return;
+
+      var batch = queue.splice(0, MAX_BATCH);
+      var body  = JSON.stringify({ token: token, events: batch });
+
+      if (useBeacon && typeof navigator.sendBeacon === "function") {
+        navigator.sendBeacon(TRACK_URL, new Blob([body], { type: "application/json" }));
+      } else {
+        fetch(TRACK_URL, {
+          method:      "POST",
+          headers:     { "Content-Type": "application/json" },
+          body:        body,
+          keepalive:   true,
+        }).catch(function () { /* silent */ });
+      }
+
+      // If more remain, re-schedule
+      if (queue.length) scheduleFlush();
+    }
+
+    // ── Heartbeat ─────────────────────────────────────────────────────────
+    function startHeartbeat() {
+      hbTimer = setInterval(function () {
+        enqueue("heartbeat", null, null);
+      }, HB_INTERVAL);
+    }
+
+    // ── Session open ──────────────────────────────────────────────────────
+    enqueue("session_start", null, null);
+    flush();
+
+    // ── Heartbeat start ───────────────────────────────────────────────────
+    startHeartbeat();
+
+    // ── Page visibility: pause/resume heartbeat, track leave ─────────────
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") {
+        enqueue("session_end", null, Date.now() - sessionStart);
+        flush(true /* beacon */);
+      } else {
+        // Page became visible again — treat as a new session start
+        sessionStart = Date.now();
+        enqueue("session_start", null, null);
+        flush();
+      }
+    });
+
+    // ── beforeunload: final flush ─────────────────────────────────────────
+    window.addEventListener("beforeunload", function () {
+      if (hbTimer) clearInterval(hbTimer);
+      enqueue("session_end", null, Date.now() - sessionStart);
+      flush(true /* beacon */);
+    });
+
+    // ── Public API for ConVia page to call ────────────────────────────────
+    /**
+     * Call when a user opens a document/section.
+     * @param {string} docId  — unique document identifier
+     * @param {string} [label] — human-readable label (optional)
+     */
+    window.drTrackOpen = function (docId, label) {
+      openTimes[docId] = Date.now();
+      enqueue("open", { docId: docId, label: label || null }, null);
+    };
+
+    /**
+     * Call when a user leaves / closes a document/section.
+     * Automatically computes durationMs from the matching drTrackOpen call.
+     * @param {string} docId
+     */
+    window.drTrackLeave = function (docId) {
+      var opened   = openTimes[docId];
+      var duration = opened ? (Date.now() - opened) : null;
+      delete openTimes[docId];
+      enqueue("leave", { docId: docId }, duration);
+    };
+
+    /**
+     * Call when the user performs a search.
+     * @param {string} query
+     */
+    window.drTrackSearch = function (query) {
+      enqueue("search", { query: String(query).slice(0, 500) }, null);
+    };
+
+    /**
+     * Call when the user flags a document.
+     * @param {string} docId
+     * @param {boolean} flagged — true = flagged, false = unflagged
+     */
+    window.drTrackFlag = function (docId, flagged) {
+      enqueue(flagged ? "flag" : "unflag", { docId: docId }, null);
+    };
+
+    /**
+     * Call when the user saves a note.
+     * @param {string} docId
+     * @param {number} [charCount] — length of note in characters
+     */
+    window.drTrackNoteSave = function (docId, charCount) {
+      enqueue("note_save", { docId: docId, charCount: charCount || null }, null);
+    };
+
+  })();
+  </script>
+  <!-- ── End Tracking Script ──────────────────────────────────────────── -->
+
+  <style>
+    /* Placeholder styling — only visible if no ConVia content is loaded */
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      margin: 0;
+      padding: 0;
+    }
+    .placeholder-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 16px;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .placeholder-badge {
+      background: #297587;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 999px;
+    }
+    .placeholder-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #0f172a;
+      margin: 0;
+    }
+    .placeholder-body {
+      font-size: 15px;
+      color: #64748b;
+      max-width: 440px;
+      line-height: 1.6;
+      margin: 0;
+    }
+    .placeholder-code {
+      font-family: monospace;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 13px;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    ═══════════════════════════════════════════════════════════════════════
+    PLATZHALTER-INHALT
+    Ersetze alles zwischen <body> und </body> durch den echten ConVia-
+    Datenraum-Inhalt. Das Tracking-Script im <head> bleibt unberührt.
+
+    Die ConVia-Seite kann folgende globale Funktionen aufrufen:
+      window.drTrackOpen(docId, label?)     — Dokument/Abschnitt geöffnet
+      window.drTrackLeave(docId)            — Dokument/Abschnitt verlassen
+      window.drTrackSearch(query)           — Suche ausgeführt
+      window.drTrackFlag(docId, flagged)    — Flag gesetzt/entfernt
+      window.drTrackNoteSave(docId, chars?) — Notiz gespeichert
+    ═══════════════════════════════════════════════════════════════════════
+  -->
+  <div class="placeholder-wrapper">
+    <div class="placeholder-badge">ConVia Datenraum</div>
+    <h1 class="placeholder-title">Datenraum-Datei wird eingerichtet</h1>
+    <p class="placeholder-body">
+      Ersetzen Sie den Inhalt dieser Datei
+      (<span class="placeholder-code">private/convia/ConVia_Datenraum.html</span>)
+      durch den tatsächlichen ConVia-Datenraum-HTML-Inhalt.<br><br>
+      Das Tracking-Script im <span class="placeholder-code">&lt;head&gt;</span>
+      bleibt unverändert — es sendet Nutzerereignisse automatisch an
+      <span class="placeholder-code">/api/dr/track</span>.
+    </p>
+  </div>
+</body>
+</html>
