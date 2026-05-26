@@ -87,10 +87,14 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
   const { id } = await req.json() as { id: string };
   if (!id) return NextResponse.json({ ok: false, error: "id erforderlich" }, { status: 400 });
 
-  await prisma.dataRoomAccessLink.update({
-    where: { id },
+  const result = await prisma.dataRoomAccessLink.updateMany({
+    where: { id, workspace: params.workspaceSlug },
     data: { revoked: true },
   });
+
+  if (result.count === 0) {
+    return NextResponse.json({ ok: false, error: "Not found or access denied" }, { status: 404 });
+  }
 
   return NextResponse.json({ ok: true });
 }

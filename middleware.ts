@@ -47,8 +47,8 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // ── /dr/* — ConVia Datenraum: token-based, always public ──────────────────
-  if (pathname.startsWith("/dr/")) {
+  // ── /dr/[token] — ConVia Datenraum entry: token IS the credential, always public ──
+  if (/^\/dr\/[^/]+\/?$/.test(pathname)) {
     return NextResponse.next();
   }
 
