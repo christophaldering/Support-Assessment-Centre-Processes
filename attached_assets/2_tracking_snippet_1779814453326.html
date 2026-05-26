@@ -1,0 +1,192 @@
+<!-- ========================================================================
+     ConVia Datenraum — Server-Tracking-Snippet
+     ------------------------------------------------------------------------
+     ZWECK: Hängt sich an das BEREITS VORHANDENE log()-System der HTML und
+     sendet alle Verhaltens-Events (Suche, Dokument öffnen/schließen mit
+     Verweildauer, Notizen, Markierungen) zusätzlich an deinen Server.
+
+     EINBAU: Diesen kompletten <script>-Block in ConVia_Datenraum.html
+     direkt VOR dem schließenden  </body>  einfügen — also NACH dem
+     bestehenden Haupt-<script>, damit die Funktionen startSession, log,
+     openFinish, buildReport bereits definiert sind.
+
+     Es ändert KEINE bestehende Funktion. Es "umhüllt" sie nur.
+     Ohne gültigen Token (?t=...) bleibt alles still — die HTML funktioniert
+     dann wie bisher rein lokal.
+     ===================================================================== -->
+<script>
+(function () {
+  "use strict";
+
+  // --- 1) Token aus der URL lesen -----------------------------------------
+  // Erwartet wird die Form  .../dr/<token>  ODER  ?t=<token>
+  // Der Server (siehe 3_redeem_route) liefert die HTML aus und kann den
+  // Token zusätzlich als globale Variable window.__DR_TOKEN setzen — das
+  // hat Vorrang, weil es nicht in der sichtbaren Adresse stehen muss.
+  function readToken() {
+    if (window.__DR_TOKEN) return window.__DR_TOKEN;        // vom Server injiziert
+    var m = location.pathname.match(/\/dr\/([A-Za-z0-9_-]{16,})/);
+    if (m) return m[1];
+    var p = new URLSearchParams(location.search);
+    return p.get("t") || null;
+  }
+  var TOKEN = readToken();
+
+  // Endpunkt, an den Events gehen. >>> ANPASSEN <<< falls deine Route anders heißt.
+  var ENDPOINT = "/api/dr/track";
+
+  // Ohne Token: nichts tun (reiner Lokal-Modus, HTML wie gehabt).
+  if (!TOKEN) { console.info("[DR] kein Token — lokaler Modus, kein Server-Tracking."); return; }
+
+  // --- 2) Mini-Sende-Queue mit Wiederholung --------------------------------
+  // Events werden gepuffert und gebündelt gesendet, um den Server nicht mit
+  // Einzel-Requests zu fluten. sendBeacon sorgt dafür, dass auch beim
+  // Schließen des Tabs noch zuverlässig gesendet wird.
+  var queue = [];
+  var seq = 0;
+  var flushTimer = null;
+
+  function enqueue(ev) {
+    ev.seq = ++seq;
+    ev.clientTs = new Date().toISOString();
+    queue.push(ev);
+    scheduleFlush();
+  }
+
+  function scheduleFlush() {
+    if (flushTimer) return;
+    flushTimer = setTimeout(flush, 1500);   // alle 1,5s bündeln
+  }
+
+  function flush(useBeacon) {
+    if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+    if (!queue.length) return;
+    var batch = queue.splice(0, queue.length);
+    var body = JSON.stringify({ token: TOKEN, events: batch });
+
+    if (useBeacon && navigator.sendBeacon) {
+      navigator.sendBeacon(ENDPOINT, new Blob([body], { type: "application/json" }));
+      return;
+    }
+    fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body,
+      keepalive: true
+    }).catch(function () {
+      // Bei Fehler: Events zurück in die Queue, später erneut versuchen.
+      queue = batch.concat(queue);
+      scheduleFlush();
+    });
+  }
+
+  // --- Zugriff auf das Session-Objekt S ------------------------------------
+  // WICHTIG: In der HTML ist S per `let S` deklariert. Solche Top-Level-
+  // let-Variablen liegen NICHT auf window. Wir greifen daher über die
+  // Funktionen zu, die S schließen (closure). Das vorhandene log() liest S
+  // ohnehin selbst — wir lesen S indirekt aus den Argumenten + aus dem
+  // Ergebnis des Original-log mit, indem wir an den richtigen Stellen
+  // ansetzen (siehe unten: openDoc/leaveDoc/quickSearch werden umhüllt).
+  function getS() {
+    // Fallback-Versuche: window.S (falls Build es doch exportiert) sonst null.
+    return (typeof window.S !== "undefined" && window.S) ? window.S : null;
+  }
+
+  // --- 3) Das vorhandene log() umhüllen ------------------------------------
+  // log() handhabt hier NUR die Typen, die sonst nirgends abgegriffen werden
+  // (flag/unflag). open/leave/search werden gezielt über die spezifischen
+  // Wrapper unten erfasst, um Doppel-Events zu vermeiden.
+  if (typeof window.log === "function") {
+    var _log = window.log;
+    window.log = function (type, id) {
+      _log(type, id);
+      try {
+        if (type === "flag" || type === "unflag") {
+          enqueue({ type: type, payload: id || null });
+        }
+      } catch (e) { /* Tracking darf die App nie stören */ }
+    };
+  }
+
+  // Suchbegriff: quickSearch(q) kennt den Klartext der Suche.
+  if (typeof window.quickSearch === "function") {
+    var _qs = window.quickSearch;
+    window.quickSearch = function (q) {
+      _qs(q);
+      try {
+        var s = (q || "").trim();
+        if (s.length >= 2) enqueue({ type: "search", payload: s });
+      } catch (e) {}
+    };
+  }
+
+  // Verweildauer: leaveDoc(id) wird beim Verlassen aufgerufen; zu diesem
+  // Zeitpunkt hat das Original totalMs bereits aktualisiert. Wir lesen es
+  // über das (umhüllte) openDoc, das uns die Eintrittszeit merkt.
+  var _enter = {};
+  if (typeof window.openDoc === "function") {
+    var _open = window.openDoc;
+    window.openDoc = function (id) {
+      // vorheriges Dokument: Dauer berechnen
+      for (var prev in _enter) {
+        if (_enter[prev]) {
+          enqueue({ type: "leave", payload: prev, durationMs: Date.now() - _enter[prev] });
+          _enter[prev] = 0;
+        }
+      }
+      _open(id);
+      _enter[id] = Date.now();
+      enqueue({ type: "open", payload: id });
+    };
+  }
+
+  // --- 4) Notizen erfassen --------------------------------------------------
+  // saveNote(id, text) wird bei jedem Tastendruck aufgerufen. Wir senden
+  // NICHT bei jedem Zeichen, sondern entprellt (debounce) nach 2s Ruhe.
+  if (typeof window.saveNote === "function") {
+    var _saveNote = window.saveNote;
+    var noteTimers = {};
+    window.saveNote = function (id, v) {
+      _saveNote(id, v);
+      clearTimeout(noteTimers[id]);
+      noteTimers[id] = setTimeout(function () {
+        enqueue({ type: "note_save", payload: JSON.stringify({ doc: id, text: v }) });
+      }, 2000);
+    };
+  }
+
+  // --- 5) Sitzungsstart / -ende markieren ----------------------------------
+  if (typeof window.startSession === "function") {
+    var _start = window.startSession;
+    window.startSession = function () {
+      _start();
+      enqueue({ type: "session_start", payload: (window.S && window.S.name) || null });
+    };
+  }
+
+  // openFinish(auto) wird am Ende (manuell ODER bei Zeitablauf) aufgerufen.
+  if (typeof window.openFinish === "function") {
+    var _finish = window.openFinish;
+    window.openFinish = function (auto) {
+      _finish(auto);
+      try {
+        // Vollständigen Abschlussbericht mitsenden, falls vorhanden.
+        var rep = (typeof window.buildReport === "function") ? window.buildReport() : null;
+        enqueue({ type: "session_end", payload: rep ? JSON.stringify(rep) : (auto ? "timeout" : "manual") });
+      } catch (e) {
+        enqueue({ type: "session_end", payload: auto ? "timeout" : "manual" });
+      }
+      flush(true);
+    };
+  }
+
+  // --- 6) Heartbeat + zuverlässiges Senden beim Verlassen ------------------
+  setInterval(function () { enqueue({ type: "heartbeat" }); }, 30000);
+  window.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") flush(true);
+  });
+  window.addEventListener("pagehide", function () { flush(true); });
+
+  console.info("[DR] Server-Tracking aktiv.");
+})();
+</script>

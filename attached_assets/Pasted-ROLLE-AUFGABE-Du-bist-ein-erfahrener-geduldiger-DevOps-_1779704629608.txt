@@ -1,0 +1,53 @@
+ROLLE & AUFGABE
+Du bist ein erfahrener, geduldiger DevOps-Mentor. Ich bin technisch interessiert, aber kein Profi. Ich plane, dieses Next.js-Projekt mittelfristig von Replit auf einen IONOS-Server in Deutschland (EU) umzuziehen – aus Datenschutz- und Serverstandort-Gründen. 
+
+In diesem Schritt sollst du AUSSCHLIESSLICH eine BESTANDSAUFNAHME erstellen. Du veränderst NICHTS: keine Dateiänderungen, keine Commits, keine ENV-Änderungen, keine Deploys, keine Installationen. Wenn du etwas ändern müsstest, um es herauszufinden – tu es NICHT, sondern notiere es als offene Frage.
+
+ZUSÄTZLICHE BITTE: Erkläre alles in einfacher, klarer Sprache. Bei jedem Fachbegriff schreib in einem Halbsatz dazu, was er bedeutet. Ziel ist, dass ich den Umzug verstehe und das Prinzip später auf andere Projekte (z.B. ein zweites Programm namens "Casksense") selbst anwenden kann.
+
+ERSTELLE EINEN BERICHT MIT FOLGENDEN ABSCHNITTEN:
+
+1) WAS IST DIESE APP TECHNISCH?
+   - Framework/Version, Node-Version, Paketmanager
+   - Wie wird sie gestartet (Start-/Build-Befehle, scripts/wrapper.js, scripts/build.sh)?
+   - Braucht sie laufende Hintergrundprozesse (z.B. SSE, Polling, Cronjobs)?
+
+2) DATENBANK
+   - Welche Datenbank, welche Version (PostgreSQL)?
+   - Wo liegt sie aktuell, wie ist sie eingebunden (Prisma)?
+   - Welche ENV-Variablen betreffen die DB (nur Namen nennen, KEINE Werte/Secrets)?
+   - Wie groß ist das Schema grob (Anzahl Modelle/Tabellen)?
+
+3) DATEI-SPEICHER (OBJECT STORAGE)
+   - Was wird gespeichert (Dokumente, Audio, generierte Reports)?
+   - Aktueller Anbieter (Replit Object Storage / Google Cloud Storage)?
+   - Wird eine S3-kompatible Schnittstelle genutzt? (wichtig für EU-Wechsel)
+   - Welche ENV-Variablen betreffen den Storage (nur Namen)?
+
+4) EXTERNE DIENSTE & DRITTLAND-RISIKO (BESONDERS WICHTIG)
+   - Liste ALLE externen Dienste/APIs (z.B. OpenAI, SendGrid, sonstige).
+   - Markiere je Dienst: Anbieter, Herkunftsland, wofür genutzt, fließen personenbezogene Daten dorthin? (US-Dienste besonders kennzeichnen)
+   - Gehe speziell auf die KI-Anbindung ein: server/llm/, generateLLMOutput(), transcribeAudio(), das Provider-Routing (openai / neuland / azure_eu). Erkläre, wie ich später von OpenAI auf einen EU-Anbieter (z.B. Azure OpenAI EU-Region) umstellen könnte und an welcher Stelle im Code das passiert.
+
+5) UMGEBUNGSVARIABLEN (ENV) – GESAMTLISTE
+   - Liste ALLE genutzten ENV-Variablen NUR mit Namen + kurzer Funktion. KEINE Werte, KEINE Secrets, KEINE Keys im Klartext.
+   - Markiere, welche beim Umzug zwingend neu gesetzt/angepasst werden müssen (z.B. Basis-URL, DB-Verbindung, Storage, API-Endpunkte).
+
+6) REPLIT-SPEZIFISCHE ABHÄNGIGKEITEN
+   - Was nutzt die App, das es NUR bei Replit gibt (Replit Object Storage, Replit AI Integrations, REPL_DEPLOYMENT-Logik, Instrumentation/Autostart-Skripte)?
+   - Diese Punkte sind beim Umzug der eigentliche Aufwand – erkläre je Punkt, was als Ersatz auf einem IONOS-Server nötig wäre.
+
+7) MIGRATIONS-CHECKLISTE (REINE PLANUNG, NICHTS UMSETZEN)
+   - Erstelle eine nummerierte Schritt-für-Schritt-Liste für einen Umzug auf einen eigenen IONOS-Server (VPS/Cloud-Server), in sinnvoller Reihenfolge.
+   - Markiere je Schritt: Schwierigkeit (leicht/mittel/schwer) und ob ich dafür realistisch technische Hilfe brauche.
+   - Nenne ehrlich die 3 größten Risiken/Stolperfallen.
+
+8) LERN-ZUSAMMENFASSUNG
+   - Fasse in 5-7 einfachen Sätzen das allgemeine Prinzip zusammen: "Wenn ich IRGENDEINE solche App von einem Anbieter zu einem eigenen Server umziehe, sind das immer die gleichen Bausteine: ____". Das soll ich später auf andere Projekte übertragen können.
+
+WICHTIG
+- Verändere nichts. Nur lesen, analysieren, berichten.
+- Keine Secrets/Keys/Passwörter ausgeben, nur Variablennamen.
+- Wenn du etwas nicht sicher weißt, schreib "unklar – müsste man prüfen" statt zu raten.
+
+Starte jetzt mit der Bestandsaufnahme.

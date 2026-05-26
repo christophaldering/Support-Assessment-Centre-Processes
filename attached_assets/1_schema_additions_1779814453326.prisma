@@ -1,0 +1,98 @@
+// ============================================================================
+//  ConVia Datenraum — Prisma Schema Ergänzungen
+//  Diese Modelle in dein bestehendes prisma/schema.prisma einfügen.
+//  Danach:  npx prisma migrate dev --name convia_dataroom_access
+// ============================================================================
+//
+//  HINWEIS: Passe `workspace`-Feld / Relationen an dein bestehendes Schema an,
+//  falls du Multi-Tenant-Felder verwendest (siehe ABCD/COMP-Muster in deiner Doku).
+//  Die markierten Stellen >>> ANPASSEN <<< an dein Projekt angleichen.
+// ============================================================================
+
+
+/// Ein tokenisierter Einladungslink ("Magic Link") für einen Kandidaten.
+/// Der Token IST das Zugangsgeheimnis — nicht ratbar, pro Kandidat einzeln
+/// ausstellbar und widerrufbar, mit festem Ablaufdatum.
+model DataRoomAccessLink {
+  id          String   @id @default(cuid())
+
+  /// 32-stelliger zufälliger URL-Token. Erscheint in der Adresse:
+  /// https://www.diagnostic-suite.de/dr/<token>
+  token       String   @unique
+
+  /// Klartext-Label, nur für die Admin-Übersicht (z.B. Kandidatenname).
+  label       String
+
+  /// Optional: E-Mail des Kandidaten (für Zuordnung / spätere Auswertung).
+  email       String?
+
+  /// Welcher Datenraum / welche Assessment-Instanz freigeschaltet wird.
+  /// >>> ANPASSEN <<< — verweise auf deine bestehende Assessment- oder
+  /// DataRoom-Entität, falls vorhanden. Sonst als String-Slug belassen.
+  dataRoomSlug String
+
+  /// Hartes Enddatum. Nach diesem Zeitpunkt lehnt der Server den Link ab,
+  /// egal wer ihn klickt. (Dein Wunsch: festes Enddatum.)
+  expiresAt   DateTime
+
+  /// Mehrfach nutzbar bis Enddatum (dein Wunsch). Auf false setzen für
+  /// Einmal-Links. Wird vom Einlöse-Handler ausgewertet.
+  multiUse    Boolean  @default(true)
+
+  /// Manueller Notaus: Link sofort sperren, ohne auf Enddatum zu warten.
+  revoked     Boolean  @default(false)
+
+  /// Zähler & Zeitstempel für die Admin-Übersicht.
+  firstUsedAt DateTime?
+  lastUsedAt  DateTime?
+  useCount    Int      @default(0)
+
+  /// >>> ANPASSEN <<< — Multi-Tenant-Feld analog zu deinem BdpUser etc.
+  workspace   String   @default("main")
+
+  createdAt   DateTime @default(now())
+
+  /// Alle erfassten Verhaltens-Events dieses Links.
+  events      DataRoomEvent[]
+
+  @@index([workspace, expiresAt])
+  @@index([dataRoomSlug])
+}
+
+
+/// Ein einzelnes Verhaltens-Event aus dem Datenraum.
+/// Erfasst (dein Wunsch "voll"): geöffnete Dokumente + Zeitstempel,
+/// Suchbegriffe, Verweildauer & Reihenfolge, Notizen.
+model DataRoomEvent {
+  id         String   @id @default(cuid())
+
+  link       DataRoomAccessLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  linkId     String
+
+  /// Event-Typ. Siehe tracking-snippet.js für die erzeugten Typen:
+  ///   "session_start" | "session_end" | "doc_open" | "doc_close"
+  ///   "search" | "note_save" | "heartbeat"
+  type       String
+
+  /// Freitext-Nutzlast je nach Typ:
+  ///   doc_open/doc_close -> Dokument-ID/-Titel
+  ///   search             -> Suchbegriff
+  ///   note_save          -> Notiztext
+  payload    String?      @db.Text
+
+  /// Für Verweildauer: Millisekunden, die ein Dokument offen war
+  /// (wird bei doc_close mitgesendet).
+  durationMs Int?
+
+  /// Laufende Nummer innerhalb der Session -> rekonstruiert die Reihenfolge.
+  seq        Int?
+
+  /// Clientseitiger Zeitstempel (Browserzeit des Kandidaten).
+  clientTs   DateTime?
+
+  /// Serverseitiger Empfangszeitpunkt (vertrauenswürdig).
+  createdAt  DateTime @default(now())
+
+  @@index([linkId, createdAt])
+  @@index([type])
+}
