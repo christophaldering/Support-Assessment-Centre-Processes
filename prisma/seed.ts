@@ -271,9 +271,15 @@ async function seedBdp() {
   await runBdpSeed();
 }
 
+async function seedDemo() {
+  const { seedDemoData } = await import("./demo-seed");
+  await seedDemoData();
+}
+
 main()
   .then(() => ensureWorkspaceComp())
   .then(() => seedBdp())
+  .then(() => seedDemo())
   .catch((e) => {
     console.error(e);
     process.exit(1);
