@@ -245,6 +245,7 @@ export async function seedDemoData() {
     where: { workspaceId: wid, name: "Leadership Development AC — Meridian AG" },
   });
 
+  let activeId2: string;
   if (!activeExists) {
     const a = await prisma.assessment.create({
       data: {
@@ -269,9 +270,44 @@ export async function seedDemoData() {
         },
       },
     });
+    activeId2 = a.id;
     console.log(`Demo-Seed: Assessment "${a.name}" (aktiv) angelegt`);
   } else {
+    activeId2 = activeExists.id;
     console.log("Demo-Seed: Assessment 'Leadership Development AC' bereits vorhanden");
+  }
+
+  // ── 8b. Assessment 4: zweites aktives Assessment ──────────────────────────
+  const active2Exists = await prisma.assessment.findFirst({
+    where: { workspaceId: wid, name: "Potenzialanalyse Vertrieb — Meridian AG" },
+  });
+
+  if (!active2Exists) {
+    const a = await prisma.assessment.create({
+      data: {
+        name: "Potenzialanalyse Vertrieb — Meridian AG",
+        workspaceId: wid,
+        clientName: "Meridian AG",
+        status: "active",
+        description: "Laufende Potenzialanalyse für die Besetzung des Vertriebsteams.",
+        location: "Hamburg",
+        targetPosition: "Sales Manager DACH",
+        startDate: new Date("2026-06-02"),
+        endDate: new Date("2026-06-03"),
+        candidates: {
+          connect: [candidates[2], candidates[5]].map((c) => ({ id: c.id })),
+        },
+        exercises: {
+          create: [
+            { name: "Verkaufsgespräch (Rolle)", type: "role_play", duration: 25, sortOrder: 1 },
+            { name: "Strategisches Interview Vertrieb", type: "interview", duration: 45, sortOrder: 2 },
+          ],
+        },
+      },
+    });
+    console.log(`Demo-Seed: Assessment "${a.name}" (aktiv 2) angelegt`);
+  } else {
+    console.log("Demo-Seed: Assessment 'Potenzialanalyse Vertrieb' bereits vorhanden");
   }
 
   // ── 9. Assessment 3: Vorbereitung ─────────────────────────────────────────
@@ -365,7 +401,7 @@ export async function seedDemoData() {
     }
   }
 
-  // ── 11. Anforderungsanalyse ───────────────────────────────────────────────
+  // ── 11. Anforderungsanalyse + Verknüpfung zum Assessment ─────────────────
   const adminUser = await prisma.user.findUnique({
     where: { email_workspaceId: { email: "christoph.aldering@googlemail.com", workspaceId: wid } },
   });
@@ -375,8 +411,9 @@ export async function seedDemoData() {
     where: { workspaceId: wid, title: "Anforderungsprofil: Bereichsleiter Operations — Meridian AG" },
   });
 
+  let reqId: string;
   if (!reqExists) {
-    await prisma.requirementsAnalysis.create({
+    const req = await prisma.requirementsAnalysis.create({
       data: {
         workspaceId: wid,
         title: "Anforderungsprofil: Bereichsleiter Operations — Meridian AG",
@@ -385,6 +422,7 @@ export async function seedDemoData() {
         mode: "auto",
         status: "completed",
         inputType: "text",
+        appliedAssessmentId: completedId,
         transcript: `Wir suchen eine erfahrene Führungspersönlichkeit für die Position des Bereichsleiters Operations.
 Die Person verantwortet eine Abteilung mit 120 Mitarbeitenden und berichtet direkt an den COO.
 
@@ -411,9 +449,82 @@ Schlüsselkompetenzen: Strategische Führung, Change Management, Kommunikation, 
         createdById: creatorId,
       },
     });
-    console.log("Demo-Seed: Anforderungsanalyse angelegt");
+    reqId = req.id;
+    // Link the assessment back to this requirements analysis
+    await prisma.assessment.update({
+      where: { id: completedId },
+      data: { sourceAnalysisId: reqId },
+    });
+    console.log("Demo-Seed: Anforderungsanalyse angelegt und mit Assessment verknüpft");
   } else {
+    reqId = reqExists.id;
+    // Ensure bidirectional link even if analysis already existed
+    const completedAssessment = await prisma.assessment.findUnique({ where: { id: completedId } });
+    if (!completedAssessment?.sourceAnalysisId) {
+      await prisma.assessment.update({
+        where: { id: completedId },
+        data: { sourceAnalysisId: reqId },
+      });
+    }
     console.log("Demo-Seed: Anforderungsanalyse bereits vorhanden");
+  }
+
+  // ── 12. ExerciseCompetencyMappings für abgeschlossenes Assessment ─────────
+  if (leafNodes.length > 0 && completedExercises.length > 0) {
+    // Create snapshot first (or reuse existing)
+    let snapshot = await prisma.mtmmSnapshot.findFirst({
+      where: { assessmentId: completedId },
+    });
+    if (!snapshot) {
+      snapshot = await prisma.mtmmSnapshot.create({
+        data: {
+          assessmentId: completedId,
+          version: 1,
+          label: "Demo-Konsolidierung",
+          status: "locked",
+          lockedAt: new Date("2026-03-11T18:00:00Z"),
+          lockedReason: "Automatisch gesperrt nach Bewertungsabgabe",
+        },
+      });
+      console.log("Demo-Seed: MTMM-Snapshot angelegt");
+    }
+
+    // Map each exercise to the most relevant competency nodes
+    const exerciseNodeMap: Record<number, number[]> = {
+      0: [0, 1, 2],   // Strategisches Interview → Visionsentwicklung, Strategische Planung, Change Mgmt
+      1: [3, 4],       // Strategiepräsentation → Präsentation, Aktives Zuhören
+      2: [1, 2, 0],   // Fallstudie → Strategische Planung, Change Mgmt, Vision
+      3: [3, 4],       // Rollenspiel → Kommunikationskompetenzen
+    };
+
+    for (let ei = 0; ei < Math.min(completedExercises.length, 4); ei++) {
+      const exercise = completedExercises[ei];
+      const nodeIndices = exerciseNodeMap[ei] ?? [0];
+      for (const ni of nodeIndices) {
+        if (ni >= leafNodes.length) continue;
+        const node = leafNodes[ni];
+        const existing = await prisma.exerciseCompetencyMapping.findUnique({
+          where: {
+            exerciseId_competencyNodeId_snapshotId: {
+              exerciseId: exercise.id,
+              competencyNodeId: node.id,
+              snapshotId: snapshot.id,
+            },
+          },
+        });
+        if (!existing) {
+          await prisma.exerciseCompetencyMapping.create({
+            data: {
+              exerciseId: exercise.id,
+              competencyNodeId: node.id,
+              snapshotId: snapshot.id,
+              weight: 1.0,
+            },
+          });
+        }
+      }
+    }
+    console.log("Demo-Seed: ExerciseCompetencyMappings angelegt");
   }
 
   console.log("Demo-Seed: Fertig ✓");
