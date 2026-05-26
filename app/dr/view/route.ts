@@ -192,7 +192,7 @@ export async function GET(_req: NextRequest) {
 
   // Step 2: if the file does not already define drTrackOpen, inject the full
   // canonical tracking script just before </head>.
-  if (!html.includes("window.drTrackOpen")) {
+  if (!html.includes("window.drTrackOpen = function")) {
     html = html.replace(/<\/head>/i, TRACKING_SCRIPT + "\n</head>");
   }
 

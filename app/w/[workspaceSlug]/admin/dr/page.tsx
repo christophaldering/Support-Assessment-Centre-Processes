@@ -32,9 +32,7 @@ type LiveSession = {
   secondsSinceHeartbeat: number;
 };
 
-const BASE_URL = typeof window !== "undefined"
-  ? window.location.origin
-  : "https://www.diagnostic-suite.de";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://www.diagnostic-suite.de";
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text).catch(() => {
