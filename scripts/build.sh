@@ -87,6 +87,7 @@ else
 
   cp -rn .next-build/static .next-build/standalone/.next/static 2>/dev/null || true
   cp -rn public .next-build/standalone/public 2>/dev/null || true
+  cp -rn private .next-build/standalone/private 2>/dev/null || true
 
   echo "=== Swapping .next ==="
   rm -rf .next-old

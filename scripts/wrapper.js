@@ -29,6 +29,7 @@ function startProductionDirect() {
   try {
     execSync("cp -rn .next/static .next/standalone/.next/static 2>/dev/null", { stdio: "ignore" });
     execSync("cp -rn public .next/standalone/public 2>/dev/null", { stdio: "ignore" });
+    execSync("cp -rn private .next/standalone/private 2>/dev/null", { stdio: "ignore" });
   } catch {}
 
   const child = spawn(process.execPath, ["server.js"], {

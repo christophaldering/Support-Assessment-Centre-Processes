@@ -142,7 +142,7 @@ export default function DataRoomLinksPage() {
       setNewUrl(data.url);
       setNewLinkId(data.id || null);
       setNewLinkEmail(emailAtCreation || null);
-      setForm({ label: "", email: "", dataRoomSlug: "varexia", expiresAt: "", multiUse: true });
+      setForm({ label: "", email: "", dataRoomSlug: "korena", expiresAt: "", multiUse: true });
       loadLinks();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Unbekannter Fehler");
