@@ -1,0 +1,115 @@
+# HARDPROMPT — Modul-Designer: Assembly-Reduktion + Bibliothek als alleiniger Erstellungsort
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden Schritte exakt in der angegebenen Reihenfolge aus.
+Bei Unklarheit: STOPP, fragen — NICHT improvisieren. Nach jedem Schritt
+erstellst du exakt den angegebenen Commit. Keine Optionalität, kein
+Ermessen, keine weichen Formulierungen.
+
+## Bindende Tatsachenbasis (aktueller Stand, per git pull verifiziert)
+
+- `Exercise.libraryItemId` existiert BEREITS im Schema (Migration bereits
+  ausgeführt). KEINE erneute Migration nötig.
+- `app/w/[workspaceSlug]/admin/modules/page.tsx`: `ViewMode` enthält noch
+  `"manual"` und `"ai"`. `persistBlueprints`/`localStorage` ist noch aktiv.
+  Diese Direktive entfernt das vollständig.
+- `app/api/w/[workspaceSlug]/exercise-library/route.ts`: `scope` wird bei
+  fehlendem Wert als `"general"` gedefaultet (`scope: scope || "general"`).
+  Diese Direktive erzwingt serverseitig, dass `scope` explizit gesetzt
+  sein MUSS.
+- `app/w/[workspaceSlug]/admin/case-studio/` existiert BEREITS als Route.
+  NICHT neu anlegen.
+- `components/shared/EmptyState.tsx`, `ModuleIcon.tsx`, `Card.tsx`,
+  `PageHeader.tsx` existieren BEREITS. In dieser Direktive verwenden,
+  NICHT neu bauen.
+
+## Nicht anfassen
+
+Auth/RBAC · Observer-Rating-System · Konsolidierungs-Engine · Audio-Pipeline ·
+Report-Generierung · `server/llm/adapter.ts` · Kandidatenportal ·
+bestehende `ExerciseLibraryItem`-Datensätze · `Exercise`-Datensätze.
+
+---
+
+## SCHRITT 1 — Bibliothek: Anforderungsanalyse-Kontext + Fallstudien-Link + Scope-Pflicht
+
+1. `app/w/[workspaceSlug]/admin/exercise-library/page.tsx`:
+   - „Neuer Baustein"-Formular um optionales Dropdown „Anforderungsanalyse
+     als KI-Kontext" erweitern — lädt via
+     `GET /api/w/[workspaceSlug]/requirements-analysis` die vorhandenen
+     Analysen, gibt die ausgewählte ID/Title als Kontext-Feld mit durch.
+   - Button „Neue Fallstudie erstellen" ergänzen → verlinkt auf
+     `/w/[workspaceSlug]/admin/case-studio`.
+   - Filter/Badge „Szenario-Baustein" für Items mit gesetztem `scenarioId`
+     ergänzen, mit Link zur referenzierten Fallstudie.
+2. `app/api/w/[workspaceSlug]/exercise-library/route.ts`, POST-Handler:
+   - `scope` ist ab sofort PFLICHT. Fehlt `scope` im Body oder ist der
+     Wert ein leerer String: 400 mit Fehlermeldung
+     „scope ist erforderlich (general | client | project | candidate)".
+   - Die Zeile `scope: scope || "general"` MUSS entfernt werden und durch
+     `scope: scope` ersetzt werden — der Defaultwert entfällt.
+   - Falls `scope !== "general"` UND `clientName` fehlt: 400 mit
+     Fehlermeldung „clientName ist erforderlich wenn scope nicht general".
+
+**COMMIT (exakter Wortlaut):**
+`Bibliothek: Anforderungsanalyse-Kontext, Fallstudien-Link, Scope serverseitig Pflichtfeld`
+
+---
+
+## SCHRITT 2 — Modul-Designer: localStorage und Erstellungs-Views entfernen
+
+1. In `app/w/[workspaceSlug]/admin/modules/page.tsx`:
+   - `ViewMode`-Typ: `"manual"` und `"ai"` ENTFERNEN. Verbleibende Werte:
+     `"hub" | "library" | "detail"`.
+   - VOLLSTÄNDIG entfernen: `persistBlueprints`-Funktion, alle
+     `localStorage.setItem`/`localStorage.getItem`-Aufrufe für Blueprints,
+     den `blueprints`-State und alle seine Setter-Aufrufe, die Render-
+     Blöcke für `view === "manual"` und `view === "ai"`.
+   - Kein toter Code, keine auskommentierten Blöcke stehen lassen.
+2. Bereich „Erstellte Bausteine" (heute localStorage-gespeist) ersetzen
+   durch echte `Exercise`-Datensätze des aktiven Assessments aus
+   `GET /api/w/[workspaceSlug]/assessments/[assessmentId]/exercises`.
+   Falls kein Assessment ausgewählt: `<EmptyState>` mit Text „Wählen Sie
+   ein Assessment, um dessen Bausteine zu sehen."
+3. „Übernehmen"-Aktion aus der Bibliotheks-Ansicht (`view === "library"`):
+   erzeugt via `POST /api/w/[workspaceSlug]/assessments/[assessmentId]/exercises`
+   einen echten `Exercise`-Datensatz mit:
+   - `libraryItemId` = ID des Quell-Items
+   - `name`, `type`, `instructions`, `duration` aus dem Bibliotheks-Item
+     vorbefüllt
+   - Adaptation Notes als Override-Feld auf dem `Exercise`-Datensatz,
+     NIEMALS auf dem Bibliotheks-Original
+4. Button „KI ausarbeiten" aus Requirement-Vorschlag MUSS auf
+   `/w/[workspaceSlug]/admin/exercise-library?createFrom=requirement&reqId=[id]`
+   verlinken. KEINE inline KI-Erzeugung im Modul-Designer.
+5. Bereich „Erstellte Bausteine" umbenennen zu „Übernommene Bausteine".
+   Leerzustand: `<EmptyState>` mit passendem Icon, Titel „Noch keine
+   Bausteine übernommen", Beschreibung „Wählen Sie Bausteine aus der
+   Bibliothek und übernehmen Sie diese ins Assessment."
+
+**COMMIT (exakter Wortlaut):**
+`Modul-Designer: localStorage entfernt, reine Assembly aus Bibliothek, echte Exercise-Persistenz`
+
+---
+
+## SCHRITT 3 — Validierung
+
+1. `POST /api/w/[slug]/exercise-library` ohne `scope` → 400. PASS/FAIL.
+2. `POST` mit `scope: "client"` ohne `clientName` → 400. PASS/FAIL.
+3. Modul-Designer: kein `localStorage`-Aufruf für Blueprints mehr im
+   Code (`grep -n "localStorage" modules/page.tsx` → null Treffer für
+   Blueprint-bezogene Keys). PASS/FAIL.
+4. Baustein aus Bibliothek übernehmen → `Exercise`-Datensatz in DB mit
+   gesetztem `libraryItemId`. PASS/FAIL.
+5. `npm run lint` — null Fehler. PASS/FAIL.
+6. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`Modul-Designer und Bibliothek-Umbau abgeschlossen und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Alle 6 Validierungspunkte mit PASS/FAIL. Keine Selbsteinschätzung.

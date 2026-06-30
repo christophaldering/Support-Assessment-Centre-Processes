@@ -317,7 +317,6 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
   const base = `/w/${workspaceSlug}/admin`;
 
   const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [featureFlags, setFeatureFlags] = useState<Record<string, boolean> | null>(null);
 
   useEffect(() => {
@@ -332,8 +331,7 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
           candidateCount: (a._count as Record<string, number> | undefined)?.candidates,
         })));
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {});
   }, [workspaceSlug]);
 
   useEffect(() => {
@@ -348,6 +346,20 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
   const assessmentIdMatch = pathname.match(/\/assessments\/([^/]+)/);
   const activeAssessmentId = assessmentIdMatch?.[1] ?? null;
   const activeAssessment = assessments.find((a) => a.id === activeAssessmentId);
+
+  const diagnostikRoutes = [
+    `${base}/requirements`, `${base}/competencies`, `${base}/observation-sheets`,
+  ];
+  const diagnostikActive = diagnostikRoutes.some(
+    (p) => pathname === p || pathname.startsWith(p + "/")
+  );
+
+  const uebungsRoutes = [
+    `${base}/exercise-library`, `${base}/case-studio`, `${base}/modules`,
+  ];
+  const uebungsActive = uebungsRoutes.some(
+    (p) => pathname === p || pathname.startsWith(p + "/")
+  );
 
   const verwaltungRoutes = [
     `${base}/users`, `${base}/consents`, `${base}/access-requests`,
@@ -428,29 +440,31 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
           <AssessmentContextNav assessmentId={activeAssessment.id} base={base} />
         ) : (
           <>
-            {/* ── Dashboard + Assessments ── */}
+            {/* ── Gruppe 1: Kern-Navigation ── */}
             <NavLink href={base}                  label="Dashboard"   match={base} base={base} icon={<IcoGrid />} />
             <NavLink href={`${base}/assessments`} label="Assessments"             base={base} icon={<IcoClipboard />} />
 
-            {/* ── Diagnostik-Aufbau ── */}
-            <GroupLabel label="Diagnostik-Aufbau" />
-            <FilteredNavLink routeSegment="requirements"       href={`${base}/requirements`}       label="Anforderungsanalyse"  icon={<IcoDocument />}   {...flagProps} />
-            <FilteredNavLink routeSegment="competencies"       href={`${base}/competencies`}       label="Kompetenzmanagement"  icon={<IcoTarget />}     {...flagProps} />
-            <FilteredNavLink routeSegment="observation-sheets" href={`${base}/observation-sheets`} label="Beobachtungsbögen"    icon={<IcoChecklist />}  {...flagProps} />
+            {/* ── Gruppe 2: Diagnostik-Aufbau (einklappbar, forceOpen wenn aktiv) ── */}
+            <CollapsibleGroup label="Diagnostik-Aufbau" defaultOpen={diagnostikActive} forceOpen={diagnostikActive}>
+              <FilteredNavLink routeSegment="requirements"       href={`${base}/requirements`}       label="Anforderungsanalyse"  icon={<IcoDocument />}   {...flagProps} />
+              <FilteredNavLink routeSegment="competencies"       href={`${base}/competencies`}       label="Kompetenzmanagement"  icon={<IcoTarget />}     {...flagProps} />
+              <FilteredNavLink routeSegment="observation-sheets" href={`${base}/observation-sheets`} label="Beobachtungsbögen"    icon={<IcoChecklist />}  {...flagProps} />
+            </CollapsibleGroup>
 
-            {/* ── Übungsentwicklung ── */}
-            <GroupLabel label="Übungsentwicklung" />
-            <FilteredNavLink routeSegment="exercise-library" href={`${base}/exercise-library`} label="Baustein-Bibliothek"    icon={<IcoBookshelf />}  {...flagProps} />
-            <FilteredNavLink routeSegment="case-studio"      href={`${base}/case-studio`}      label="Fallstudien-Werkstatt"  icon={<IcoFolder />}     {...flagProps} />
-            <FilteredNavLink routeSegment="modules"          href={`${base}/modules`}          label="Modul-Designer"         icon={<IcoCube />}       {...flagProps} />
+            {/* ── Gruppe 3: Übungsentwicklung (einklappbar, forceOpen wenn aktiv) ── */}
+            <CollapsibleGroup label="Übungsentwicklung" defaultOpen={uebungsActive} forceOpen={uebungsActive}>
+              <FilteredNavLink routeSegment="exercise-library" href={`${base}/exercise-library`} label="Baustein-Bibliothek"    icon={<IcoBookshelf />}  {...flagProps} />
+              <FilteredNavLink routeSegment="case-studio"      href={`${base}/case-studio`}      label="Fallstudien-Werkstatt"  icon={<IcoFolder />}     {...flagProps} />
+              <FilteredNavLink routeSegment="modules"          href={`${base}/modules`}          label="Modul-Designer"         icon={<IcoCube />}       {...flagProps} />
+            </CollapsibleGroup>
 
-            {/* ── Durchführung & Auswertung ── */}
-            <GroupLabel label="Durchführung & Auswertung" />
+            {/* ── Gruppe 4: Durchführung & Auswertung ── */}
+            <GroupLabel label="Auswertung" />
             <FilteredNavLink routeSegment="analytics"  href={`${base}/analytics`}  label="Analytics & Berichte"  icon={<IcoBarChart />}   {...flagProps} />
             <FilteredNavLink routeSegment="reports"    href={`${base}/reports`}    label="Berichte (Export)"     icon={<IcoDownload />}   {...flagProps} />
             <FilteredNavLink routeSegment="gutachten"  href={`${base}/gutachten`}  label="Gutachten-Generator"   icon={<IcoFeather />}    {...flagProps} />
 
-            {/* ── Verwaltung (einklappbar) ── */}
+            {/* ── Gruppe 5: Verwaltung (einklappbar) ── */}
             <CollapsibleGroup label="Verwaltung" defaultOpen={verwaltungActive} forceOpen={verwaltungActive}>
               <FilteredNavLink routeSegment="users"             href={`${base}/users`}             label="People"                       icon={<IcoPeople />}      {...flagProps} />
               <FilteredNavLink routeSegment="consents"          href={`${base}/consents`}          label="Consent-Management"           icon={<IcoShield />}      {...flagProps} />
@@ -463,65 +477,6 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
               <FilteredNavLink routeSegment="prompt-library"    href={`${base}/prompt-library`}    label="KI-Prompts"                   icon={<IcoPrompt />}      {...flagProps} />
               <FilteredNavLink routeSegment="document-sharing"  href={`${base}/document-sharing`}  label="Externe Dokumentenfreigabe"   icon={<IcoShare />}       {...flagProps} />
             </CollapsibleGroup>
-
-            {/* ── Live-Assessments-Liste ── */}
-            <GroupLabel label="Assessments" />
-
-            {loading && (
-              <div style={{ padding: "8px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} style={{ height: "28px", borderRadius: "var(--eds-radius-sm)", background: "var(--eds-bg-sunken)", animation: "pulse 1.5s ease-in-out infinite" }} />
-                ))}
-              </div>
-            )}
-
-            {!loading && assessments.length === 0 && (
-              <div style={{ padding: "8px", fontSize: "var(--eds-text-sm)", color: "var(--eds-text-tertiary)" }}>
-                Keine Assessments
-              </div>
-            )}
-
-            {!loading && assessments.map((a) => {
-              const href = `${base}/assessments/${a.id}`;
-              const isActive = pathname === href || pathname.startsWith(href + "/");
-              return (
-                <Link
-                  key={a.id}
-                  href={href}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "5px 8px",
-                    fontSize: "var(--eds-text-sm)",
-                    color: isActive ? "var(--eds-terracotta)" : "var(--eds-text-secondary)",
-                    background: isActive ? "var(--eds-terracotta-ghost)" : "transparent",
-                    borderRadius: "var(--eds-radius-sm)",
-                    textDecoration: "none",
-                    fontWeight: isActive ? 500 : 400,
-                    transition: "background var(--eds-transition-fast), color var(--eds-transition-fast)",
-                    borderLeft: isActive ? "2px solid var(--eds-terracotta)" : "2px solid transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      (e.currentTarget as HTMLElement).style.background = "var(--eds-bg-sunken)";
-                      (e.currentTarget as HTMLElement).style.color = "var(--eds-text-primary)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      (e.currentTarget as HTMLElement).style.background = "transparent";
-                      (e.currentTarget as HTMLElement).style.color = "var(--eds-text-secondary)";
-                    }
-                  }}
-                >
-                  <StatusDot status={a.status} />
-                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {a.name}
-                  </span>
-                </Link>
-              );
-            })}
           </>
         )}
       </div>
