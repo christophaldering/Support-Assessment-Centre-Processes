@@ -73,6 +73,8 @@ export default function ShellClient({
         <ContextPanel
           workspaceSlug={workspaceSlug}
           workspaceName={workspaceName}
+          userRoles={userRoles}
+          isMaster={isMaster}
         />
 
         <main

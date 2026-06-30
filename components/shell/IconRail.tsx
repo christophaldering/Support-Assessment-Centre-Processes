@@ -76,6 +76,16 @@ function GearIcon() {
   );
 }
 
+/** Link-Ketten-Icon für Datenraum-Tracking (Sonderfunktionen, nur Master) */
+function LinkIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </svg>
+  );
+}
+
 interface IconRailProps {
   workspaceSlug: string;
   userRoles: string[];
@@ -83,11 +93,8 @@ interface IconRailProps {
 }
 
 export default function IconRail({ workspaceSlug, userRoles, isMaster }: IconRailProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const base = `/w/${workspaceSlug}/admin`;
-
-  const hasRole = (...roles: string[]) =>
-    isMaster || userRoles.some((r) => roles.includes(r));
 
   const navItems: NavItem[] = [
     {
@@ -123,13 +130,23 @@ export default function IconRail({ workspaceSlug, userRoles, isMaster }: IconRai
       icon: <ChartIcon />,
     },
     ...(isMaster
-      ? [{
-          id: "platform",
-          label: "Platform",
-          href: "/admin/workspaces",
-          roles: ["MASTER_ADMIN"],
-          icon: <HexIcon />,
-        } as RailItem]
+      ? [
+          {
+            id: "platform",
+            label: "Platform",
+            href: "/admin/workspaces",
+            roles: ["MASTER_ADMIN"],
+            icon: <HexIcon />,
+          } as RailItem,
+          {
+            id: "dataroom",
+            label: "Datenraum-Tracking",
+            href: `${base}/dr`,
+            matchPrefix: `${base}/dr`,
+            roles: ["MASTER_ADMIN"],
+            icon: <LinkIcon />,
+          } as RailItem,
+        ]
       : []),
     { id: "sep1", separator: true },
     {

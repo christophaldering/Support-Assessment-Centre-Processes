@@ -23,19 +23,26 @@ function breadcrumbFromPath(pathname: string, workspaceName: string, slug: strin
     modules: "Content",
     "case-study-builder": "Case Studio",
     "case-study-dataroom": "Fallstudie-Verwaltung",
+    "data-room": "Fallstudie",
+    "case-study": "Fallstudie",
     analytics: "Insights",
-    gutachten: "Gutachten",
+    gutachten: "Gutachten-Generator",
     requirements: "Anforderungsanalyse",
     competencies: "Kompetenzmanagement",
     "exercise-library": "Baustein-Bibliothek",
     "observation-sheets": "Beobachtungsbögen",
     "brand-rules": "Corporate Design",
     intelligence: "Advanced Intelligence",
-    consents: "Einwilligungen",
-    "ai-governance": "AI Governance",
-    "data-room": "Fallstudie-Verwaltung",
-    theme: "Einstellungen",
+    consents: "Consent-Management",
+    "ai-governance": "AI-Governance",
+    theme: "Theming",
     "observation-sheet-templates": "Beobachtungsbögen",
+    reports: "Berichte",
+    audio: "Audio & Transkription",
+    "access-requests": "Zugriffsanfragen",
+    dr: "Datenraum-Tracking",
+    setup: "Konfiguration",
+    categories: "Kategorien",
   };
 
   const crumbs = [workspaceName];
@@ -86,7 +93,7 @@ export default function TopBar({
   isMaster,
   onCommandPalette,
 }: TopBarProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const crumbs = breadcrumbFromPath(pathname, workspaceName, workspaceSlug);
   const roleLabel = isMaster ? "Master Admin" : (userRoles[0] ?? "");
 

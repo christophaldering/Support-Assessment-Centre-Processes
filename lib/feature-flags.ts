@@ -11,7 +11,7 @@ export const MODULE_REGISTRY: Record<string, { label: string; defaultReleased: b
   requirements: { label: "Anforderungsanalyse", defaultReleased: true },
   exercise_library: { label: "Baustein-Bibliothek", defaultReleased: true },
   modules: { label: "Modul-Designer", defaultReleased: true },
-  case_studio: { label: "Case-Studio", defaultReleased: true },
+  case_studio: { label: "Case-Studio / Fallstudie", defaultReleased: true },
   observation_sheets: { label: "Beobachtungsbogen-Tool", defaultReleased: true },
   analytics: { label: "Analytics & Berichte", defaultReleased: true },
   brand_rules: { label: "Corporate Design", defaultReleased: true },
@@ -20,6 +20,9 @@ export const MODULE_REGISTRY: Record<string, { label: string; defaultReleased: b
   consents: { label: "Consent-Management", defaultReleased: true },
   theme: { label: "Theming", defaultReleased: true },
   reports: { label: "Reports", defaultReleased: true },
+  gutachten: { label: "Gutachten-Generator", defaultReleased: true },
+  access_requests: { label: "Zugriffsanfragen", defaultReleased: true },
+  ai_governance: { label: "AI-Governance", defaultReleased: true },
 };
 
 export const NAV_MODULE_MAP: Record<string, string> = {
@@ -28,6 +31,7 @@ export const NAV_MODULE_MAP: Record<string, string> = {
   "exercise-library": "exercise_library",
   modules: "modules",
   "case-study-builder": "case_studio",
+  "data-room": "case_studio",
   "observation-sheets": "observation_sheets",
   analytics: "analytics",
   "brand-rules": "brand_rules",
@@ -38,6 +42,9 @@ export const NAV_MODULE_MAP: Record<string, string> = {
   reports: "reports",
   users: "users",
   assessments: "assessments",
+  gutachten: "gutachten",
+  "access-requests": "access_requests",
+  "ai-governance": "ai_governance",
 };
 
 export type FeatureFlags = Record<string, boolean>;
