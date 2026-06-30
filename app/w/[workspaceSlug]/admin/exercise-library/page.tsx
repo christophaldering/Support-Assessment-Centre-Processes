@@ -175,7 +175,7 @@ function SpinnerIcon({ className = "h-4 w-4" }: { className?: string }) {
 function UploadIcon() {
   return (
     <svg
-      className="h-10 w-10 text-slate-300"
+      className="h-10 w-10 text-[var(--eds-text-disabled)]"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -226,7 +226,7 @@ function DownloadIcon() {
 
 function CheckIcon() {
   return (
-    <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+    <svg className="w-5 h-5 text-[var(--eds-status-green)]" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
@@ -269,20 +269,20 @@ function PendingFileRow({
   };
 
   return (
-    <div className="border border-slate-200 rounded-lg p-4 bg-white" data-testid={`pending-file-${index}`}>
+    <div className="border border-[var(--eds-border)] rounded-lg p-4 bg-white" data-testid={`pending-file-${index}`}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <FileIcon className="h-5 w-5 text-slate-400" />
-          <span className="text-sm font-medium text-slate-800" data-testid={`text-filename-${index}`}>
+          <FileIcon className="h-5 w-5 text-[var(--eds-text-disabled)]" />
+          <span className="text-sm font-medium text-[var(--eds-text-primary)]" data-testid={`text-filename-${index}`}>
             {pf.file.name}
           </span>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-[var(--eds-text-disabled)]">
             ({(pf.file.size / 1024).toFixed(0)} KB)
           </span>
         </div>
         <button
           onClick={() => onRemove(index)}
-          className="text-slate-400 hover:text-red-500 transition-colors"
+          className="text-[var(--eds-text-disabled)] hover:text-[var(--eds-status-red)] transition-colors"
           data-testid={`button-remove-file-${index}`}
         >
           <CloseIcon />
@@ -291,11 +291,11 @@ function PendingFileRow({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Übungstyp</label>
+          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Übungstyp</label>
           <select
             value={pf.exerciseType}
             onChange={(e) => onUpdate(index, { exerciseType: e.target.value })}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
             data-testid={`select-type-${index}`}
           >
             {EXERCISE_CATEGORIES.map((c) => (
@@ -307,19 +307,19 @@ function PendingFileRow({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Autor</label>
+          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Autor</label>
           <input
             type="text"
             value={pf.author}
             onChange={(e) => onUpdate(index, { author: e.target.value })}
             placeholder="z.B. Christoph Aldering"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
             data-testid={`input-author-${index}`}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">
+          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">
             Ursprünglich konzipiert für
           </label>
           <input
@@ -327,37 +327,37 @@ function PendingFileRow({
             value={pf.sourceContext}
             onChange={(e) => onUpdate(index, { sourceContext: e.target.value })}
             placeholder="z.B. REWE Group"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
             data-testid={`input-source-context-${index}`}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Kunde</label>
+          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Kunde</label>
           <input
             type="text"
             value={pf.clientName}
             onChange={(e) => onUpdate(index, { clientName: e.target.value })}
             placeholder="z.B. REWE Group"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
             data-testid={`input-client-${index}`}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Projekt</label>
+          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Projekt</label>
           <input
             type="text"
             value={pf.projectName}
             onChange={(e) => onUpdate(index, { projectName: e.target.value })}
             placeholder="z.B. Führungskräfte-Assessment 2024"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
             data-testid={`input-project-${index}`}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Zielgruppe</label>
+          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Zielgruppe</label>
           <div className="flex flex-wrap gap-1.5">
             {TARGET_LEVELS.map((level) => (
               <label
@@ -365,7 +365,7 @@ function PendingFileRow({
                 className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs cursor-pointer border transition-colors ${
                   pf.targetLevels.includes(level)
                     ? "border-[hsl(14,48%,44%)] bg-[hsl(14,48%,44%)]/10 text-[hsl(14,48%,44%)]"
-                    : "border-slate-200 text-slate-600 hover:border-slate-300"
+                    : "border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:border-[var(--eds-border-strong)]"
                 }`}
                 data-testid={`checkbox-level-${index}-${level.replace(/\s/g, "-")}`}
               >
@@ -564,19 +564,19 @@ function DetailModal({
         className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[85vh] overflow-y-auto"
         data-testid={`detail-modal-${item.id}`}
       >
-        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+        <div className="sticky top-0 bg-white border-b border-[var(--eds-border)] px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
           {editing ? (
             <input
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              className="text-lg font-bold text-slate-800 bg-transparent border-b-2 border-slate-300 focus:border-slate-600 focus:outline-none flex-1 mr-4"
+              className="text-lg font-bold text-[var(--eds-text-primary)] bg-transparent border-b-2 border-[var(--eds-border-strong)] focus:border-[var(--eds-border-strong)] focus:outline-none flex-1 mr-4"
               style={{ fontFamily: "Playfair Display, serif" }}
               data-testid="input-edit-title"
             />
           ) : (
             <h2
-              className="text-lg font-bold text-slate-800"
+              className="text-lg font-bold text-[var(--eds-text-primary)]"
               style={{ fontFamily: "Playfair Display, serif" }}
               data-testid="text-modal-title"
             >
@@ -587,7 +587,7 @@ function DetailModal({
             {!editing && (
               <button
                 onClick={() => setEditing(true)}
-                className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                className="text-xs px-3 py-1.5 rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)] transition-colors"
                 data-testid="button-toggle-edit"
               >
                 Bearbeiten
@@ -595,7 +595,7 @@ function DetailModal({
             )}
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 transition-colors"
+              className="text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)] transition-colors"
               data-testid="button-close-modal"
             >
               <CloseIcon />
@@ -605,36 +605,36 @@ function DetailModal({
 
         <div className="px-6 py-5 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm" data-testid="text-modal-error">
+            <div className="p-3 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-lg text-[var(--eds-status-red)] text-sm" data-testid="text-modal-error">
               {error}
             </div>
           )}
           {successMsg && (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm" data-testid="text-modal-success">
+            <div className="p-3 bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] rounded-lg text-[var(--eds-status-green)] text-sm" data-testid="text-modal-success">
               {successMsg}
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Typ</span>
-              <p className="text-slate-800 mt-0.5" data-testid="text-modal-type">
+              <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">Typ</span>
+              <p className="text-[var(--eds-text-primary)] mt-0.5" data-testid="text-modal-type">
                 {CATEGORY_LABELS[item.exerciseType] || item.exerciseType}
               </p>
             </div>
             <div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Erstellt</span>
-              <p className="text-slate-800 mt-0.5" data-testid="text-modal-created">
+              <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">Erstellt</span>
+              <p className="text-[var(--eds-text-primary)] mt-0.5" data-testid="text-modal-created">
                 {new Date(item.createdAt).toLocaleDateString("de-DE")}
               </p>
             </div>
             <div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Bereich</span>
+              <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">Bereich</span>
               {editing ? (
                 <select
                   value={editScope}
                   onChange={(e) => setEditScope(e.target.value)}
-                  className="mt-0.5 w-full text-sm text-slate-800 rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                  className="mt-0.5 w-full text-sm text-[var(--eds-text-primary)] rounded-lg border border-[var(--eds-border)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
                   data-testid="select-edit-scope"
                 >
                   {SCOPE_OPTIONS.map((s) => (
@@ -642,7 +642,7 @@ function DetailModal({
                   ))}
                 </select>
               ) : (
-                <p className="text-slate-800 mt-0.5" data-testid="text-modal-scope">
+                <p className="text-[var(--eds-text-primary)] mt-0.5" data-testid="text-modal-scope">
                   {(() => {
                     const scopeKey = item.scope || "general";
                     const colors = SCOPE_COLORS[scopeKey] || SCOPE_COLORS.general;
@@ -657,12 +657,12 @@ function DetailModal({
             </div>
             {(author || editing) && (
               <div>
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Autor</span>
-                <p className="text-slate-800 mt-0.5" data-testid="text-modal-author">{author}</p>
+                <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">Autor</span>
+                <p className="text-[var(--eds-text-primary)] mt-0.5" data-testid="text-modal-author">{author}</p>
               </div>
             )}
             <div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">
                 Ursprünglich konzipiert für
               </span>
               {editing ? (
@@ -671,25 +671,25 @@ function DetailModal({
                   value={editSourceContext}
                   onChange={(e) => setEditSourceContext(e.target.value)}
                   placeholder="z.B. Projekt XY"
-                  className="mt-0.5 w-full text-sm text-slate-800 bg-transparent border-b border-slate-300 focus:border-slate-600 focus:outline-none"
+                  className="mt-0.5 w-full text-sm text-[var(--eds-text-primary)] bg-transparent border-b border-[var(--eds-border-strong)] focus:border-[var(--eds-border-strong)] focus:outline-none"
                   data-testid="input-edit-source-context"
                 />
               ) : (
-                <p className="text-slate-800 mt-0.5" data-testid="text-modal-source">{sourceCtx || "–"}</p>
+                <p className="text-[var(--eds-text-primary)] mt-0.5" data-testid="text-modal-source">{sourceCtx || "–"}</p>
               )}
             </div>
             {(item.clientName || item.projectName) && (
               <>
                 {item.clientName && (
                   <div>
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Kunde</span>
-                    <p className="text-slate-800 mt-0.5" data-testid="text-modal-client">{item.clientName}</p>
+                    <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">Kunde</span>
+                    <p className="text-[var(--eds-text-primary)] mt-0.5" data-testid="text-modal-client">{item.clientName}</p>
                   </div>
                 )}
                 {item.projectName && (
                   <div>
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Projekt</span>
-                    <p className="text-slate-800 mt-0.5" data-testid="text-modal-project">{item.projectName}</p>
+                    <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">Projekt</span>
+                    <p className="text-[var(--eds-text-primary)] mt-0.5" data-testid="text-modal-project">{item.projectName}</p>
                   </div>
                 )}
               </>
@@ -698,7 +698,7 @@ function DetailModal({
 
           {item.targetLevels.length > 0 && (
             <div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Zielgruppe</span>
+              <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">Zielgruppe</span>
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {item.targetLevels.map((level) => (
                   <span
@@ -719,7 +719,7 @@ function DetailModal({
           )}
 
           <div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+            <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">
               Beschreibung / Instruktion
             </span>
             {editing ? (
@@ -732,11 +732,11 @@ function DetailModal({
                 />
               </div>
             ) : (
-              <div className="text-sm text-slate-700 mt-1 leading-relaxed" data-testid="text-modal-description">
+              <div className="text-sm text-[var(--eds-text-primary)] mt-1 leading-relaxed" data-testid="text-modal-description">
                 {editDescription ? (
                   <div dangerouslySetInnerHTML={{ __html: editDescription }} />
                 ) : (
-                  <p className="text-slate-400 italic">Keine Beschreibung vorhanden</p>
+                  <p className="text-[var(--eds-text-disabled)] italic">Keine Beschreibung vorhanden</p>
                 )}
               </div>
             )}
@@ -744,10 +744,10 @@ function DetailModal({
 
           {item.originalFileName && (
             <div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">
                 Originaldatei
               </span>
-              <p className="text-sm text-slate-700 mt-0.5" data-testid="text-modal-filename">
+              <p className="text-sm text-[var(--eds-text-primary)] mt-0.5" data-testid="text-modal-filename">
                 {item.originalFileName}
               </p>
             </div>
@@ -755,7 +755,7 @@ function DetailModal({
 
           {editing && (
             <div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">
                 Download für Kandidaten erlauben
               </span>
               <div className="mt-1.5 flex items-center gap-3">
@@ -777,7 +777,7 @@ function DetailModal({
                     }`}
                   />
                 </button>
-                <span className="text-sm text-slate-700">
+                <span className="text-sm text-[var(--eds-text-primary)]">
                   {editDownloadAllowed ? "Erlaubt" : "Nicht erlaubt"}
                 </span>
               </div>
@@ -786,12 +786,12 @@ function DetailModal({
 
           {item.tags.length > 0 && (
             <div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tags</span>
+              <span className="text-xs font-medium text-[var(--eds-text-tertiary)] uppercase tracking-wide">Tags</span>
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {item.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs"
+                    className="px-2 py-0.5 rounded bg-[var(--eds-bg-sunken)] text-[var(--eds-text-secondary)] text-xs"
                   >
                     {tag}
                   </span>
@@ -801,7 +801,7 @@ function DetailModal({
           )}
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex items-center gap-3 rounded-b-2xl z-10">
+        <div className="sticky bottom-0 bg-white border-t border-[var(--eds-border)] px-6 py-4 flex items-center gap-3 rounded-b-2xl z-10">
           {editing ? (
             <>
               <button
@@ -822,7 +822,7 @@ function DetailModal({
                   setEditSourceContext(item.sourceContext || item.metadataJson?.sourceContext || "");
                   setEditScope(item.scope || "general");
                 }}
-                className="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-sm hover:bg-slate-50 transition"
+                className="px-4 py-2 border border-[var(--eds-border-strong)] text-[var(--eds-text-secondary)] rounded-lg text-sm hover:bg-[var(--eds-bg-sunken)] transition"
                 data-testid="button-cancel-edit"
               >
                 Abbrechen
@@ -844,7 +844,7 @@ function DetailModal({
                   </button>
                   <button
                     onClick={handlePreview}
-                    className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition"
+                    className="flex items-center gap-2 px-4 py-2 border border-[var(--eds-border-strong)] text-[var(--eds-text-primary)] rounded-lg text-sm font-medium hover:bg-[var(--eds-bg-sunken)] transition"
                     data-testid="button-preview"
                   >
                     <EyeIcon />
@@ -856,7 +856,7 @@ function DetailModal({
               {isCaseStudy && (
                 <>
                   <button
-                    className="px-4 py-2 border border-slate-300 text-slate-400 rounded-lg text-sm cursor-not-allowed"
+                    className="px-4 py-2 border border-[var(--eds-border-strong)] text-[var(--eds-text-disabled)] rounded-lg text-sm cursor-not-allowed"
                     disabled
                     data-testid="button-digitalize"
                   >
@@ -864,7 +864,7 @@ function DetailModal({
                   </button>
                   <Link
                     href={`/w/${slug}/admin/modules/case-study-dataroom`}
-                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm hover:bg-slate-50 transition"
+                    className="px-4 py-2 border border-[var(--eds-border-strong)] text-[var(--eds-text-primary)] rounded-lg text-sm hover:bg-[var(--eds-bg-sunken)] transition"
                     data-testid="link-case-study-dataroom"
                   >
                     Fallstudien-Datenraum öffnen
@@ -878,7 +878,7 @@ function DetailModal({
                 <button
                   onClick={handleRestore}
                   disabled={archiving}
-                  className="flex items-center gap-1.5 px-3 py-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg text-sm transition"
+                  className="flex items-center gap-1.5 px-3 py-2 text-[var(--eds-status-green)] hover:text-[var(--eds-status-green)] hover:bg-[var(--eds-status-green-bg)] rounded-lg text-sm transition"
                   data-testid="button-restore"
                 >
                   {archiving ? <SpinnerIcon /> : null}
@@ -888,7 +888,7 @@ function DetailModal({
                 <button
                   onClick={handleArchive}
                   disabled={archiving}
-                  className="flex items-center gap-1.5 px-3 py-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg text-sm transition"
+                  className="flex items-center gap-1.5 px-3 py-2 text-[var(--eds-status-amber)] hover:text-[var(--eds-status-amber)] hover:bg-[var(--eds-status-amber-bg)] rounded-lg text-sm transition"
                   data-testid="button-archive"
                 >
                   {archiving ? <SpinnerIcon /> : null}
@@ -899,7 +899,7 @@ function DetailModal({
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex items-center gap-1.5 px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg text-sm transition"
+                className="flex items-center gap-1.5 px-3 py-2 text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] hover:bg-[var(--eds-status-red-bg)] rounded-lg text-sm transition"
                 data-testid="button-delete"
               >
                 {deleting ? <SpinnerIcon /> : <TrashIcon />}
@@ -1261,15 +1261,19 @@ export default function ExerciseLibraryPage() {
 
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
+      <PageHeader
+        title="Übungsbibliothek"
+        description="Verwalten Sie wiederverwendbare Übungen für Assessment-Center"
+      />
         {error && (
           <div
-            className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between"
+            className="mb-4 p-3 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-lg text-[var(--eds-status-red)] text-sm flex items-center justify-between"
             data-testid="text-error"
           >
             {error}
             <button
               onClick={() => setError("")}
-              className="text-red-400 hover:text-red-600 ml-4"
+              className="text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] ml-4"
               data-testid="button-dismiss-error"
             >
               <CloseIcon />
@@ -1282,7 +1286,7 @@ export default function ExerciseLibraryPage() {
             className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
               isDragOver
                 ? "border-[hsl(14,48%,44%)] bg-[hsl(14,48%,44%)]/5"
-                : "border-slate-300 hover:border-[hsl(14,48%,44%)]/50 bg-white"
+                : "border-[var(--eds-border-strong)] hover:border-[hsl(14,48%,44%)]/50 bg-white"
             }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -1313,7 +1317,7 @@ export default function ExerciseLibraryPage() {
               >
                 Übungen hochladen
               </h3>
-              <p className="text-xs text-slate-500 max-w-md">
+              <p className="text-xs text-[var(--eds-text-tertiary)] max-w-md">
                 Ziehen Sie Dateien hierher oder klicken Sie zum Auswählen.
                 Unterstützt: Word (.docx), Excel (.xlsx), PowerPoint (.pptx), PDF (.pdf)
               </p>
@@ -1322,7 +1326,7 @@ export default function ExerciseLibraryPage() {
 
           {uploadError && (
             <div
-              className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
+              className="mt-3 p-3 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-lg text-[var(--eds-status-red)] text-sm"
               data-testid="text-upload-error"
             >
               {uploadError}
@@ -1330,7 +1334,7 @@ export default function ExerciseLibraryPage() {
           )}
           {uploadSuccess && (
             <div
-              className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm"
+              className="mt-3 p-3 bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] rounded-lg text-[var(--eds-status-green)] text-sm"
               data-testid="text-upload-success"
             >
               {uploadSuccess}
@@ -1340,7 +1344,7 @@ export default function ExerciseLibraryPage() {
           {pendingFiles.length > 0 && (
             <div className="mt-4 space-y-3" data-testid="pending-files-list">
               <h3
-                className="text-sm font-bold text-slate-700"
+                className="text-sm font-bold text-[var(--eds-text-primary)]"
                 style={{ fontFamily: "Playfair Display, serif" }}
               >
                 {pendingFiles.length} Datei(en) ausgewählt
@@ -1380,7 +1384,7 @@ export default function ExerciseLibraryPage() {
                         setPendingFiles([]);
                         setUploadError("");
                       }}
-                      className="px-4 py-2.5 text-slate-500 hover:text-slate-700 text-sm transition"
+                      className="px-4 py-2.5 text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)] text-sm transition"
                       data-testid="button-clear-files"
                     >
                       Alle entfernen
@@ -1394,7 +1398,7 @@ export default function ExerciseLibraryPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <CheckIcon />
                     <h4
-                      className="text-sm font-bold text-emerald-700"
+                      className="text-sm font-bold text-[var(--eds-status-green)]"
                       style={{ fontFamily: "Playfair Display, serif" }}
                     >
                       Analyse abgeschlossen — bitte prüfen und bestätigen
@@ -1404,13 +1408,13 @@ export default function ExerciseLibraryPage() {
                   {analysisResults.map((ar, idx) => (
                     <div
                       key={`analysis-${idx}`}
-                      className="border border-emerald-200 bg-emerald-50/30 rounded-lg p-4"
+                      className="border border-[var(--eds-status-green-bg)] bg-[var(--eds-status-green-bg)]/30 rounded-lg p-4"
                       data-testid={`analysis-result-${idx}`}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <FileIcon className="h-5 w-5 text-slate-400" />
-                          <span className="text-sm font-medium text-slate-800">
+                          <FileIcon className="h-5 w-5 text-[var(--eds-text-disabled)]" />
+                          <span className="text-sm font-medium text-[var(--eds-text-primary)]">
                             {ar.fileName}
                           </span>
                         </div>
@@ -1418,25 +1422,25 @@ export default function ExerciseLibraryPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                         <div className="md:col-span-2">
-                          <label className="block text-xs font-medium text-slate-600 mb-1">
+                          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">
                             Generierter Titel
                           </label>
                           <input
                             type="text"
                             value={ar.generatedTitle}
                             onChange={(e) => updateAnalysisResult(idx, { generatedTitle: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
                             data-testid={`input-title-${idx}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">
+                          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">
                             Übungstyp
                           </label>
                           <select
                             value={ar.exerciseType}
                             onChange={(e) => updateAnalysisResult(idx, { exerciseType: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
                             data-testid={`select-type-result-${idx}`}
                           >
                             {EXERCISE_CATEGORIES.map((c) => (
@@ -1445,51 +1449,51 @@ export default function ExerciseLibraryPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Autor</label>
+                          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Autor</label>
                           <input
                             type="text"
                             value={ar.author}
                             onChange={(e) => updateAnalysisResult(idx, { author: e.target.value })}
                             placeholder="z.B. Christoph Aldering"
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
                             data-testid={`input-author-result-${idx}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Ursprünglich konzipiert für</label>
+                          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Ursprünglich konzipiert für</label>
                           <input
                             type="text"
                             value={ar.sourceContext}
                             onChange={(e) => updateAnalysisResult(idx, { sourceContext: e.target.value })}
                             placeholder="z.B. REWE Group"
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
                             data-testid={`input-source-result-${idx}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Kunde</label>
+                          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Kunde</label>
                           <input
                             type="text"
                             value={ar.clientName}
                             onChange={(e) => updateAnalysisResult(idx, { clientName: e.target.value })}
                             placeholder="z.B. REWE Group"
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
                             data-testid={`input-client-result-${idx}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Projekt</label>
+                          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Projekt</label>
                           <input
                             type="text"
                             value={ar.projectName}
                             onChange={(e) => updateAnalysisResult(idx, { projectName: e.target.value })}
                             placeholder="z.B. Führungskräfte-Assessment 2024"
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
                             data-testid={`input-project-result-${idx}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Zielgruppe</label>
+                          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Zielgruppe</label>
                           <div className="flex flex-wrap gap-1.5">
                             {TARGET_LEVELS.map((level) => (
                               <label
@@ -1497,7 +1501,7 @@ export default function ExerciseLibraryPage() {
                                 className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs cursor-pointer border transition-colors ${
                                   ar.targetLevels.includes(level)
                                     ? "border-[hsl(14,48%,44%)] bg-[hsl(14,48%,44%)]/10 text-[hsl(14,48%,44%)]"
-                                    : "border-slate-200 text-slate-600 hover:border-slate-300"
+                                    : "border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:border-[var(--eds-border-strong)]"
                                 }`}
                                 data-testid={`checkbox-level-result-${idx}-${level.replace(/\s/g, "-")}`}
                               >
@@ -1521,24 +1525,24 @@ export default function ExerciseLibraryPage() {
 
                       {ar.description && (
                         <div className="mb-3">
-                          <label className="block text-xs font-medium text-slate-600 mb-1">
+                          <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">
                             KI-Kurzbeschreibung
-                            <span className="ml-1 text-xs text-emerald-600 font-normal">(wird mit Übung gespeichert)</span>
+                            <span className="ml-1 text-xs text-[var(--eds-status-green)] font-normal">(wird mit Übung gespeichert)</span>
                           </label>
                           <textarea
                             value={ar.description}
                             onChange={(e) => updateAnalysisResult(idx, { description: e.target.value })}
                             rows={3}
-                            className="w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            className="w-full rounded-lg border border-[var(--eds-status-green-bg)] bg-[var(--eds-status-green-bg)]/50 px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
                             data-testid={`textarea-description-${idx}`}
                           />
                         </div>
                       )}
 
                       <div className="mb-3">
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
+                        <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">
                           KI-generierte Tags
-                          <span className="ml-1 text-xs text-slate-400 font-normal">(klicken zum Entfernen)</span>
+                          <span className="ml-1 text-xs text-[var(--eds-text-disabled)] font-normal">(klicken zum Entfernen)</span>
                         </label>
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           {ar.suggestedTags.length > 0 ? (
@@ -1546,7 +1550,7 @@ export default function ExerciseLibraryPage() {
                               <span
                                 key={`${tag}-${ti}`}
                                 onClick={() => removeTagFromResult(idx, ti)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(14,48%,44%)]/10 text-[hsl(14,48%,44%)] border border-[hsl(14,48%,44%)]/20 cursor-pointer hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(14,48%,44%)]/10 text-[hsl(14,48%,44%)] border border-[hsl(14,48%,44%)]/20 cursor-pointer hover:bg-[var(--eds-status-red-bg)] hover:text-[var(--eds-status-red)] hover:border-[var(--eds-status-red-bg)] transition-colors"
                                 data-testid={`tag-${idx}-${ti}`}
                               >
                                 {tag}
@@ -1556,14 +1560,14 @@ export default function ExerciseLibraryPage() {
                               </span>
                             ))
                           ) : (
-                            <span className="text-xs text-slate-400 italic">Keine Tags generiert</span>
+                            <span className="text-xs text-[var(--eds-text-disabled)] italic">Keine Tags generiert</span>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
                             placeholder="Neuen Tag hinzufügen…"
-                            className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
+                            className="flex-1 rounded-lg border border-[var(--eds-border)] px-3 py-1.5 text-xs text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]"
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 addTagToResult(idx, (e.target as HTMLInputElement).value);
@@ -1600,7 +1604,7 @@ export default function ExerciseLibraryPage() {
                           setAnalysisResults([]);
                           setUploadError("");
                         }}
-                        className="px-4 py-2.5 text-slate-500 hover:text-slate-700 text-sm transition"
+                        className="px-4 py-2.5 text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)] text-sm transition"
                         data-testid="button-discard-analysis"
                       >
                         Verwerfen
@@ -1614,13 +1618,13 @@ export default function ExerciseLibraryPage() {
         </section>
 
         <div className="flex items-center gap-2 mb-6" data-testid="scope-filter-bar">
-          <span className="text-xs font-medium text-slate-500 mr-1">Bereich:</span>
+          <span className="text-xs font-medium text-[var(--eds-text-tertiary)] mr-1">Bereich:</span>
           <button
             onClick={() => setActiveScopeFilter(null)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               activeScopeFilter === null
                 ? "text-white"
-                : "text-slate-600 bg-slate-100 hover:bg-slate-200"
+                : "text-[var(--eds-text-secondary)] bg-[var(--eds-bg-sunken)] hover:bg-[var(--eds-border)]"
             }`}
             style={activeScopeFilter === null ? { backgroundColor: ACCENT } : undefined}
             data-testid="button-scope-all"
@@ -1647,13 +1651,13 @@ export default function ExerciseLibraryPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <SpinnerIcon className="h-6 w-6 text-slate-400" />
+            <SpinnerIcon className="h-6 w-6 text-[var(--eds-text-disabled)]" />
           </div>
         ) : (
           <div className="flex gap-6" data-testid="section-library">
             <aside className="w-72 shrink-0" data-testid="category-sidebar">
               <h3
-                className="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide"
+                className="text-sm font-bold text-[var(--eds-text-primary)] mb-3 uppercase tracking-wide"
                 style={{ fontFamily: "Playfair Display, serif" }}
               >
                 Kategorien
@@ -1664,7 +1668,7 @@ export default function ExerciseLibraryPage() {
                   className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors flex items-center justify-between ${
                     activeCategory === null
                       ? "text-white font-medium"
-                      : "text-slate-700 hover:bg-slate-50"
+                      : "text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)]"
                   }`}
                   style={activeCategory === null ? { backgroundColor: ACCENT } : undefined}
                   data-testid="button-category-all"
@@ -1674,7 +1678,7 @@ export default function ExerciseLibraryPage() {
                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                       activeCategory === null
                         ? "bg-white/20 text-white"
-                        : "bg-slate-100 text-slate-500"
+                        : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)]"
                     }`}
                   >
                     {allItems.length}
@@ -1688,7 +1692,7 @@ export default function ExerciseLibraryPage() {
                     className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors flex items-center justify-between ${
                       activeCategory === cat.key
                         ? "text-white font-medium"
-                        : "text-slate-700 hover:bg-slate-50"
+                        : "text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)]"
                     }`}
                     style={
                       activeCategory === cat.key ? { backgroundColor: ACCENT } : undefined
@@ -1700,7 +1704,7 @@ export default function ExerciseLibraryPage() {
                       className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         activeCategory === cat.key
                           ? "bg-white/20 text-white"
-                          : "bg-slate-100 text-slate-500"
+                          : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)]"
                       }`}
                     >
                       {counts[cat.key] || 0}
@@ -1710,14 +1714,14 @@ export default function ExerciseLibraryPage() {
               </div>
 
               <div className="mt-6">
-                <h3 className="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide" style={{ fontFamily: "Playfair Display, serif" }}>
+                <h3 className="text-sm font-bold text-[var(--eds-text-primary)] mb-3 uppercase tracking-wide" style={{ fontFamily: "Playfair Display, serif" }}>
                   Kunden
                 </h3>
                 <div className="space-y-1">
                   <button
                     onClick={() => setActiveClientFilter(null)}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
-                      activeClientFilter === null ? "text-white font-medium" : "text-slate-700 hover:bg-slate-50"
+                      activeClientFilter === null ? "text-white font-medium" : "text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)]"
                     }`}
                     style={activeClientFilter === null ? { backgroundColor: ACCENT } : undefined}
                     data-testid="button-client-all"
@@ -1727,7 +1731,7 @@ export default function ExerciseLibraryPage() {
                   <button
                     onClick={() => setActiveClientFilter("neutral")}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
-                      activeClientFilter === "neutral" ? "text-white font-medium" : "text-slate-700 hover:bg-slate-50"
+                      activeClientFilter === "neutral" ? "text-white font-medium" : "text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)]"
                     }`}
                     style={activeClientFilter === "neutral" ? { backgroundColor: ACCENT } : undefined}
                     data-testid="button-client-neutral"
@@ -1739,14 +1743,14 @@ export default function ExerciseLibraryPage() {
                       key={client.id}
                       onClick={() => setActiveClientFilter(client.id)}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
-                        activeClientFilter === client.id ? "text-white font-medium" : "text-slate-700 hover:bg-slate-50"
+                        activeClientFilter === client.id ? "text-white font-medium" : "text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)]"
                       }`}
                       style={activeClientFilter === client.id ? { backgroundColor: ACCENT } : undefined}
                       data-testid={`button-client-${client.id}`}
                     >
                       <span>{client.name}</span>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        activeClientFilter === client.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                        activeClientFilter === client.id ? "bg-white/20 text-white" : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)]"
                       }`}>
                         {client._count?.exerciseLibraryItems || 0}
                       </span>
@@ -1759,7 +1763,7 @@ export default function ExerciseLibraryPage() {
                 <button
                   onClick={() => setShowArchived(!showArchived)}
                   className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors flex items-center justify-between ${
-                    showArchived ? "text-white font-medium" : "text-slate-700 hover:bg-slate-50"
+                    showArchived ? "text-white font-medium" : "text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)]"
                   }`}
                   style={showArchived ? { backgroundColor: ACCENT } : undefined}
                   data-testid="button-show-archived"
@@ -1772,7 +1776,7 @@ export default function ExerciseLibraryPage() {
             <div className="flex-1 min-w-0" data-testid="document-list">
               <div className="flex items-center justify-between mb-4">
                 <h3
-                  className="text-sm font-bold text-slate-700 uppercase tracking-wide"
+                  className="text-sm font-bold text-[var(--eds-text-primary)] uppercase tracking-wide"
                   style={{ fontFamily: "Playfair Display, serif" }}
                   data-testid="text-category-title"
                 >
@@ -1782,7 +1786,7 @@ export default function ExerciseLibraryPage() {
                       ? CATEGORY_LABELS[activeCategory]
                       : "Alle Übungen"}
                   {" "}
-                  <span className="text-slate-400 font-normal">
+                  <span className="text-[var(--eds-text-disabled)] font-normal">
                     ({filteredItems.length})
                   </span>
                 </h3>
@@ -1811,14 +1815,14 @@ export default function ExerciseLibraryPage() {
                         onClick={() => setSelectedItem(item)}
                         className={`border rounded-xl p-4 hover:shadow-md transition cursor-pointer ${
                           item.archived
-                            ? "border-amber-200 bg-amber-50/30 opacity-70"
-                            : "border-slate-200 bg-white hover:border-slate-300"
+                            ? "border-[var(--eds-status-amber-bg)] bg-[var(--eds-status-amber-bg)]/30 opacity-70"
+                            : "border-[var(--eds-border)] bg-white hover:border-[var(--eds-border-strong)]"
                         }`}
                         data-testid={`card-item-${item.id}`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <h4
-                            className={`text-sm font-semibold ${item.archived ? "text-slate-500 line-through" : "text-slate-800"}`}
+                            className={`text-sm font-semibold ${item.archived ? "text-[var(--eds-text-tertiary)] line-through" : "text-[var(--eds-text-primary)]"}`}
                             data-testid={`text-item-title-${item.id}`}
                           >
                             {item.title}
@@ -1848,11 +1852,11 @@ export default function ExerciseLibraryPage() {
                               </Link>
                             )}
                             {item.archived && (
-                              <span className="text-[10px] font-medium text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded" data-testid={`badge-archived-${item.id}`}>
+                              <span className="text-[10px] font-medium text-[var(--eds-status-amber)] bg-[var(--eds-status-amber-bg)] px-1.5 py-0.5 rounded" data-testid={`badge-archived-${item.id}`}>
                                 Archiviert
                               </span>
                             )}
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-[var(--eds-text-disabled)]">
                               {new Date(item.createdAt).toLocaleDateString("de-DE")}
                             </span>
                           </div>
@@ -1877,15 +1881,15 @@ export default function ExerciseLibraryPage() {
                           </div>
                         )}
 
-                        <div className="text-xs text-slate-500 space-y-0.5">
+                        <div className="text-xs text-[var(--eds-text-tertiary)] space-y-0.5">
                           {author && (
                             <p data-testid={`text-item-author-${item.id}`}>
-                              <span className="font-medium text-slate-600">Autor:</span> {author}
+                              <span className="font-medium text-[var(--eds-text-secondary)]">Autor:</span> {author}
                             </p>
                           )}
                           {sourceCtx && (
                             <p data-testid={`text-item-source-${item.id}`}>
-                              <span className="font-medium text-slate-600">
+                              <span className="font-medium text-[var(--eds-text-secondary)]">
                                 Ursprünglich konzipiert für:
                               </span>{" "}
                               {sourceCtx}
@@ -1893,14 +1897,14 @@ export default function ExerciseLibraryPage() {
                           )}
                           {(item.clientName || item.projectName) && (
                             <p data-testid={`text-item-client-${item.id}`}>
-                              {item.clientName && <><span className="text-slate-400">Kunde:</span> {item.clientName}</>}
+                              {item.clientName && <><span className="text-[var(--eds-text-disabled)]">Kunde:</span> {item.clientName}</>}
                               {item.clientName && item.projectName && " · "}
-                              {item.projectName && <><span className="text-slate-400">Projekt:</span> {item.projectName}</>}
+                              {item.projectName && <><span className="text-[var(--eds-text-disabled)]">Projekt:</span> {item.projectName}</>}
                             </p>
                           )}
                           {item.description && (
                             <p
-                              className="line-clamp-2 text-slate-500"
+                              className="line-clamp-2 text-[var(--eds-text-tertiary)]"
                               data-testid={`text-item-desc-${item.id}`}
                             >
                               {item.description}

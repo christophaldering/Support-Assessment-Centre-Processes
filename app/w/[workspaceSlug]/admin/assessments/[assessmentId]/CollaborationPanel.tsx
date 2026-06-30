@@ -246,7 +246,7 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
         />
       )}
       <div
-        className="fixed top-0 right-0 h-full z-40 bg-white border-l border-slate-200 flex flex-col transition-transform duration-300 ease-in-out"
+        className="fixed top-0 right-0 h-full z-40 bg-white border-l border-[var(--eds-border)] flex flex-col transition-transform duration-300 ease-in-out"
         style={{
           width: 380,
           transform: isOpen ? "translateX(0)" : "translateX(100%)",
@@ -254,12 +254,12 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
         }}
         data-testid="collaboration-panel"
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-          <h2 className="text-base font-semibold text-slate-800">Zusammenarbeit</h2>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--eds-border)]">
+          <h2 className="text-base font-semibold text-[var(--eds-text-primary)]">Zusammenarbeit</h2>
           <button
             onClick={onClose}
             data-testid="button-close-collaboration"
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)]"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -267,7 +267,7 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
           </button>
         </div>
 
-        <div className="flex border-b border-slate-200">
+        <div className="flex border-b border-[var(--eds-border)]">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -296,17 +296,17 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
           {activeTab === "presence" && (
             <div className="p-4 space-y-3" data-testid="presence-list">
               {presence.length === 0 && (
-                <p className="text-sm text-slate-400 text-center py-6">Keine aktiven Beobachter.</p>
+                <p className="text-sm text-[var(--eds-text-disabled)] text-center py-6">Keine aktiven Beobachter.</p>
               )}
               {presence.map((u) => (
                 <div key={u.userId} className="flex items-center gap-3 py-2" data-testid={`presence-user-${u.userId}`}>
                   <div className="relative">
                     <UserInitial name={u.userName} />
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[var(--eds-status-green-bg)]0 rounded-full border-2 border-white" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-800 truncate">{u.userName}</p>
-                    <p className="text-xs text-slate-500">{ROLE_LABELS[u.userRole] || u.userRole}</p>
+                    <p className="text-sm font-medium text-[var(--eds-text-primary)] truncate">{u.userName}</p>
+                    <p className="text-xs text-[var(--eds-text-tertiary)]">{ROLE_LABELS[u.userRole] || u.userRole}</p>
                   </div>
                 </div>
               ))}
@@ -316,15 +316,15 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
           {activeTab === "events" && (
             <div className="p-4 space-y-3" data-testid="events-list">
               {events.length === 0 && (
-                <p className="text-sm text-slate-400 text-center py-6">Noch keine Aktivitäten.</p>
+                <p className="text-sm text-[var(--eds-text-disabled)] text-center py-6">Noch keine Aktivitäten.</p>
               )}
               {events.map((ev) => (
                 <div key={ev.id} className="flex items-start gap-3 py-1" data-testid={`event-${ev.id}`}>
                   <UserInitial name={ev.userName} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-slate-800">
+                    <p className="text-sm text-[var(--eds-text-primary)]">
                       <span className="font-medium">{ev.userName}</span>{" "}
-                      <span className="text-slate-600">
+                      <span className="text-[var(--eds-text-secondary)]">
                         {ev.eventType === "comment" ? (
                           <>: &ldquo;{eventDescription(ev)}&rdquo;</>
                         ) : (
@@ -332,12 +332,12 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
                         )}
                       </span>
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">{relativeTime(ev.createdAt)}</p>
+                    <p className="text-xs text-[var(--eds-text-disabled)] mt-0.5">{relativeTime(ev.createdAt)}</p>
                   </div>
                 </div>
               ))}
               {Object.keys(typingUsers).length > 0 && (
-                <div className="flex items-center gap-2 text-xs text-slate-400 italic py-1">
+                <div className="flex items-center gap-2 text-xs text-[var(--eds-text-disabled)] italic py-1">
                   <span className="flex gap-0.5">
                     <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
                     <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -354,32 +354,32 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
             <div className="flex flex-col h-full" data-testid="notes-list">
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {sortedNotes.length === 0 && (
-                  <p className="text-sm text-slate-400 text-center py-6">Keine Notizen vorhanden.</p>
+                  <p className="text-sm text-[var(--eds-text-disabled)] text-center py-6">Keine Notizen vorhanden.</p>
                 )}
                 {sortedNotes.map((note) => (
                   <div
                     key={note.id}
-                    className="border border-slate-200 rounded-lg p-3"
+                    className="border border-[var(--eds-border)] rounded-lg p-3"
                     data-testid={`note-${note.id}`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-slate-800">{note.authorName}</span>
+                          <span className="text-sm font-medium text-[var(--eds-text-primary)]">{note.authorName}</span>
                           {note.pinned && (
-                            <svg className="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 text-[var(--eds-status-amber)]" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" />
                             </svg>
                           )}
                         </div>
-                        <p className="text-sm text-slate-600 whitespace-pre-wrap">{note.content}</p>
-                        <p className="text-xs text-slate-400 mt-1">{relativeTime(note.createdAt)}</p>
+                        <p className="text-sm text-[var(--eds-text-secondary)] whitespace-pre-wrap">{note.content}</p>
+                        <p className="text-xs text-[var(--eds-text-disabled)] mt-1">{relativeTime(note.createdAt)}</p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => handleTogglePin(note.id, note.pinned)}
                           data-testid={`button-pin-${note.id}`}
-                          className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                          className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--eds-bg-sunken)] text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)]"
                           title={note.pinned ? "Lösen" : "Anheften"}
                         >
                           <svg className="w-4 h-4" fill={note.pinned ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -389,7 +389,7 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
                         <button
                           onClick={() => handleDeleteNote(note.id)}
                           data-testid={`button-delete-note-${note.id}`}
-                          className="w-7 h-7 flex items-center justify-center rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
+                          className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--eds-status-red-bg)] text-[var(--eds-text-disabled)] hover:text-[var(--eds-status-red)]"
                           title="Löschen"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -403,7 +403,7 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
               </div>
               <form
                 onSubmit={handleAddNote}
-                className="border-t border-slate-200 p-3 flex gap-2"
+                className="border-t border-[var(--eds-border)] p-3 flex gap-2"
                 data-testid="form-add-note"
               >
                 <input
@@ -412,7 +412,7 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
                   onChange={(e) => setNewNote(e.target.value)}
                   placeholder="Notiz hinzufügen..."
                   data-testid="input-new-note"
-                  className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1"
+                  className="flex-1 border border-[var(--eds-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1"
                   style={{ focusRingColor: ACCENT } as any}
                 />
                 <button

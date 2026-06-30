@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/shared/PageHeader";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -97,34 +98,34 @@ function PromptCard({ slot, workspaceSlug, onSaved, onReset }: {
 
   return (
     <div
-      className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+      className="bg-white rounded-xl border border-[var(--eds-border)] shadow-sm overflow-hidden"
       data-testid={`card-prompt-${slot.key}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between p-5 gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <h2 className="text-base font-semibold text-slate-800">{slot.label}</h2>
+            <h2 className="text-base font-semibold text-[var(--eds-text-primary)]">{slot.label}</h2>
             {isCustomized ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
                 ✦ Angepasst
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)]">
                 Standard
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500">{slot.description}</p>
+          <p className="text-xs text-[var(--eds-text-tertiary)]">{slot.description}</p>
           {isCustomized && slot.updatedAt && (
-            <p className="text-xs text-slate-400 mt-1">Geändert: {formatDate(slot.updatedAt)}</p>
+            <p className="text-xs text-[var(--eds-text-disabled)] mt-1">Geändert: {formatDate(slot.updatedAt)}</p>
           )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {!editing && (
             <button
               onClick={handleEdit}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 hover:border-[#A6473B] hover:text-[#A6473B] transition-colors"
+              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] hover:border-[#A6473B] hover:text-[#A6473B] transition-colors"
               data-testid={`button-edit-${slot.key}`}
             >
               Bearbeiten
@@ -134,7 +135,7 @@ function PromptCard({ slot, workspaceSlug, onSaved, onReset }: {
             <button
               onClick={handleReset}
               disabled={resetting}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-red-100 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] text-[var(--eds-status-red)] hover:bg-[var(--eds-status-red-bg)] transition-colors disabled:opacity-50"
               data-testid={`button-reset-${slot.key}`}
             >
               {resetting ? "…" : "Zurücksetzen"}
@@ -142,7 +143,7 @@ function PromptCard({ slot, workspaceSlug, onSaved, onReset }: {
           )}
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="text-xs text-slate-400 hover:text-slate-600 px-2 py-1.5 rounded"
+            className="text-xs text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)] px-2 py-1.5 rounded"
             data-testid={`button-toggle-${slot.key}`}
           >
             {expanded ? "▲" : "▼"}
@@ -152,14 +153,14 @@ function PromptCard({ slot, workspaceSlug, onSaved, onReset }: {
 
       {/* Expanded body */}
       {expanded && (
-        <div className="border-t border-slate-100 p-5 space-y-3">
+        <div className="border-t border-[var(--eds-border)] p-5 space-y-3">
           {editing ? (
             <>
               <textarea
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 rows={16}
-                className="w-full font-mono text-xs border border-slate-200 rounded-lg p-3 focus:outline-none focus:border-[#297587] resize-y leading-relaxed"
+                className="w-full font-mono text-xs border border-[var(--eds-border)] rounded-lg p-3 focus:outline-none focus:border-[#297587] resize-y leading-relaxed"
                 data-testid={`textarea-prompt-${slot.key}`}
               />
               <div className="flex items-center gap-2">
@@ -174,20 +175,20 @@ function PromptCard({ slot, workspaceSlug, onSaved, onReset }: {
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="text-sm px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+                  className="text-sm px-4 py-2 rounded-lg border border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)] transition-colors"
                   data-testid={`button-cancel-${slot.key}`}
                 >
                   Abbrechen
                 </button>
                 {msg && (
-                  <span className={`text-xs ml-2 ${msg.type === "ok" ? "text-teal-700" : "text-red-600"}`}>
+                  <span className={`text-xs ml-2 ${msg.type === "ok" ? "text-teal-700" : "text-[var(--eds-status-red)]"}`}>
                     {msg.text}
                   </span>
                 )}
               </div>
             </>
           ) : (
-            <pre className="text-xs text-slate-600 whitespace-pre-wrap leading-relaxed font-mono bg-slate-50 rounded-lg p-3 max-h-64 overflow-y-auto">
+            <pre className="text-xs text-[var(--eds-text-secondary)] whitespace-pre-wrap leading-relaxed font-mono bg-[var(--eds-bg-sunken)] rounded-lg p-3 max-h-64 overflow-y-auto">
               {displayText}
             </pre>
           )}
@@ -244,38 +245,29 @@ export default function PromptLibraryPage() {
 
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
-      {/* Header */}
-      <div className="mb-2">
-        <div className="flex items-start justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: "#A6473B" }} data-testid="heading-prompt-library">
-              KI-Prompt-Bibliothek
-            </h1>
-            <p className="text-sm text-slate-500 mt-1 max-w-2xl" data-testid="text-subtitle">
-              Passen Sie die System-Prompts für KI-Funktionen in diesem Workspace an. Nicht bearbeitete Slots
-              nutzen automatisch die Plattform-Standards — eigene Prompts überschreiben diese workspace-weit.
-            </p>
+      <PageHeader
+        title="KI-Prompt-Bibliothek"
+        description="System-Prompts für KI-Funktionen anpassen — workspace-weit. Nicht bearbeitete Slots nutzen automatisch die Plattform-Standards."
+        // no-eds-token: teal badge uses Lagune-Türkis brand color, no EDS token equivalent
+        actions={customizedCount > 0 ? (
+          <div
+            className="text-xs font-medium px-3 py-1.5 rounded-full border border-teal-200 bg-teal-50 text-teal-700"
+            data-testid="badge-customized-count"
+          >
+            {customizedCount} von {slots.length} Slots angepasst
           </div>
-          {customizedCount > 0 && (
-            <div
-              className="text-xs font-medium px-3 py-1.5 rounded-full border border-teal-200 bg-teal-50 text-teal-700"
-              data-testid="badge-customized-count"
-            >
-              {customizedCount} von {slots.length} Slots angepasst
-            </div>
-          )}
-        </div>
+        ) : undefined}
+      />
 
-        {/* Info banner */}
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700">
-          <strong>Hinweis:</strong> Änderungen wirken sofort bei der nächsten KI-Anfrage.
-          Die Standard-Prompts bleiben gespeichert und können jederzeit wiederhergestellt werden.
-        </div>
+      {/* Info banner */}
+      <div className="p-3 bg-[var(--eds-status-blue-bg)] border border-[var(--eds-border)] rounded-lg text-xs text-[var(--eds-status-blue)]">
+        <strong>Hinweis:</strong> Änderungen wirken sofort bei der nächsten KI-Anfrage.
+        Die Standard-Prompts bleiben gespeichert und können jederzeit wiederhergestellt werden.
       </div>
 
       {/* Error */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700" data-testid="text-error">
+        <div className="p-4 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-xl text-sm text-[var(--eds-status-red)]" data-testid="text-error">
           {error}
         </div>
       )}
@@ -284,7 +276,7 @@ export default function PromptLibraryPage() {
       {loading ? (
         <div className="space-y-4">
           {PROMPT_SLOT_KEYS.map((key) => (
-            <div key={key} className="bg-white rounded-xl border border-slate-200 h-24 animate-pulse" />
+            <div key={key} className="bg-white rounded-xl border border-[var(--eds-border)] h-24 animate-pulse" />
           ))}
         </div>
       ) : (

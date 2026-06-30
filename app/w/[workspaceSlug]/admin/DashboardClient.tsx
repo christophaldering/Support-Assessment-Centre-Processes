@@ -281,14 +281,14 @@ export default function DashboardClient({
     }
   }
 
-  const inputClass = "w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors";
+  const inputClass = "w-full rounded-lg border border-[var(--eds-border)] px-3 py-2.5 text-sm text-[var(--eds-text-primary)] bg-white focus:outline-none focus:ring-2 focus:ring-[var(--eds-status-blue)]/20 focus:border-[var(--eds-status-blue)] transition-colors";
 
   function renderCreateModal() {
     if (!showCreate) return null;
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
         <div
-          className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
+          className="bg-white rounded-2xl border border-[var(--eds-border)] shadow-xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
           data-testid="dialog-create-project"
         >
@@ -297,7 +297,7 @@ export default function DashboardClient({
           </h3>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1">Assessment-Name *</label>
+              <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Assessment-Name *</label>
               <input
                 type="text"
                 value={form.name}
@@ -309,7 +309,7 @@ export default function DashboardClient({
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1">Kunde</label>
+              <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Kunde</label>
               <input
                 type="text"
                 value={form.clientName}
@@ -320,7 +320,7 @@ export default function DashboardClient({
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1">Vorlage verwenden</label>
+              <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Vorlage verwenden</label>
               <select
                 value={form.copyFromId}
                 onChange={(e) => {
@@ -344,7 +344,7 @@ export default function DashboardClient({
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1">Beschreibung</label>
+              <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Beschreibung</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -355,16 +355,16 @@ export default function DashboardClient({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Startdatum</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Startdatum</label>
                 <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className={inputClass} data-testid="input-project-start-date" />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Enddatum</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Enddatum</label>
                 <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className={inputClass} data-testid="input-project-end-date" />
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-2">Design-Modus</label>
+              <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-2">Design-Modus</label>
               <div className="grid grid-cols-3 gap-2">
                 {(["ai_full", "ai_supported", "classic"] as const).map((mode) => {
                   const ml = designModeLabels[mode] ?? { de: mode, icon: "✋" };
@@ -376,8 +376,8 @@ export default function DashboardClient({
                       onClick={() => setForm({ ...form, designMode: mode })}
                       className={`rounded-lg border px-3 py-2.5 text-xs font-medium transition-all text-center ${
                         selected
-                          ? "border-blue-500 bg-blue-50/60 text-blue-700 ring-1 ring-blue-500"
-                          : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                          ? "border-[var(--eds-status-blue)] bg-[var(--eds-status-blue-bg)]/60 text-[var(--eds-status-blue)] ring-1 ring-[var(--eds-status-blue)]"
+                          : "border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)]"
                       }`}
                       data-testid={`button-design-mode-${mode}`}
                     >
@@ -389,7 +389,7 @@ export default function DashboardClient({
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1">Auto-Löschung</label>
+              <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Auto-Löschung</label>
               <select value={form.autoDeleteDays} onChange={(e) => setForm({ ...form, autoDeleteDays: e.target.value })} className={inputClass} data-testid="select-auto-delete-days">
                 <option value="">Keine</option>
                 <option value="30">30 Tage</option>
@@ -399,12 +399,12 @@ export default function DashboardClient({
                 <option value="365">365 Tage</option>
               </select>
             </div>
-            {error && <p className="text-sm text-red-600 font-medium" data-testid="text-create-error">{error}</p>}
+            {error && <p className="text-sm text-[var(--eds-status-red)] font-medium" data-testid="text-create-error">{error}</p>}
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setShowCreate(false)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] transition-colors hover:bg-[var(--eds-bg-sunken)]"
                 data-testid="button-cancel-create"
               >
                 Abbrechen
@@ -431,18 +431,18 @@ export default function DashboardClient({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setConfirmDelete(null); setDeletePassword(""); setDeleteError(""); setDeleteAction("archive"); }}>
         <div
-          className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-md p-8"
+          className="bg-white rounded-2xl border border-[var(--eds-border)] shadow-xl w-full max-w-md p-8"
           onClick={(e) => e.stopPropagation()}
           data-testid="dialog-confirm-delete"
         >
-          <h3 className="text-lg font-semibold text-slate-800 mb-2">Assessment verwalten</h3>
-          <p className="text-sm text-slate-500 mb-5">
+          <h3 className="text-lg font-semibold text-[var(--eds-text-primary)] mb-2">Assessment verwalten</h3>
+          <p className="text-sm text-[var(--eds-text-tertiary)] mb-5">
             &laquo;{project.name}&raquo;
           </p>
 
           <div className="space-y-2 mb-5">
             <label
-              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${deleteAction === "archive" ? "border-blue-400 bg-blue-50/50" : "border-slate-200 hover:bg-slate-50"}`}
+              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${deleteAction === "archive" ? "border-[var(--eds-status-blue)] bg-[var(--eds-status-blue-bg)]/50" : "border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)]"}`}
               data-testid="radio-archive"
             >
               <input
@@ -453,12 +453,12 @@ export default function DashboardClient({
                 className="mt-0.5 accent-blue-600"
               />
               <div>
-                <span className="text-sm font-medium text-slate-800">Archivieren</span>
-                <p className="text-xs text-slate-400 mt-0.5">Assessment wird in den Archiv-Container verschoben. Nur Master-Administratoren können darauf zugreifen.</p>
+                <span className="text-sm font-medium text-[var(--eds-text-primary)]">Archivieren</span>
+                <p className="text-xs text-[var(--eds-text-disabled)] mt-0.5">Assessment wird in den Archiv-Container verschoben. Nur Master-Administratoren können darauf zugreifen.</p>
               </div>
             </label>
             <label
-              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${deleteAction === "delete" ? "border-red-400 bg-red-50/50" : "border-slate-200 hover:bg-slate-50"}`}
+              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${deleteAction === "delete" ? "border-[var(--eds-status-red)] bg-[var(--eds-status-red-bg)]/50" : "border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)]"}`}
               data-testid="radio-delete"
             >
               <input
@@ -469,39 +469,39 @@ export default function DashboardClient({
                 className="mt-0.5 accent-red-600"
               />
               <div>
-                <span className="text-sm font-medium text-red-700">Endgültig löschen</span>
-                <p className="text-xs text-slate-400 mt-0.5">Alle zugehörigen Daten werden unwiderruflich entfernt.</p>
+                <span className="text-sm font-medium text-[var(--eds-status-red)]">Endgültig löschen</span>
+                <p className="text-xs text-[var(--eds-text-disabled)] mt-0.5">Alle zugehörigen Daten werden unwiderruflich entfernt.</p>
               </div>
             </label>
           </div>
 
           <div className="mb-5">
-            <label className="text-xs font-medium text-slate-600 block mb-1.5">Passwort zur Bestätigung</label>
+            <label className="text-xs font-medium text-[var(--eds-text-secondary)] block mb-1.5">Passwort zur Bestätigung</label>
             <PasswordInput
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
               placeholder="Ihr Passwort eingeben"
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
+              className="w-full px-4 py-2.5 border border-[var(--eds-border-strong)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--eds-status-blue)] focus:border-[var(--eds-status-blue)] pr-12"
               data-testid="input-delete-password"
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleDeleteOrArchive(confirmDelete); } }}
             />
           </div>
 
           {deleteError && (
-            <div className="mb-4 p-2.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs" data-testid="text-delete-error">
+            <div className="mb-4 p-2.5 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-lg text-[var(--eds-status-red)] text-xs" data-testid="text-delete-error">
               {deleteError}
             </div>
           )}
 
           <div className="flex justify-end gap-3">
-            <button type="button" onClick={() => { setConfirmDelete(null); setDeletePassword(""); setDeleteError(""); setDeleteAction("archive"); }} className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50" data-testid="button-cancel-delete">
+            <button type="button" onClick={() => { setConfirmDelete(null); setDeletePassword(""); setDeleteError(""); setDeleteAction("archive"); }} className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)]" data-testid="button-cancel-delete">
               Abbrechen
             </button>
             <button
               type="button"
               onClick={() => handleDeleteOrArchive(confirmDelete)}
               disabled={deletingId === confirmDelete || !deletePassword}
-              className={`px-5 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 transition ${deleteAction === "delete" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}
+              className={`px-5 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 transition ${deleteAction === "delete" ? "bg-[var(--eds-status-red)] hover:bg-[var(--eds-terracotta-dk)]" : "bg-[var(--eds-status-blue)] hover:bg-[var(--eds-status-blue)]"}`}
               data-testid="button-confirm-delete"
             >
               {deletingId === confirmDelete
@@ -521,13 +521,13 @@ export default function DashboardClient({
     return (
       <div
         key={a.id}
-        className="px-6 py-3.5 flex items-center gap-4 hover:bg-slate-50/80 cursor-pointer transition-colors group"
+        className="px-6 py-3.5 flex items-center gap-4 hover:bg-[var(--eds-bg-sunken)]/80 cursor-pointer transition-colors group"
         onClick={() => router.push(`${base}/assessments/${a.id}`)}
         data-testid={`card-assessment-${a.id}`}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <h4 className="text-sm font-semibold text-slate-800 group-hover:text-brand-navy transition-colors truncate">
+            <h4 className="text-sm font-semibold text-[var(--eds-text-primary)] group-hover:text-brand-navy transition-colors truncate">
               {a.name}
             </h4>
             <span
@@ -537,29 +537,29 @@ export default function DashboardClient({
               {st.de}
             </span>
           </div>
-          <div className="flex items-center gap-3 text-[11px] text-slate-400">
+          <div className="flex items-center gap-3 text-[11px] text-[var(--eds-text-disabled)]">
             <span>{formatDate(a.startDate)} — {formatDate(a.endDate)}</span>
             <span>{dm.icon} {dm.de}</span>
           </div>
         </div>
         <div className="flex items-center gap-5 text-center shrink-0">
           <div>
-            <p className="text-sm font-bold text-slate-700 tabular-nums">{a.exerciseCount}</p>
-            <p className="text-[10px] text-slate-400">Übungen</p>
+            <p className="text-sm font-bold text-[var(--eds-text-primary)] tabular-nums">{a.exerciseCount}</p>
+            <p className="text-[10px] text-[var(--eds-text-disabled)]">Übungen</p>
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-700 tabular-nums">{a.candidateCount}</p>
-            <p className="text-[10px] text-slate-400">Teilnehmer</p>
+            <p className="text-sm font-bold text-[var(--eds-text-primary)] tabular-nums">{a.candidateCount}</p>
+            <p className="text-[10px] text-[var(--eds-text-disabled)]">Teilnehmer</p>
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-700 tabular-nums">{a.reportCount}</p>
-            <p className="text-[10px] text-slate-400">Berichte</p>
+            <p className="text-sm font-bold text-[var(--eds-text-primary)] tabular-nums">{a.reportCount}</p>
+            <p className="text-[10px] text-[var(--eds-text-disabled)]">Berichte</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={(e) => { e.stopPropagation(); setConfirmDelete(a.id); setDeletePassword(""); setDeleteError(""); setDeleteAction("archive"); }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-slate-100 text-slate-500"
+            className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)]"
             data-testid={`button-manage-assessment-${a.id}`}
             title="Archivieren / Löschen"
           >
@@ -587,15 +587,15 @@ export default function DashboardClient({
 
   function renderAssessmentList() {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl" data-testid="section-assessments">
-        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+      <div className="bg-white border border-[var(--eds-border)] rounded-xl" data-testid="section-assessments">
+        <div className="px-6 py-5 border-b border-[var(--eds-border)] flex items-center justify-between">
           <div>
             <h3 className="text-base font-semibold text-brand-navy">Assessments</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">
               {clientGroups.length > 1
                 ? `${clientGroups.filter(([k]) => k !== "__none__").length} Kunden · `
                 : ""}
-              {activeCount > 0 && <span className="font-medium text-emerald-600">{activeCount} aktiv</span>}
+              {activeCount > 0 && <span className="font-medium text-[var(--eds-status-green)]">{activeCount} aktiv</span>}
               {activeCount > 0 && draftCount > 0 && " · "}
               {draftCount > 0 && <span>{draftCount} Entwurf</span>}
               {(activeCount > 0 || draftCount > 0) && completedCount > 0 && " · "}
@@ -617,7 +617,7 @@ export default function DashboardClient({
 
         {localAssessments.length === 0 ? (
           <div className="p-12 text-center">
-            <p className="text-sm text-slate-500 mb-4">Noch keine Assessments vorhanden.</p>
+            <p className="text-sm text-[var(--eds-text-tertiary)] mb-4">Noch keine Assessments vorhanden.</p>
             <button
               onClick={() => setShowCreate(true)}
               className="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-white rounded-lg bg-brand-navy hover:opacity-90"
@@ -637,22 +637,22 @@ export default function DashboardClient({
               const clientLabel = clientKey === "__none__" ? "Ohne Kunde" : clientKey;
               const clientActiveCount = items.filter((a) => a.status === "active").length;
               return (
-                <div key={clientKey} className="border-b border-slate-100 last:border-b-0">
+                <div key={clientKey} className="border-b border-[var(--eds-border)] last:border-b-0">
                   <button
                     onClick={() => toggleClient(clientKey)}
-                    className="w-full flex items-center gap-3 px-6 py-3 bg-slate-50/60 hover:bg-slate-100/60 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-6 py-3 bg-[var(--eds-bg-sunken)]/60 hover:bg-[var(--eds-bg-sunken)]/60 transition-colors text-left"
                     data-testid={`toggle-client-${clientKey}`}
                   >
                     <svg
-                      className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isCollapsed ? "" : "rotate-90"}`}
+                      className={`w-3.5 h-3.5 text-[var(--eds-text-disabled)] transition-transform ${isCollapsed ? "" : "rotate-90"}`}
                       fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
-                    <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-[var(--eds-text-secondary)] uppercase tracking-wider">
                       {clientLabel}
                     </span>
-                    <span className="text-[10px] text-slate-400 tabular-nums">
+                    <span className="text-[10px] text-[var(--eds-text-disabled)] tabular-nums">
                       {items.length} Assessment{items.length !== 1 ? "s" : ""}
                       {clientActiveCount > 0 && (
                         <span className="ml-1 text-emerald-500 font-medium">({clientActiveCount} aktiv)</span>
@@ -675,11 +675,11 @@ export default function DashboardClient({
 
   function renderTeamPanel() {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl">
-        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+      <div className="bg-white border border-[var(--eds-border)] rounded-xl">
+        <div className="px-5 py-4 border-b border-[var(--eds-border)] flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-brand-navy" data-testid="text-team-title">Team</h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[11px] text-[var(--eds-text-disabled)] mt-0.5">
               {teamUsers.length} Person{teamUsers.length !== 1 ? "en" : ""} · {TEAM_ROLE_ORDER.filter((r) => (roleGroups[r]?.length ?? 0) > 0).length} Rollen
             </p>
           </div>
@@ -698,22 +698,22 @@ export default function DashboardClient({
             if (members.length === 0) return null;
             const isCollapsed = collapsedRoles.has(role);
             return (
-              <div key={role} className="border-b border-slate-100 last:border-b-0">
+              <div key={role} className="border-b border-[var(--eds-border)] last:border-b-0">
                 <button
                   onClick={() => toggleRole(role)}
-                  className="w-full flex items-center gap-3 px-5 py-2.5 bg-slate-50/60 hover:bg-slate-100/60 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-5 py-2.5 bg-[var(--eds-bg-sunken)]/60 hover:bg-[var(--eds-bg-sunken)]/60 transition-colors text-left"
                   data-testid={`toggle-role-${role.toLowerCase()}`}
                 >
                   <svg
-                    className={`w-3 h-3 text-slate-400 transition-transform ${isCollapsed ? "" : "rotate-90"}`}
+                    className={`w-3 h-3 text-[var(--eds-text-disabled)] transition-transform ${isCollapsed ? "" : "rotate-90"}`}
                     fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
-                  <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                  <span className="text-[11px] font-semibold text-[var(--eds-text-secondary)] uppercase tracking-wider">
                     {ROLE_LABELS[role] ?? role}
                   </span>
-                  <span className="text-[10px] text-slate-400 tabular-nums">
+                  <span className="text-[10px] text-[var(--eds-text-disabled)] tabular-nums">
                     {members.length}
                   </span>
                 </button>
@@ -721,14 +721,14 @@ export default function DashboardClient({
                   <div className="divide-y divide-slate-50">
                     {members.map((u) => (
                       <div key={u.id} className="px-5 py-2 flex items-center gap-3 pl-10" data-testid={`user-${u.id}`}>
-                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                          <span className="text-[9px] font-bold text-slate-500 uppercase">
+                        <div className="w-6 h-6 rounded-full bg-[var(--eds-bg-sunken)] flex items-center justify-center shrink-0">
+                          <span className="text-[9px] font-bold text-[var(--eds-text-tertiary)] uppercase">
                             {u.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-slate-700 truncate">{u.name}</p>
-                          <p className="text-[10px] text-slate-400 truncate">{u.email}</p>
+                          <p className="text-xs font-medium text-[var(--eds-text-primary)] truncate">{u.name}</p>
+                          <p className="text-[10px] text-[var(--eds-text-disabled)] truncate">{u.email}</p>
                         </div>
                       </div>
                     ))}
@@ -739,7 +739,7 @@ export default function DashboardClient({
           })}
           {teamUsers.length === 0 && (
             <div className="px-5 py-6 text-center">
-              <p className="text-xs text-slate-400">Noch keine Teammitglieder.</p>
+              <p className="text-xs text-[var(--eds-text-disabled)]">Noch keine Teammitglieder.</p>
             </div>
           )}
         </div>
@@ -759,10 +759,10 @@ export default function DashboardClient({
     const range = maxDate - minDate || 1;
 
     return (
-      <div className="bg-white border border-slate-200 rounded-xl" data-testid="section-timeline">
-        <div className="px-6 py-4 border-b border-slate-200">
+      <div className="bg-white border border-[var(--eds-border)] rounded-xl" data-testid="section-timeline">
+        <div className="px-6 py-4 border-b border-[var(--eds-border)]">
           <h3 className="text-sm font-semibold text-brand-navy">Aktive Assessments – Zeitstrahl</h3>
-          <p className="text-[11px] text-slate-400 mt-0.5">{activeAssessments.length} aktive Assessment{activeAssessments.length !== 1 ? "s" : ""}</p>
+          <p className="text-[11px] text-[var(--eds-text-disabled)] mt-0.5">{activeAssessments.length} aktive Assessment{activeAssessments.length !== 1 ? "s" : ""}</p>
         </div>
         <div className="px-6 py-4 space-y-3">
           {activeAssessments.map((a) => {
@@ -772,15 +772,15 @@ export default function DashboardClient({
             const widthPct = Math.max(((end - start) / range) * 100, 2);
             return (
               <div key={a.id} className="flex items-center gap-3">
-                <div className="w-32 shrink-0 truncate text-xs font-medium text-slate-700">{a.name}</div>
-                <div className="flex-1 relative h-6 bg-slate-100 rounded-full overflow-hidden">
+                <div className="w-32 shrink-0 truncate text-xs font-medium text-[var(--eds-text-primary)]">{a.name}</div>
+                <div className="flex-1 relative h-6 bg-[var(--eds-bg-sunken)] rounded-full overflow-hidden">
                   <div
-                    className="absolute top-0.5 bottom-0.5 rounded-full bg-emerald-500/80"
+                    className="absolute top-0.5 bottom-0.5 rounded-full bg-[var(--eds-status-green-bg)]0/80"
                     style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                     title={`${formatDate(a.startDate)} – ${formatDate(a.endDate)}`}
                   />
                 </div>
-                <div className="w-36 shrink-0 text-[10px] text-slate-400 text-right">
+                <div className="w-36 shrink-0 text-[10px] text-[var(--eds-text-disabled)] text-right">
                   {formatDate(a.startDate)} – {formatDate(a.endDate)}
                 </div>
               </div>
@@ -799,29 +799,29 @@ export default function DashboardClient({
       {activeSection === "dashboard" && (
         <>
           <div className="grid md:grid-cols-5 gap-4" data-testid="kpi-grid">
-                <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-assessments">
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-assessments">
                   <p className="text-2xl font-bold" style={{ color: "#A6473B" }}>{localAssessments.length}</p>
-                  <p className="text-xs text-slate-500 mt-1">Assessments</p>
+                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Assessments</p>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-active">
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-active">
                   <p className="text-2xl font-bold" style={{ color: "#297587" }}>{activeCount}</p>
-                  <p className="text-xs text-slate-500 mt-1">Aktiv</p>
+                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Aktiv</p>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-teilnehmer">
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-teilnehmer">
                   <p className="text-2xl font-bold" style={{ color: "#5F1A11" }}>{totalCandidates}</p>
-                  <p className="text-xs text-slate-500 mt-1">Teilnehmer</p>
+                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Teilnehmer</p>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-übungen">
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-übungen">
                   <p className="text-2xl font-bold" style={{ color: "#115560" }}>{totalExercises}</p>
-                  <p className="text-xs text-slate-500 mt-1">Übungen</p>
+                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Übungen</p>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-4 text-center" data-testid="kpi-team">
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-team">
                   <p className="text-2xl font-bold" style={{ color: "#297587" }}>{teamUsers.length}</p>
-                  <p className="text-xs text-slate-500 mt-1">Team</p>
+                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Team</p>
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-schnellzugriff">
+              <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-schnellzugriff">
                 <h3 className="text-sm font-semibold mb-3" style={{ color: "#A6473B" }}>Schnellzugriff</h3>
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -837,7 +837,7 @@ export default function DashboardClient({
                   </button>
                   <Link
                     href={`${base}/users`}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)] transition-all"
                     data-testid="quick-action-new-user"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -861,7 +861,7 @@ export default function DashboardClient({
 
               {renderAssessmentList()}
 
-              <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid="section-activity-feed">
+              <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-activity-feed">
                 <h3 className="text-sm font-semibold mb-4" style={{ color: "#A6473B" }}>Letzte Aktivitäten</h3>
                 <div className="space-y-3">
                   {localAssessments.slice(0, 5).map((a, i) => {
@@ -875,15 +875,15 @@ export default function DashboardClient({
                       <div key={`${i}-${j}`} className="flex items-start gap-3 py-2 border-b border-slate-50 last:border-0">
                         <span className="text-sm mt-0.5">{act.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-700 truncate">{act.text}</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">{act.time}</p>
+                          <p className="text-sm text-[var(--eds-text-primary)] truncate">{act.text}</p>
+                          <p className="text-[10px] text-[var(--eds-text-disabled)] mt-0.5">{act.time}</p>
                         </div>
                         <div className="w-1.5 h-1.5 rounded-full mt-2 shrink-0" style={{ backgroundColor: act.accent }} />
                       </div>
                     ));
                   }).flat()}
                   {localAssessments.length === 0 && (
-                    <p className="text-sm text-slate-400 text-center py-4">Noch keine Aktivitäten vorhanden</p>
+                    <p className="text-sm text-[var(--eds-text-disabled)] text-center py-4">Noch keine Aktivitäten vorhanden</p>
                   )}
                 </div>
               </div>
@@ -904,29 +904,29 @@ export default function DashboardClient({
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl font-bold" style={{ color: "#A6473B" }}>Modul-Freigabe</h2>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-[var(--eds-text-tertiary)] mt-1">
                   Steuern Sie, welche Module für Ihre Kollegen sichtbar und nutzbar sind.
                   Nicht freigegebene Module sind nur für Administratoren zugänglich.
                 </p>
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
+              <div className="bg-white border border-[var(--eds-border)] rounded-xl divide-y divide-slate-100">
                 {modules.map((mod) => {
                   const isOn = localFlags[mod.moduleKey] ?? false;
                   return (
                     <div key={mod.moduleKey} className="flex items-center justify-between px-6 py-4" data-testid={`flag-row-${mod.moduleKey}`}>
                       <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-[var(--eds-bg-sunken)] flex items-center justify-center shrink-0">
                           <ModuleIcon icon={mod.icon} color={isOn ? "#3b82f6" : "#94a3b8"} />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-slate-800">{mod.title}</p>
-                          <p className="text-xs text-slate-400">{mod.description}</p>
+                          <p className="text-sm font-medium text-[var(--eds-text-primary)]">{mod.title}</p>
+                          <p className="text-xs text-[var(--eds-text-disabled)]">{mod.description}</p>
                         </div>
                       </div>
                       <button
                         onClick={() => setLocalFlags(prev => ({ ...prev, [mod.moduleKey]: !prev[mod.moduleKey] }))}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isOn ? "bg-blue-600" : "bg-slate-300"}`}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isOn ? "bg-[var(--eds-status-blue)]" : "bg-slate-300"}`}
                         data-testid={`toggle-${mod.moduleKey}`}
                       >
                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${isOn ? "translate-x-6" : "translate-x-1"}`} />
@@ -959,13 +959,13 @@ export default function DashboardClient({
                   {savingFlags ? "Wird gespeichert..." : "Änderungen speichern"}
                 </button>
                 {flagSaved && (
-                  <span className="text-sm text-emerald-600 font-medium">Gespeichert</span>
+                  <span className="text-sm text-[var(--eds-status-green)] font-medium">Gespeichert</span>
                 )}
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-                <h3 className="text-sm font-semibold text-blue-800 mb-2">Hinweis zur Modul-Freigabe</h3>
-                <ul className="text-xs text-blue-700 space-y-1.5 list-disc list-inside">
+              <div className="bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] rounded-xl p-5">
+                <h3 className="text-sm font-semibold text-[var(--eds-status-blue)] mb-2">Hinweis zur Modul-Freigabe</h3>
+                <ul className="text-xs text-[var(--eds-status-blue)] space-y-1.5 list-disc list-inside">
                   <li>Nur freigegebene Module sind für reguläre Benutzer sichtbar und nutzbar.</li>
                   <li>Als Administrator haben Sie Zugriff auf alle Module — unabhängig vom Freigabestatus.</li>
                   <li>Die Seite muss nach dem Speichern neu geladen werden, damit die Sidebar-Änderungen sichtbar werden.</li>

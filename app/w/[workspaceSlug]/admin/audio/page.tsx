@@ -37,10 +37,10 @@ interface AudioRecording {
 const accentColor = "hsl(14, 48%, 44%)";
 
 const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
-  uploaded: { bg: "bg-slate-100", text: "text-slate-600", label: "Hochgeladen" },
-  transcribed: { bg: "bg-blue-50", text: "text-blue-700", label: "Transkribiert" },
-  summarized: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Zusammengefasst" },
-  error: { bg: "bg-red-50", text: "text-red-700", label: "Fehler" },
+  uploaded: { bg: "bg-[var(--eds-bg-sunken)]", text: "text-[var(--eds-text-secondary)]", label: "Hochgeladen" },
+  transcribed: { bg: "bg-[var(--eds-status-blue-bg)]", text: "text-[var(--eds-status-blue)]", label: "Transkribiert" },
+  summarized: { bg: "bg-[var(--eds-status-green-bg)]", text: "text-[var(--eds-status-green)]", label: "Zusammengefasst" },
+  error: { bg: "bg-[var(--eds-status-red-bg)]", text: "text-[var(--eds-status-red)]", label: "Fehler" },
 };
 
 const ACCEPTED_AUDIO = ".mp3,.wav,.m4a";
@@ -196,12 +196,12 @@ export default function AudioRecordingsPage() {
           >
             Audioaufnahmen
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-[var(--eds-text-tertiary)]">
             Audioaufnahmen hochladen, transkribieren und zusammenfassen
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8">
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 mb-8">
           <h2
             className="text-lg font-semibold mb-4"
             style={{ fontFamily: "'Playfair Display', serif", color: accentColor }}
@@ -211,19 +211,19 @@ export default function AudioRecordingsPage() {
 
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Audiodatei *</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Audiodatei *</label>
               <input
                 type="file"
                 accept={ACCEPTED_AUDIO}
                 ref={fileInputRef}
                 data-testid="input-audio-file"
-                className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:text-white file:cursor-pointer"
+                className="w-full text-sm text-[var(--eds-text-tertiary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:text-white file:cursor-pointer"
                 style={{ "--file-bg": accentColor } as React.CSSProperties}
               />
               <style>{`input[type="file"]::file-selector-button { background-color: ${accentColor}; }`}</style>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Aufbewahrung (Tage)</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Aufbewahrung (Tage)</label>
               <input
                 type="number"
                 value={retentionDays}
@@ -231,19 +231,19 @@ export default function AudioRecordingsPage() {
                 min={1}
                 max={365}
                 data-testid="input-retention-days"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2"
+                className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2"
               />
             </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Assessment (optional)</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Assessment (optional)</label>
               <select
                 value={uploadAssessmentId}
                 onChange={(e) => handleAssessmentSelect(e.target.value)}
                 data-testid="select-upload-assessment"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2"
+                className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2"
               >
                 <option value="">Kein Assessment</option>
                 {assessments.map((a) => (
@@ -254,13 +254,13 @@ export default function AudioRecordingsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Übung (optional)</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Übung (optional)</label>
               <select
                 value={uploadExerciseId}
                 onChange={(e) => setUploadExerciseId(e.target.value)}
                 disabled={!uploadAssessmentId}
                 data-testid="select-upload-exercise"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 disabled:opacity-50"
+                className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 disabled:opacity-50"
               >
                 <option value="">Keine Übung</option>
                 {exercises.map((ex) => (
@@ -271,13 +271,13 @@ export default function AudioRecordingsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Kandidat (optional)</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Kandidat (optional)</label>
               <select
                 value={uploadCandidateId}
                 onChange={(e) => setUploadCandidateId(e.target.value)}
                 disabled={!uploadAssessmentId}
                 data-testid="select-upload-candidate"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 disabled:opacity-50"
+                className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 disabled:opacity-50"
               >
                 <option value="">Kein Kandidat</option>
                 {candidates.map((c) => (
@@ -290,12 +290,12 @@ export default function AudioRecordingsPage() {
           </div>
 
           {uploadError && (
-            <p className="text-sm text-red-500 mb-3" data-testid="text-upload-error">
+            <p className="text-sm text-[var(--eds-status-red)] mb-3" data-testid="text-upload-error">
               {uploadError}
             </p>
           )}
           {uploadSuccess && (
-            <p className="text-sm text-emerald-600 mb-3" data-testid="text-upload-success">
+            <p className="text-sm text-[var(--eds-status-green)] mb-3" data-testid="text-upload-success">
               {uploadSuccess}
             </p>
           )}
@@ -318,15 +318,15 @@ export default function AudioRecordingsPage() {
           >
             Aufnahmen
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[var(--eds-text-disabled)]">
             {recordings.length} {recordings.length === 1 ? "Aufnahme" : "Aufnahmen"}
           </p>
         </div>
 
-        {loading && <p className="text-sm text-slate-400">Laden…</p>}
+        {loading && <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>}
 
         {!loading && recordings.length === 0 && (
-          <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+          <div className="bg-white border border-[var(--eds-border)] rounded-xl p-8 text-center text-[var(--eds-text-disabled)]">
             Keine Aufnahmen vorhanden.
           </div>
         )}
@@ -339,13 +339,13 @@ export default function AudioRecordingsPage() {
             return (
               <div
                 key={rec.id}
-                className="bg-white border border-slate-200 rounded-xl p-5"
+                className="bg-white border border-[var(--eds-border)] rounded-xl p-5"
                 data-testid={`card-recording-${rec.id}`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
-                      <h3 className="font-medium text-slate-900 text-sm">
+                      <h3 className="font-medium text-[var(--eds-text-primary)] text-sm">
                         {rec.originalFileName || "Unbenannt"}
                       </h3>
                       <span
@@ -355,7 +355,7 @@ export default function AudioRecordingsPage() {
                         {badge.label}
                       </span>
                     </div>
-                    <div className="flex gap-4 text-xs text-slate-400">
+                    <div className="flex gap-4 text-xs text-[var(--eds-text-disabled)]">
                       {rec.duration != null && <span>{rec.duration}s</span>}
                       <span>
                         {new Date(rec.createdAt).toLocaleDateString("de-DE", {
@@ -372,7 +372,7 @@ export default function AudioRecordingsPage() {
                       onClick={() => handleProcess(rec.id, "transcribe")}
                       disabled={isProcessing}
                       data-testid={`button-transcribe-${rec.id}`}
-                      className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)] transition-colors disabled:opacity-50"
                     >
                       {isProcessing ? "…" : "Transkribieren"}
                     </button>
@@ -381,7 +381,7 @@ export default function AudioRecordingsPage() {
                         onClick={() => handleProcess(rec.id, "summarize")}
                         disabled={isProcessing}
                         data-testid={`button-summarize-${rec.id}`}
-                        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-status-blue-bg)] text-[var(--eds-status-blue)] hover:bg-[var(--eds-status-blue-bg)] transition-colors disabled:opacity-50"
                       >
                         Zusammenfassen
                       </button>
@@ -389,7 +389,7 @@ export default function AudioRecordingsPage() {
                     <button
                       onClick={() => handleDelete(rec.id)}
                       data-testid={`button-delete-${rec.id}`}
-                      className="text-xs font-medium text-red-500 hover:text-red-700 px-2 py-1.5"
+                      className="text-xs font-medium text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] px-2 py-1.5"
                     >
                       Löschen
                     </button>
@@ -399,7 +399,7 @@ export default function AudioRecordingsPage() {
                 {rec.transcript && (
                   <div className="mb-2">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-slate-500">Transkript</span>
+                      <span className="text-xs font-medium text-[var(--eds-text-tertiary)]">Transkript</span>
                       <button
                         onClick={() =>
                           setTranscriptModal({
@@ -408,12 +408,12 @@ export default function AudioRecordingsPage() {
                           })
                         }
                         data-testid={`button-view-transcript-${rec.id}`}
-                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-xs text-[var(--eds-status-blue)] hover:text-blue-800 font-medium"
                       >
                         Vollständig anzeigen
                       </button>
                     </div>
-                    <p className="text-xs text-slate-500 bg-slate-50 rounded-lg p-2 line-clamp-2">
+                    <p className="text-xs text-[var(--eds-text-tertiary)] bg-[var(--eds-bg-sunken)] rounded-lg p-2 line-clamp-2">
                       {rec.transcript.substring(0, 200)}
                       {rec.transcript.length > 200 ? "…" : ""}
                     </p>
@@ -423,7 +423,7 @@ export default function AudioRecordingsPage() {
                 {rec.aiSummary && (
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-slate-500">Zusammenfassung</span>
+                      <span className="text-xs font-medium text-[var(--eds-text-tertiary)]">Zusammenfassung</span>
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
                         KI-generiert
                       </span>
@@ -441,7 +441,7 @@ export default function AudioRecordingsPage() {
                         Vollständig anzeigen
                       </button>
                     </div>
-                    <p className="text-xs text-slate-500 bg-purple-50 rounded-lg p-2 line-clamp-2">
+                    <p className="text-xs text-[var(--eds-text-tertiary)] bg-purple-50 rounded-lg p-2 line-clamp-2">
                       {rec.aiSummary.substring(0, 200)}
                       {rec.aiSummary.length > 200 ? "…" : ""}
                     </p>
@@ -464,12 +464,12 @@ export default function AudioRecordingsPage() {
               <button
                 onClick={() => setTranscriptModal(null)}
                 data-testid="button-close-transcript"
-                className="text-slate-400 hover:text-slate-600 text-xl"
+                className="text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)] text-xl"
               >
                 ✕
               </button>
             </div>
-            <div className="text-sm text-slate-700 whitespace-pre-wrap bg-slate-50 rounded-lg p-4">
+            <div className="text-sm text-[var(--eds-text-primary)] whitespace-pre-wrap bg-[var(--eds-bg-sunken)] rounded-lg p-4">
               {transcriptModal.content}
             </div>
           </div>
@@ -494,13 +494,13 @@ export default function AudioRecordingsPage() {
               <button
                 onClick={() => setSummaryModal(null)}
                 data-testid="button-close-summary"
-                className="text-slate-400 hover:text-slate-600 text-xl"
+                className="text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)] text-xl"
               >
                 ✕
               </button>
             </div>
             {summaryModal.meta && (
-              <div className="flex gap-4 text-xs text-slate-400 mb-3">
+              <div className="flex gap-4 text-xs text-[var(--eds-text-disabled)] mb-3">
                 {summaryModal.meta.model && <span>Modell: {summaryModal.meta.model}</span>}
                 {summaryModal.meta.timestamp && (
                   <span>
@@ -509,7 +509,7 @@ export default function AudioRecordingsPage() {
                 )}
               </div>
             )}
-            <div className="text-sm text-slate-700 whitespace-pre-wrap bg-purple-50 rounded-lg p-4">
+            <div className="text-sm text-[var(--eds-text-primary)] whitespace-pre-wrap bg-purple-50 rounded-lg p-4">
               {summaryModal.content}
             </div>
           </div>

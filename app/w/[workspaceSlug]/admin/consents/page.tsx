@@ -62,12 +62,12 @@ export default function ConsentManagementPage() {
           >
             Einwilligungsverwaltung
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-[var(--eds-text-tertiary)]">
             Einwilligungsvorlagen und -aufzeichnungen verwalten
           </p>
         </div>
 
-        <div className="flex gap-1 mb-6 border-b border-slate-200">
+        <div className="flex gap-1 mb-6 border-b border-[var(--eds-border)]">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -76,7 +76,7 @@ export default function ConsentManagementPage() {
               className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === tab.key
                   ? "text-[hsl(14,48%,44%)]"
-                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"
               }`}
               style={activeTab === tab.key ? { borderBottomColor: ACCENT } : {}}
             >
@@ -183,7 +183,7 @@ function TemplatesTab({ workspaceSlug }: { workspaceSlug: string }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500" data-testid="text-template-count">
+        <p className="text-sm text-[var(--eds-text-tertiary)]" data-testid="text-template-count">
           {templates.length} Vorlagen
         </p>
         <button
@@ -200,11 +200,11 @@ function TemplatesTab({ workspaceSlug }: { workspaceSlug: string }) {
       </div>
 
       {error && (
-        <p className="text-sm text-red-500" data-testid="text-error">{error}</p>
+        <p className="text-sm text-[var(--eds-status-red)]" data-testid="text-error">{error}</p>
       )}
 
       {showCreate && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
           <h2
             className="text-lg font-semibold mb-4"
             style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}
@@ -213,24 +213,24 @@ function TemplatesTab({ workspaceSlug }: { workspaceSlug: string }) {
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4" data-testid="form-template">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Name *</label>
               <input
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 required
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                 data-testid="input-template-name"
                 placeholder="z.B. Audioaufnahme-Einwilligung"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Sprache</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Sprache</label>
                 <select
                   value={formLanguage}
                   onChange={(e) => setFormLanguage(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                  className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                   data-testid="select-template-language"
                 >
                   <option value="de">Deutsch</option>
@@ -238,11 +238,11 @@ function TemplatesTab({ workspaceSlug }: { workspaceSlug: string }) {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Kategorie</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Kategorie</label>
                 <select
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                  className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                   data-testid="select-template-category"
                 >
                   {CATEGORIES.map((c) => (
@@ -252,19 +252,19 @@ function TemplatesTab({ workspaceSlug }: { workspaceSlug: string }) {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Inhalt *</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Inhalt *</label>
               <textarea
                 value={formContent}
                 onChange={(e) => setFormContent(e.target.value)}
                 required
                 rows={5}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                 data-testid="input-template-content"
                 placeholder="Einwilligungstext eingeben…"
               />
             </div>
             {formError && (
-              <p className="text-sm text-red-500" data-testid="text-form-error">{formError}</p>
+              <p className="text-sm text-[var(--eds-status-red)]" data-testid="text-form-error">{formError}</p>
             )}
             <button
               type="submit"
@@ -279,39 +279,39 @@ function TemplatesTab({ workspaceSlug }: { workspaceSlug: string }) {
         </div>
       )}
 
-      {loading && <p className="text-sm text-slate-400">Laden…</p>}
+      {loading && <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>}
 
       <div className="space-y-3">
         {templates.map((t) => (
           <div
             key={t.id}
-            className="bg-white border border-slate-200 rounded-xl p-5 flex items-start justify-between"
+            className="bg-white border border-[var(--eds-border)] rounded-xl p-5 flex items-start justify-between"
             data-testid={`card-template-${t.id}`}
           >
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-1">
-                <h3 className="font-semibold text-slate-900">{t.name}</h3>
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                <h3 className="font-semibold text-[var(--eds-text-primary)]">{t.name}</h3>
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--eds-bg-sunken)] text-[var(--eds-text-secondary)]">
                   {CATEGORY_LABELS[t.category] || t.category}
                 </span>
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--eds-status-blue-bg)] text-[var(--eds-status-blue)]">
                   {t.language === "de" ? "Deutsch" : "Englisch"}
                 </span>
-                <span className="text-xs text-slate-400">v{t.version}</span>
+                <span className="text-xs text-[var(--eds-text-disabled)]">v{t.version}</span>
               </div>
-              <p className="text-sm text-slate-500 line-clamp-2">{t.content}</p>
+              <p className="text-sm text-[var(--eds-text-tertiary)] line-clamp-2">{t.content}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0 ml-4">
               <button
                 onClick={() => startEdit(t)}
-                className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)] transition-colors"
                 data-testid={`button-edit-template-${t.id}`}
               >
                 Bearbeiten
               </button>
               <button
                 onClick={() => handleArchive(t.id)}
-                className="text-xs font-medium text-red-500 hover:text-red-700"
+                className="text-xs font-medium text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)]"
                 data-testid={`button-archive-template-${t.id}`}
               >
                 Archivieren
@@ -320,7 +320,7 @@ function TemplatesTab({ workspaceSlug }: { workspaceSlug: string }) {
           </div>
         ))}
         {templates.length === 0 && !loading && (
-          <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+          <div className="bg-white border border-[var(--eds-border)] rounded-xl p-8 text-center text-[var(--eds-text-disabled)]">
             Keine Einwilligungsvorlagen vorhanden.
           </div>
         )}
@@ -359,7 +359,7 @@ function RecordsTab({ workspaceSlug }: { workspaceSlug: string }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500" data-testid="text-record-count">
+        <p className="text-sm text-[var(--eds-text-tertiary)]" data-testid="text-record-count">
           {records.length} Einwilligungen
         </p>
         <div>
@@ -369,7 +369,7 @@ function RecordsTab({ workspaceSlug }: { workspaceSlug: string }) {
               setFilterFeature(e.target.value);
               setLoading(true);
             }}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+            className="rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
             data-testid="select-filter-feature"
           >
             <option value="">Alle Features</option>
@@ -381,47 +381,47 @@ function RecordsTab({ workspaceSlug }: { workspaceSlug: string }) {
       </div>
 
       {error && (
-        <p className="text-sm text-red-500" data-testid="text-error">{error}</p>
+        <p className="text-sm text-[var(--eds-status-red)]" data-testid="text-error">{error}</p>
       )}
 
-      {loading && <p className="text-sm text-slate-400">Laden…</p>}
+      {loading && <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>}
 
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-white border border-[var(--eds-border)] rounded-xl overflow-hidden">
         <table className="w-full text-sm" data-testid="table-records">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50">
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Benutzer-ID</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Feature</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Vorlage</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Datum</th>
+            <tr className="border-b border-[var(--eds-border)] bg-[var(--eds-bg-sunken)]">
+              <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Benutzer-ID</th>
+              <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Feature</th>
+              <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Vorlage</th>
+              <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Status</th>
+              <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Datum</th>
             </tr>
           </thead>
           <tbody>
             {records.map((r) => (
-              <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50" data-testid={`row-record-${r.id}`}>
-                <td className="px-4 py-3 font-mono text-xs text-slate-600">{r.userId.substring(0, 8)}…</td>
+              <tr key={r.id} className="border-b border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)]" data-testid={`row-record-${r.id}`}>
+                <td className="px-4 py-3 font-mono text-xs text-[var(--eds-text-secondary)]">{r.userId.substring(0, 8)}…</td>
                 <td className="px-4 py-3">{r.feature}</td>
-                <td className="px-4 py-3 text-slate-500">{r.template?.name || "–"}</td>
+                <td className="px-4 py-3 text-[var(--eds-text-tertiary)]">{r.template?.name || "–"}</td>
                 <td className="px-4 py-3">
                   {r.granted ? (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)]">
                       Erteilt
                     </span>
                   ) : (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-500">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--eds-status-red-bg)] text-[var(--eds-status-red)]">
                       Verweigert
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-slate-500">
+                <td className="px-4 py-3 text-[var(--eds-text-tertiary)]">
                   {new Date(r.createdAt).toLocaleDateString("de-DE")}
                 </td>
               </tr>
             ))}
             {records.length === 0 && !loading && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={5} className="px-4 py-8 text-center text-[var(--eds-text-disabled)]">
                   Keine Einwilligungen vorhanden.
                 </td>
               </tr>

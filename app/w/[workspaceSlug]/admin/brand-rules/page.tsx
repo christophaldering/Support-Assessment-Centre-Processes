@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/shared/PageHeader";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -26,14 +27,14 @@ interface RulesJson {
 }
 
 const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
-  draft: { bg: "bg-slate-50", text: "text-slate-600", label: "Entwurf" },
-  active: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Aktiv" },
-  archived: { bg: "bg-red-50", text: "text-red-500", label: "Archiviert" },
+  draft: { bg: "bg-[var(--eds-bg-sunken)]", text: "text-[var(--eds-text-secondary)]", label: "Entwurf" },
+  active: { bg: "bg-[var(--eds-status-green-bg)]", text: "text-[var(--eds-status-green)]", label: "Aktiv" },
+  archived: { bg: "bg-[var(--eds-status-red-bg)]", text: "text-[var(--eds-status-red)]", label: "Archiviert" },
 };
 
-const inputClass = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue";
+const inputClass = "w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue";
 const btnPrimary = "rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors";
-const btnDanger = "text-xs text-red-500 hover:text-red-700 font-medium";
+const btnDanger = "text-xs text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] font-medium";
 
 const EMPTY_RULES: RulesJson = {
   colors: { primary: "#1a1a2e", secondary: "#16213e", accent: "#e94560", background: "#ffffff" },
@@ -66,12 +67,12 @@ export default function BrandRulesPage() {
 
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-brand-navy">Brand & Style</h1>
-          <p className="text-sm text-slate-500">Markenregelwerke verwalten und auf das Workspace-Theme anwenden</p>
-        </div>
+        <PageHeader
+          title="Brand & Style"
+          description="Markenregelwerke verwalten und auf das Workspace-Theme anwenden"
+        />
 
-        <div className="flex gap-1 mb-6 border-b border-slate-200">
+        <div className="flex gap-1 mb-6 border-b border-[var(--eds-border)]">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -80,7 +81,7 @@ export default function BrandRulesPage() {
               className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === tab.key
                   ? "border-brand-blue text-brand-blue"
-                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"
               }`}
             >
               {tab.label}
@@ -107,8 +108,8 @@ interface StyleGuide {
 }
 
 const STYLE_GUIDE_STATUS: Record<string, { bg: string; text: string; label: string }> = {
-  uploaded: { bg: "bg-amber-50", text: "text-amber-600", label: "Hochgeladen" },
-  analyzed: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Analysiert" },
+  uploaded: { bg: "bg-[var(--eds-status-amber-bg)]", text: "text-[var(--eds-status-amber)]", label: "Hochgeladen" },
+  analyzed: { bg: "bg-[var(--eds-status-green-bg)]", text: "text-[var(--eds-status-green)]", label: "Analysiert" },
 };
 
 function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; router: ReturnType<typeof useRouter> }) {
@@ -174,7 +175,7 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
           <h2 className="text-lg font-semibold text-[#1a1a2e]" style={{ fontFamily: "Satoshi, sans-serif" }} data-testid="heading-style-guides">
             Style Guides
           </h2>
-          <p className="text-sm text-slate-500">Hochgeladene Marken-Styleguides für diesen Workspace</p>
+          <p className="text-sm text-[var(--eds-text-tertiary)]">Hochgeladene Marken-Styleguides für diesen Workspace</p>
         </div>
         <button
           onClick={() => setShowUpload(!showUpload)}
@@ -187,13 +188,13 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
       </div>
 
       {showUpload && (
-        <div className="bg-[#EFF4F5] border border-slate-200 rounded-xl p-6 mb-4" data-testid="section-upload-form">
+        <div className="bg-[#EFF4F5] border border-[var(--eds-border)] rounded-xl p-6 mb-4" data-testid="section-upload-form">
           <h3 className="text-sm font-semibold text-[#1a1a2e] mb-4" style={{ fontFamily: "Satoshi, sans-serif" }}>
             Neuen Style Guide hochladen
           </h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Titel *</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Titel *</label>
               <input
                 type="text"
                 value={uploadTitle}
@@ -204,16 +205,16 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">PDF-Datei *</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">PDF-Datei *</label>
               <input
                 type="file"
                 accept=".pdf"
                 onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
                 data-testid="input-upload-file"
-                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#A6473B] file:text-white hover:file:opacity-90 file:cursor-pointer"
+                className="block w-full text-sm text-[var(--eds-text-tertiary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#A6473B] file:text-white hover:file:opacity-90 file:cursor-pointer"
               />
             </div>
-            {uploadError && <p className="text-sm text-red-500" data-testid="text-upload-error">{uploadError}</p>}
+            {uploadError && <p className="text-sm text-[var(--eds-status-red)]" data-testid="text-upload-error">{uploadError}</p>}
             <button
               onClick={handleUpload}
               disabled={!uploadFile || !uploadTitle.trim() || uploading}
@@ -227,10 +228,10 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
         </div>
       )}
 
-      {loading && <p className="text-sm text-slate-400">Laden…</p>}
+      {loading && <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>}
 
       {!loading && styleGuides.length === 0 && !showUpload && (
-        <div className="bg-white border border-dashed border-slate-300 rounded-xl p-6 text-center text-slate-400 text-sm" data-testid="text-no-style-guides">
+        <div className="bg-white border border-dashed border-[var(--eds-border-strong)] rounded-xl p-6 text-center text-[var(--eds-text-disabled)] text-sm" data-testid="text-no-style-guides">
           Noch keine Style Guides hochgeladen.
         </div>
       )}
@@ -243,7 +244,7 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
             return (
               <div
                 key={sg.id}
-                className="bg-white border border-slate-200 rounded-xl p-5"
+                className="bg-white border border-[var(--eds-border)] rounded-xl p-5"
                 data-testid={`card-style-guide-${sg.id}`}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -251,7 +252,7 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
                     <h4 className="font-semibold text-[#1a1a2e] text-sm" data-testid={`text-sg-title-${sg.id}`}>
                       {sg.title}
                     </h4>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-[var(--eds-text-disabled)] mt-0.5">
                       {sg.sourceType === "pdf_upload" ? "PDF Upload" : sg.sourceType} · {formatDate(sg.createdAt)}
                     </p>
                   </div>
@@ -264,19 +265,19 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
                 </div>
 
                 {analysis && (
-                  <div className="mt-3 pt-3 border-t border-slate-100 space-y-2" data-testid={`section-sg-analysis-${sg.id}`}>
+                  <div className="mt-3 pt-3 border-t border-[var(--eds-border)] space-y-2" data-testid={`section-sg-analysis-${sg.id}`}>
                     {analysis.colors && (
                       <div>
-                        <p className="text-xs font-medium text-slate-600 mb-1">Farben</p>
+                        <p className="text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Farben</p>
                         <div className="flex gap-1.5">
                           {Object.entries(analysis.colors).map(([key, val]) => (
                             <div key={key} className="flex items-center gap-1">
                               <div
-                                className="w-5 h-5 rounded border border-slate-200"
+                                className="w-5 h-5 rounded border border-[var(--eds-border)]"
                                 style={{ backgroundColor: val }}
                                 title={`${key}: ${val}`}
                               />
-                              <span className="text-[10px] text-slate-400 font-mono">{val}</span>
+                              <span className="text-[10px] text-[var(--eds-text-disabled)] font-mono">{val}</span>
                             </div>
                           ))}
                         </div>
@@ -284,16 +285,16 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
                     )}
                     {analysis.fonts && (
                       <div>
-                        <p className="text-xs font-medium text-slate-600 mb-1">Schriften</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Schriften</p>
+                        <p className="text-xs text-[var(--eds-text-tertiary)]">
                           {Object.entries(analysis.fonts).map(([k, v]) => `${k}: ${v}`).join(", ")}
                         </p>
                       </div>
                     )}
                     {analysis.principles && analysis.principles.length > 0 && (
                       <div>
-                        <p className="text-xs font-medium text-slate-600 mb-1">Gestaltungsprinzipien</p>
-                        <ul className="text-xs text-slate-500 list-disc list-inside">
+                        <p className="text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Gestaltungsprinzipien</p>
+                        <ul className="text-xs text-[var(--eds-text-tertiary)] list-disc list-inside">
                           {analysis.principles.slice(0, 3).map((p, i) => (
                             <li key={i}>{p}</li>
                           ))}
@@ -368,7 +369,7 @@ function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router:
       <StyleGuidesSection workspaceSlug={workspaceSlug} router={router} />
 
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500" data-testid="text-ruleset-count">{ruleSets.length} Regelwerke</p>
+        <p className="text-sm text-[var(--eds-text-tertiary)]" data-testid="text-ruleset-count">{ruleSets.length} Regelwerke</p>
         <button
           onClick={() => setShowCreate(!showCreate)}
           data-testid="button-create-ruleset"
@@ -378,7 +379,7 @@ function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router:
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-500" data-testid="text-error">{error}</p>}
+      {error && <p className="text-sm text-[var(--eds-status-red)]" data-testid="text-error">{error}</p>}
 
       {showCreate && (
         <CreateRuleSetForm
@@ -388,7 +389,7 @@ function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router:
         />
       )}
 
-      {loading && <p className="text-sm text-slate-400">Laden…</p>}
+      {loading && <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>}
 
       <div className="space-y-4">
         {ruleSets.map((rs) => {
@@ -401,7 +402,7 @@ function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router:
           if (rs.appliesToExerciseMaterials) appliesTo.push("Übung");
 
           return (
-            <div key={rs.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden" data-testid={`card-ruleset-${rs.id}`}>
+            <div key={rs.id} className="bg-white border border-[var(--eds-border)] rounded-xl overflow-hidden" data-testid={`card-ruleset-${rs.id}`}>
               <div
                 className="p-6 flex items-center justify-between cursor-pointer"
                 onClick={() => setExpandedId(isExpanded ? null : rs.id)}
@@ -413,12 +414,12 @@ function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router:
                       {badge.label}
                     </span>
                   </div>
-                  <div className="flex gap-4 mt-1 text-xs text-slate-400">
+                  <div className="flex gap-4 mt-1 text-xs text-[var(--eds-text-disabled)]">
                     <span>Erstellt: {formatDate(rs.createdAt)}</span>
                     {appliesTo.length > 0 && (
                       <span className="flex gap-1">
                         {appliesTo.map((a) => (
-                          <span key={a} className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[10px] font-medium">{a}</span>
+                          <span key={a} className="bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)] px-1.5 py-0.5 rounded text-[10px] font-medium">{a}</span>
                         ))}
                       </span>
                     )}
@@ -429,7 +430,7 @@ function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router:
                     <button
                       onClick={(e) => { e.stopPropagation(); handleActivate(rs.id); }}
                       data-testid={`button-activate-${rs.id}`}
-                      className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                      className="text-xs text-[var(--eds-status-green)] hover:text-[var(--eds-status-green)] font-medium"
                     >
                       Aktivieren
                     </button>
@@ -447,9 +448,9 @@ function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router:
                     <>
                       {deleteConfirmId === rs.id ? (
                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <span className="text-xs text-red-500">Sicher?</span>
-                          <button onClick={() => handleDelete(rs.id)} className="text-xs text-red-600 font-bold hover:text-red-800">Ja</button>
-                          <button onClick={() => setDeleteConfirmId(null)} className="text-xs text-slate-400">Nein</button>
+                          <span className="text-xs text-[var(--eds-status-red)]">Sicher?</span>
+                          <button onClick={() => handleDelete(rs.id)} className="text-xs text-[var(--eds-status-red)] font-bold hover:text-[var(--eds-status-red)]">Ja</button>
+                          <button onClick={() => setDeleteConfirmId(null)} className="text-xs text-[var(--eds-text-disabled)]">Nein</button>
                         </div>
                       ) : (
                         <button
@@ -469,11 +470,11 @@ function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router:
                   >
                     {isExpanded ? "Schließen" : "Bearbeiten"}
                   </button>
-                  <span className="text-slate-400 text-sm">{isExpanded ? "▲" : "▼"}</span>
+                  <span className="text-[var(--eds-text-disabled)] text-sm">{isExpanded ? "▲" : "▼"}</span>
                 </div>
               </div>
               {isExpanded && (
-                <div className="border-t border-slate-200 p-6">
+                <div className="border-t border-[var(--eds-border)] p-6">
                   <EditRuleSetForm
                     workspaceSlug={workspaceSlug}
                     ruleSet={rs}
@@ -485,7 +486,7 @@ function RuleSetsTab({ workspaceSlug, router }: { workspaceSlug: string; router:
           );
         })}
         {ruleSets.length === 0 && !loading && (
-          <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+          <div className="bg-white border border-[var(--eds-border)] rounded-xl p-8 text-center text-[var(--eds-text-disabled)]">
             Keine Regelwerke vorhanden.
           </div>
         )}
@@ -546,7 +547,7 @@ function RulesFormFields({
   return (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+        <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Name *</label>
         <input
           type="text"
           value={name}
@@ -572,19 +573,19 @@ function RulesFormFields({
         <h4 className="text-sm font-semibold text-brand-navy mb-3">Typografie (Typography)</h4>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Heading Font</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Heading Font</label>
             <input type="text" value={rules.typography?.headingFont || ""} onChange={(e) => updateTypography("headingFont", e.target.value)} data-testid="input-heading-font" className={inputClass} placeholder="Playfair Display" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Body Font</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Body Font</label>
             <input type="text" value={rules.typography?.bodyFont || ""} onChange={(e) => updateTypography("bodyFont", e.target.value)} data-testid="input-body-font" className={inputClass} placeholder="Inter" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Heading Size</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Heading Size</label>
             <input type="text" value={rules.typography?.headingSize || ""} onChange={(e) => updateTypography("headingSize", e.target.value)} data-testid="input-heading-size" className={inputClass} placeholder="2rem" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Body Size</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Body Size</label>
             <input type="text" value={rules.typography?.bodySize || ""} onChange={(e) => updateTypography("bodySize", e.target.value)} data-testid="input-body-size" className={inputClass} placeholder="1rem" />
           </div>
         </div>
@@ -594,11 +595,11 @@ function RulesFormFields({
         <h4 className="text-sm font-semibold text-brand-navy mb-3">Abstand & Layout (Spacing)</h4>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Grid Unit</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Grid Unit</label>
             <input type="text" value={rules.spacing?.gridUnit || ""} onChange={(e) => updateSpacing("gridUnit", e.target.value)} data-testid="input-grid-unit" className={inputClass} placeholder="8px" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Margins</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Margins</label>
             <input type="text" value={rules.spacing?.margins || ""} onChange={(e) => updateSpacing("margins", e.target.value)} data-testid="input-margins" className={inputClass} placeholder="24px" />
           </div>
         </div>
@@ -608,7 +609,7 @@ function RulesFormFields({
         <h4 className="text-sm font-semibold text-brand-navy mb-3">Logo-Platzierung</h4>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Position</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Position</label>
             <select value={rules.logo?.position || "top-left"} onChange={(e) => updateLogo("position", e.target.value)} data-testid="select-logo-position" className={inputClass}>
               <option value="top-left">Top Left</option>
               <option value="top-center">Top Center</option>
@@ -616,7 +617,7 @@ function RulesFormFields({
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Max Height</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Max Height</label>
             <input type="text" value={rules.logo?.maxHeight || ""} onChange={(e) => updateLogo("maxHeight", e.target.value)} data-testid="input-logo-max-height" className={inputClass} placeholder="48px" />
           </div>
         </div>
@@ -626,7 +627,7 @@ function RulesFormFields({
         <h4 className="text-sm font-semibold text-brand-navy mb-3">Tonalität (Tone of Voice)</h4>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Style</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Style</label>
             <select value={rules.tone?.style || "formal"} onChange={(e) => updateTone("style", e.target.value)} data-testid="select-tone-style" className={inputClass}>
               <option value="formal">Formal</option>
               <option value="informal">Informal</option>
@@ -634,7 +635,7 @@ function RulesFormFields({
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Notes</label>
             <textarea value={rules.tone?.notes || ""} onChange={(e) => updateTone("notes", e.target.value)} data-testid="input-tone-notes" className={inputClass} rows={2} placeholder="Hinweise zur Tonalität" />
           </div>
         </div>
@@ -643,24 +644,24 @@ function RulesFormFields({
       <div>
         <h4 className="text-sm font-semibold text-brand-navy mb-3">Dokument-Regeln</h4>
         <div className="grid md:grid-cols-2 gap-4">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={rules.document?.coverPage ?? false} onChange={(e) => updateDocument("coverPage", e.target.checked)} data-testid="input-cover-page" className="rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
+            <input type="checkbox" checked={rules.document?.coverPage ?? false} onChange={(e) => updateDocument("coverPage", e.target.checked)} data-testid="input-cover-page" className="rounded border-[var(--eds-border-strong)]" />
             Deckblatt (Cover Page)
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={rules.document?.pageNumbers ?? false} onChange={(e) => updateDocument("pageNumbers", e.target.checked)} data-testid="input-page-numbers" className="rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
+            <input type="checkbox" checked={rules.document?.pageNumbers ?? false} onChange={(e) => updateDocument("pageNumbers", e.target.checked)} data-testid="input-page-numbers" className="rounded border-[var(--eds-border-strong)]" />
             Seitenzahlen
           </label>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Header / Footer</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Header / Footer</label>
             <input type="text" value={rules.document?.headerFooter || ""} onChange={(e) => updateDocument("headerFooter", e.target.value)} data-testid="input-header-footer" className={inputClass} placeholder="Kopf-/Fußzeile" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Vertraulichkeitsvermerk</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Vertraulichkeitsvermerk</label>
             <input type="text" value={rules.document?.confidentialityNote || ""} onChange={(e) => updateDocument("confidentialityNote", e.target.value)} data-testid="input-confidentiality-note" className={inputClass} placeholder="Vertraulich" />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-slate-600 mb-1">Wasserzeichen</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Wasserzeichen</label>
             <input type="text" value={rules.document?.watermark || ""} onChange={(e) => updateDocument("watermark", e.target.value)} data-testid="input-watermark" className={inputClass} placeholder="z.B. ENTWURF" />
           </div>
         </div>
@@ -669,20 +670,20 @@ function RulesFormFields({
       <div>
         <h4 className="text-sm font-semibold text-brand-navy mb-3">Folien-Regeln (Slide Rules)</h4>
         <div className="grid md:grid-cols-2 gap-4">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={rules.slides?.titleSlide ?? false} onChange={(e) => updateSlides("titleSlide", e.target.checked)} data-testid="input-title-slide" className="rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
+            <input type="checkbox" checked={rules.slides?.titleSlide ?? false} onChange={(e) => updateSlides("titleSlide", e.target.checked)} data-testid="input-title-slide" className="rounded border-[var(--eds-border-strong)]" />
             Titelfolie
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={rules.slides?.sectionDividers ?? false} onChange={(e) => updateSlides("sectionDividers", e.target.checked)} data-testid="input-section-dividers" className="rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
+            <input type="checkbox" checked={rules.slides?.sectionDividers ?? false} onChange={(e) => updateSlides("sectionDividers", e.target.checked)} data-testid="input-section-dividers" className="rounded border-[var(--eds-border-strong)]" />
             Abschnittstrennfolien
           </label>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Footer</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Footer</label>
             <input type="text" value={rules.slides?.footer || ""} onChange={(e) => updateSlides("footer", e.target.value)} data-testid="input-slides-footer" className={inputClass} placeholder="Folien-Fußzeile" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Legal Line</label>
+            <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">Legal Line</label>
             <input type="text" value={rules.slides?.legalLine || ""} onChange={(e) => updateSlides("legalLine", e.target.value)} data-testid="input-legal-line" className={inputClass} placeholder="Rechtshinweis" />
           </div>
         </div>
@@ -691,20 +692,20 @@ function RulesFormFields({
       <div>
         <h4 className="text-sm font-semibold text-brand-navy mb-3">Anwendungsbereiche (Applies To)</h4>
         <div className="grid md:grid-cols-2 gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={appliesToWorkspaceUi} onChange={(e) => setAppliesToWorkspaceUi(e.target.checked)} data-testid="input-applies-workspace-ui" className="rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
+            <input type="checkbox" checked={appliesToWorkspaceUi} onChange={(e) => setAppliesToWorkspaceUi(e.target.checked)} data-testid="input-applies-workspace-ui" className="rounded border-[var(--eds-border-strong)]" />
             Workspace UI
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={appliesToDocuments} onChange={(e) => setAppliesToDocuments(e.target.checked)} data-testid="input-applies-documents" className="rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
+            <input type="checkbox" checked={appliesToDocuments} onChange={(e) => setAppliesToDocuments(e.target.checked)} data-testid="input-applies-documents" className="rounded border-[var(--eds-border-strong)]" />
             Dokumente
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={appliesToPptExports} onChange={(e) => setAppliesToPptExports(e.target.checked)} data-testid="input-applies-ppt" className="rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
+            <input type="checkbox" checked={appliesToPptExports} onChange={(e) => setAppliesToPptExports(e.target.checked)} data-testid="input-applies-ppt" className="rounded border-[var(--eds-border-strong)]" />
             PowerPoint-Exporte
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={appliesToExerciseMaterials} onChange={(e) => setAppliesToExerciseMaterials(e.target.checked)} data-testid="input-applies-exercises" className="rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
+            <input type="checkbox" checked={appliesToExerciseMaterials} onChange={(e) => setAppliesToExerciseMaterials(e.target.checked)} data-testid="input-applies-exercises" className="rounded border-[var(--eds-border-strong)]" />
             Übungsmaterialien
           </label>
         </div>
@@ -747,7 +748,7 @@ function CreateRuleSetForm({ workspaceSlug, onCreated, onCancel }: { workspaceSl
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-6">
+    <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
       <h2 className="text-lg font-semibold text-brand-navy mb-4">Neues Regelwerk erstellen</h2>
       <form onSubmit={handleSubmit} data-testid="form-create-ruleset">
         <RulesFormFields
@@ -758,12 +759,12 @@ function CreateRuleSetForm({ workspaceSlug, onCreated, onCancel }: { workspaceSl
           appliesToPptExports={appliesToPptExports} setAppliesToPptExports={setAppliesToPptExports}
           appliesToExerciseMaterials={appliesToExerciseMaterials} setAppliesToExerciseMaterials={setAppliesToExerciseMaterials}
         />
-        {error && <p className="text-sm text-red-500 mt-4" data-testid="text-create-error">{error}</p>}
+        {error && <p className="text-sm text-[var(--eds-status-red)] mt-4" data-testid="text-create-error">{error}</p>}
         <div className="flex gap-3 mt-6">
           <button type="submit" disabled={creating || !name.trim()} data-testid="button-submit-ruleset" className={`${btnPrimary} px-6 disabled:opacity-50`}>
             {creating ? "Wird erstellt…" : "Regelwerk erstellen"}
           </button>
-          <button type="button" onClick={onCancel} className="text-sm text-slate-500 hover:text-slate-700">Abbrechen</button>
+          <button type="button" onClick={onCancel} className="text-sm text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]">Abbrechen</button>
         </div>
       </form>
     </div>
@@ -816,8 +817,8 @@ function EditRuleSetForm({ workspaceSlug, ruleSet, onSaved }: { workspaceSlug: s
         appliesToPptExports={appliesToPptExports} setAppliesToPptExports={setAppliesToPptExports}
         appliesToExerciseMaterials={appliesToExerciseMaterials} setAppliesToExerciseMaterials={setAppliesToExerciseMaterials}
       />
-      {message && <p className="text-sm text-emerald-600 mt-4" data-testid="text-save-success">{message}</p>}
-      {error && <p className="text-sm text-red-500 mt-4" data-testid="text-save-error">{error}</p>}
+      {message && <p className="text-sm text-[var(--eds-status-green)] mt-4" data-testid="text-save-success">{message}</p>}
+      {error && <p className="text-sm text-[var(--eds-status-red)] mt-4" data-testid="text-save-error">{error}</p>}
       <div className="mt-6">
         <button onClick={handleSave} disabled={saving || !name.trim()} data-testid={`button-save-${ruleSet.id}`} className={`${btnPrimary} px-6 disabled:opacity-50`}>
           {saving ? "Wird gespeichert…" : "Änderungen speichern"}
@@ -865,13 +866,13 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
     finally { setApplying(false); }
   };
 
-  if (loading) return <p className="text-sm text-slate-400">Laden…</p>;
+  if (loading) return <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>;
 
   if (!activeRuleSet) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-8 text-center">
-        <p className="text-slate-500 mb-2">Kein aktives Regelwerk vorhanden.</p>
-        <p className="text-xs text-slate-400">Aktivieren Sie ein Regelwerk im Tab „Brand Rule Sets", um eine Vorschau zu sehen.</p>
+      <div className="bg-white border border-[var(--eds-border)] rounded-xl p-8 text-center">
+        <p className="text-[var(--eds-text-tertiary)] mb-2">Kein aktives Regelwerk vorhanden.</p>
+        <p className="text-xs text-[var(--eds-text-disabled)]">Aktivieren Sie ein Regelwerk im Tab „Brand Rule Sets", um eine Vorschau zu sehen.</p>
       </div>
     );
   }
@@ -889,7 +890,7 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-brand-navy">{activeRuleSet.name}</h2>
-          <p className="text-xs text-slate-400">Aktives Regelwerk · Erstellt: {formatDate(activeRuleSet.createdAt)}</p>
+          <p className="text-xs text-[var(--eds-text-disabled)]">Aktives Regelwerk · Erstellt: {formatDate(activeRuleSet.createdAt)}</p>
         </div>
         <button
           onClick={handleApplyTheme}
@@ -902,18 +903,18 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
       </div>
 
       {message && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800" data-testid="text-apply-success">
+        <div className="bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] rounded-xl p-4 text-sm text-emerald-800" data-testid="text-apply-success">
           {message}
         </div>
       )}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800" data-testid="text-apply-error">
+        <div className="bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-xl p-4 text-sm text-[var(--eds-status-red)]" data-testid="text-apply-error">
           {error}
         </div>
       )}
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-brand-navy mb-4">Farben</h3>
           <div className="grid grid-cols-2 gap-4">
             {[
@@ -923,97 +924,97 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
               { label: "Background", color: colors.background },
             ].map((c) => (
               <div key={c.label} className="flex items-center gap-3" data-testid={`preview-color-${c.label.toLowerCase()}`}>
-                <div className="w-10 h-10 rounded-lg border border-slate-200 shrink-0" style={{ backgroundColor: c.color || "#ccc" }} />
+                <div className="w-10 h-10 rounded-lg border border-[var(--eds-border)] shrink-0" style={{ backgroundColor: c.color || "#ccc" }} />
                 <div>
-                  <p className="text-xs font-medium text-slate-700">{c.label}</p>
-                  <p className="text-xs text-slate-400 font-mono">{c.color || "–"}</p>
+                  <p className="text-xs font-medium text-[var(--eds-text-primary)]">{c.label}</p>
+                  <p className="text-xs text-[var(--eds-text-disabled)] font-mono">{c.color || "–"}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-brand-navy mb-4">Typografie</h3>
           <div className="space-y-3">
             <div>
-              <p className="text-xs text-slate-400">Heading Font</p>
-              <p className="text-sm font-medium text-slate-900" style={{ fontFamily: `'${typography.headingFont || "sans-serif"}', serif` }} data-testid="preview-heading-font">
+              <p className="text-xs text-[var(--eds-text-disabled)]">Heading Font</p>
+              <p className="text-sm font-medium text-[var(--eds-text-primary)]" style={{ fontFamily: `'${typography.headingFont || "sans-serif"}', serif` }} data-testid="preview-heading-font">
                 {typography.headingFont || "–"}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-400">Body Font</p>
-              <p className="text-sm font-medium text-slate-900" style={{ fontFamily: `'${typography.bodyFont || "sans-serif"}', sans-serif` }} data-testid="preview-body-font">
+              <p className="text-xs text-[var(--eds-text-disabled)]">Body Font</p>
+              <p className="text-sm font-medium text-[var(--eds-text-primary)]" style={{ fontFamily: `'${typography.bodyFont || "sans-serif"}', sans-serif` }} data-testid="preview-body-font">
                 {typography.bodyFont || "–"}
               </p>
             </div>
             <div className="flex gap-6">
               <div>
-                <p className="text-xs text-slate-400">Heading Size</p>
-                <p className="text-sm text-slate-700">{typography.headingSize || "–"}</p>
+                <p className="text-xs text-[var(--eds-text-disabled)]">Heading Size</p>
+                <p className="text-sm text-[var(--eds-text-primary)]">{typography.headingSize || "–"}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-400">Body Size</p>
-                <p className="text-sm text-slate-700">{typography.bodySize || "–"}</p>
+                <p className="text-xs text-[var(--eds-text-disabled)]">Body Size</p>
+                <p className="text-sm text-[var(--eds-text-primary)]">{typography.bodySize || "–"}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-brand-navy mb-4">Tonalität & Logo</h3>
           <div className="space-y-3">
             <div>
-              <p className="text-xs text-slate-400">Tone Style</p>
-              <p className="text-sm text-slate-700 capitalize">{tone.style || "–"}</p>
+              <p className="text-xs text-[var(--eds-text-disabled)]">Tone Style</p>
+              <p className="text-sm text-[var(--eds-text-primary)] capitalize">{tone.style || "–"}</p>
             </div>
             {tone.notes && (
               <div>
-                <p className="text-xs text-slate-400">Notes</p>
-                <p className="text-sm text-slate-700">{tone.notes}</p>
+                <p className="text-xs text-[var(--eds-text-disabled)]">Notes</p>
+                <p className="text-sm text-[var(--eds-text-primary)]">{tone.notes}</p>
               </div>
             )}
             <div>
-              <p className="text-xs text-slate-400">Logo Position</p>
-              <p className="text-sm text-slate-700">{logo.position || "–"}</p>
+              <p className="text-xs text-[var(--eds-text-disabled)]">Logo Position</p>
+              <p className="text-sm text-[var(--eds-text-primary)]">{logo.position || "–"}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-400">Logo Max Height</p>
-              <p className="text-sm text-slate-700">{logo.maxHeight || "–"}</p>
+              <p className="text-xs text-[var(--eds-text-disabled)]">Logo Max Height</p>
+              <p className="text-sm text-[var(--eds-text-primary)]">{logo.maxHeight || "–"}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-brand-navy mb-4">Dokument- & Folien-Regeln</h3>
           <div className="space-y-3 text-sm">
             <div className="flex gap-4 flex-wrap">
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${doc.coverPage ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400"}`}>
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${doc.coverPage ? "bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)]" : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-disabled)]"}`}>
                 Deckblatt {doc.coverPage ? "✓" : "✗"}
               </span>
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${doc.pageNumbers ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400"}`}>
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${doc.pageNumbers ? "bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)]" : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-disabled)]"}`}>
                 Seitenzahlen {doc.pageNumbers ? "✓" : "✗"}
               </span>
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${slides.titleSlide ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400"}`}>
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${slides.titleSlide ? "bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)]" : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-disabled)]"}`}>
                 Titelfolie {slides.titleSlide ? "✓" : "✗"}
               </span>
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${slides.sectionDividers ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400"}`}>
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${slides.sectionDividers ? "bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)]" : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-disabled)]"}`}>
                 Trennfolien {slides.sectionDividers ? "✓" : "✗"}
               </span>
             </div>
-            {doc.headerFooter && <p className="text-xs text-slate-500">Header/Footer: {doc.headerFooter}</p>}
-            {doc.confidentialityNote && <p className="text-xs text-slate-500">Vertraulichkeit: {doc.confidentialityNote}</p>}
-            {doc.watermark && <p className="text-xs text-slate-500">Wasserzeichen: {doc.watermark}</p>}
-            {slides.footer && <p className="text-xs text-slate-500">Folien-Footer: {slides.footer}</p>}
-            {slides.legalLine && <p className="text-xs text-slate-500">Legal: {slides.legalLine}</p>}
+            {doc.headerFooter && <p className="text-xs text-[var(--eds-text-tertiary)]">Header/Footer: {doc.headerFooter}</p>}
+            {doc.confidentialityNote && <p className="text-xs text-[var(--eds-text-tertiary)]">Vertraulichkeit: {doc.confidentialityNote}</p>}
+            {doc.watermark && <p className="text-xs text-[var(--eds-text-tertiary)]">Wasserzeichen: {doc.watermark}</p>}
+            {slides.footer && <p className="text-xs text-[var(--eds-text-tertiary)]">Folien-Footer: {slides.footer}</p>}
+            {slides.legalLine && <p className="text-xs text-[var(--eds-text-tertiary)]">Legal: {slides.legalLine}</p>}
           </div>
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
+      <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
         <h3 className="text-sm font-semibold text-brand-navy mb-4">Live-Vorschau</h3>
-        <div className="border border-slate-200 rounded-xl overflow-hidden" data-testid="preview-panel">
+        <div className="border border-[var(--eds-border)] rounded-xl overflow-hidden" data-testid="preview-panel">
           <div className="px-5 py-3 flex items-center justify-between" style={{ backgroundColor: colors.primary || "#1a1a2e" }}>
             <span className="text-sm font-bold text-white" style={{ fontFamily: `'${typography.headingFont || "sans-serif"}', serif` }}>
               Workspace Preview
@@ -1027,7 +1028,7 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
             <h4 className="text-xl font-bold" style={{ fontFamily: `'${typography.headingFont || "sans-serif"}', serif`, color: colors.primary || "#1a1a2e" }}>
               Überschrift Beispiel
             </h4>
-            <p className="text-sm leading-relaxed text-slate-700" style={{ fontFamily: `'${typography.bodyFont || "sans-serif"}', sans-serif` }}>
+            <p className="text-sm leading-relaxed text-[var(--eds-text-primary)]" style={{ fontFamily: `'${typography.bodyFont || "sans-serif"}', sans-serif` }}>
               Dies ist ein Beispieltext, der zeigt, wie das Branding mit den definierten Farben und Schriftarten aussehen wird.
             </p>
             <div className="flex gap-3">
@@ -1124,18 +1125,18 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
   };
 
   const confidenceLabels: Record<string, { label: string; color: string }> = {
-    high: { label: "Hoch", color: "text-emerald-600 bg-emerald-50" },
-    medium: { label: "Mittel", color: "text-amber-600 bg-amber-50" },
-    low: { label: "Niedrig", color: "text-red-500 bg-red-50" },
+    high: { label: "Hoch", color: "text-[var(--eds-status-green)] bg-[var(--eds-status-green-bg)]" },
+    medium: { label: "Mittel", color: "text-[var(--eds-status-amber)] bg-[var(--eds-status-amber-bg)]" },
+    low: { label: "Niedrig", color: "text-[var(--eds-status-red)] bg-[var(--eds-status-red-bg)]" },
   };
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
+      <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
         <h2 className="text-lg font-semibold text-brand-navy mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
           Style Guide analysieren
         </h2>
-        <p className="text-sm text-slate-500 mb-6">
+        <p className="text-sm text-[var(--eds-text-tertiary)] mb-6">
           Laden Sie einen Style Guide hoch und lassen Sie die KI automatisch Markenregeln extrahieren.
         </p>
 
@@ -1158,8 +1159,8 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
             dragOver
               ? "border-[hsl(14,48%,44%)] bg-[hsl(14,48%,44%)]/5"
               : file
-              ? "border-emerald-300 bg-emerald-50/50"
-              : "border-slate-200 hover:border-slate-300 bg-slate-50/50"
+              ? "border-emerald-300 bg-[var(--eds-status-green-bg)]/50"
+              : "border-[var(--eds-border)] hover:border-[var(--eds-border-strong)] bg-[var(--eds-bg-sunken)]/50"
           }`}
         >
           {file ? (
@@ -1168,31 +1169,31 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div className="text-left">
-                <p className="text-sm font-medium text-slate-700">{file.name}</p>
-                <p className="text-xs text-slate-400">{formatFileSize(file.size)}</p>
+                <p className="text-sm font-medium text-[var(--eds-text-primary)]">{file.name}</p>
+                <p className="text-xs text-[var(--eds-text-disabled)]">{formatFileSize(file.size)}</p>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); setFile(null); setResult(null); setSaved(false); }}
-                className="ml-4 text-xs text-slate-400 hover:text-red-500"
+                className="ml-4 text-xs text-[var(--eds-text-disabled)] hover:text-[var(--eds-status-red)]"
               >
                 Entfernen
               </button>
             </div>
           ) : (
             <div>
-              <svg className="w-10 h-10 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-10 h-10 text-[var(--eds-text-disabled)] mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              <p className="text-sm text-slate-500 mb-1">
+              <p className="text-sm text-[var(--eds-text-tertiary)] mb-1">
                 Style Guide hierher ziehen oder <span className="text-[hsl(14,48%,44%)] font-medium">Datei auswählen</span>
               </p>
-              <p className="text-xs text-slate-400">.pdf oder .docx · Max. 10 MB</p>
+              <p className="text-xs text-[var(--eds-text-disabled)]">.pdf oder .docx · Max. 10 MB</p>
             </div>
           )}
         </div>
 
         <div className="mt-4">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Name des Regelwerks (optional)</label>
+          <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Name des Regelwerks (optional)</label>
           <input
             type="text"
             value={name}
@@ -1203,7 +1204,7 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
           />
         </div>
 
-        {error && <p className="text-sm text-red-500 mt-4" data-testid="text-ai-error">{error}</p>}
+        {error && <p className="text-sm text-[var(--eds-status-red)] mt-4" data-testid="text-ai-error">{error}</p>}
 
         <div className="mt-6">
           <button
@@ -1230,7 +1231,7 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
 
       {result && (
         <div data-testid="section-ai-results" className="space-y-6">
-          <div className="bg-white border border-slate-200 rounded-xl p-6">
+          <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-brand-navy" style={{ fontFamily: "'Playfair Display', serif" }}>
                 Analyseergebnis
@@ -1252,12 +1253,12 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
                   ].map((c) => (
                     <div key={c.label} className="flex items-center gap-2">
                       <div
-                        className="w-8 h-8 rounded-lg border border-slate-200 shrink-0"
+                        className="w-8 h-8 rounded-lg border border-[var(--eds-border)] shrink-0"
                         style={{ backgroundColor: c.color || "#e2e8f0" }}
                       />
                       <div>
-                        <p className="text-xs font-medium text-slate-600">{c.label}</p>
-                        <p className="text-xs text-slate-400 font-mono">{c.color || "–"}</p>
+                        <p className="text-xs font-medium text-[var(--eds-text-secondary)]">{c.label}</p>
+                        <p className="text-xs text-[var(--eds-text-disabled)] font-mono">{c.color || "–"}</p>
                       </div>
                     </div>
                   ))}
@@ -1268,20 +1269,20 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
                 <h4 className="text-sm font-semibold text-brand-navy mb-3">Typografie</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Heading Font</span>
-                    <span className="text-slate-700 font-medium">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.headingFont || "–"}</span>
+                    <span className="text-[var(--eds-text-tertiary)]">Heading Font</span>
+                    <span className="text-[var(--eds-text-primary)] font-medium">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.headingFont || "–"}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Body Font</span>
-                    <span className="text-slate-700 font-medium">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.bodyFont || "–"}</span>
+                    <span className="text-[var(--eds-text-tertiary)]">Body Font</span>
+                    <span className="text-[var(--eds-text-primary)] font-medium">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.bodyFont || "–"}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Heading Size</span>
-                    <span className="text-slate-700">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.headingSize || "–"}</span>
+                    <span className="text-[var(--eds-text-tertiary)]">Heading Size</span>
+                    <span className="text-[var(--eds-text-primary)]">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.headingSize || "–"}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Body Size</span>
-                    <span className="text-slate-700">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.bodySize || "–"}</span>
+                    <span className="text-[var(--eds-text-tertiary)]">Body Size</span>
+                    <span className="text-[var(--eds-text-primary)]">{(result.brandRuleSet.rulesJson as RulesJson)?.typography?.bodySize || "–"}</span>
                   </div>
                 </div>
               </div>
@@ -1290,11 +1291,11 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
                 <h4 className="text-sm font-semibold text-brand-navy mb-3">Tonalität</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Stil</span>
-                    <span className="text-slate-700 capitalize">{(result.brandRuleSet.rulesJson as RulesJson)?.tone?.style || "–"}</span>
+                    <span className="text-[var(--eds-text-tertiary)]">Stil</span>
+                    <span className="text-[var(--eds-text-primary)] capitalize">{(result.brandRuleSet.rulesJson as RulesJson)?.tone?.style || "–"}</span>
                   </div>
                   {(result.brandRuleSet.rulesJson as RulesJson)?.tone?.notes && (
-                    <p className="text-xs text-slate-500 mt-1">{(result.brandRuleSet.rulesJson as RulesJson)?.tone?.notes}</p>
+                    <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">{(result.brandRuleSet.rulesJson as RulesJson)?.tone?.notes}</p>
                   )}
                 </div>
               </div>
@@ -1310,7 +1311,7 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
                   ].map((r) => (
                     <span
                       key={r.label}
-                      className={`px-2 py-0.5 rounded text-xs font-medium ${r.val ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400"}`}
+                      className={`px-2 py-0.5 rounded text-xs font-medium ${r.val ? "bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)]" : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-disabled)]"}`}
                     >
                       {r.label} {r.val ? "✓" : "✗"}
                     </span>
@@ -1332,7 +1333,7 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
             <button
               onClick={onSwitchToEdit}
               data-testid="button-edit-parsed"
-              className="rounded-lg border border-slate-200 text-slate-700 text-sm font-medium px-6 py-2.5 hover:bg-slate-50 transition-colors"
+              className="rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-primary)] text-sm font-medium px-6 py-2.5 hover:bg-[var(--eds-bg-sunken)] transition-colors"
             >
               Zur Bearbeitung
             </button>
@@ -1346,20 +1347,20 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
 function ColorField({ label, value, onChange, testId }: { label: string; value: string; onChange: (v: string) => void; testId: string }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-600 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">{label}</label>
       <div className="flex items-center gap-2">
         <input
           type="color"
           value={value.startsWith("#") ? value : "#000000"}
           onChange={(e) => onChange(e.target.value)}
-          className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5"
+          className="w-10 h-10 rounded-lg border border-[var(--eds-border)] cursor-pointer p-0.5"
           data-testid={`${testId}-picker`}
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-brand-blue/30"
+          className="flex-1 rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] font-mono focus:outline-none focus:ring-2 focus:ring-brand-blue/30"
           data-testid={testId}
         />
       </div>

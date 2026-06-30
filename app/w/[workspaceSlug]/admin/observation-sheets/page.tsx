@@ -510,26 +510,26 @@ export default function ObservationSheetsPage() {
     return (
       <div className="space-y-4">
         {sections.map((section: any, si: number) => (
-          <div key={si} className="border border-slate-200 rounded-lg p-4">
+          <div key={si} className="border border-[var(--eds-border)] rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
-              <h4 className="font-semibold text-sm text-slate-800">{section.title || `Abschnitt ${si + 1}`}</h4>
+              <h4 className="font-semibold text-sm text-[var(--eds-text-primary)]">{section.title || `Abschnitt ${si + 1}`}</h4>
               {section.competency && (
-                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{section.competency}</span>
+                <span className="text-xs bg-[var(--eds-status-blue-bg)] text-[var(--eds-status-blue)] px-2 py-0.5 rounded-full">{section.competency}</span>
               )}
               {section.type && (
-                <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{section.type}</span>
+                <span className="text-xs bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)] px-2 py-0.5 rounded-full">{section.type}</span>
               )}
             </div>
             {section.items && Array.isArray(section.items) && (
               <div className="space-y-2">
                 {section.items.map((item: any, ii: number) => (
-                  <div key={ii} className="bg-slate-50 rounded-md p-3">
-                    <p className="text-sm text-slate-700 font-medium">{item.label}</p>
-                    {item.helpText && <p className="text-xs text-slate-400 mt-1">{item.helpText}</p>}
+                  <div key={ii} className="bg-[var(--eds-bg-sunken)] rounded-md p-3">
+                    <p className="text-sm text-[var(--eds-text-primary)] font-medium">{item.label}</p>
+                    {item.helpText && <p className="text-xs text-[var(--eds-text-disabled)] mt-1">{item.helpText}</p>}
                     {item.anchors && Array.isArray(item.anchors) && item.anchors.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         {item.anchors.map((anchor: string, ai: number) => (
-                          <span key={ai} className="text-[11px] bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded">
+                          <span key={ai} className="text-[11px] bg-white border border-[var(--eds-border)] text-[var(--eds-text-secondary)] px-2 py-0.5 rounded">
                             {anchor}
                           </span>
                         ))}
@@ -547,18 +547,18 @@ export default function ObservationSheetsPage() {
 
   const renderExerciseMultiSelect = (selectedIds: string[], setSelectedIds: (v: string[]) => void, testIdPrefix: string) => (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">Übungszuordnung</label>
+      <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Übungszuordnung</label>
       {exercises.length === 0 ? (
-        <p className="text-xs text-slate-400">Keine Übungen verfügbar</p>
+        <p className="text-xs text-[var(--eds-text-disabled)]">Keine Übungen verfügbar</p>
       ) : (
         <div className="flex flex-wrap gap-2">
           {exercises.map((ex) => (
-            <label key={ex.id} className="flex items-center gap-1.5 text-sm text-slate-700 cursor-pointer bg-slate-50 rounded-lg px-3 py-1.5 border border-slate-200 hover:border-slate-300 transition-colors">
+            <label key={ex.id} className="flex items-center gap-1.5 text-sm text-[var(--eds-text-primary)] cursor-pointer bg-[var(--eds-bg-sunken)] rounded-lg px-3 py-1.5 border border-[var(--eds-border)] hover:border-[var(--eds-border-strong)] transition-colors">
               <input
                 type="checkbox"
                 checked={selectedIds.includes(ex.id)}
                 onChange={() => toggleArrayItem(selectedIds, ex.id, setSelectedIds)}
-                className="rounded border-slate-300"
+                className="rounded border-[var(--eds-border-strong)]"
                 data-testid={`${testIdPrefix}-exercise-${ex.id}`}
               />
               <span className="text-xs">{ex.title}</span>
@@ -571,7 +571,7 @@ export default function ObservationSheetsPage() {
 
   const renderCompModelSelect = (value: string, onChange: (v: string) => void, testId: string) => (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">Kompetenzmodell</label>
+      <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Kompetenzmodell</label>
       <select value={value} onChange={(e) => onChange(e.target.value)} className={inputClass} data-testid={testId}>
         <option value="">— Kein Kompetenzmodell —</option>
         {competencyModels.map((cm) => (
@@ -583,15 +583,15 @@ export default function ObservationSheetsPage() {
 
   const renderTargetLevelCheckboxes = (levels: string[], setLevels: (v: string[]) => void) => (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-2">Zielniveaus</label>
+      <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-2">Zielniveaus</label>
       <div className="flex flex-wrap gap-3">
         {TARGET_LEVELS.map((level) => (
-          <label key={level} className="flex items-center gap-1.5 text-sm text-slate-700 cursor-pointer">
+          <label key={level} className="flex items-center gap-1.5 text-sm text-[var(--eds-text-primary)] cursor-pointer">
             <input
               type="checkbox"
               checked={levels.includes(level)}
               onChange={() => toggleArrayItem(levels, level, setLevels)}
-              className="rounded border-slate-300"
+              className="rounded border-[var(--eds-border-strong)]"
             />
             {level}
           </label>
@@ -603,12 +603,12 @@ export default function ObservationSheetsPage() {
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-4 mb-6" data-testid="text-error">
+          <div className="bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] text-sm rounded-lg p-4 mb-6" data-testid="text-error">
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-4 mb-6" data-testid="text-success">
+          <div className="bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] text-[var(--eds-status-green)] text-sm rounded-lg p-4 mb-6" data-testid="text-success">
             {success}
           </div>
         )}
@@ -674,7 +674,7 @@ export default function ObservationSheetsPage() {
                   return (
                     <div
                       key={item.id}
-                      className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md transition-shadow"
+                      className="bg-white border border-[var(--eds-border)] rounded-xl p-5 hover:shadow-md transition-shadow"
                       data-testid={`card-template-${item.id}`}
                     >
                       <div className="flex items-start justify-between gap-4">
@@ -682,7 +682,7 @@ export default function ObservationSheetsPage() {
                           <div className="flex items-center gap-2 mb-1">
                             <button
                               onClick={() => openView(item.id)}
-                              className="font-semibold text-slate-900 truncate hover:underline text-left"
+                              className="font-semibold text-[var(--eds-text-primary)] truncate hover:underline text-left"
                               style={{ fontFamily: "'Playfair Display', serif" }}
                               data-testid={`text-name-${item.id}`}
                             >
@@ -696,7 +696,7 @@ export default function ObservationSheetsPage() {
                               {typeLabel}
                             </span>
                             {item.aiGenerated && (
-                              <span className="text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                              <span className="text-[10px] font-medium text-[var(--eds-status-blue)] bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] rounded-full px-2 py-0.5">
                                 KI
                               </span>
                             )}
@@ -704,18 +704,18 @@ export default function ObservationSheetsPage() {
                             <span
                               className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${
                                 item.status === "active"
-                                  ? "bg-emerald-50 text-emerald-600"
-                                  : "bg-slate-50 text-slate-500"
+                                  ? "bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)]"
+                                  : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)]"
                               }`}
                             >
                               {item.status === "active" ? "Aktiv" : "Archiviert"}
                             </span>
                           </div>
                           {item.description && (
-                            <p className="text-sm text-slate-500 mb-2">{item.description}</p>
+                            <p className="text-sm text-[var(--eds-text-tertiary)] mb-2">{item.description}</p>
                           )}
                           {item.fileName && (
-                            <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2">
+                            <div className="flex items-center gap-1.5 text-xs text-[var(--eds-text-disabled)] mb-2">
                               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                               </svg>
@@ -724,13 +724,13 @@ export default function ObservationSheetsPage() {
                           )}
                           <div className="flex flex-wrap gap-1.5 items-center">
                             {item.tags.map((tag, i) => (
-                              <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{tag}</span>
+                              <span key={i} className="text-xs bg-[var(--eds-bg-sunken)] text-[var(--eds-text-secondary)] px-2 py-0.5 rounded-full">{tag}</span>
                             ))}
                             {item.targetLevels.map((level, i) => (
-                              <span key={`l-${i}`} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{level}</span>
+                              <span key={`l-${i}`} className="text-xs bg-[var(--eds-status-blue-bg)] text-[var(--eds-status-blue)] px-2 py-0.5 rounded-full">{level}</span>
                             ))}
                           </div>
-                          <div className="flex items-center gap-4 text-[11px] text-slate-400 mt-2">
+                          <div className="flex items-center gap-4 text-[11px] text-[var(--eds-text-disabled)] mt-2">
                             {item.ratingScale && <span>Skala: {item.ratingScale}</span>}
                             <span>{new Date(item.createdAt).toLocaleDateString("de-DE")}</span>
                           </div>
@@ -738,21 +738,21 @@ export default function ObservationSheetsPage() {
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => openView(item.id)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)]"
                             data-testid={`button-view-${item.id}`}
                           >
                             Ansehen
                           </button>
                           <button
                             onClick={() => openDetail(item.id)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)]"
                             data-testid={`button-edit-${item.id}`}
                           >
                             Bearbeiten
                           </button>
                           <button
                             onClick={() => handleDelete(item.id)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] hover:bg-[var(--eds-status-red-bg)]"
                             data-testid={`button-delete-${item.id}`}
                           >
                             Löschen
@@ -775,14 +775,14 @@ export default function ObservationSheetsPage() {
             >
               Neuen Beobachtungsbogen erstellen
             </h1>
-            <p className="text-sm text-slate-400 mb-10">
+            <p className="text-sm text-[var(--eds-text-disabled)] mb-10">
               Wählen Sie, wie Sie den Beobachtungsbogen erstellen möchten
             </p>
 
             <div className="grid md:grid-cols-2 gap-6">
               <button
                 onClick={() => { setMode("upload"); setUploadStep("select"); setUploadFile(null); setError(""); }}
-                className="rounded-xl border-2 border-slate-200 p-8 text-left hover:border-[hsl(14,48%,44%)] hover:shadow-lg transition-all group"
+                className="rounded-xl border-2 border-[var(--eds-border)] p-8 text-left hover:border-[hsl(14,48%,44%)] hover:shadow-lg transition-all group"
                 data-testid="button-mode-upload"
               >
                 <div className="text-4xl mb-4">📄</div>
@@ -792,20 +792,20 @@ export default function ObservationSheetsPage() {
                 >
                   Bestehenden Bogen hochladen
                 </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-sm text-[var(--eds-text-disabled)] leading-relaxed">
                   Laden Sie einen bestehenden Beobachtungsbogen hoch (Word, PDF, PowerPoint).
                   Die KI analysiert den Inhalt und extrahiert Kompetenzen, Verhaltensanker und Bewertungsskalen.
                 </p>
-                <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
-                  <span className="bg-slate-100 px-2 py-0.5 rounded">DOCX</span>
-                  <span className="bg-slate-100 px-2 py-0.5 rounded">PDF</span>
-                  <span className="bg-slate-100 px-2 py-0.5 rounded">PPTX</span>
+                <div className="mt-4 flex items-center gap-2 text-xs text-[var(--eds-text-disabled)]">
+                  <span className="bg-[var(--eds-bg-sunken)] px-2 py-0.5 rounded">DOCX</span>
+                  <span className="bg-[var(--eds-bg-sunken)] px-2 py-0.5 rounded">PDF</span>
+                  <span className="bg-[var(--eds-bg-sunken)] px-2 py-0.5 rounded">PPTX</span>
                 </div>
               </button>
 
               <button
                 onClick={() => { setMode("generate"); setError(""); }}
-                className="rounded-xl border-2 border-slate-200 p-8 text-left hover:border-[hsl(14,48%,44%)] hover:shadow-lg transition-all group"
+                className="rounded-xl border-2 border-[var(--eds-border)] p-8 text-left hover:border-[hsl(14,48%,44%)] hover:shadow-lg transition-all group"
                 data-testid="button-mode-generate"
               >
                 <div className="text-4xl mb-4">🤖</div>
@@ -815,13 +815,13 @@ export default function ObservationSheetsPage() {
                 >
                   Neuen Bogen per KI erstellen
                 </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-sm text-[var(--eds-text-disabled)] leading-relaxed">
                   Definieren Sie Typ, Kompetenzen und Bewertungsskala. Die KI generiert einen vollständigen,
                   professionellen Beobachtungsbogen mit Verhaltensankern.
                 </p>
-                <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
-                  <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded">KI-gestützt</span>
-                  <span className="bg-slate-100 px-2 py-0.5 rounded">Vollautomatisch</span>
+                <div className="mt-4 flex items-center gap-2 text-xs text-[var(--eds-text-disabled)]">
+                  <span className="bg-[var(--eds-status-blue-bg)] text-[var(--eds-status-blue)] px-2 py-0.5 rounded">KI-gestützt</span>
+                  <span className="bg-[var(--eds-bg-sunken)] px-2 py-0.5 rounded">Vollautomatisch</span>
                 </div>
               </button>
             </div>
@@ -845,17 +845,17 @@ export default function ObservationSheetsPage() {
                       uploadStep === step
                         ? "text-white"
                         : i < (["select", "analyzing", "review"] as UploadStep[]).indexOf(uploadStep)
-                        ? "text-white bg-emerald-500"
-                        : "bg-slate-100 text-slate-400"
+                        ? "text-white bg-[var(--eds-status-green)]"
+                        : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-disabled)]"
                     }`}
                     style={uploadStep === step ? { backgroundColor: ACCENT } : undefined}
                   >
                     {i < (["select", "analyzing", "review"] as UploadStep[]).indexOf(uploadStep) ? "✓" : i + 1}
                   </div>
-                  <span className={`text-xs font-medium ${uploadStep === step ? "text-slate-800" : "text-slate-400"}`}>
+                  <span className={`text-xs font-medium ${uploadStep === step ? "text-[var(--eds-text-primary)]" : "text-[var(--eds-text-disabled)]"}`}>
                     {step === "select" ? "Datei wählen" : step === "analyzing" ? "KI-Analyse" : "Prüfen & Speichern"}
                   </span>
-                  {i < 2 && <div className="w-8 h-px bg-slate-200" />}
+                  {i < 2 && <div className="w-8 h-px bg-[var(--eds-border)]" />}
                 </div>
               ))}
             </div>
@@ -863,7 +863,7 @@ export default function ObservationSheetsPage() {
             {uploadStep === "select" && (
               <>
                 <div
-                  className="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 p-10 text-center transition-colors hover:border-[hsl(14,48%,44%)]/50 cursor-pointer"
+                  className="border-2 border-dashed border-[var(--eds-border-strong)] rounded-xl bg-[var(--eds-bg-sunken)] p-10 text-center transition-colors hover:border-[hsl(14,48%,44%)]/50 cursor-pointer"
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   onClick={() => fileInputRef.current?.click()}
@@ -880,26 +880,26 @@ export default function ObservationSheetsPage() {
                       e.target.value = "";
                     }}
                   />
-                  <svg className="h-12 w-12 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="h-12 w-12 text-[var(--eds-text-disabled)] mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                   </svg>
                   <h3 className="text-sm font-semibold mb-1" style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}>
                     Datei hierher ziehen oder klicken
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[var(--eds-text-tertiary)]">
                     Unterstützte Formate: Word (.docx), PDF (.pdf), PowerPoint (.pptx) · Max. 50 MB
                   </p>
                 </div>
 
                 {uploadFile && (
-                  <div className="mt-4 bg-white border border-slate-200 rounded-lg p-4 flex items-center justify-between">
+                  <div className="mt-4 bg-white border border-[var(--eds-border)] rounded-lg p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <svg className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <svg className="h-8 w-8 text-[var(--eds-text-disabled)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                       </svg>
                       <div>
-                        <p className="text-sm font-medium text-slate-800">{uploadFile.name}</p>
-                        <p className="text-xs text-slate-400">{(uploadFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                        <p className="text-sm font-medium text-[var(--eds-text-primary)]">{uploadFile.name}</p>
+                        <p className="text-xs text-[var(--eds-text-disabled)]">{(uploadFile.size / 1024 / 1024).toFixed(2)} MB</p>
                       </div>
                     </div>
                     <button
@@ -923,10 +923,10 @@ export default function ObservationSheetsPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style={{ backgroundColor: `${ACCENT}15` }}>
                   <SpinnerIcon />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-700 mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <h3 className="text-lg font-semibold text-[var(--eds-text-primary)] mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
                   KI analysiert den Beobachtungsbogen…
                 </h3>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-[var(--eds-text-disabled)]">
                   Kompetenzen, Verhaltensanker und Bewertungsskala werden extrahiert. Dies kann bis zu 60 Sekunden dauern.
                 </p>
               </div>
@@ -944,14 +944,14 @@ export default function ObservationSheetsPage() {
                   </div>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 space-y-5">
                   <h3 className="text-lg font-semibold" style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}>
                     Vorschläge prüfen und anpassen
                   </h3>
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+                      <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Name *</label>
                       <input
                         type="text"
                         value={reviewName}
@@ -961,7 +961,7 @@ export default function ObservationSheetsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Typ</label>
+                      <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Typ</label>
                       <select value={reviewType} onChange={(e) => setReviewType(e.target.value)} className={inputClass} data-testid="select-type">
                         {TEMPLATE_TYPES.map((t) => (
                           <option key={t.value} value={t.value}>{t.label}</option>
@@ -971,7 +971,7 @@ export default function ObservationSheetsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
+                    <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Beschreibung</label>
                     <textarea
                       value={reviewDescription}
                       onChange={(e) => setReviewDescription(e.target.value)}
@@ -982,7 +982,7 @@ export default function ObservationSheetsPage() {
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Bewertungsskala</label>
+                      <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Bewertungsskala</label>
                       <select value={reviewScale} onChange={(e) => setReviewScale(e.target.value)} className={inputClass} data-testid="select-scale">
                         {RATING_SCALES.map((s) => (
                           <option key={s.value} value={s.value}>{s.label}</option>
@@ -991,7 +991,7 @@ export default function ObservationSheetsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Kompetenzen (kommagetrennt)</label>
+                      <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Kompetenzen (kommagetrennt)</label>
                       <input
                         type="text"
                         value={reviewCompetencies}
@@ -1003,7 +1003,7 @@ export default function ObservationSheetsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Tags (kommagetrennt)</label>
+                    <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Tags (kommagetrennt)</label>
                     <input
                       type="text"
                       value={reviewTags}
@@ -1018,15 +1018,15 @@ export default function ObservationSheetsPage() {
 
                   {analysisResult.sections && analysisResult.sections.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-slate-700 mb-3">Erkannte Abschnitte ({analysisResult.sections.length})</h4>
+                      <h4 className="text-sm font-semibold text-[var(--eds-text-primary)] mb-3">Erkannte Abschnitte ({analysisResult.sections.length})</h4>
                       {renderSections(analysisResult.sections)}
                     </div>
                   )}
 
-                  <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                  <div className="flex gap-3 justify-end pt-4 border-t border-[var(--eds-border)]">
                     <button
                       onClick={resetToList}
-                      className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-200 rounded-lg"
+                      className="px-4 py-2 text-sm text-[var(--eds-text-secondary)] hover:text-[var(--eds-text-primary)] border border-[var(--eds-border)] rounded-lg"
                     >
                       Abbrechen
                     </button>
@@ -1055,14 +1055,14 @@ export default function ObservationSheetsPage() {
             >
               Beobachtungsbogen per KI generieren
             </h1>
-            <p className="text-sm text-slate-400 mb-8">
+            <p className="text-sm text-[var(--eds-text-disabled)] mb-8">
               Definieren Sie die Parameter und lassen Sie die KI einen professionellen Beobachtungsbogen erstellen.
             </p>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 space-y-5">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Name *</label>
                   <input
                     type="text"
                     value={genName}
@@ -1073,7 +1073,7 @@ export default function ObservationSheetsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Typ *</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Typ *</label>
                   <select value={genType} onChange={(e) => setGenType(e.target.value)} className={inputClass} data-testid="select-type">
                     {TEMPLATE_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>{t.label}</option>
@@ -1084,7 +1084,7 @@ export default function ObservationSheetsPage() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Bewertungsskala</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Bewertungsskala</label>
                   <select value={genScale} onChange={(e) => setGenScale(e.target.value)} className={inputClass} data-testid="select-scale">
                     {RATING_SCALES.map((s) => (
                       <option key={s.value} value={s.value}>{s.label}</option>
@@ -1093,7 +1093,7 @@ export default function ObservationSheetsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Zielniveau</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Zielniveau</label>
                   <select value={genTargetLevel} onChange={(e) => setGenTargetLevel(e.target.value)} className={inputClass}>
                     <option value="">— Kein Zielniveau —</option>
                     {TARGET_LEVELS.map((l) => (
@@ -1104,7 +1104,7 @@ export default function ObservationSheetsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Kompetenzen (kommagetrennt oder aus Kompetenzmodell)</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Kompetenzen (kommagetrennt oder aus Kompetenzmodell)</label>
                 <input
                   type="text"
                   value={genCompetencies}
@@ -1119,7 +1119,7 @@ export default function ObservationSheetsPage() {
               {renderCompModelSelect(genCompModelId, setGenCompModelId, "select-competency-model")}
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Zusätzliche Hinweise</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Zusätzliche Hinweise</label>
                 <textarea
                   value={genHints}
                   onChange={(e) => setGenHints(e.target.value)}
@@ -1129,10 +1129,10 @@ export default function ObservationSheetsPage() {
                 />
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+              <div className="flex gap-3 justify-end pt-4 border-t border-[var(--eds-border)]">
                 <button
                   onClick={resetToList}
-                  className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-200 rounded-lg"
+                  className="px-4 py-2 text-sm text-[var(--eds-text-secondary)] hover:text-[var(--eds-text-primary)] border border-[var(--eds-border)] rounded-lg"
                 >
                   Abbrechen
                 </button>
@@ -1160,15 +1160,15 @@ export default function ObservationSheetsPage() {
               Vorschau: {previewData.title || genName}
             </h1>
             {previewData.description && (
-              <p className="text-sm text-slate-500 mb-6">{previewData.description}</p>
+              <p className="text-sm text-[var(--eds-text-tertiary)] mb-6">{previewData.description}</p>
             )}
 
             {previewData.headerFields && Array.isArray(previewData.headerFields) && (
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
-                <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Kopffelder</h4>
+              <div className="bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-lg p-4 mb-6">
+                <h4 className="text-xs font-semibold text-[var(--eds-text-tertiary)] uppercase mb-2">Kopffelder</h4>
                 <div className="flex flex-wrap gap-2">
                   {previewData.headerFields.map((field: string, i: number) => (
-                    <span key={i} className="text-xs bg-white border border-slate-200 text-slate-600 px-3 py-1 rounded">{field}</span>
+                    <span key={i} className="text-xs bg-white border border-[var(--eds-border)] text-[var(--eds-text-secondary)] px-3 py-1 rounded">{field}</span>
                   ))}
                 </div>
               </div>
@@ -1177,23 +1177,23 @@ export default function ObservationSheetsPage() {
             {previewData.sections && renderSections(previewData.sections)}
 
             {previewData.footerNote && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-6">
-                <p className="text-xs text-amber-700">{previewData.footerNote}</p>
+              <div className="bg-[var(--eds-status-amber-bg)] border border-[var(--eds-status-amber-bg)] rounded-lg p-4 mt-6">
+                <p className="text-xs text-[var(--eds-status-amber)]">{previewData.footerNote}</p>
               </div>
             )}
 
             {previewData.tags && Array.isArray(previewData.tags) && previewData.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-6">
                 {previewData.tags.map((tag: string, i: number) => (
-                  <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{tag}</span>
+                  <span key={i} className="text-xs bg-[var(--eds-bg-sunken)] text-[var(--eds-text-secondary)] px-2 py-0.5 rounded-full">{tag}</span>
                 ))}
               </div>
             )}
 
-            <div className="flex gap-3 justify-end mt-8 pt-4 border-t border-slate-100">
+            <div className="flex gap-3 justify-end mt-8 pt-4 border-t border-[var(--eds-border)]">
               <button
                 onClick={resetToList}
-                className="px-5 py-2.5 rounded-lg text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50"
+                className="px-5 py-2.5 rounded-lg text-sm font-medium border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)]"
               >
                 Zur Übersicht
               </button>
@@ -1204,7 +1204,7 @@ export default function ObservationSheetsPage() {
                       const tmpl = await loadTemplate(previewTemplateId);
                       if (tmpl) downloadAsPDF(tmpl);
                     }}
-                    className="px-5 py-2.5 rounded-lg text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-lg text-sm font-medium border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)] flex items-center gap-2"
                     data-testid="button-preview-pdf"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -1214,7 +1214,7 @@ export default function ObservationSheetsPage() {
                   </button>
                   <button
                     onClick={() => openView(previewTemplateId)}
-                    className="px-5 py-2.5 rounded-lg text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    className="px-5 py-2.5 rounded-lg text-sm font-medium border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)]"
                   >
                     Ansehen
                   </button>
@@ -1250,12 +1250,12 @@ export default function ObservationSheetsPage() {
                       {viewTypeLabel}
                     </span>
                     {detailTemplate.ratingScale && (
-                      <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Skala: {detailTemplate.ratingScale}</span>
+                      <span className="text-xs bg-[var(--eds-bg-sunken)] text-[var(--eds-text-secondary)] px-2 py-0.5 rounded-full">Skala: {detailTemplate.ratingScale}</span>
                     )}
                     {detailTemplate.aiGenerated && (
-                      <span className="text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">KI-generiert</span>
+                      <span className="text-[10px] font-medium text-[var(--eds-status-blue)] bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] rounded-full px-2 py-0.5">KI-generiert</span>
                     )}
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${detailTemplate.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-500"}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${detailTemplate.status === "active" ? "bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)]" : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)]"}`}>
                       {detailTemplate.status === "active" ? "Aktiv" : "Archiviert"}
                     </span>
                   </div>
@@ -1263,15 +1263,15 @@ export default function ObservationSheetsPage() {
               </div>
 
               {detailTemplate.description && (
-                <p className="text-sm text-slate-600 mb-6">{detailTemplate.description}</p>
+                <p className="text-sm text-[var(--eds-text-secondary)] mb-6">{detailTemplate.description}</p>
               )}
 
               {viewHeaderFields && Array.isArray(viewHeaderFields) && viewHeaderFields.length > 0 && (
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Kopffelder</h4>
+                <div className="bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-lg p-4 mb-6">
+                  <h4 className="text-xs font-semibold text-[var(--eds-text-tertiary)] uppercase mb-2">Kopffelder</h4>
                   <div className="flex flex-wrap gap-2">
                     {viewHeaderFields.map((field: string, i: number) => (
-                      <span key={i} className="text-xs bg-white border border-slate-200 text-slate-600 px-3 py-1 rounded">{field}</span>
+                      <span key={i} className="text-xs bg-white border border-[var(--eds-border)] text-[var(--eds-text-secondary)] px-3 py-1 rounded">{field}</span>
                     ))}
                   </div>
                 </div>
@@ -1279,37 +1279,38 @@ export default function ObservationSheetsPage() {
 
               {viewSections.length > 0 ? (
                 <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Inhalte ({viewSections.length} Abschnitte)</h4>
+                  <h4 className="text-sm font-semibold text-[var(--eds-text-primary)] mb-3">Inhalte ({viewSections.length} Abschnitte)</h4>
                   {renderSections(viewSections)}
                 </div>
               ) : (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-amber-700">Keine strukturierten Inhalte vorhanden.</p>
+                <div className="bg-[var(--eds-status-amber-bg)] border border-[var(--eds-status-amber-bg)] rounded-lg p-4 mb-6">
+                  <p className="text-sm text-[var(--eds-status-amber)]">Keine strukturierten Inhalte vorhanden.</p>
                 </div>
               )}
 
               {detailTemplate.content?.footerNote && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-                  <p className="text-xs text-amber-700">{detailTemplate.content.footerNote}</p>
+                <div className="bg-[var(--eds-status-amber-bg)] border border-[var(--eds-status-amber-bg)] rounded-lg p-4 mb-6">
+                  <p className="text-xs text-[var(--eds-status-amber)]">{detailTemplate.content.footerNote}</p>
                 </div>
               )}
 
               {(detailTemplate.tags.length > 0 || detailTemplate.targetLevels.length > 0 || detailTemplate.competencyNames.length > 0) && (
-                <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 space-y-3">
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5 mb-6 space-y-3">
                   {detailTemplate.competencyNames.length > 0 && (
                     <div>
-                      <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1.5">Kompetenzen</h4>
+                      <h4 className="text-xs font-semibold text-[var(--eds-text-tertiary)] uppercase mb-1.5">Kompetenzen</h4>
                       <div className="flex flex-wrap gap-1.5">
                         {detailTemplate.competencyNames.map((c, i) => (
-                          <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{c}</span>
+                          <span key={i} className="text-xs bg-[var(--eds-status-blue-bg)] text-[var(--eds-status-blue)] px-2 py-0.5 rounded-full">{c}</span>
                         ))}
                       </div>
                     </div>
                   )}
                   {detailTemplate.targetLevels.length > 0 && (
                     <div>
-                      <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1.5">Zielniveaus</h4>
+                      <h4 className="text-xs font-semibold text-[var(--eds-text-tertiary)] uppercase mb-1.5">Zielniveaus</h4>
                       <div className="flex flex-wrap gap-1.5">
+                        {/* no-eds-token: kein äquivalentes Token für Zielniveau-Badge (purple) */}
                         {detailTemplate.targetLevels.map((l, i) => (
                           <span key={i} className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">{l}</span>
                         ))}
@@ -1318,10 +1319,10 @@ export default function ObservationSheetsPage() {
                   )}
                   {detailTemplate.tags.length > 0 && (
                     <div>
-                      <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1.5">Tags</h4>
+                      <h4 className="text-xs font-semibold text-[var(--eds-text-tertiary)] uppercase mb-1.5">Tags</h4>
                       <div className="flex flex-wrap gap-1.5">
                         {detailTemplate.tags.map((t, i) => (
-                          <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{t}</span>
+                          <span key={i} className="text-xs bg-[var(--eds-bg-sunken)] text-[var(--eds-text-secondary)] px-2 py-0.5 rounded-full">{t}</span>
                         ))}
                       </div>
                     </div>
@@ -1330,9 +1331,9 @@ export default function ObservationSheetsPage() {
               )}
 
               {detailTemplate.fileName && (
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-lg p-4 mb-6">
+                  <div className="flex items-center gap-2 text-sm text-[var(--eds-text-secondary)]">
+                    <svg className="h-4 w-4 text-[var(--eds-text-disabled)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                     <span>Original-Datei: {detailTemplate.fileName}</span>
@@ -1340,20 +1341,20 @@ export default function ObservationSheetsPage() {
                 </div>
               )}
 
-              <div className="text-xs text-slate-400 mb-6">
+              <div className="text-xs text-[var(--eds-text-disabled)] mb-6">
                 Erstellt am {new Date(detailTemplate.createdAt).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" })}
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+              <div className="flex gap-3 justify-end pt-4 border-t border-[var(--eds-border)]">
                 <button
                   onClick={resetToList}
-                  className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-200 rounded-lg"
+                  className="px-4 py-2 text-sm text-[var(--eds-text-secondary)] hover:text-[var(--eds-text-primary)] border border-[var(--eds-border)] rounded-lg"
                 >
                   Zurück
                 </button>
                 <button
                   onClick={() => downloadAsPDF(detailTemplate)}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2"
+                  className="px-4 py-2 text-sm font-medium text-[var(--eds-text-primary)] border border-[var(--eds-border)] rounded-lg hover:bg-[var(--eds-bg-sunken)] flex items-center gap-2"
                   data-testid="button-download"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -1382,14 +1383,14 @@ export default function ObservationSheetsPage() {
             >
               Beobachtungsbogen bearbeiten
             </h1>
-            <p className="text-sm text-slate-400 mb-8">
+            <p className="text-sm text-[var(--eds-text-disabled)] mb-8">
               Metadaten und Zuordnungen anpassen
             </p>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 space-y-5">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Name</label>
                   <input
                     type="text"
                     value={detailName}
@@ -1399,7 +1400,7 @@ export default function ObservationSheetsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Typ</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Typ</label>
                   <select value={detailType} onChange={(e) => setDetailType(e.target.value)} className={inputClass} data-testid="select-type">
                     {TEMPLATE_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>{t.label}</option>
@@ -1411,7 +1412,7 @@ export default function ObservationSheetsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Beschreibung</label>
                 <textarea
                   value={detailDescription}
                   onChange={(e) => setDetailDescription(e.target.value)}
@@ -1422,7 +1423,7 @@ export default function ObservationSheetsPage() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Bewertungsskala</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Bewertungsskala</label>
                   <select value={detailScale} onChange={(e) => setDetailScale(e.target.value)} className={inputClass} data-testid="select-scale">
                     {RATING_SCALES.map((s) => (
                       <option key={s.value} value={s.value}>{s.label}</option>
@@ -1431,7 +1432,7 @@ export default function ObservationSheetsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Tags (kommagetrennt)</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Tags (kommagetrennt)</label>
                   <input
                     type="text"
                     value={detailTags}
@@ -1449,16 +1450,16 @@ export default function ObservationSheetsPage() {
                 const editSections = getSections(detailTemplate);
                 return editSections.length > 0 ? (
                   <div>
-                    <h4 className="text-sm font-semibold text-slate-700 mb-3">Inhalte ({editSections.length} Abschnitte)</h4>
+                    <h4 className="text-sm font-semibold text-[var(--eds-text-primary)] mb-3">Inhalte ({editSections.length} Abschnitte)</h4>
                     {renderSections(editSections)}
                   </div>
                 ) : null;
               })()}
 
               {detailTemplate.fileName && (
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-sm text-[var(--eds-text-secondary)]">
+                    <svg className="h-4 w-4 text-[var(--eds-text-disabled)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                     <span>Original-Datei: {detailTemplate.fileName}</span>
@@ -1466,16 +1467,16 @@ export default function ObservationSheetsPage() {
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+              <div className="flex gap-3 justify-end pt-4 border-t border-[var(--eds-border)]">
                 <button
                   onClick={resetToList}
-                  className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-200 rounded-lg"
+                  className="px-4 py-2 text-sm text-[var(--eds-text-secondary)] hover:text-[var(--eds-text-primary)] border border-[var(--eds-border)] rounded-lg"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={() => downloadAsPDF(detailTemplate)}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2"
+                  className="px-4 py-2 text-sm font-medium text-[var(--eds-text-primary)] border border-[var(--eds-border)] rounded-lg hover:bg-[var(--eds-bg-sunken)] flex items-center gap-2"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />

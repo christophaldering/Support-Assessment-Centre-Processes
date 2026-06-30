@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/shared/PageHeader";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -111,49 +112,45 @@ export default function AccessRequestsPage() {
 
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-brand-navy" data-testid="text-access-requests-title">
-              Zugangsanfragen
-            </h1>
-            <p className="text-sm text-slate-500">
-              {requests.length} {statusFilter === "pending" ? "ausstehende" : statusFilter === "approved" ? "genehmigte" : "abgelehnte"} Anfragen
-            </p>
-          </div>
-          <div className="flex rounded-lg border border-slate-200 overflow-hidden">
-            {(["pending", "approved", "rejected"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setStatusFilter(s)}
-                data-testid={`button-filter-${s}`}
-                className={`px-4 py-2 text-xs font-medium transition-colors ${
-                  statusFilter === s
-                    ? "bg-brand-navy text-white"
-                    : "bg-white text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                {s === "pending" ? "Ausstehend" : s === "approved" ? "Genehmigt" : "Abgelehnt"}
-              </button>
-            ))}
-          </div>
-        </div>
+        <PageHeader
+          title="Zugangsanfragen"
+          description={`${requests.length} ${statusFilter === "pending" ? "ausstehende" : statusFilter === "approved" ? "genehmigte" : "abgelehnte"} Anfragen`}
+          actions={
+            <div className="flex rounded-lg border border-[var(--eds-border)] overflow-hidden">
+              {(["pending", "approved", "rejected"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatusFilter(s)}
+                  data-testid={`button-filter-${s}`}
+                  className={`px-4 py-2 text-xs font-medium transition-colors ${
+                    statusFilter === s
+                      ? "bg-brand-navy text-white"
+                      : "bg-white text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"
+                  }`}
+                >
+                  {s === "pending" ? "Ausstehend" : s === "approved" ? "Genehmigt" : "Abgelehnt"}
+                </button>
+              ))}
+            </div>
+          }
+        />
 
         {successMessage && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg" data-testid="text-success">
-            <p className="text-sm text-green-800 font-medium">{successMessage}</p>
+          <div className="mb-4 p-4 bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] rounded-lg" data-testid="text-success">
+            <p className="text-sm text-[var(--eds-status-green)] font-medium">{successMessage}</p>
           </div>
         )}
 
-        {error && <p className="text-sm text-red-500 mb-4" data-testid="text-error">{error}</p>}
+        {error && <p className="text-sm text-[var(--eds-status-red)] mb-4" data-testid="text-error">{error}</p>}
 
-        {loading && <p className="text-sm text-slate-400">Laden...</p>}
+        {loading && <p className="text-sm text-[var(--eds-text-disabled)]">Laden...</p>}
 
         <div className="space-y-4">
           {requests.map((r) => (
             <div
               key={r.id}
-              className="bg-white border border-slate-200 rounded-xl p-6"
+              className="bg-white border border-[var(--eds-border)] rounded-xl p-6"
               data-testid={`card-request-${r.id}`}
             >
               <div className="flex items-start justify-between gap-4">
@@ -164,27 +161,27 @@ export default function AccessRequestsPage() {
                     </h3>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                       r.status === "pending"
-                        ? "bg-amber-50 text-amber-600"
+                        ? "bg-[var(--eds-status-amber-bg)] text-[var(--eds-status-amber)]"
                         : r.status === "approved"
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-red-50 text-red-500"
+                          ? "bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)]"
+                          : "bg-[var(--eds-status-red-bg)] text-[var(--eds-status-red)]"
                     }`}>
                       {r.status === "pending" ? "Ausstehend" : r.status === "approved" ? "Genehmigt" : "Abgelehnt"}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-500" data-testid={`text-email-${r.id}`}>{r.email}</p>
+                  <p className="text-sm text-[var(--eds-text-tertiary)]" data-testid={`text-email-${r.id}`}>{r.email}</p>
                   {r.message && (
-                    <p className="text-sm text-slate-600 mt-2 bg-slate-50 rounded-lg px-3 py-2 italic">
+                    <p className="text-sm text-[var(--eds-text-secondary)] mt-2 bg-[var(--eds-bg-sunken)] rounded-lg px-3 py-2 italic">
                       &ldquo;{r.message}&rdquo;
                     </p>
                   )}
-                  <p className="text-xs text-slate-400 mt-2">{formatDate(r.createdAt)}</p>
+                  <p className="text-xs text-[var(--eds-text-disabled)] mt-2">{formatDate(r.createdAt)}</p>
                 </div>
 
                 {r.status === "pending" && (
                   <div className="shrink-0 space-y-3">
                     <div>
-                      <p className="text-xs font-medium text-slate-500 mb-1.5">Rolle zuweisen:</p>
+                      <p className="text-xs font-medium text-[var(--eds-text-tertiary)] mb-1.5">Rolle zuweisen:</p>
                       <div className="flex flex-wrap gap-1">
                         {ASSIGNABLE_ROLES.map((role) => {
                           const selected = (roleSelections[r.id] || ["OBSERVER"]).includes(role);
@@ -197,7 +194,7 @@ export default function AccessRequestsPage() {
                               className={`text-xs px-2 py-1 rounded-full border transition-colors ${
                                 selected
                                   ? "bg-brand-blue text-white border-brand-blue"
-                                  : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+                                  : "bg-white text-[var(--eds-text-tertiary)] border-[var(--eds-border)] hover:border-[var(--eds-border-strong)]"
                               }`}
                             >
                               {ROLE_LABELS[role]}
@@ -211,7 +208,7 @@ export default function AccessRequestsPage() {
                         onClick={() => handleAction(r.id, "approve")}
                         disabled={processingId === r.id}
                         data-testid={`button-approve-${r.id}`}
-                        className="rounded-lg bg-emerald-500 text-white text-xs font-medium px-4 py-2 hover:bg-emerald-600 disabled:opacity-50 transition-colors"
+                        className="rounded-lg bg-[var(--eds-status-green-bg)]0 text-white text-xs font-medium px-4 py-2 hover:bg-emerald-600 disabled:opacity-50 transition-colors"
                       >
                         {processingId === r.id ? "..." : "Genehmigen"}
                       </button>
@@ -219,7 +216,7 @@ export default function AccessRequestsPage() {
                         onClick={() => handleAction(r.id, "reject")}
                         disabled={processingId === r.id}
                         data-testid={`button-reject-${r.id}`}
-                        className="rounded-lg bg-white text-red-500 text-xs font-medium px-4 py-2 border border-red-200 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                        className="rounded-lg bg-white text-[var(--eds-status-red)] text-xs font-medium px-4 py-2 border border-[var(--eds-status-red-bg)] hover:bg-[var(--eds-status-red-bg)] disabled:opacity-50 transition-colors"
                       >
                         Ablehnen
                       </button>
@@ -231,7 +228,7 @@ export default function AccessRequestsPage() {
           ))}
 
           {requests.length === 0 && !loading && (
-            <div className="text-center py-12 text-slate-400">
+            <div className="text-center py-12 text-[var(--eds-text-disabled)]">
               <p className="text-sm">Keine {statusFilter === "pending" ? "ausstehenden" : statusFilter === "approved" ? "genehmigten" : "abgelehnten"} Anfragen.</p>
             </div>
           )}

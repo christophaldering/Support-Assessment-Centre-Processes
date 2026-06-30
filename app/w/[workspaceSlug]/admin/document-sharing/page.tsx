@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/shared/PageHeader";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -192,13 +193,10 @@ export default function DataRoomLinksPage() {
 
   return (
     <div style={S.wrap}>
-      <header style={S.header}>
-        <div>
-          <div style={S.eyebrow}>ConVia · Magic-Link-Verwaltung</div>
-          <h1 style={S.h1}>Externe Freigabe-Links</h1>
-          <p style={S.sub}>Erstelle tokenisierte Einladungslinks für Kandidaten — kein Passwort nötig.</p>
-        </div>
-      </header>
+      <PageHeader
+        title="Externe Freigabe-Links"
+        description="Tokenisierte Einladungslinks für Kandidaten erstellen — kein Passwort nötig."
+      />
 
       {/* ── Live-Sitzungen ───────────────────────────────────────────────── */}
       <section style={{ ...S.card, marginBottom: 20, borderColor: liveSessions.length > 0 ? "#b6e8d0" : "var(--eds-border,#e2e8f0)" }}>

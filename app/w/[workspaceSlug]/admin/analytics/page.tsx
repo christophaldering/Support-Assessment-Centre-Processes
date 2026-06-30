@@ -126,7 +126,7 @@ export default function AnalyticsDashboardPage() {
           >
             Analyse-Dashboard
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-sm text-[var(--eds-text-tertiary)] mt-0.5">
             Übersicht über Assessments, Bewertungen und Kompetenzwerte
           </p>
         </div>
@@ -134,7 +134,7 @@ export default function AnalyticsDashboardPage() {
           <select
             value={selectedAssessment}
             onChange={(e) => { setSelectedAssessment(e.target.value); setActiveTab("uebersicht"); }}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#297587]/30"
+            className="rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#297587]/30"
             data-testid="select-assessment-filter"
           >
             <option value="">Alle Assessments</option>
@@ -146,7 +146,7 @@ export default function AnalyticsDashboardPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-0.5 border-b border-slate-200 no-print">
+      <div className="flex gap-0.5 border-b border-[var(--eds-border)] no-print">
         {TABS.filter((t) => t.show).map((t) => (
           <button
             key={t.key}
@@ -154,7 +154,7 @@ export default function AnalyticsDashboardPage() {
             className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
               activeTab === t.key
                 ? "text-white"
-                : "text-slate-500 hover:text-slate-800"
+                : "text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"
             }`}
             style={activeTab === t.key ? { backgroundColor: ACCENT } : {}}
             data-testid={`tab-${t.key}`}
@@ -171,7 +171,7 @@ export default function AnalyticsDashboardPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800" data-testid="text-error">
+        <div className="bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-xl p-4 text-sm text-[var(--eds-status-red)]" data-testid="text-error">
           {error}
         </div>
       )}
@@ -179,7 +179,7 @@ export default function AnalyticsDashboardPage() {
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-20">
-          <p className="text-sm text-slate-400">Laden…</p>
+          <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>
         </div>
       )}
 
@@ -194,7 +194,7 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           {analytics.competencyAverages.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
               <h2
                 className="text-lg font-semibold mb-4"
                 style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}
@@ -204,10 +204,10 @@ export default function AnalyticsDashboardPage() {
               <div className="space-y-3" data-testid="chart-competency-averages">
                 {analytics.competencyAverages.map((c) => (
                   <div key={c.competencyName} className="flex items-center gap-3">
-                    <span className="text-sm text-slate-700 w-48 shrink-0 truncate" title={c.competencyName}>
+                    <span className="text-sm text-[var(--eds-text-primary)] w-48 shrink-0 truncate" title={c.competencyName}>
                       {c.competencyName}
                     </span>
-                    <div className="flex-1 bg-slate-100 rounded-full h-6 overflow-hidden">
+                    <div className="flex-1 bg-[var(--eds-bg-sunken)] rounded-full h-6 overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
                         style={{
@@ -218,7 +218,7 @@ export default function AnalyticsDashboardPage() {
                         <span className="text-xs font-medium text-white">{c.averageNormalized}</span>
                       </div>
                     </div>
-                    <span className="text-xs text-slate-400 w-12 text-right">n={c.count}</span>
+                    <span className="text-xs text-[var(--eds-text-disabled)] w-12 text-right">n={c.count}</span>
                   </div>
                 ))}
               </div>
@@ -226,8 +226,8 @@ export default function AnalyticsDashboardPage() {
           )}
 
           {analytics.candidateScores.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-              <div className="p-6 border-b border-slate-200">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl overflow-hidden">
+              <div className="p-6 border-b border-[var(--eds-border)]">
                 <h2
                   className="text-lg font-semibold"
                   style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}
@@ -238,12 +238,12 @@ export default function AnalyticsDashboardPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm" data-testid="table-candidate-scores">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Kandidat</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Kompetenz</th>
-                      <th className="text-right px-4 py-3 font-medium text-slate-600">Normalisiert (0–100)</th>
-                      <th className="text-center px-4 py-3 font-medium text-slate-600">Ausreißer</th>
-                      <th className="text-center px-4 py-3 font-medium text-slate-600">Moderator-Überschr.</th>
+                    <tr className="border-b border-[var(--eds-border)] bg-[var(--eds-bg-sunken)]">
+                      <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Kandidat</th>
+                      <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Kompetenz</th>
+                      <th className="text-right px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Normalisiert (0–100)</th>
+                      <th className="text-center px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Ausreißer</th>
+                      <th className="text-center px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Moderator-Überschr.</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -251,26 +251,26 @@ export default function AnalyticsDashboardPage() {
                       candidate.competencies.map((comp, idx) => (
                         <tr
                           key={`${candidate.candidateId}-${comp.name}-${idx}`}
-                          className={`border-b border-slate-100 hover:bg-slate-50 ${comp.outlier ? "bg-red-50" : ""}`}
+                          className={`border-b border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)] ${comp.outlier ? "bg-[var(--eds-status-red-bg)]" : ""}`}
                           data-testid={`row-score-${candidate.candidateId}-${idx}`}
                         >
                           {idx === 0 && (
-                            <td className="px-4 py-3 font-medium text-slate-900" rowSpan={candidate.competencies.length}>
+                            <td className="px-4 py-3 font-medium text-[var(--eds-text-primary)]" rowSpan={candidate.competencies.length}>
                               {candidate.candidateName}
                             </td>
                           )}
-                          <td className="px-4 py-3 text-slate-700">{comp.name}</td>
-                          <td className={`px-4 py-3 text-right font-mono ${comp.outlier ? "text-red-600 font-semibold" : "text-slate-900"}`}>
+                          <td className="px-4 py-3 text-[var(--eds-text-primary)]">{comp.name}</td>
+                          <td className={`px-4 py-3 text-right font-mono ${comp.outlier ? "text-[var(--eds-status-red)] font-semibold" : "text-[var(--eds-text-primary)]"}`}>
                             {Math.round(comp.normalized * 100) / 100}
                           </td>
                           <td className="px-4 py-3 text-center">
                             {comp.outlier && (
-                              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-600">Ja</span>
+                              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--eds-status-red-bg)] text-[var(--eds-status-red)]">Ja</span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-center">
                             {comp.overridden && (
-                              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Überschrieben</span>
+                              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--eds-status-amber-bg)] text-[var(--eds-status-amber)]">Überschrieben</span>
                             )}
                           </td>
                         </tr>
@@ -283,7 +283,7 @@ export default function AnalyticsDashboardPage() {
           )}
 
           {analytics.competencyAverages.length === 0 && analytics.candidateScores.length === 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-8 text-center text-[var(--eds-text-disabled)]">
               Keine konsolidierten Bewertungsdaten vorhanden.
             </div>
           )}
@@ -328,8 +328,8 @@ export default function AnalyticsDashboardPage() {
 
 function SummaryCard({ label, value, testId }: { label: string; value: number; testId: string }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-5" data-testid={testId}>
-      <p className="text-sm text-slate-500 mb-1">{label}</p>
+    <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid={testId}>
+      <p className="text-sm text-[var(--eds-text-tertiary)] mb-1">{label}</p>
       <p className="text-2xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}>
         {value}
       </p>

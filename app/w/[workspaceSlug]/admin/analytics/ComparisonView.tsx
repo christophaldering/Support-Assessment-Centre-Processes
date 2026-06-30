@@ -140,7 +140,7 @@ export default function ComparisonView({
 
   if (candidateScores.length < 2) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-slate-400">
+      <div className="bg-white border border-[var(--eds-border)] rounded-xl p-12 text-center text-[var(--eds-text-disabled)]">
         <p className="text-lg mb-1">Mindestens zwei bewertete Kandidaten nötig</p>
         <p className="text-sm">Wählen Sie ein Assessment mit konsolidierten Scores für mehrere Kandidaten.</p>
       </div>
@@ -175,8 +175,8 @@ export default function ComparisonView({
 
       <div className="space-y-8">
         {/* Candidate selector */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 no-print">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Kandidatenauswahl</p>
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5 no-print">
+          <p className="text-xs font-semibold text-[var(--eds-text-tertiary)] uppercase tracking-wide mb-3">Kandidatenauswahl</p>
           <div className="flex flex-wrap gap-2">
             {candidateScores.map((cs) => {
               const on = selectedIds.has(cs.candidateId);
@@ -199,19 +199,19 @@ export default function ComparisonView({
             })}
           </div>
           {selected.length > 5 && (
-            <p className="text-xs text-amber-600 mt-2">
+            <p className="text-xs text-[var(--eds-status-amber)] mt-2">
               Für optimale Radar-Lesbarkeit empfehlen wir max. 5 Kandidaten gleichzeitig.
             </p>
           )}
         </div>
 
         {/* 1. Heatmap */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-[var(--eds-border)] flex items-center justify-between">
             <h2 className="text-base font-semibold" style={{ color: ACCENT }}>
               Heatmap-Matrix
             </h2>
-            <div className="flex items-center gap-2 text-xs text-slate-400 no-print">
+            <div className="flex items-center gap-2 text-xs text-[var(--eds-text-disabled)] no-print">
               <span className="w-16 h-3 rounded" style={{ background: "linear-gradient(to right, #EFF4F5, #297587, #A6473B)" }} />
               <span>0 → 100</span>
             </div>
@@ -223,7 +223,7 @@ export default function ComparisonView({
               data-testid="heatmap-grid"
             >
               {/* Header row */}
-              <div className="px-2 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <div className="px-2 py-1 text-xs font-semibold text-[var(--eds-text-disabled)] uppercase tracking-wide">
                 Kompetenz
               </div>
               {selected.map((cs) => (
@@ -242,7 +242,7 @@ export default function ComparisonView({
                 <>
                   <div
                     key={`lbl-${comp}`}
-                    className="px-2 py-1.5 text-xs text-slate-700 truncate flex items-center"
+                    className="px-2 py-1.5 text-xs text-[var(--eds-text-primary)] truncate flex items-center"
                     title={comp}
                   >
                     {comp}
@@ -269,12 +269,12 @@ export default function ComparisonView({
         </div>
 
         {/* 2. Radar */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 print-break">
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5 print-break">
           <h2 className="text-base font-semibold mb-4" style={{ color: ACCENT }}>
             Netzdiagramm
           </h2>
           {N < 3 ? (
-            <p className="text-sm text-slate-400 py-8 text-center">Mindestens 3 Kompetenzen für das Netzdiagramm erforderlich.</p>
+            <p className="text-sm text-[var(--eds-text-disabled)] py-8 text-center">Mindestens 3 Kompetenzen für das Netzdiagramm erforderlich.</p>
           ) : (
             <div className="flex flex-col lg:flex-row items-start gap-6">
               <svg viewBox="0 0 320 320" className="w-full max-w-xs flex-shrink-0" data-testid="radar-svg">
@@ -329,11 +329,11 @@ export default function ComparisonView({
               </svg>
               {/* Legend */}
               <div className="space-y-2 pt-2">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Legende</p>
+                <p className="text-xs font-semibold text-[var(--eds-text-disabled)] uppercase tracking-wide">Legende</p>
                 {selected.map((cs) => (
                   <div key={cs.candidateId} className="flex items-center gap-2 text-sm">
                     <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: colorOf(cs.candidateId) }} />
-                    <span className="text-slate-700">{cs.candidateName}</span>
+                    <span className="text-[var(--eds-text-primary)]">{cs.candidateName}</span>
                   </div>
                 ))}
               </div>
@@ -342,13 +342,13 @@ export default function ComparisonView({
         </div>
 
         {/* 3. Ranking table */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-[var(--eds-border)] flex items-center justify-between flex-wrap gap-3">
             <h2 className="text-base font-semibold" style={{ color: ACCENT }}>Ranking</h2>
             <div className="flex items-center gap-3 no-print">
               <button
                 onClick={() => window.print()}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-[#297587] hover:text-[#297587] transition-colors"
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-[var(--eds-border)] hover:border-[#297587] hover:text-[#297587] transition-colors"
                 data-testid="button-print"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -358,7 +358,7 @@ export default function ComparisonView({
               </button>
               <a
                 href={`/w/${workspaceSlug}/admin/gutachten`}
-                className="text-xs text-slate-400 hover:text-[#297587] transition-colors"
+                className="text-xs text-[var(--eds-text-disabled)] hover:text-[#297587] transition-colors"
                 data-testid="link-gutachten"
               >
                 Formale Berichte → Gutachten-Generator
@@ -368,7 +368,7 @@ export default function ComparisonView({
           <div className="overflow-x-auto" data-testid="ranking-table">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs text-slate-500">
+                <tr className="border-b border-[var(--eds-border)] bg-[var(--eds-bg-sunken)] text-left text-xs text-[var(--eds-text-tertiary)]">
                   <th className="px-4 py-3"><SortBtn col="rank" label="Rang" /></th>
                   <th className="px-4 py-3">Kandidat</th>
                   <th className="px-4 py-3"><SortBtn col="score" label="Gesamt-Score" /></th>
@@ -380,7 +380,7 @@ export default function ComparisonView({
                 {sortedStats.map((s) => (
                   <tr
                     key={s.candidateId}
-                    className="border-b border-slate-50 hover:bg-slate-50"
+                    className="border-b border-slate-50 hover:bg-[var(--eds-bg-sunken)]"
                     data-testid={`row-rank-${s.candidateId}`}
                   >
                     <td className="px-4 py-3">
@@ -394,22 +394,22 @@ export default function ComparisonView({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: colorOf(s.candidateId) }} />
-                        <span className="font-medium text-slate-800">{s.candidateName}</span>
+                        <span className="font-medium text-[var(--eds-text-primary)]">{s.candidateName}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 max-w-24 bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div className="flex-1 max-w-24 bg-[var(--eds-bg-sunken)] rounded-full h-2 overflow-hidden">
                           <div
                             className="h-full rounded-full"
                             style={{ width: `${s.mean}%`, backgroundColor: TEAL }}
                           />
                         </div>
-                        <span className="font-mono text-slate-700">{s.mean}</span>
+                        <span className="font-mono text-[var(--eds-text-primary)]">{s.mean}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell text-teal-700 text-xs">{s.best}</td>
-                    <td className="px-4 py-3 hidden lg:table-cell text-slate-400 text-xs">{s.worst}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell text-[var(--eds-text-disabled)] text-xs">{s.worst}</td>
                   </tr>
                 ))}
               </tbody>
@@ -418,7 +418,7 @@ export default function ComparisonView({
         </div>
 
         {/* Print footer */}
-        <div className="print-footer text-xs text-slate-400 text-center pt-4 border-t border-slate-200">
+        <div className="print-footer text-xs text-[var(--eds-text-disabled)] text-center pt-4 border-t border-[var(--eds-border)]">
           © Christoph Aldering · Private initiative – for training reasons only – no data from reality so far!
         </div>
       </div>

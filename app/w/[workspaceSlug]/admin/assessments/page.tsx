@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/shared/PageHeader";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -25,10 +26,10 @@ interface ClientRecord {
 }
 
 const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
-  draft: { bg: "bg-slate-50", text: "text-slate-600", label: "Entwurf" },
-  active: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Aktiv" },
-  completed: { bg: "bg-blue-50", text: "text-blue-600", label: "Abgeschlossen" },
-  archived: { bg: "bg-red-50", text: "text-red-500", label: "Archiviert" },
+  draft: { bg: "bg-[var(--eds-bg-sunken)]", text: "text-[var(--eds-text-secondary)]", label: "Entwurf" },
+  active: { bg: "bg-[var(--eds-status-green-bg)]", text: "text-[var(--eds-status-green)]", label: "Aktiv" },
+  completed: { bg: "bg-[var(--eds-status-blue-bg)]", text: "text-[var(--eds-status-blue)]", label: "Abgeschlossen" },
+  archived: { bg: "bg-[var(--eds-status-red-bg)]", text: "text-[var(--eds-status-red)]", label: "Archiviert" },
 };
 
 function formatDate(dateStr: string | null): string {
@@ -225,12 +226,12 @@ export default function AssessmentManagementPage() {
   const renderAssessmentRow = (a: AssessmentRecord) => {
     const badge = STATUS_BADGES[a.status] || STATUS_BADGES.draft;
     return (
-      <tr key={a.id} className="border-b border-slate-100 hover:bg-slate-50/50" data-testid={`row-assessment-${a.id}`}>
+      <tr key={a.id} className="border-b border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)]/50" data-testid={`row-assessment-${a.id}`}>
         <td className="px-4 py-3">
           <div>
-            <p className="font-medium text-slate-900">{a.name}</p>
+            <p className="font-medium text-[var(--eds-text-primary)]">{a.name}</p>
             {viewMode === "flat" && a.clientName && (
-              <p className="text-xs text-slate-400 mt-0.5">{a.clientName}</p>
+              <p className="text-xs text-[var(--eds-text-disabled)] mt-0.5">{a.clientName}</p>
             )}
           </div>
         </td>
@@ -239,10 +240,10 @@ export default function AssessmentManagementPage() {
             {badge.label}
           </span>
         </td>
-        <td className="px-4 py-3 text-slate-500">
+        <td className="px-4 py-3 text-[var(--eds-text-tertiary)]">
           {formatDate(a.startDate)} – {formatDate(a.endDate)}
         </td>
-        <td className="px-4 py-3 text-slate-500">{a._count?.candidates ?? 0}</td>
+        <td className="px-4 py-3 text-[var(--eds-text-tertiary)]">{a._count?.candidates ?? 0}</td>
         <td className="px-4 py-3 text-right">
           <div className="flex justify-end gap-2">
             <Link
@@ -255,7 +256,7 @@ export default function AssessmentManagementPage() {
             <button
               onClick={() => handleDelete(a.id, a.name)}
               data-testid={`button-delete-${a.id}`}
-              className="text-xs text-red-500 hover:text-red-700 font-medium"
+              className="text-xs text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] font-medium"
             >
               Löschen
             </button>
@@ -267,37 +268,37 @@ export default function AssessmentManagementPage() {
 
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-brand-navy">Assessments</h1>
-            <p className="text-sm text-slate-500">{assessments.length} Assessments in diesem Workspace</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden">
+        <PageHeader
+          title="Assessments"
+          description={`${assessments.length} Assessments in diesem Workspace`}
+          actions={
+            <div className="flex items-center gap-3">
+              <div className="flex items-center bg-white border border-[var(--eds-border)] rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setViewMode("grouped")}
+                  data-testid="button-view-grouped"
+                  className={`text-xs font-medium px-3 py-1.5 transition-colors ${viewMode === "grouped" ? "bg-brand-navy text-white" : "text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)]"}`}
+                >
+                  Nach Kunde
+                </button>
+                <button
+                  onClick={() => setViewMode("flat")}
+                  data-testid="button-view-flat"
+                  className={`text-xs font-medium px-3 py-1.5 transition-colors ${viewMode === "flat" ? "bg-brand-navy text-white" : "text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)]"}`}
+                >
+                  Liste
+                </button>
+              </div>
               <button
-                onClick={() => setViewMode("grouped")}
-                data-testid="button-view-grouped"
-                className={`text-xs font-medium px-3 py-1.5 transition-colors ${viewMode === "grouped" ? "bg-brand-navy text-white" : "text-slate-600 hover:bg-slate-50"}`}
+                onClick={() => setShowCreate(!showCreate)}
+                data-testid="button-create-assessment"
+                className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
               >
-                Nach Kunde
-              </button>
-              <button
-                onClick={() => setViewMode("flat")}
-                data-testid="button-view-flat"
-                className={`text-xs font-medium px-3 py-1.5 transition-colors ${viewMode === "flat" ? "bg-brand-navy text-white" : "text-slate-600 hover:bg-slate-50"}`}
-              >
-                Liste
+                {showCreate ? "Abbrechen" : "Neues Assessment"}
               </button>
             </div>
-            <button
-              onClick={() => setShowCreate(!showCreate)}
-              data-testid="button-create-assessment"
-              className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
-            >
-              {showCreate ? "Abbrechen" : "Neues Assessment"}
-            </button>
-          </div>
-        </div>
+          }
+        />
 
         {clients.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
@@ -307,7 +308,7 @@ export default function AssessmentManagementPage() {
               className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
                 activeClientFilter === null
                   ? "bg-brand-navy text-white border-brand-navy"
-                  : "text-slate-600 border-slate-200 hover:border-slate-300 bg-white"
+                  : "text-[var(--eds-text-secondary)] border-[var(--eds-border)] hover:border-[var(--eds-border-strong)] bg-white"
               }`}
             >
               Alle
@@ -318,7 +319,7 @@ export default function AssessmentManagementPage() {
               className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
                 activeClientFilter === "neutral"
                   ? "bg-brand-navy text-white border-brand-navy"
-                  : "text-slate-600 border-slate-200 hover:border-slate-300 bg-white"
+                  : "text-[var(--eds-text-secondary)] border-[var(--eds-border)] hover:border-[var(--eds-border-strong)] bg-white"
               }`}
             >
               Allgemein
@@ -331,7 +332,7 @@ export default function AssessmentManagementPage() {
                   className={`group relative flex items-center text-xs font-medium rounded-full border transition-colors ${
                     activeClientFilter === c.id
                       ? "bg-brand-navy text-white border-brand-navy"
-                      : "text-slate-600 border-slate-200 hover:border-slate-300 bg-white"
+                      : "text-[var(--eds-text-secondary)] border-[var(--eds-border)] hover:border-[var(--eds-border-strong)] bg-white"
                   }`}
                 >
                   <button
@@ -352,7 +353,7 @@ export default function AssessmentManagementPage() {
                     className={`pr-2 pl-0 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity ${
                       activeClientFilter === c.id
                         ? "text-white/70 hover:text-white"
-                        : "text-slate-400 hover:text-slate-700"
+                        : "text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-primary)]"
                     }`}
                   >
                     ✕
@@ -363,18 +364,18 @@ export default function AssessmentManagementPage() {
         )}
 
         {deleteClientError && (
-          <p className="text-sm text-red-500 mb-2" data-testid="text-delete-client-error">{deleteClientError}</p>
+          <p className="text-sm text-[var(--eds-status-red)] mb-2" data-testid="text-delete-client-error">{deleteClientError}</p>
         )}
 
-        {error && <p className="text-sm text-red-500 mb-4" data-testid="text-error">{error}</p>}
+        {error && <p className="text-sm text-[var(--eds-status-red)] mb-4" data-testid="text-error">{error}</p>}
 
         {showCreate && (
-          <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6">
+          <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 mb-6">
             <h2 className="text-lg font-semibold text-brand-navy mb-4">Neues Assessment erstellen</h2>
             <form onSubmit={handleCreate} className="space-y-4" data-testid="form-create-assessment">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Name *</label>
                   <input
                     type="text"
                     value={newName}
@@ -382,18 +383,18 @@ export default function AssessmentManagementPage() {
                     placeholder="Assessment Name"
                     required
                     data-testid="input-name"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Kunde</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Kunde</label>
                   <input
                     type="text"
                     value={newClientName}
                     onChange={(e) => setNewClientName(e.target.value)}
                     placeholder="z.B. REWE Group (optional)"
                     data-testid="input-client-name"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                     list="client-suggestions"
                   />
                   <datalist id="client-suggestions">
@@ -406,23 +407,23 @@ export default function AssessmentManagementPage() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Standort</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Standort</label>
                   <input
                     type="text"
                     value={newLocation}
                     onChange={(e) => setNewLocation(e.target.value)}
                     placeholder="z.B. Hamburg, Berlin"
                     data-testid="input-location"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Status</label>
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value)}
                     data-testid="select-status"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   >
                     <option value="draft">Entwurf</option>
                     <option value="active">Aktiv</option>
@@ -433,41 +434,41 @@ export default function AssessmentManagementPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Beschreibung</label>
                 <textarea
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Beschreibung des Assessments"
                   rows={3}
                   data-testid="input-description"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                  className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                 />
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Startdatum</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Startdatum</label>
                   <input
                     type="date"
                     value={newStartDate}
                     onChange={(e) => setNewStartDate(e.target.value)}
                     data-testid="input-start-date"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Enddatum</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Enddatum</label>
                   <input
                     type="date"
                     value={newEndDate}
                     onChange={(e) => setNewEndDate(e.target.value)}
                     data-testid="input-end-date"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   />
                 </div>
               </div>
 
-              {createError && <p className="text-sm text-red-500" data-testid="text-create-error">{createError}</p>}
+              {createError && <p className="text-sm text-[var(--eds-status-red)]" data-testid="text-create-error">{createError}</p>}
 
               <button
                 type="submit"
@@ -481,28 +482,28 @@ export default function AssessmentManagementPage() {
           </div>
         )}
 
-        {loading && <p className="text-sm text-slate-400">Laden…</p>}
+        {loading && <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>}
 
         {viewMode === "grouped" ? (
           <div className="space-y-6">
             {sortedGroups.map(([groupName, items]) => (
-              <div key={groupName} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div key={groupName} className="bg-white border border-[var(--eds-border)] rounded-xl overflow-hidden">
+                <div className="px-4 py-3 bg-[var(--eds-bg-sunken)] border-b border-[var(--eds-border)] flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-brand-navy">{groupName}</span>
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--eds-border)] text-[var(--eds-text-secondary)]">
                       {items.length}
                     </span>
                   </div>
                 </div>
                 <table className="w-full text-sm" data-testid={`table-group-${groupName}`}>
                   <thead>
-                    <tr className="border-b border-slate-100">
-                      <th className="text-left px-4 py-2 font-medium text-slate-500 text-xs">Name</th>
-                      <th className="text-left px-4 py-2 font-medium text-slate-500 text-xs">Status</th>
-                      <th className="text-left px-4 py-2 font-medium text-slate-500 text-xs">Datum</th>
-                      <th className="text-left px-4 py-2 font-medium text-slate-500 text-xs">Kandidaten</th>
-                      <th className="text-right px-4 py-2 font-medium text-slate-500 text-xs">Aktionen</th>
+                    <tr className="border-b border-[var(--eds-border)]">
+                      <th className="text-left px-4 py-2 font-medium text-[var(--eds-text-tertiary)] text-xs">Name</th>
+                      <th className="text-left px-4 py-2 font-medium text-[var(--eds-text-tertiary)] text-xs">Status</th>
+                      <th className="text-left px-4 py-2 font-medium text-[var(--eds-text-tertiary)] text-xs">Datum</th>
+                      <th className="text-left px-4 py-2 font-medium text-[var(--eds-text-tertiary)] text-xs">Kandidaten</th>
+                      <th className="text-right px-4 py-2 font-medium text-[var(--eds-text-tertiary)] text-xs">Aktionen</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -512,28 +513,28 @@ export default function AssessmentManagementPage() {
               </div>
             ))}
             {sortedGroups.length === 0 && !loading && (
-              <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+              <div className="bg-white border border-[var(--eds-border)] rounded-xl p-8 text-center text-[var(--eds-text-disabled)]">
                 Keine Assessments vorhanden.
               </div>
             )}
           </div>
         ) : (
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="bg-white border border-[var(--eds-border)] rounded-xl overflow-hidden">
             <table className="w-full text-sm" data-testid="table-assessments">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">Name</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">Status</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">Datum</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">Kandidaten</th>
-                  <th className="text-right px-4 py-3 font-medium text-slate-600">Aktionen</th>
+                <tr className="bg-[var(--eds-bg-sunken)] border-b border-[var(--eds-border)]">
+                  <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Name</th>
+                  <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Datum</th>
+                  <th className="text-left px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Kandidaten</th>
+                  <th className="text-right px-4 py-3 font-medium text-[var(--eds-text-secondary)]">Aktionen</th>
                 </tr>
               </thead>
               <tbody>
                 {assessments.map(renderAssessmentRow)}
                 {assessments.length === 0 && !loading && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={5} className="px-4 py-8 text-center text-[var(--eds-text-disabled)]">
                       Keine Assessments vorhanden.
                     </td>
                   </tr>
@@ -546,13 +547,13 @@ export default function AssessmentManagementPage() {
       {deleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" data-testid="modal-delete-assessment">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-1">Assessment löschen</h2>
-            <p className="text-sm text-slate-500 mb-4">
-              <span className="font-medium text-slate-700">„{deleteModal.name}"</span> wird unwiderruflich gelöscht. Alle zugehörigen Daten gehen verloren.
+            <h2 className="text-lg font-semibold text-[var(--eds-text-primary)] mb-1">Assessment löschen</h2>
+            <p className="text-sm text-[var(--eds-text-tertiary)] mb-4">
+              <span className="font-medium text-[var(--eds-text-primary)]">„{deleteModal.name}"</span> wird unwiderruflich gelöscht. Alle zugehörigen Daten gehen verloren.
             </p>
             <form onSubmit={confirmDelete} className="space-y-4" data-testid="form-delete-assessment">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Passwort zur Bestätigung</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Passwort zur Bestätigung</label>
                 <input
                   type="password"
                   value={deletePassword}
@@ -561,18 +562,18 @@ export default function AssessmentManagementPage() {
                   required
                   autoFocus
                   data-testid="input-delete-password"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400"
+                  className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400"
                 />
               </div>
               {deleteError && (
-                <p className="text-sm text-red-500" data-testid="text-delete-error">{deleteError}</p>
+                <p className="text-sm text-[var(--eds-status-red)]" data-testid="text-delete-error">{deleteError}</p>
               )}
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
                   onClick={() => { setDeleteModal(null); setDeletePassword(""); setDeleteError(""); }}
                   data-testid="button-cancel-delete"
-                  className="text-sm font-medium text-slate-600 hover:text-slate-800 px-4 py-2 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+                  className="text-sm font-medium text-[var(--eds-text-secondary)] hover:text-[var(--eds-text-primary)] px-4 py-2 rounded-lg border border-[var(--eds-border)] hover:border-[var(--eds-border-strong)] transition-colors"
                 >
                   Abbrechen
                 </button>
@@ -580,7 +581,7 @@ export default function AssessmentManagementPage() {
                   type="submit"
                   disabled={deleting || !deletePassword}
                   data-testid="button-confirm-delete"
-                  className="text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 px-4 py-2 rounded-lg transition-colors"
+                  className="text-sm font-medium text-white bg-[var(--eds-status-red)] hover:bg-[var(--eds-terracotta-dk)] disabled:opacity-50 px-4 py-2 rounded-lg transition-colors"
                 >
                   {deleting ? "Wird gelöscht…" : "Endgültig löschen"}
                 </button>

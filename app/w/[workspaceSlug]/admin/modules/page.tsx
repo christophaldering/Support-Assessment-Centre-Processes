@@ -102,7 +102,7 @@ const inputClass = "w-full rounded-lg border border-[var(--eds-border)] px-3 py-
 
 export default function ModulesHubPage() {
   return (
-    <Suspense fallback={<div className="py-8 px-6 lg:px-10 flex items-center justify-center text-slate-400">Laden...</div>}>
+    <Suspense fallback={<div className="py-8 px-6 lg:px-10 flex items-center justify-center text-[var(--eds-text-disabled)]">Laden...</div>}>
       <ModulesHubContent />
     </Suspense>
   );
@@ -455,7 +455,7 @@ Antworte in folgendem JSON-Format:
   if (loading) {
     return (
       <div className="py-8 px-6 lg:px-10 flex items-center justify-center">
-        <p className="text-sm text-slate-400">Laden...</p>
+        <p className="text-sm text-[var(--eds-text-disabled)]">Laden...</p>
       </div>
     );
   }
@@ -463,13 +463,13 @@ Antworte in folgendem JSON-Format:
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl flex items-center justify-between" data-testid="text-error">
+          <div className="bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] text-sm px-4 py-3 rounded-xl flex items-center justify-between" data-testid="text-error">
             <span>{error}</span>
-            <button onClick={() => setError("")} className="text-red-400 hover:text-red-600 ml-3" data-testid="button-dismiss-error">✕</button>
+            <button onClick={() => setError("")} className="text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] ml-3" data-testid="button-dismiss-error">✕</button>
           </div>
         )}
         {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-xl" data-testid="text-success">
+          <div className="bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] text-[var(--eds-status-green)] text-sm px-4 py-3 rounded-xl" data-testid="text-success">
             {success}
           </div>
         )}
@@ -533,15 +533,15 @@ Antworte in folgendem JSON-Format:
             </div>
 
             {analyses.length > 0 && (
-              <div className="bg-white border border-slate-200 rounded-xl" data-testid="section-requirement-suggestions">
-                <div className="px-6 py-5 border-b border-slate-200">
+              <div className="bg-white border border-[var(--eds-border)] rounded-xl" data-testid="section-requirement-suggestions">
+                <div className="px-6 py-5 border-b border-[var(--eds-border)]">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-base font-semibold text-brand-navy">Vorschläge aus der Anforderungsanalyse</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">Empfohlene Bausteine direkt übernehmen oder per KI ausarbeiten</p>
+                      <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">Empfohlene Bausteine direkt übernehmen oder per KI ausarbeiten</p>
                     </div>
                     {analyses.length > 1 && !selectedAnalysis && (
-                      <span className="text-[10px] text-slate-400">{analyses.length} Analysen</span>
+                      <span className="text-[10px] text-[var(--eds-text-disabled)]">{analyses.length} Analysen</span>
                     )}
                   </div>
                 </div>
@@ -553,11 +553,11 @@ Antworte in folgendem JSON-Format:
                         <button
                           key={a.id}
                           onClick={() => loadRequirementModules(a)}
-                          className="w-full text-left bg-slate-50 border border-slate-200 rounded-lg p-3 hover:border-brand-blue transition"
+                          className="w-full text-left bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-lg p-3 hover:border-brand-blue transition"
                           data-testid={`button-analysis-${a.id}`}
                         >
-                          <p className="text-sm font-medium text-slate-800">{a.title}</p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-sm font-medium text-[var(--eds-text-primary)]">{a.title}</p>
+                          <p className="text-xs text-[var(--eds-text-tertiary)]">
                             {a.clientName || ""}
                             {a.projectName ? ` · ${a.projectName}` : ""}
                           </p>
@@ -571,26 +571,27 @@ Antworte in folgendem JSON-Format:
                         <button onClick={() => { setSelectedAnalysis(null); setRequirementModules([]); }} className="text-[10px] text-brand-blue hover:underline">andere wählen</button>
                       </div>
                       {requirementModules.length === 0 ? (
-                        <p className="text-xs text-slate-400">Keine Baustein-Empfehlungen in dieser Analyse.</p>
+                        <p className="text-xs text-[var(--eds-text-disabled)]">Keine Baustein-Empfehlungen in dieser Analyse.</p>
                       ) : (
                         <div className="grid sm:grid-cols-2 gap-3">
                           {requirementModules.map((mod, idx) => {
                             const alreadyAdopted = blueprints.some((b) => b.name.toLowerCase() === mod.name.toLowerCase());
                             return (
-                              <div key={idx} className={`bg-slate-50 border rounded-lg p-3 ${alreadyAdopted ? "border-green-200 opacity-60" : "border-slate-200"}`} data-testid={`card-req-module-${idx}`}>
+                              <div key={idx} className={`bg-[var(--eds-bg-sunken)] border rounded-lg p-3 ${alreadyAdopted ? "border-[var(--eds-status-green-bg)] opacity-60" : "border-[var(--eds-border)]"}`} data-testid={`card-req-module-${idx}`}>
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-slate-800">{mod.name}</p>
+                                    <p className="text-sm font-medium text-[var(--eds-text-primary)]">{mod.name}</p>
+                                    {/* no-eds-token: kein äquivalentes Token für Modultyp-Badge (teal) */}
                                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-600 font-medium">{mod.type}</span>
-                                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{mod.description}</p>
+                                    <p className="text-xs text-[var(--eds-text-tertiary)] mt-1 line-clamp-2">{mod.description}</p>
                                   </div>
                                   {alreadyAdopted ? (
-                                    <span className="text-[10px] text-green-600 font-medium shrink-0">✓ Übernommen</span>
+                                    <span className="text-[10px] text-[var(--eds-status-green)] font-medium shrink-0">✓ Übernommen</span>
                                   ) : (
                                     <div className="flex flex-col gap-1 shrink-0">
                                       <button
                                         onClick={() => adoptRequirementModule(mod)}
-                                        className="text-[10px] font-medium text-brand-navy bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded px-2 py-1 transition"
+                                        className="text-[10px] font-medium text-brand-navy bg-[var(--eds-bg-sunken)] hover:bg-[var(--eds-border)] border border-[var(--eds-border)] rounded px-2 py-1 transition"
                                         data-testid={`button-adopt-req-${idx}`}
                                       >
                                         Übernehmen
@@ -605,7 +606,7 @@ Antworte in folgendem JSON-Format:
                                           }));
                                           setView("ai");
                                         }}
-                                        className="text-[10px] font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded px-2 py-1 transition"
+                                        className="text-[10px] font-medium text-[var(--eds-status-amber)] bg-[var(--eds-status-amber-bg)] hover:bg-[var(--eds-status-amber-bg)] border border-[var(--eds-status-amber-bg)] rounded px-2 py-1 transition"
                                         data-testid={`button-ai-req-${idx}`}
                                       >
                                         KI ausarbeiten
@@ -624,11 +625,11 @@ Antworte in folgendem JSON-Format:
               </div>
             )}
 
-            <div className="bg-white border border-slate-200 rounded-xl" data-testid="section-blueprints">
-              <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl" data-testid="section-blueprints">
+              <div className="px-6 py-5 border-b border-[var(--eds-border)] flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-semibold text-brand-navy" data-testid="text-blueprints-title">Erstellte Bausteine</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">{blueprints.length} Baustein{blueprints.length !== 1 ? "e" : ""}</p>
+                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">{blueprints.length} Baustein{blueprints.length !== 1 ? "e" : ""}</p>
                 </div>
                 <Link
                   href={`${base}/modules/case-study-builder`}
@@ -641,33 +642,33 @@ Antworte in folgendem JSON-Format:
 
               {blueprints.length === 0 ? (
                 <div className="p-12 text-center">
-                  <p className="text-sm text-slate-400">Noch keine Bausteine erstellt.</p>
-                  <p className="text-xs text-slate-400 mt-1">Nutzen Sie die Optionen oben, um Ihren ersten Baustein zu erstellen.</p>
+                  <p className="text-sm text-[var(--eds-text-disabled)]">Noch keine Bausteine erstellt.</p>
+                  <p className="text-xs text-[var(--eds-text-disabled)] mt-1">Nutzen Sie die Optionen oben, um Ihren ersten Baustein zu erstellen.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {blueprints.map((bp) => (
                     <div
                       key={bp.id}
-                      className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50/80 transition-colors group"
+                      className="px-6 py-4 flex items-center gap-4 hover:bg-[var(--eds-bg-sunken)]/80 transition-colors group"
                       data-testid={`card-blueprint-${bp.id}`}
                     >
-                      <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-lg shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-[var(--eds-bg-sunken)] flex items-center justify-center text-lg shrink-0">
                         {typeIconEl(bp.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className="text-sm font-semibold text-slate-800 truncate">{bp.name}</h4>
+                          <h4 className="text-sm font-semibold text-[var(--eds-text-primary)] truncate">{bp.name}</h4>
                           {statusBadge(bp.status)}
                           {sourceBadge(bp.sourceType)}
                         </div>
-                        <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                        <div className="flex items-center gap-3 text-[11px] text-[var(--eds-text-disabled)]">
                           <span>{typeLabel(bp.type)}</span>
                           <span>{bp.duration} Min.</span>
                           <span>{bp.targetLevel}</span>
                         </div>
                         {bp.description && (
-                          <p className="text-xs text-slate-500 mt-1 line-clamp-1">{bp.description}</p>
+                          <p className="text-xs text-[var(--eds-text-tertiary)] mt-1 line-clamp-1">{bp.description}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -680,7 +681,7 @@ Antworte in folgendem JSON-Format:
                         </button>
                         <button
                           onClick={() => deleteBlueprint(bp.id)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-red-50 text-red-500"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-[var(--eds-status-red-bg)] text-[var(--eds-status-red)]"
                           data-testid={`button-delete-${bp.id}`}
                           title="Löschen"
                         >
@@ -701,12 +702,12 @@ Antworte in folgendem JSON-Format:
           <div className="max-w-2xl mx-auto">
             <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6 mb-6">
               <h2 className="text-lg font-semibold text-brand-navy" data-testid="text-manual-title">Baustein manuell erstellen</h2>
-              <p className="text-sm text-slate-600 mt-1">Definieren Sie alle Details für einen neuen Assessment-Baustein.</p>
+              <p className="text-sm text-[var(--eds-text-secondary)] mt-1">Definieren Sie alle Details für einen neuen Assessment-Baustein.</p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 space-y-4">
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Name *</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Name *</label>
                 <input
                   className={inputClass}
                   value={manualForm.name}
@@ -718,7 +719,7 @@ Antworte in folgendem JSON-Format:
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Typ</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Typ</label>
                   <select
                     className={inputClass}
                     value={manualForm.type}
@@ -731,7 +732,7 @@ Antworte in folgendem JSON-Format:
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Ziel-Level</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Ziel-Level</label>
                   <select
                     className={inputClass}
                     value={manualForm.targetLevel}
@@ -746,7 +747,7 @@ Antworte in folgendem JSON-Format:
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Dauer (Minuten)</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Dauer (Minuten)</label>
                 <input
                   type="number"
                   className={inputClass + " !w-32"}
@@ -757,7 +758,7 @@ Antworte in folgendem JSON-Format:
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Beschreibung</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Beschreibung</label>
                 <textarea
                   className={inputClass + " min-h-[70px] resize-y"}
                   rows={3}
@@ -769,7 +770,7 @@ Antworte in folgendem JSON-Format:
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Durchführungsanweisungen</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Durchführungsanweisungen</label>
                 <textarea
                   className={inputClass + " min-h-[100px] resize-y"}
                   rows={5}
@@ -781,7 +782,7 @@ Antworte in folgendem JSON-Format:
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Szenario-Kontext (optional)</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Szenario-Kontext (optional)</label>
                 <textarea
                   className={inputClass + " min-h-[50px] resize-y"}
                   rows={2}
@@ -793,8 +794,8 @@ Antworte in folgendem JSON-Format:
               </div>
 
               {manualForm.type === "case_study" && (
-                <div className="bg-blue-50/60 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-700 mb-2">Für umfangreiche Fallstudien mit Datenraum nutzen Sie das spezialisierte Case-Studio:</p>
+                <div className="bg-[var(--eds-status-blue-bg)]/60 border border-[var(--eds-status-blue-bg)] rounded-lg p-3">
+                  <p className="text-xs text-[var(--eds-status-blue)] mb-2">Für umfangreiche Fallstudien mit Datenraum nutzen Sie das spezialisierte Case-Studio:</p>
                   <Link
                     href={`${base}/modules/case-study-builder`}
                     className="text-xs font-medium text-brand-blue hover:underline"
@@ -808,7 +809,7 @@ Antworte in folgendem JSON-Format:
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   onClick={() => setView("hub")}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] transition-colors hover:bg-[var(--eds-bg-sunken)]"
                   data-testid="button-cancel-manual"
                 >
                   Abbrechen
@@ -829,14 +830,14 @@ Antworte in folgendem JSON-Format:
           <div className="max-w-3xl mx-auto">
             <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6 mb-6">
               <h2 className="text-lg font-semibold text-brand-navy" data-testid="text-library-title">Aus Bibliothek übernehmen</h2>
-              <p className="text-sm text-slate-600 mt-1">Wählen Sie eine bestehende Übung und passen Sie sie als Assessment-Baustein an.</p>
+              <p className="text-sm text-[var(--eds-text-secondary)] mt-1">Wählen Sie eine bestehende Übung und passen Sie sie als Assessment-Baustein an.</p>
             </div>
 
             {!selectedLibraryItem ? (
-              <div className="bg-white border border-slate-200 rounded-xl">
+              <div className="bg-white border border-[var(--eds-border)] rounded-xl">
                 {libraryItems.length === 0 ? (
                   <div className="p-12 text-center">
-                    <p className="text-sm text-slate-400">Keine Einträge in der Bibliothek vorhanden.</p>
+                    <p className="text-sm text-[var(--eds-text-disabled)]">Keine Einträge in der Bibliothek vorhanden.</p>
                     <Link href={`${base}/exercise-library`} className="text-xs text-brand-blue hover:underline mt-2 inline-block">Zur Baustein-Bibliothek →</Link>
                   </div>
                 ) : (
@@ -844,26 +845,26 @@ Antworte in folgendem JSON-Format:
                     {libraryItems.map((item) => {
                       const alreadyAdopted = blueprints.some((b) => b.sourceId === item.id && b.sourceType === "library");
                       return (
-                        <div key={item.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors group" data-testid={`card-lib-item-${item.id}`}>
+                        <div key={item.id} className="px-6 py-4 flex items-center justify-between hover:bg-[var(--eds-bg-sunken)]/80 transition-colors group" data-testid={`card-lib-item-${item.id}`}>
                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-lg shrink-0">
+                            <div className="w-9 h-9 rounded-lg bg-[var(--eds-bg-sunken)] flex items-center justify-center text-lg shrink-0">
                               {typeIconEl(item.exerciseType)}
                             </div>
                             <div className="min-w-0">
-                              <h3 className="text-sm font-semibold text-slate-800">{item.title}</h3>
+                              <h3 className="text-sm font-semibold text-[var(--eds-text-primary)]">{item.title}</h3>
                               <div className="flex flex-wrap gap-1 mt-0.5">
                                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>{typeLabel(item.exerciseType)}</span>
                                 {item.targetLevels?.slice(0, 2).map((l) => (
-                                  <span key={l} className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-medium">{l}</span>
+                                  <span key={l} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--eds-status-amber-bg)] text-[var(--eds-status-amber)] font-medium">{l}</span>
                                 ))}
-                                {item.clientName && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">{item.clientName}</span>}
+                                {item.clientName && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--eds-bg-sunken)] text-[var(--eds-text-tertiary)]">{item.clientName}</span>}
                               </div>
-                              {item.description && <p className="text-xs text-slate-500 mt-1 line-clamp-1">{item.description}</p>}
+                              {item.description && <p className="text-xs text-[var(--eds-text-tertiary)] mt-1 line-clamp-1">{item.description}</p>}
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0 ml-2">
                             {alreadyAdopted ? (
-                              <span className="text-[10px] text-green-600 font-medium">✓ Bereits übernommen</span>
+                              <span className="text-[10px] text-[var(--eds-status-green)] font-medium">✓ Bereits übernommen</span>
                             ) : (
                               <button
                                 onClick={() => {
@@ -885,7 +886,7 @@ Antworte in folgendem JSON-Format:
                             )}
                             <button
                               onClick={() => setConfirmDeleteLibItem(item)}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-red-50 hover:!opacity-100 text-red-500"
+                              className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-[var(--eds-status-red-bg)] hover:!opacity-100 text-[var(--eds-status-red)]"
                               data-testid={`button-delete-lib-${item.id}`}
                               title="Aus Bibliothek löschen"
                             >
@@ -901,20 +902,20 @@ Antworte in folgendem JSON-Format:
                 )}
               </div>
             ) : (
-              <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
-                <div className="flex items-center gap-3 pb-4 border-b border-slate-200">
-                  <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-lg shrink-0">
+              <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 space-y-4">
+                <div className="flex items-center gap-3 pb-4 border-b border-[var(--eds-border)]">
+                  <div className="w-9 h-9 rounded-lg bg-[var(--eds-bg-sunken)] flex items-center justify-center text-lg shrink-0">
                     {typeIconEl(selectedLibraryItem.exerciseType)}
                   </div>
                   <div>
-                    <p className="text-[11px] text-slate-400">Basierend auf</p>
-                    <p className="text-sm font-semibold text-slate-800">{selectedLibraryItem.title}</p>
+                    <p className="text-[11px] text-[var(--eds-text-disabled)]">Basierend auf</p>
+                    <p className="text-sm font-semibold text-[var(--eds-text-primary)]">{selectedLibraryItem.title}</p>
                   </div>
                   <button onClick={() => setSelectedLibraryItem(null)} className="ml-auto text-xs text-brand-blue hover:underline">Andere wählen</button>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Baustein-Name</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Baustein-Name</label>
                   <input
                     className={inputClass}
                     value={libraryAdaptForm.name}
@@ -925,7 +926,7 @@ Antworte in folgendem JSON-Format:
 
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-slate-700 block mb-1">Ziel-Level</label>
+                    <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Ziel-Level</label>
                     <select
                       className={inputClass}
                       value={libraryAdaptForm.targetLevel}
@@ -938,7 +939,7 @@ Antworte in folgendem JSON-Format:
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-700 block mb-1">Dauer (Minuten)</label>
+                    <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Dauer (Minuten)</label>
                     <input
                       type="number"
                       className={inputClass + " !w-32"}
@@ -950,7 +951,7 @@ Antworte in folgendem JSON-Format:
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Beschreibung</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Beschreibung</label>
                   <textarea
                     className={inputClass + " min-h-[70px] resize-y"}
                     rows={3}
@@ -961,7 +962,7 @@ Antworte in folgendem JSON-Format:
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Durchführungsanweisungen</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Durchführungsanweisungen</label>
                   <textarea
                     className={inputClass + " min-h-[80px] resize-y"}
                     rows={4}
@@ -973,7 +974,7 @@ Antworte in folgendem JSON-Format:
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Szenario-Kontext (optional)</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Szenario-Kontext (optional)</label>
                   <textarea
                     className={inputClass + " min-h-[50px] resize-y"}
                     rows={2}
@@ -987,7 +988,7 @@ Antworte in folgendem JSON-Format:
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     onClick={() => setSelectedLibraryItem(null)}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] transition-colors hover:bg-[var(--eds-bg-sunken)]"
                     data-testid="button-cancel-library"
                   >
                     Abbrechen
@@ -1009,13 +1010,13 @@ Antworte in folgendem JSON-Format:
           <div className="max-w-2xl mx-auto">
             <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6 mb-6">
               <h2 className="text-lg font-semibold text-brand-navy" data-testid="text-ai-title">KI-gestützte Generierung</h2>
-              <p className="text-sm text-slate-600 mt-1">Die KI erstellt einen vollständigen Baustein basierend auf Ihren Vorgaben.</p>
+              <p className="text-sm text-[var(--eds-text-secondary)] mt-1">Die KI erstellt einen vollständigen Baustein basierend auf Ihren Vorgaben.</p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 space-y-4">
               {requirementModules.length > 0 && (
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Anforderungsanalyse-Empfehlung als Grundlage</label>
+                <div className="bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-lg p-4">
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Anforderungsanalyse-Empfehlung als Grundlage</label>
                   <select
                     className={inputClass}
                     value={aiForm.requirementModuleIndex}
@@ -1045,7 +1046,7 @@ Antworte in folgendem JSON-Format:
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Baustein-Typ</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Baustein-Typ</label>
                   <select
                     className={inputClass}
                     value={aiForm.type}
@@ -1058,7 +1059,7 @@ Antworte in folgendem JSON-Format:
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Ziel-Level</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Ziel-Level</label>
                   <select
                     className={inputClass}
                     value={aiForm.targetLevel}
@@ -1073,7 +1074,7 @@ Antworte in folgendem JSON-Format:
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Dauer (Minuten)</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Dauer (Minuten)</label>
                 <input
                   type="number"
                   className={inputClass + " !w-32"}
@@ -1084,7 +1085,7 @@ Antworte in folgendem JSON-Format:
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Kontext / Anforderungen</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Kontext / Anforderungen</label>
                 <textarea
                   className={inputClass + " min-h-[70px] resize-y"}
                   rows={3}
@@ -1095,25 +1096,25 @@ Antworte in folgendem JSON-Format:
                 />
               </div>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
-                <h3 className="text-sm font-medium text-slate-700">Overarching-Szenario</h3>
-                <p className="text-xs text-slate-500">Optional: Baustein in ein übergeordnetes Fallstudien-Szenario einbetten, sodass alle Übungen in der gleichen Firma / Situation spielen.</p>
+              <div className="bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-lg p-4 space-y-3">
+                <h3 className="text-sm font-medium text-[var(--eds-text-primary)]">Overarching-Szenario</h3>
+                <p className="text-xs text-[var(--eds-text-tertiary)]">Optional: Baustein in ein übergeordnetes Fallstudien-Szenario einbetten, sodass alle Übungen in der gleichen Firma / Situation spielen.</p>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={aiForm.embedInScenario}
                     onChange={(e) => setAiForm((f) => ({ ...f, embedInScenario: e.target.checked }))}
-                    className="w-4 h-4 rounded border-slate-300 text-brand-navy focus:ring-blue-500/20"
+                    className="w-4 h-4 rounded border-[var(--eds-border-strong)] text-brand-navy focus:ring-[var(--eds-status-blue)]/20"
                     data-testid="checkbox-embed-scenario"
                   />
-                  <span className="text-sm text-slate-700">In bestehendes Szenario einbetten</span>
+                  <span className="text-sm text-[var(--eds-text-primary)]">In bestehendes Szenario einbetten</span>
                 </label>
 
                 {aiForm.embedInScenario && (
                   <div>
-                    <label className="text-sm font-medium text-slate-700 block mb-1">Fallstudie als Szenario-Rahmen</label>
+                    <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Fallstudie als Szenario-Rahmen</label>
                     {caseStudies.length === 0 ? (
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-[var(--eds-text-disabled)]">
                         Keine Fallstudien vorhanden.{" "}
                         <Link href={`${base}/modules/case-study-builder`} className="text-brand-blue hover:underline">
                           Fallstudie erstellen →
@@ -1139,7 +1140,7 @@ Antworte in folgendem JSON-Format:
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   onClick={() => setView("hub")}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] transition-colors hover:bg-[var(--eds-bg-sunken)]"
                   data-testid="button-cancel-ai"
                 >
                   Abbrechen
@@ -1168,9 +1169,9 @@ Antworte in folgendem JSON-Format:
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 space-y-4">
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Name</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Name</label>
                 <input
                   className={inputClass}
                   value={editBlueprint.name}
@@ -1181,7 +1182,7 @@ Antworte in folgendem JSON-Format:
 
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Typ</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Typ</label>
                   <select
                     className={inputClass}
                     value={editBlueprint.type}
@@ -1194,7 +1195,7 @@ Antworte in folgendem JSON-Format:
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Ziel-Level</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Ziel-Level</label>
                   <select
                     className={inputClass}
                     value={editBlueprint.targetLevel}
@@ -1207,7 +1208,7 @@ Antworte in folgendem JSON-Format:
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Status</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Status</label>
                   <select
                     className={inputClass}
                     value={editBlueprint.status}
@@ -1222,7 +1223,7 @@ Antworte in folgendem JSON-Format:
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Dauer (Minuten)</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Dauer (Minuten)</label>
                 <input
                   type="number"
                   className={inputClass + " !w-32"}
@@ -1233,7 +1234,7 @@ Antworte in folgendem JSON-Format:
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Beschreibung</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Beschreibung</label>
                 <textarea
                   className={inputClass + " min-h-[70px] resize-y"}
                   rows={3}
@@ -1244,7 +1245,7 @@ Antworte in folgendem JSON-Format:
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Durchführungsanweisungen</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Durchführungsanweisungen</label>
                 <textarea
                   className={inputClass + " min-h-[120px] resize-y"}
                   rows={6}
@@ -1255,7 +1256,7 @@ Antworte in folgendem JSON-Format:
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Szenario-Kontext</label>
+                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Szenario-Kontext</label>
                 <textarea
                   className={inputClass + " min-h-[50px] resize-y"}
                   rows={2}
@@ -1267,9 +1268,9 @@ Antworte in folgendem JSON-Format:
 
               {editBlueprint.adaptationNotes && (
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1">Anpassungshinweise</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Anpassungshinweise</label>
                   <textarea
-                    className={inputClass + " min-h-[50px] resize-y bg-slate-50"}
+                    className={inputClass + " min-h-[50px] resize-y bg-[var(--eds-bg-sunken)]"}
                     rows={2}
                     value={editBlueprint.adaptationNotes}
                     onChange={(e) => setEditBlueprint({ ...editBlueprint, adaptationNotes: e.target.value })}
@@ -1281,7 +1282,7 @@ Antworte in folgendem JSON-Format:
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   onClick={() => { setEditBlueprint(null); setView("hub"); }}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] transition-colors hover:bg-[var(--eds-bg-sunken)]"
                   data-testid="button-cancel-edit"
                 >
                   Abbrechen
@@ -1300,18 +1301,18 @@ Antworte in folgendem JSON-Format:
 
         {confirmDeleteLibItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" data-testid="modal-confirm-delete-lib">
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 max-w-sm w-full mx-4">
-              <h3 className="text-base font-semibold text-slate-800 mb-2" data-testid="text-confirm-delete-title">Wirklich löschen?</h3>
-              <p className="text-sm text-slate-600 mb-5">
+            <div className="bg-white rounded-2xl shadow-xl border border-[var(--eds-border)] p-6 max-w-sm w-full mx-4">
+              <h3 className="text-base font-semibold text-[var(--eds-text-primary)] mb-2" data-testid="text-confirm-delete-title">Wirklich löschen?</h3>
+              <p className="text-sm text-[var(--eds-text-secondary)] mb-5">
                 Der Bibliothekseintrag{" "}
-                <span className="font-medium text-slate-800">"{confirmDeleteLibItem.title}"</span>{" "}
+                <span className="font-medium text-[var(--eds-text-primary)]">"{confirmDeleteLibItem.title}"</span>{" "}
                 wird dauerhaft gelöscht und kann nicht wiederhergestellt werden.
               </p>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setConfirmDeleteLibItem(null)}
                   disabled={deletingLibItem}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)] transition-colors disabled:opacity-50"
                   data-testid="button-cancel-delete-lib"
                 >
                   Abbrechen
@@ -1319,7 +1320,7 @@ Antworte in folgendem JSON-Format:
                 <button
                   onClick={() => deleteLibraryItem(confirmDeleteLibItem)}
                   disabled={deletingLibItem}
-                  className="px-4 py-2 text-sm font-medium text-white rounded-lg bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium text-white rounded-lg bg-[var(--eds-status-red)] hover:bg-[var(--eds-terracotta-dk)] transition-colors disabled:opacity-50"
                   data-testid="button-confirm-delete-lib"
                 >
                   {deletingLibItem ? "Löschen..." : "Löschen"}

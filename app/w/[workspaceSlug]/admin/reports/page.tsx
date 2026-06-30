@@ -38,8 +38,8 @@ interface ReportWithUrl extends Report {
 const accentColor = "hsl(14, 48%, 44%)";
 
 const FORMAT_BADGES: Record<string, { bg: string; text: string }> = {
-  pdf: { bg: "bg-red-50", text: "text-red-700" },
-  docx: { bg: "bg-blue-50", text: "text-blue-700" },
+  pdf: { bg: "bg-[var(--eds-status-red-bg)]", text: "text-[var(--eds-status-red)]" },
+  docx: { bg: "bg-[var(--eds-status-blue-bg)]", text: "text-[var(--eds-status-blue)]" },
   pptx: { bg: "bg-orange-50", text: "text-orange-700" },
 };
 
@@ -172,12 +172,12 @@ export default function ReportsPage() {
           >
             Berichte
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-[var(--eds-text-tertiary)]">
             Assessment-Berichte erstellen, herunterladen und verwalten
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8">
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 mb-8">
           <h2
             className="text-lg font-semibold mb-4"
             style={{ fontFamily: "'Playfair Display', serif", color: accentColor }}
@@ -187,12 +187,12 @@ export default function ReportsPage() {
 
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Assessment</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Assessment</label>
               <select
                 value={selectedAssessmentId}
                 onChange={(e) => handleAssessmentChange(e.target.value)}
                 data-testid="select-assessment"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:border-transparent"
+                className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:border-transparent"
                 style={{ "--tw-ring-color": accentColor } as React.CSSProperties}
               >
                 <option value="">Assessment auswählen…</option>
@@ -204,13 +204,13 @@ export default function ReportsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Kandidat</label>
+              <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Kandidat</label>
               <select
                 value={selectedCandidateId}
                 onChange={(e) => setSelectedCandidateId(e.target.value)}
                 disabled={!selectedAssessmentId || candidates.length === 0}
                 data-testid="select-candidate"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="">Kandidat auswählen…</option>
                 {candidates.map((c) => (
@@ -229,15 +229,15 @@ export default function ReportsPage() {
               checked={includeAi}
               onChange={(e) => setIncludeAi(e.target.checked)}
               data-testid="checkbox-include-ai"
-              className="rounded border-slate-300"
+              className="rounded border-[var(--eds-border-strong)]"
             />
-            <label htmlFor="includeAi" className="text-sm text-slate-700">
+            <label htmlFor="includeAi" className="text-sm text-[var(--eds-text-primary)]">
               KI-Empfehlungen einbeziehen
             </label>
           </div>
 
           {error && (
-            <p className="text-sm text-red-500 mb-4" data-testid="text-error">
+            <p className="text-sm text-[var(--eds-status-red)] mb-4" data-testid="text-error">
               {error}
             </p>
           )}
@@ -267,21 +267,21 @@ export default function ReportsPage() {
           >
             Vorhandene Berichte
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[var(--eds-text-disabled)]">
             {reports.length} {reports.length === 1 ? "Bericht" : "Berichte"}
           </p>
         </div>
 
-        {loading && <p className="text-sm text-slate-400">Laden…</p>}
+        {loading && <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>}
 
         {!loading && reports.length === 0 && selectedAssessmentId && (
-          <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+          <div className="bg-white border border-[var(--eds-border)] rounded-xl p-8 text-center text-[var(--eds-text-disabled)]">
             Keine Berichte vorhanden. Erstellen Sie einen oben.
           </div>
         )}
 
         {!loading && !selectedAssessmentId && (
-          <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+          <div className="bg-white border border-[var(--eds-border)] rounded-xl p-8 text-center text-[var(--eds-text-disabled)]">
             Bitte wählen Sie ein Assessment aus, um Berichte anzuzeigen.
           </div>
         )}
@@ -292,12 +292,12 @@ export default function ReportsPage() {
             return (
               <div
                 key={report.id}
-                className="bg-white border border-slate-200 rounded-xl p-5 flex items-center justify-between"
+                className="bg-white border border-[var(--eds-border)] rounded-xl p-5 flex items-center justify-between"
                 data-testid={`card-report-${report.id}`}
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    <h3 className="font-medium text-slate-900 text-sm">{report.title}</h3>
+                    <h3 className="font-medium text-[var(--eds-text-primary)] text-sm">{report.title}</h3>
                     <span
                       className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badge.bg} ${badge.text}`}
                       data-testid={`badge-format-${report.id}`}
@@ -311,7 +311,7 @@ export default function ReportsPage() {
                     )}
                     <DocumentOriginBadge origin="GENERATED" />
                   </div>
-                  <div className="flex gap-4 text-xs text-slate-400">
+                  <div className="flex gap-4 text-xs text-[var(--eds-text-disabled)]">
                     <span>Version {report.version}</span>
                     {report.generatedAt && (
                       <span>
@@ -332,7 +332,7 @@ export default function ReportsPage() {
                     <button
                       onClick={() => setSnapshotModal(report.snapshotData)}
                       data-testid={`button-snapshot-${report.id}`}
-                      className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)] transition-colors"
                     >
                       Snapshot ansehen
                     </button>
@@ -348,7 +348,7 @@ export default function ReportsPage() {
                   <button
                     onClick={() => handleDelete(report.id)}
                     data-testid={`button-delete-${report.id}`}
-                    className="text-xs font-medium text-red-500 hover:text-red-700 px-2 py-1.5"
+                    className="text-xs font-medium text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] px-2 py-1.5"
                   >
                     Löschen
                   </button>
@@ -370,7 +370,7 @@ export default function ReportsPage() {
               <button
                 onClick={() => setSnapshotModal(null)}
                 data-testid="button-close-snapshot"
-                className="text-slate-400 hover:text-slate-600 text-xl"
+                className="text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)] text-xl"
               >
                 ✕
               </button>
@@ -410,25 +410,25 @@ function SnapshotView({ data }: { data: Record<string, unknown> }) {
       <div className="grid grid-cols-2 gap-4">
         {d.candidateName && (
           <div>
-            <span className="text-xs text-slate-400">Kandidat</span>
+            <span className="text-xs text-[var(--eds-text-disabled)]">Kandidat</span>
             <p className="font-medium">{d.candidateName}</p>
           </div>
         )}
         {d.assessmentName && (
           <div>
-            <span className="text-xs text-slate-400">Assessment</span>
+            <span className="text-xs text-[var(--eds-text-disabled)]">Assessment</span>
             <p className="font-medium">{d.assessmentName}</p>
           </div>
         )}
         {d.workspaceName && (
           <div>
-            <span className="text-xs text-slate-400">Workspace</span>
+            <span className="text-xs text-[var(--eds-text-disabled)]">Workspace</span>
             <p className="font-medium">{d.workspaceName}</p>
           </div>
         )}
         {d.generatedAt && (
           <div>
-            <span className="text-xs text-slate-400">Erstellt</span>
+            <span className="text-xs text-[var(--eds-text-disabled)]">Erstellt</span>
             <p className="font-medium">
               {new Date(d.generatedAt).toLocaleDateString("de-DE")}
             </p>
@@ -438,24 +438,24 @@ function SnapshotView({ data }: { data: Record<string, unknown> }) {
 
       {d.consolidatedScores && d.consolidatedScores.length > 0 && (
         <div>
-          <h4 className="font-semibold text-slate-700 mb-2">Konsolidierte Werte</h4>
-          <div className="border border-slate-200 rounded-lg overflow-hidden">
+          <h4 className="font-semibold text-[var(--eds-text-primary)] mb-2">Konsolidierte Werte</h4>
+          <div className="border border-[var(--eds-border)] rounded-lg overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+              <thead className="bg-[var(--eds-bg-sunken)]">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">Kompetenz</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">Wert</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">Normalisiert</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">Übung</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-[var(--eds-text-tertiary)]">Kompetenz</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-[var(--eds-text-tertiary)]">Wert</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-[var(--eds-text-tertiary)]">Normalisiert</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-[var(--eds-text-tertiary)]">Übung</th>
                 </tr>
               </thead>
               <tbody>
                 {d.consolidatedScores.map((s, i) => (
-                  <tr key={i} className="border-t border-slate-100">
+                  <tr key={i} className="border-t border-[var(--eds-border)]">
                     <td className="px-3 py-2">{s.competencyName}</td>
                     <td className="px-3 py-2 font-mono">{s.consolidatedValue.toFixed(2)}</td>
                     <td className="px-3 py-2 font-mono">{s.normalizedValue.toFixed(2)}</td>
-                    <td className="px-3 py-2 text-slate-400">{s.exerciseName || "—"}</td>
+                    <td className="px-3 py-2 text-[var(--eds-text-disabled)]">{s.exerciseName || "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -466,17 +466,17 @@ function SnapshotView({ data }: { data: Record<string, unknown> }) {
 
       {d.evidenceNotes && d.evidenceNotes.length > 0 && (
         <div>
-          <h4 className="font-semibold text-slate-700 mb-2">Evidenznotizen</h4>
+          <h4 className="font-semibold text-[var(--eds-text-primary)] mb-2">Evidenznotizen</h4>
           <div className="space-y-2">
             {d.evidenceNotes.map((n, i) => (
-              <div key={i} className="bg-slate-50 rounded-lg p-3">
-                <div className="flex gap-3 text-xs text-slate-400 mb-1">
+              <div key={i} className="bg-[var(--eds-bg-sunken)] rounded-lg p-3">
+                <div className="flex gap-3 text-xs text-[var(--eds-text-disabled)] mb-1">
                   <span>{n.exerciseName}</span>
                   <span>{n.competencyName}</span>
                   <span>{n.observerName}</span>
                   {n.rating != null && <span>Bewertung: {n.rating}</span>}
                 </div>
-                <p className="text-slate-700">{n.notes}</p>
+                <p className="text-[var(--eds-text-primary)]">{n.notes}</p>
               </div>
             ))}
           </div>
@@ -486,12 +486,12 @@ function SnapshotView({ data }: { data: Record<string, unknown> }) {
       {d.aiRecommendations && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <h4 className="font-semibold text-slate-700">KI-Empfehlungen</h4>
+            <h4 className="font-semibold text-[var(--eds-text-primary)]">KI-Empfehlungen</h4>
             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
               KI-generiert
             </span>
           </div>
-          <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-slate-700 whitespace-pre-wrap">
+          <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-[var(--eds-text-primary)] whitespace-pre-wrap">
             {d.aiRecommendations}
           </div>
         </div>

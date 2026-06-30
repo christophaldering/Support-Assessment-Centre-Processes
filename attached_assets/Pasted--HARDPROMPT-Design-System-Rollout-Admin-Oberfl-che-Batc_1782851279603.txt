@@ -1,0 +1,120 @@
+# HARDPROMPT — Design-System-Rollout Admin-Oberfläche (Batch A–E)
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die Batches exakt in der angegebenen Reihenfolge aus.
+Bei Unklarheit: STOPP, fragen — NICHT improvisieren. Nach jedem Batch
+erstellst du exakt den angegebenen Commit. Keine Optionalität.
+
+## Bindende Tatsachenbasis (aktueller Stand, per git pull verifiziert)
+
+Folgende 4 Komponenten existieren BEREITS in `components/shared/` und
+werden in JEDER migrierten Datei konsequent eingesetzt:
+`Card.tsx`, `EmptyState.tsx`, `PageHeader.tsx`, `ModuleIcon.tsx`.
+Sie werden NICHT neu gebaut — nur genutzt.
+
+`styles/tokens.css` existiert mit allen `--eds-*`-Variablen BEREITS.
+KEINE neuen Tokens werden in dieser Direktive definiert
+(Token-Erweiterung wurde in vorherigem Hardprompt bereits committed).
+
+Folgende 28 Dateien nutzen NOCH rohe Tailwind-Farbklassen (`slate-*`,
+`gray-*`, `blue-600`, `blue-50` u.ä.) statt `--eds-*`-Tokens
+(per `grep` am aktuellen Stand verifiziert):
+
+**Batch A — Übungsentwicklung:**
+`exercise-library/page.tsx`, `case-studio/page.tsx`,
+`case-studio/[caseId]/CaseStudyClient.tsx`,
+`observation-sheets/page.tsx`, `modules/page.tsx`
+
+**Batch B — Diagnostik-Aufbau & Durchführung:**
+`requirements/page.tsx`, `competencies/page.tsx`,
+`analytics/page.tsx`, `analytics/ComparisonView.tsx`,
+`analytics/RosterView.tsx`, `reports/page.tsx`,
+`gutachten/page.tsx`, `audio/page.tsx`,
+`intelligence/page.tsx`, `prompt-library/page.tsx`
+
+**Batch C — Verwaltung:**
+`users/page.tsx`, `consents/page.tsx`,
+`access-requests/page.tsx`, `theme/page.tsx`,
+`brand-rules/page.tsx`, `ai-governance/page.tsx`
+
+**Batch D — Assessment-Detail & Projekte:**
+`assessments/page.tsx`, `assessments/[assessmentId]/page.tsx`,
+`assessments/[assessmentId]/CollaborationPanel.tsx`,
+`assessments/[assessmentId]/PortalManagementSection.tsx`,
+`projects/[projectId]/page.tsx`
+
+**Batch E — Shell:**
+`DashboardClient.tsx`, `ModuleGuard.tsx`
+
+## Nicht anfassen
+
+Strukturelle Logik, State-Management, API-Calls in JEDER der 28 Dateien —
+NUR Klassen/Styles/Markup für visuelle Darstellung ändern, NIEMALS
+Funktionalität · Kandidatenportal (`app/candidate/`) · `app/master/` ·
+`components/shell/` (bereits in separatem Hardprompt behandelt).
+
+---
+
+## Regel für JEDE Datei in JEDEM Batch (ohne Ausnahme)
+
+1. Alle rohen Tailwind-Farbklassen (`slate-*`, `gray-*`, `blue-*`,
+   `red-*`, `green-*`, `amber-*`, `purple-*`) durch `var(--eds-*)`-Tokens
+   ersetzen — entweder via `style={{ color: "var(--eds-text-secondary)" }}`
+   oder Tailwind-Arbitrary-Value `text-[var(--eds-text-secondary)]`.
+   **Erlaubte Ausnahmen** (dürfen als rohe Klassen bleiben):
+   bestehende Status-Badge-Muster mit `bg-green-100 text-green-800` o.ä.
+   NUR dort, wo kein äquivalentes `--eds-status-*`-Token existiert — in
+   diesem Fall in Kommentar-Zeile direkt darüber explizit vermerken:
+   `// no-eds-token: kein äquivalentes Token für diesen Zustand`.
+2. Seitenkopf (`<h1>` + Beschreibungstext) durch `<PageHeader>` aus
+   `components/shared/PageHeader.tsx` ersetzen.
+3. Jeden Leerzustand-Text durch `<EmptyState>` ersetzen — mit Icon,
+   Titel, Beschreibung und `action`-Prop, wo eine naheliegende Aktion
+   existiert.
+4. Modultyp-Icons (`interview`/`presentation`/`roleplay`/`fact_finding`/
+   `case_study`/`other`) durch `<ModuleIcon>` ersetzen.
+5. Karten-Container: `<Card variant="primary">` für primäre Aktionsbereiche,
+   `<Card variant="secondary">` für Listen/Übersichten.
+6. KEINE Änderung an State, Props, API-Calls, Event-Handlern.
+7. Nach JEDEM Batch: `npm run lint` für die geänderten Dateien.
+   Bei Fehlern: STOPP, beheben, bevor der nächste Batch beginnt.
+
+---
+
+**COMMIT nach Batch A:**
+`Design-Rollout Batch A: Übungsentwicklung auf Token-System und neue Komponenten`
+
+**COMMIT nach Batch B:**
+`Design-Rollout Batch B: Diagnostik-Aufbau und Durchführung auf Token-System`
+
+**COMMIT nach Batch C:**
+`Design-Rollout Batch C: Verwaltung auf Token-System`
+
+**COMMIT nach Batch D:**
+`Design-Rollout Batch D: Assessment-Detail und Projekte auf Token-System`
+
+**COMMIT nach Batch E:**
+`Design-Rollout Batch E: Shell-Komponenten auf Token-System`
+
+---
+
+## Validierung (alle PASS erforderlich)
+
+1. `grep -rl "slate-\|gray-\|blue-600\|blue-50" app/w/[workspaceSlug]/admin`
+   liefert NUR noch Treffer mit `// no-eds-token`-Kommentar. PASS/FAIL.
+2. Alle 28 Dateien bearbeitet — einzeln bestätigen. PASS/FAIL.
+3. Keine funktionale Regression — je 1 Workflow-Durchlauf pro Batch.
+   PASS/FAIL.
+4. Kandidatenportal unverändert — Diff zeigt null Änderungen dort. PASS/FAIL.
+5. `npm run lint` gesamt — null Fehler. PASS/FAIL.
+6. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (nur wenn ALLE PASS):**
+`Design-System-Rollout Admin-Oberfläche abgeschlossen und validiert`
+
+## Abschluss-Statement (Pflicht)
+
+Liste aller 28 Dateien mit Status. Liste erlaubter Token-Ausnahmen mit
+Begründung. Alle 6 Validierungspunkte mit PASS/FAIL. Keine
+Selbsteinschätzung.

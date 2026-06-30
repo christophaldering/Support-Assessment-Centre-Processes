@@ -92,27 +92,27 @@ function EditableField({
 
   return (
     <div className="flex items-start gap-2 group">
-      <span className="text-xs text-slate-500 w-40 shrink-0 pt-0.5">{label}:</span>
+      <span className="text-xs text-[var(--eds-text-tertiary)] w-40 shrink-0 pt-0.5">{label}:</span>
       {isEditing ? (
         <div className="flex-1 flex items-center gap-1">
           <input
-            className="flex-1 text-sm border border-slate-300 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className="flex-1 text-sm border border-[var(--eds-border-strong)] rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-400"
             value={tempVal}
             onChange={(e) => setTempVal(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") onSave(path, tempVal); if (e.key === "Escape") setEditingField(null); }}
             autoFocus
             data-testid={`input-edit-${path}`}
           />
-          <button onClick={() => onSave(path, tempVal)} className="text-green-600 hover:text-green-700 text-xs" data-testid={`button-save-${path}`}>OK</button>
-          <button onClick={() => setEditingField(null)} className="text-slate-400 hover:text-slate-600 text-xs">X</button>
+          <button onClick={() => onSave(path, tempVal)} className="text-[var(--eds-status-green)] hover:text-[var(--eds-status-green)] text-xs" data-testid={`button-save-${path}`}>OK</button>
+          <button onClick={() => setEditingField(null)} className="text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)] text-xs">X</button>
         </div>
       ) : (
         <span
-          className="flex-1 text-sm text-slate-800 cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1 group-hover:bg-slate-50"
+          className="flex-1 text-sm text-[var(--eds-text-primary)] cursor-pointer hover:bg-[var(--eds-bg-sunken)] rounded px-1 -mx-1 group-hover:bg-[var(--eds-bg-sunken)]"
           onClick={() => { setEditingField(path); setTempVal(value); }}
           data-testid={`text-${path}`}
         >
-          {value || <span className="text-slate-300 italic">nicht angegeben</span>}
+          {value || <span className="text-[var(--eds-text-disabled)] italic">nicht angegeben</span>}
         </span>
       )}
     </div>
@@ -128,8 +128,8 @@ function PersonBlock({
   setEditingField: (field: string | null) => void;
 }) {
   return (
-    <div className="bg-slate-50 rounded-lg p-3 space-y-1">
-      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">{label}</p>
+    <div className="bg-[var(--eds-bg-sunken)] rounded-lg p-3 space-y-1">
+      <p className="text-xs font-semibold text-[var(--eds-text-secondary)] uppercase tracking-wide mb-2">{label}</p>
       <EditableField label="Vorname" value={person.firstName} path={`${pathPrefix}.firstName`} onSave={onSave} editingField={editingField} setEditingField={setEditingField} />
       <EditableField label="Nachname" value={person.lastName} path={`${pathPrefix}.lastName`} onSave={onSave} editingField={editingField} setEditingField={setEditingField} />
       <EditableField label="Funktion" value={person.role} path={`${pathPrefix}.role`} onSave={onSave} editingField={editingField} setEditingField={setEditingField} />
@@ -141,7 +141,7 @@ function PersonBlock({
 
 export default function RequirementsAnalysisPage() {
   return (
-    <Suspense fallback={<div className="py-8 px-6 lg:px-10 flex items-center justify-center text-slate-400">Laden...</div>}>
+    <Suspense fallback={<div className="py-8 px-6 lg:px-10 flex items-center justify-center text-[var(--eds-text-disabled)]">Laden...</div>}>
       <RequirementsContent />
     </Suspense>
   );
@@ -580,12 +580,12 @@ function RequirementsContent() {
             <div className="flex items-center gap-2 text-xs">
               <svg className="w-4 h-4 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.193-9.193a4.5 4.5 0 00-6.364 0l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
               <span className="font-medium text-brand-blue">Kontext: Assessment-Projekt</span>
-              <span className="text-slate-400">·</span>
-              <span className="text-slate-500">Wählen oder erstellen Sie eine Analyse, dann übernehmen Sie die Ergebnisse für Ihr Projekt</span>
+              <span className="text-[var(--eds-text-disabled)]">·</span>
+              <span className="text-[var(--eds-text-tertiary)]">Wählen oder erstellen Sie eine Analyse, dann übernehmen Sie die Ergebnisse für Ihr Projekt</span>
             </div>
             <button
               onClick={() => router.push(`/w/${slug}/admin/assessments/${assessmentId}`)}
-              className="text-xs text-slate-500 hover:text-slate-700 transition"
+              className="text-xs text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)] transition"
               data-testid="link-back-assessment-top"
             >
               ← Zurück
@@ -595,7 +595,7 @@ function RequirementsContent() {
       )}
 
       <div className="flex flex-1">
-        <aside className="w-[280px] shrink-0 border-r border-slate-200 bg-white p-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 56px)", position: "sticky", top: "56px" }}>
+        <aside className="w-[280px] shrink-0 border-r border-[var(--eds-border)] bg-white p-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 56px)", position: "sticky", top: "56px" }}>
           <button
             onClick={startNew}
             className="w-full mb-4 px-4 py-2.5 text-white rounded-lg font-medium text-sm shadow-sm hover:opacity-90 transition flex items-center justify-center gap-2 bg-brand-navy"
@@ -605,12 +605,12 @@ function RequirementsContent() {
             Neue Anforderungsanalyse
           </button>
 
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Gespeicherte Analysen</h3>
+          <h3 className="text-xs font-bold text-[var(--eds-text-tertiary)] uppercase tracking-wide mb-2">Gespeicherte Analysen</h3>
 
           {loadingList ? (
-            <p className="text-xs text-slate-400 p-2">Laden...</p>
+            <p className="text-xs text-[var(--eds-text-disabled)] p-2">Laden...</p>
           ) : savedAnalyses.length === 0 ? (
-            <p className="text-xs text-slate-400 p-2">Noch keine Analysen</p>
+            <p className="text-xs text-[var(--eds-text-disabled)] p-2">Noch keine Analysen</p>
           ) : (
             <div className="space-y-1">
               {savedAnalyses.map((a) => {
@@ -620,12 +620,12 @@ function RequirementsContent() {
                     <button
                       onClick={() => loadSaved(a)}
                       className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors pr-8 ${
-                        isActive ? "text-white font-medium bg-brand-navy" : "text-slate-700 hover:bg-slate-50"
+                        isActive ? "text-white font-medium bg-brand-navy" : "text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)]"
                       }`}
                       data-testid={`button-load-analysis-${a.id}`}
                     >
                       <p className="font-medium truncate text-xs">{a.title}</p>
-                      <p className={`text-[10px] mt-0.5 truncate ${isActive ? "text-white/70" : "text-slate-400"}`}>
+                      <p className={`text-[10px] mt-0.5 truncate ${isActive ? "text-white/70" : "text-[var(--eds-text-disabled)]"}`}>
                         {a.clientName && `${a.clientName} · `}
                         {new Date(a.createdAt).toLocaleDateString("de-DE")}
                       </p>
@@ -633,7 +633,7 @@ function RequirementsContent() {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDeleteAnalysis(a.id); }}
                       className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${
-                        isActive ? "text-white/60 hover:text-white hover:bg-white/20" : "text-slate-400 hover:text-red-600 hover:bg-red-50"
+                        isActive ? "text-white/60 hover:text-white hover:bg-white/20" : "text-[var(--eds-text-disabled)] hover:text-[var(--eds-status-red)] hover:bg-[var(--eds-status-red-bg)]"
                       }`}
                       title="Analyse löschen"
                       data-testid={`button-delete-analysis-${a.id}`}
@@ -651,9 +651,9 @@ function RequirementsContent() {
 
         <main className="flex-1 min-w-0 p-6">
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between" data-testid="text-error">
+            <div className="mb-4 p-3 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-lg text-[var(--eds-status-red)] text-sm flex items-center justify-between" data-testid="text-error">
               {error}
-              <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 ml-4">
+              <button onClick={() => setError(null)} className="text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] ml-4">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -668,9 +668,9 @@ function RequirementsContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">Kunde</label>
+                <label className="text-xs font-medium text-[var(--eds-text-secondary)] mb-1 block">Kunde</label>
                 <input
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                  className="w-full border border-[var(--eds-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   placeholder="z.B. DER Touristik, Siemens AG..."
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
@@ -678,9 +678,9 @@ function RequirementsContent() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">Projekt</label>
+                <label className="text-xs font-medium text-[var(--eds-text-secondary)] mb-1 block">Projekt</label>
                 <input
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                  className="w-full border border-[var(--eds-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   placeholder="z.B. CEO-Nachfolge, Vorstandsbesetzung..."
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
@@ -691,7 +691,7 @@ function RequirementsContent() {
 
             <div
               className={`relative border-2 border-dashed rounded-xl p-5 mb-3 transition-colors text-center cursor-pointer ${
-                dragActive ? "border-brand-blue bg-blue-50" : "border-slate-300 hover:border-slate-400 bg-slate-50"
+                dragActive ? "border-brand-blue bg-[var(--eds-status-blue-bg)]" : "border-[var(--eds-border-strong)] hover:border-[var(--eds-border-strong)] bg-[var(--eds-bg-sunken)]"
               }`}
               onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
@@ -708,11 +708,11 @@ function RequirementsContent() {
                 onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }}
                 data-testid="input-file-upload"
               />
-              <svg className="w-8 h-8 mx-auto text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+              <svg className="w-8 h-8 mx-auto text-[var(--eds-text-disabled)] mb-2" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
               </svg>
-              <p className="text-sm text-slate-600 font-medium">Stellenbeschreibungen, Unternehmensinfos etc. hierher ziehen</p>
-              <p className="text-xs text-slate-400 mt-1">Word, Excel, PowerPoint, PDF, TXT — mehrere Dateien möglich. Klicken Sie hier, um Dateien auszuwählen.</p>
+              <p className="text-sm text-[var(--eds-text-secondary)] font-medium">Stellenbeschreibungen, Unternehmensinfos etc. hierher ziehen</p>
+              <p className="text-xs text-[var(--eds-text-disabled)] mt-1">Word, Excel, PowerPoint, PDF, TXT — mehrere Dateien möglich. Klicken Sie hier, um Dateien auszuwählen.</p>
             </div>
 
             {uploadedFiles.length > 0 && (
@@ -720,21 +720,21 @@ function RequirementsContent() {
                 {uploadedFiles.map((f, i) => {
                   const ext = f.name.split(".").pop()?.toLowerCase() || "";
                   const iconColor =
-                    ["docx", "doc"].includes(ext) ? "text-blue-600" :
-                    ["xlsx", "xls"].includes(ext) ? "text-green-600" :
+                    ["docx", "doc"].includes(ext) ? "text-[var(--eds-status-blue)]" :
+                    ["xlsx", "xls"].includes(ext) ? "text-[var(--eds-status-green)]" :
                     ["pptx", "ppt"].includes(ext) ? "text-orange-600" :
-                    ext === "pdf" ? "text-red-600" : "text-slate-500";
+                    ext === "pdf" ? "text-[var(--eds-status-red)]" : "text-[var(--eds-text-tertiary)]";
                   return (
-                    <div key={i} className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2" data-testid={`file-item-${i}`}>
+                    <div key={i} className="flex items-center gap-2 bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2" data-testid={`file-item-${i}`}>
                       <svg className={`w-4 h-4 shrink-0 ${iconColor}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                       </svg>
-                      <span className="text-sm text-slate-700 flex-1 truncate">{f.name}</span>
-                      <span className="text-[10px] text-slate-400 uppercase font-medium">{ext}</span>
-                      <span className="text-[10px] text-slate-400">{(f.size / 1024).toFixed(0)} KB</span>
+                      <span className="text-sm text-[var(--eds-text-primary)] flex-1 truncate">{f.name}</span>
+                      <span className="text-[10px] text-[var(--eds-text-disabled)] uppercase font-medium">{ext}</span>
+                      <span className="text-[10px] text-[var(--eds-text-disabled)]">{(f.size / 1024).toFixed(0)} KB</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); removeFile(i); }}
-                        className="text-slate-400 hover:text-red-500 transition"
+                        className="text-[var(--eds-text-disabled)] hover:text-[var(--eds-status-red)] transition"
                         data-testid={`button-remove-file-${i}`}
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -746,14 +746,14 @@ function RequirementsContent() {
             )}
 
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex-1 border-t border-slate-200"></div>
-              <span className="text-xs text-slate-400">und / oder</span>
-              <div className="flex-1 border-t border-slate-200"></div>
+              <div className="flex-1 border-t border-[var(--eds-border)]"></div>
+              <span className="text-xs text-[var(--eds-text-disabled)]">und / oder</span>
+              <div className="flex-1 border-t border-[var(--eds-border)]"></div>
             </div>
 
-            <p className="text-xs font-medium text-slate-600 mb-1.5">Transkript / Freitext eingeben</p>
+            <p className="text-xs font-medium text-[var(--eds-text-secondary)] mb-1.5">Transkript / Freitext eingeben</p>
             <textarea
-              className="w-full h-40 border border-slate-300 rounded-xl p-4 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue resize-y"
+              className="w-full h-40 border border-[var(--eds-border-strong)] rounded-xl p-4 text-sm text-[var(--eds-text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue resize-y"
               placeholder="Fügen Sie hier die Ergebnisse, den Mitschrieb oder das Transkript einer Anforderungsanalyse ein..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -761,7 +761,7 @@ function RequirementsContent() {
             />
 
             <div className="mt-4">
-              <p className="text-xs font-medium text-slate-600 mb-1.5">Internet-Adressen für KI-Research (optional)</p>
+              <p className="text-xs font-medium text-[var(--eds-text-secondary)] mb-1.5">Internet-Adressen für KI-Research (optional)</p>
               <div className="space-y-2">
                 {researchUrls.map((url, i) => (
                   <div key={i} className="flex items-center gap-2">
@@ -774,12 +774,12 @@ function RequirementsContent() {
                         setResearchUrls(updated);
                       }}
                       placeholder="https://..."
-                      className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                      className="flex-1 border border-[var(--eds-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                       data-testid={`input-research-url-${i}`}
                     />
                     <button
                       onClick={() => setResearchUrls(researchUrls.filter((_, idx) => idx !== i))}
-                      className="text-slate-400 hover:text-red-500 transition p-1"
+                      className="text-[var(--eds-text-disabled)] hover:text-[var(--eds-status-red)] transition p-1"
                       data-testid={`button-remove-url-${i}`}
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -788,19 +788,19 @@ function RequirementsContent() {
                 ))}
                 <button
                   onClick={() => setResearchUrls([...researchUrls, ""])}
-                  className="text-xs font-medium px-3 py-1.5 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:text-slate-700 hover:border-slate-400 transition flex items-center gap-1"
+                  className="text-xs font-medium px-3 py-1.5 rounded-lg border border-dashed border-[var(--eds-border-strong)] text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)] hover:border-[var(--eds-border-strong)] transition flex items-center gap-1"
                   data-testid="button-add-url"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                   URL hinzufügen
                 </button>
-                <p className="text-[10px] text-slate-400">z.B. Unternehmenswebsites, Stellenanzeigen, LinkedIn-Profile — werden von der KI für vertiefenden Research genutzt</p>
+                <p className="text-[10px] text-[var(--eds-text-disabled)]">z.B. Unternehmenswebsites, Stellenanzeigen, LinkedIn-Profile — werden von der KI für vertiefenden Research genutzt</p>
               </div>
             </div>
 
             <div className="flex items-center justify-between mt-3">
-              <span className="text-xs text-slate-400">
-                {uploadedFiles.length > 0 && <span className="text-slate-600 font-medium">{uploadedFiles.length} Datei(en) + </span>}
+              <span className="text-xs text-[var(--eds-text-disabled)]">
+                {uploadedFiles.length > 0 && <span className="text-[var(--eds-text-secondary)] font-medium">{uploadedFiles.length} Datei(en) + </span>}
                 {inputText.length} Zeichen
               </span>
               <button
@@ -828,44 +828,44 @@ function RequirementsContent() {
             <>
             {(clientName || projectName) && (
               <div className="mb-4 flex items-center gap-3 text-sm" data-testid="section-project-info">
-                <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" /></svg>
-                {clientName && <span className="font-medium text-slate-700">{clientName}</span>}
-                {clientName && projectName && <span className="text-slate-300">|</span>}
-                {projectName && <span className="text-slate-600">{projectName}</span>}
+                <svg className="w-4 h-4 text-[var(--eds-text-disabled)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" /></svg>
+                {clientName && <span className="font-medium text-[var(--eds-text-primary)]">{clientName}</span>}
+                {clientName && projectName && <span className="text-[var(--eds-text-disabled)]">|</span>}
+                {projectName && <span className="text-[var(--eds-text-secondary)]">{projectName}</span>}
               </div>
             )}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="section-results">
               <div className="space-y-5">
-                <h2 className="text-lg font-bold text-brand-navy border-b border-slate-200 pb-2">
+                <h2 className="text-lg font-bold text-brand-navy border-b border-[var(--eds-border)] pb-2">
                   Output — Extrahierte Daten
                 </h2>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
-                  <h3 className="text-sm font-bold text-slate-700 mb-3">Anforderungsanalyse</h3>
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 space-y-2">
+                  <h3 className="text-sm font-bold text-[var(--eds-text-primary)] mb-3">Anforderungsanalyse</h3>
                   <EditableField label="Datum" value={extraction.analysisDate} path="analysisDate" onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                   <EditableField label="Form" value={extraction.analysisForm} path="analysisForm" onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                   <div className="flex items-start gap-2">
-                    <span className="text-xs text-slate-500 w-40 shrink-0 pt-0.5">Teilnehmende:</span>
-                    <span className="text-sm text-slate-800">{extraction.participants.join(", ") || <span className="text-slate-300 italic">nicht angegeben</span>}</span>
+                    <span className="text-xs text-[var(--eds-text-tertiary)] w-40 shrink-0 pt-0.5">Teilnehmende:</span>
+                    <span className="text-sm text-[var(--eds-text-primary)]">{extraction.participants.join(", ") || <span className="text-[var(--eds-text-disabled)] italic">nicht angegeben</span>}</span>
                   </div>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
-                  <h3 className="text-sm font-bold text-slate-700 mb-3">Unternehmen & Rolle</h3>
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 space-y-2">
+                  <h3 className="text-sm font-bold text-[var(--eds-text-primary)] mb-3">Unternehmen & Rolle</h3>
                   <EditableField label="Unternehmen" value={extraction.company} path="company" onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                   <EditableField label="Ziel-Funktion" value={extraction.targetRole} path="targetRole" onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                   <EditableField label="Besetzung ab" value={extraction.startDate} path="startDate" onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
-                  <h3 className="text-sm font-bold text-slate-700 mb-3">Assessment</h3>
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 space-y-2">
+                  <h3 className="text-sm font-bold text-[var(--eds-text-primary)] mb-3">Assessment</h3>
                   <EditableField label="Durchführungstermin" value={extraction.assessmentDate} path="assessmentDate" onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                   <EditableField label="Art" value={extraction.assessmentType} path="assessmentType" onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                   <EditableField label="Dauer" value={extraction.assessmentDuration} path="assessmentDuration" onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-                  <h3 className="text-sm font-bold text-slate-700 mb-3">Durchführende</h3>
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 space-y-3">
+                  <h3 className="text-sm font-bold text-[var(--eds-text-primary)] mb-3">Durchführende</h3>
                   <PersonBlock label="Berater" person={extraction.leadConsultant} pathPrefix="leadConsultant" onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                   {extraction.secondConsultant && (
                     <PersonBlock label="Zweit-Berater" person={extraction.secondConsultant} pathPrefix="secondConsultant" onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
@@ -873,35 +873,35 @@ function RequirementsContent() {
                   {extraction.additionalObservers.map((obs, i) => (
                     <div key={i} className="relative">
                       <PersonBlock label={`Beobachter ${i + 1}`} person={obs} pathPrefix={`additionalObservers.${i}`} onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
-                      <button onClick={() => removeObserver(i)} className="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs" data-testid={`button-remove-observer-${i}`}>Entfernen</button>
+                      <button onClick={() => removeObserver(i)} className="absolute top-2 right-2 text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] text-xs" data-testid={`button-remove-observer-${i}`}>Entfernen</button>
                     </div>
                   ))}
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-                  <h3 className="text-sm font-bold text-slate-700 mb-3">Kandidaten</h3>
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 space-y-3">
+                  <h3 className="text-sm font-bold text-[var(--eds-text-primary)] mb-3">Kandidaten</h3>
                   {extraction.candidates.map((cand, i) => (
-                    <div key={i} className="relative bg-slate-50 rounded-lg p-3 space-y-1">
-                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Kandidat {i + 1}</p>
+                    <div key={i} className="relative bg-[var(--eds-bg-sunken)] rounded-lg p-3 space-y-1">
+                      <p className="text-xs font-semibold text-[var(--eds-text-secondary)] uppercase tracking-wide mb-2">Kandidat {i + 1}</p>
                       <EditableField label="Vorname" value={cand.firstName} path={`candidates.${i}.firstName`} onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                       <EditableField label="Nachname" value={cand.lastName} path={`candidates.${i}.lastName`} onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                       <EditableField label="Aktuelle Funktion" value={cand.currentRole} path={`candidates.${i}.currentRole`} onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                       <EditableField label="Unternehmen" value={cand.currentCompany} path={`candidates.${i}.currentCompany`} onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                       <EditableField label="Telefon" value={cand.phone} path={`candidates.${i}.phone`} onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
                       <EditableField label="E-Mail" value={cand.email} path={`candidates.${i}.email`} onSave={updateField} editingField={editingField} setEditingField={setEditingField} />
-                      <button onClick={() => removeCandidate(i)} className="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs" data-testid={`button-remove-candidate-${i}`}>Entfernen</button>
+                      <button onClick={() => removeCandidate(i)} className="absolute top-2 right-2 text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] text-xs" data-testid={`button-remove-candidate-${i}`}>Entfernen</button>
                     </div>
                   ))}
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
-                  <h3 className="text-sm font-bold text-slate-700 mb-3">Spezifische Fragestellungen</h3>
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4">
+                  <h3 className="text-sm font-bold text-[var(--eds-text-primary)] mb-3">Spezifische Fragestellungen</h3>
                   <ul className="space-y-2">
                     {extraction.specificQuestions.map((q, i) => (
                       <li key={i} className="flex items-start gap-2 group">
-                        <span className="text-xs mt-1 text-slate-400">&bull;</span>
-                        <span className="flex-1 text-sm text-slate-700">{q}</span>
-                        <button onClick={() => removeQuestion(i)} className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition text-xs shrink-0" data-testid={`button-remove-question-${i}`}>
+                        <span className="text-xs mt-1 text-[var(--eds-text-disabled)]">&bull;</span>
+                        <span className="flex-1 text-sm text-[var(--eds-text-primary)]">{q}</span>
+                        <button onClick={() => removeQuestion(i)} className="text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] opacity-0 group-hover:opacity-100 transition text-xs shrink-0" data-testid={`button-remove-question-${i}`}>
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </li>
@@ -909,14 +909,14 @@ function RequirementsContent() {
                   </ul>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
-                  <h3 className="text-sm font-bold text-slate-700 mb-3">Stellenspezifische Erfolgsmerkmale</h3>
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4">
+                  <h3 className="text-sm font-bold text-[var(--eds-text-primary)] mb-3">Stellenspezifische Erfolgsmerkmale</h3>
                   <ul className="space-y-2">
                     {extraction.successCriteria.map((c, i) => (
                       <li key={i} className="flex items-start gap-2 group">
                         <span className="text-xs mt-1 text-brand-blue">&#9733;</span>
-                        <span className="flex-1 text-sm text-slate-700">{c}</span>
-                        <button onClick={() => removeCriterion(i)} className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition text-xs shrink-0" data-testid={`button-remove-criterion-${i}`}>
+                        <span className="flex-1 text-sm text-[var(--eds-text-primary)]">{c}</span>
+                        <button onClick={() => removeCriterion(i)} className="text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] opacity-0 group-hover:opacity-100 transition text-xs shrink-0" data-testid={`button-remove-criterion-${i}`}>
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </li>
@@ -926,24 +926,24 @@ function RequirementsContent() {
               </div>
 
               <div className="space-y-5">
-                <h2 className="text-lg font-bold text-brand-navy border-b border-slate-200 pb-2">
+                <h2 className="text-lg font-bold text-brand-navy border-b border-[var(--eds-border)] pb-2">
                   Empfehlungen
                 </h2>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-slate-700">Anforderungsprofil / Kompetenzen</h3>
+                    <h3 className="text-sm font-bold text-[var(--eds-text-primary)]">Anforderungsprofil / Kompetenzen</h3>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => { setShowModelPicker(!showModelPicker); if (!showModelPicker && competencyModels.length === 0) fetchCompetencyModels(); }}
-                        className="text-[10px] font-medium text-brand-blue bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5 hover:bg-blue-100 transition"
+                        className="text-[10px] font-medium text-brand-blue bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] rounded-full px-2 py-0.5 hover:bg-[var(--eds-status-blue-bg)] transition"
                         data-testid="button-link-competency-model"
                       >
                         Modell verknüpfen
                       </button>
                       <button
                         onClick={() => setAddingCompetency(true)}
-                        className="text-xs font-medium px-2 py-0.5 rounded border border-slate-300 hover:bg-slate-50 transition"
+                        className="text-xs font-medium px-2 py-0.5 rounded border border-[var(--eds-border-strong)] hover:bg-[var(--eds-bg-sunken)] transition"
                         data-testid="button-add-competency"
                       >
                         + Hinzufügen
@@ -952,22 +952,22 @@ function RequirementsContent() {
                   </div>
 
                   {showModelPicker && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3" data-testid="section-model-picker">
+                    <div className="bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] rounded-lg p-3 mb-3" data-testid="section-model-picker">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-xs font-semibold text-blue-800">Kompetenzmodell auswählen</h4>
-                        <button onClick={() => setShowModelPicker(false)} className="text-xs text-slate-400 hover:text-slate-600">Schließen</button>
+                        <h4 className="text-xs font-semibold text-[var(--eds-status-blue)]">Kompetenzmodell auswählen</h4>
+                        <button onClick={() => setShowModelPicker(false)} className="text-xs text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)]">Schließen</button>
                       </div>
                       {loadingModels ? (
-                        <p className="text-xs text-slate-400">Laden...</p>
+                        <p className="text-xs text-[var(--eds-text-disabled)]">Laden...</p>
                       ) : competencyModels.length === 0 ? (
-                        <p className="text-xs text-slate-400">Keine Kompetenzmodelle vorhanden. Erstellen Sie eines unter Kompetenzen.</p>
+                        <p className="text-xs text-[var(--eds-text-disabled)]">Keine Kompetenzmodelle vorhanden. Erstellen Sie eines unter Kompetenzen.</p>
                       ) : (
                         <div className="space-y-2 max-h-48 overflow-y-auto">
                           {competencyModels.map((model) => (
-                            <div key={model.id} className="bg-white border border-blue-100 rounded-lg p-3 flex items-center justify-between" data-testid={`card-model-${model.id}`}>
+                            <div key={model.id} className="bg-white border border-[var(--eds-border)] rounded-lg p-3 flex items-center justify-between" data-testid={`card-model-${model.id}`}>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-slate-800">{model.name}</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-medium text-[var(--eds-text-primary)]">{model.name}</p>
+                                <p className="text-xs text-[var(--eds-text-tertiary)]">
                                   {model.nodes?.length || 0} Kompetenzen
                                   {model.companyName ? ` · ${model.companyName}` : ""}
                                   {model.sourceType ? ` · ${model.sourceType}` : ""}
@@ -975,7 +975,7 @@ function RequirementsContent() {
                               </div>
                               <button
                                 onClick={() => importFromModel(model)}
-                                className="shrink-0 ml-2 text-xs font-medium text-blue-600 bg-blue-100 hover:bg-blue-200 border border-blue-200 rounded px-2 py-1 transition"
+                                className="shrink-0 ml-2 text-xs font-medium text-[var(--eds-status-blue)] bg-[var(--eds-status-blue-bg)] hover:bg-blue-200 border border-[var(--eds-status-blue-bg)] rounded px-2 py-1 transition"
                                 data-testid={`button-import-model-${model.id}`}
                               >
                                 Übernehmen
@@ -988,24 +988,24 @@ function RequirementsContent() {
                   )}
 
                   {addingCompetency && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 space-y-2">
+                    <div className="bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] rounded-lg p-3 mb-3 space-y-2">
                       <input
-                        className="w-full text-sm border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        className="w-full text-sm border border-[var(--eds-border-strong)] rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
                         placeholder="Kompetenzname"
                         value={newCompName}
                         onChange={(e) => setNewCompName(e.target.value)}
                         data-testid="input-new-competency-name"
                       />
                       <input
-                        className="w-full text-sm border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        className="w-full text-sm border border-[var(--eds-border-strong)] rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
                         placeholder="Kurzbeschreibung"
                         value={newCompDesc}
                         onChange={(e) => setNewCompDesc(e.target.value)}
                         data-testid="input-new-competency-desc"
                       />
                       <div className="flex gap-2">
-                        <button onClick={addCompetency} className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700" data-testid="button-save-competency">Hinzufügen</button>
-                        <button onClick={() => setAddingCompetency(false)} className="text-xs px-3 py-1 border border-slate-300 rounded hover:bg-slate-50">Abbrechen</button>
+                        <button onClick={addCompetency} className="text-xs px-3 py-1 bg-[var(--eds-status-blue)] text-white rounded hover:bg-[var(--eds-status-blue)]" data-testid="button-save-competency">Hinzufügen</button>
+                        <button onClick={() => setAddingCompetency(false)} className="text-xs px-3 py-1 border border-[var(--eds-border-strong)] rounded hover:bg-[var(--eds-bg-sunken)]">Abbrechen</button>
                       </div>
                     </div>
                   )}
@@ -1014,7 +1014,7 @@ function RequirementsContent() {
                     {extraction.competencies.map((comp, i) => (
                       <div
                         key={i}
-                        className={`flex items-start gap-3 p-3 rounded-lg border transition ${comp.selected ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200 opacity-60"}`}
+                        className={`flex items-start gap-3 p-3 rounded-lg border transition ${comp.selected ? "bg-[var(--eds-status-green-bg)] border-[var(--eds-status-green-bg)]" : "bg-[var(--eds-bg-sunken)] border-[var(--eds-border)] opacity-60"}`}
                       >
                         <input
                           type="checkbox"
@@ -1024,10 +1024,10 @@ function RequirementsContent() {
                           data-testid={`checkbox-competency-${i}`}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-800">{comp.name}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{comp.description}</p>
+                          <p className="text-sm font-semibold text-[var(--eds-text-primary)]">{comp.name}</p>
+                          <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">{comp.description}</p>
                         </div>
-                        <button onClick={() => removeCompetency(i)} className="text-red-400 hover:text-red-600 shrink-0" data-testid={`button-remove-competency-${i}`}>
+                        <button onClick={() => removeCompetency(i)} className="text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] shrink-0" data-testid={`button-remove-competency-${i}`}>
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
@@ -1035,20 +1035,20 @@ function RequirementsContent() {
                   </div>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
+                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-slate-700">Assessment-Bausteine</h3>
+                    <h3 className="text-sm font-bold text-[var(--eds-text-primary)]">Assessment-Bausteine</h3>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => { setShowLibraryPicker(!showLibraryPicker); if (!showLibraryPicker && libraryItems.length === 0) fetchLibraryItems(); }}
-                        className="text-[10px] font-medium text-brand-blue bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5 hover:bg-blue-100 transition"
+                        className="text-[10px] font-medium text-brand-blue bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] rounded-full px-2 py-0.5 hover:bg-[var(--eds-status-blue-bg)] transition"
                         data-testid="button-link-exercise-library"
                       >
                         Bibliothek nutzen
                       </button>
                       <button
                         onClick={() => setAddingModule(true)}
-                        className="text-xs font-medium px-2 py-0.5 rounded border border-slate-300 hover:bg-slate-50 transition"
+                        className="text-xs font-medium px-2 py-0.5 rounded border border-[var(--eds-border-strong)] hover:bg-[var(--eds-bg-sunken)] transition"
                         data-testid="button-add-module"
                       >
                         + Hinzufügen
@@ -1057,36 +1057,36 @@ function RequirementsContent() {
                   </div>
 
                   {showLibraryPicker && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3" data-testid="section-library-picker">
+                    <div className="bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] rounded-lg p-3 mb-3" data-testid="section-library-picker">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-xs font-semibold text-blue-800">Übung aus Bibliothek auswählen</h4>
-                        <button onClick={() => setShowLibraryPicker(false)} className="text-xs text-slate-400 hover:text-slate-600">Schließen</button>
+                        <h4 className="text-xs font-semibold text-[var(--eds-status-blue)]">Übung aus Bibliothek auswählen</h4>
+                        <button onClick={() => setShowLibraryPicker(false)} className="text-xs text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)]">Schließen</button>
                       </div>
                       {loadingLibrary ? (
-                        <p className="text-xs text-slate-400">Laden...</p>
+                        <p className="text-xs text-[var(--eds-text-disabled)]">Laden...</p>
                       ) : libraryItems.length === 0 ? (
-                        <p className="text-xs text-slate-400">Keine Einträge in der Bibliothek vorhanden.</p>
+                        <p className="text-xs text-[var(--eds-text-disabled)]">Keine Einträge in der Bibliothek vorhanden.</p>
                       ) : (
                         <div className="space-y-2 max-h-48 overflow-y-auto">
                           {libraryItems.map((item: any) => {
                             const alreadyAdded = extraction?.assessmentModules.some(m => m.name.toLowerCase() === item.title.toLowerCase());
                             return (
-                              <div key={item.id} className="bg-white border border-blue-100 rounded-lg p-3 flex items-center justify-between" data-testid={`card-library-${item.id}`}>
+                              <div key={item.id} className="bg-white border border-[var(--eds-border)] rounded-lg p-3 flex items-center justify-between" data-testid={`card-library-${item.id}`}>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-slate-800">{item.title}</p>
+                                  <p className="text-sm font-medium text-[var(--eds-text-primary)]">{item.title}</p>
                                   <div className="flex flex-wrap gap-1 mt-0.5">
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600">{item.exerciseType}</span>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--eds-status-blue-bg)] text-[var(--eds-status-blue)]">{item.exerciseType}</span>
                                     {item.targetLevels?.slice(0, 2).map((l: string) => (
-                                      <span key={l} className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">{l}</span>
+                                      <span key={l} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--eds-status-amber-bg)] text-[var(--eds-status-amber)]">{l}</span>
                                     ))}
                                   </div>
                                 </div>
                                 {alreadyAdded ? (
-                                  <span className="shrink-0 ml-2 text-[10px] text-green-600 font-medium">Bereits hinzugefügt</span>
+                                  <span className="shrink-0 ml-2 text-[10px] text-[var(--eds-status-green)] font-medium">Bereits hinzugefügt</span>
                                 ) : (
                                   <button
                                     onClick={() => importFromLibrary(item)}
-                                    className="shrink-0 ml-2 text-xs font-medium text-blue-600 bg-blue-100 hover:bg-blue-200 border border-blue-200 rounded px-2 py-1 transition"
+                                    className="shrink-0 ml-2 text-xs font-medium text-[var(--eds-status-blue)] bg-[var(--eds-status-blue-bg)] hover:bg-blue-200 border border-[var(--eds-status-blue-bg)] rounded px-2 py-1 transition"
                                     data-testid={`button-import-library-${item.id}`}
                                   >
                                     Übernehmen
@@ -1101,16 +1101,16 @@ function RequirementsContent() {
                   )}
 
                   {addingModule && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 space-y-2">
+                    <div className="bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] rounded-lg p-3 mb-3 space-y-2">
                       <input
-                        className="w-full text-sm border border-slate-300 rounded px-2 py-1"
+                        className="w-full text-sm border border-[var(--eds-border-strong)] rounded px-2 py-1"
                         placeholder="Modulname"
                         value={newModName}
                         onChange={(e) => setNewModName(e.target.value)}
                         data-testid="input-new-module-name"
                       />
                       <select
-                        className="w-full text-sm border border-slate-300 rounded px-2 py-1"
+                        className="w-full text-sm border border-[var(--eds-border-strong)] rounded px-2 py-1"
                         value={newModType}
                         onChange={(e) => setNewModType(e.target.value)}
                         data-testid="select-new-module-type"
@@ -1118,22 +1118,22 @@ function RequirementsContent() {
                         {Object.entries(MODULE_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </select>
                       <textarea
-                        className="w-full text-sm border border-slate-300 rounded px-2 py-1 h-16 resize-y"
+                        className="w-full text-sm border border-[var(--eds-border-strong)] rounded px-2 py-1 h-16 resize-y"
                         placeholder="Beschreibung"
                         value={newModDesc}
                         onChange={(e) => setNewModDesc(e.target.value)}
                         data-testid="textarea-new-module-desc"
                       />
                       <textarea
-                        className="w-full text-sm border border-slate-300 rounded px-2 py-1 h-20 resize-y font-mono text-xs"
+                        className="w-full text-sm border border-[var(--eds-border-strong)] rounded px-2 py-1 h-20 resize-y font-mono text-xs"
                         placeholder="Prompt/Anweisung zur Erstellung dieses Bausteins..."
                         value={newModPrompt}
                         onChange={(e) => setNewModPrompt(e.target.value)}
                         data-testid="textarea-new-module-prompt"
                       />
                       <div className="flex gap-2">
-                        <button onClick={addModule} className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700" data-testid="button-save-module">Hinzufügen</button>
-                        <button onClick={() => setAddingModule(false)} className="text-xs px-3 py-1 border border-slate-300 rounded hover:bg-slate-50">Abbrechen</button>
+                        <button onClick={addModule} className="text-xs px-3 py-1 bg-[var(--eds-status-blue)] text-white rounded hover:bg-[var(--eds-status-blue)]" data-testid="button-save-module">Hinzufügen</button>
+                        <button onClick={() => setAddingModule(false)} className="text-xs px-3 py-1 border border-[var(--eds-border-strong)] rounded hover:bg-[var(--eds-bg-sunken)]">Abbrechen</button>
                       </div>
                     </div>
                   )}
@@ -1142,7 +1142,7 @@ function RequirementsContent() {
                     {extraction.assessmentModules.map((mod, i) => (
                       <div
                         key={i}
-                        className={`rounded-lg border transition ${mod.selected ? "bg-blue-50 border-blue-200" : "bg-slate-50 border-slate-200 opacity-60"}`}
+                        className={`rounded-lg border transition ${mod.selected ? "bg-[var(--eds-status-blue-bg)] border-[var(--eds-status-blue-bg)]" : "bg-[var(--eds-bg-sunken)] border-[var(--eds-border)] opacity-60"}`}
                       >
                         <div className="flex items-start gap-3 p-3">
                           <input
@@ -1156,13 +1156,13 @@ function RequirementsContent() {
                             {expandedModule === i ? (
                               <div className="space-y-2">
                                 <input
-                                  className="w-full text-sm font-semibold border border-slate-300 rounded px-2 py-1"
+                                  className="w-full text-sm font-semibold border border-[var(--eds-border-strong)] rounded px-2 py-1"
                                   value={mod.name}
                                   onChange={(e) => updateModule(i, "name", e.target.value)}
                                   data-testid={`input-module-name-${i}`}
                                 />
                                 <select
-                                  className="w-full text-sm border border-slate-300 rounded px-2 py-1"
+                                  className="w-full text-sm border border-[var(--eds-border-strong)] rounded px-2 py-1"
                                   value={mod.type}
                                   onChange={(e) => updateModule(i, "type", e.target.value)}
                                   data-testid={`select-module-type-${i}`}
@@ -1172,7 +1172,7 @@ function RequirementsContent() {
                                   ))}
                                 </select>
                                 <textarea
-                                  className="w-full text-sm border border-slate-300 rounded px-2 py-1 h-16 resize-y"
+                                  className="w-full text-sm border border-[var(--eds-border-strong)] rounded px-2 py-1 h-16 resize-y"
                                   value={mod.description}
                                   onChange={(e) => updateModule(i, "description", e.target.value)}
                                   placeholder="Beschreibung..."
@@ -1182,33 +1182,33 @@ function RequirementsContent() {
                             ) : (
                               <div className="cursor-pointer" onClick={() => setExpandedModule(i)}>
                                 <div className="flex items-center gap-2">
-                                  <p className="text-sm font-semibold text-slate-800">{mod.name}</p>
-                                  <span className="text-[10px] bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{MODULE_TYPE_LABELS[mod.type] || mod.type}</span>
+                                  <p className="text-sm font-semibold text-[var(--eds-text-primary)]">{mod.name}</p>
+                                  <span className="text-[10px] bg-[var(--eds-status-blue-bg)] text-[var(--eds-status-blue)] rounded-full px-2 py-0.5">{MODULE_TYPE_LABELS[mod.type] || mod.type}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 mt-1">{mod.description}</p>
+                                <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">{mod.description}</p>
                               </div>
                             )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             <button
                               onClick={() => setExpandedModule(expandedModule === i ? null : i)}
-                              className="text-slate-400 hover:text-slate-600"
+                              className="text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)]"
                               data-testid={`button-expand-module-${i}`}
                             >
                               <svg className={`w-4 h-4 transition-transform ${expandedModule === i ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                             </button>
-                            <button onClick={() => removeModule(i)} className="text-red-400 hover:text-red-600" data-testid={`button-remove-module-${i}`}>
+                            <button onClick={() => removeModule(i)} className="text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)]" data-testid={`button-remove-module-${i}`}>
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                           </div>
                         </div>
 
                         {expandedModule === i && (
-                          <div className="border-t border-blue-200 p-3 space-y-3">
+                          <div className="border-t border-[var(--eds-status-blue-bg)] p-3 space-y-3">
                             <div>
-                              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Anpassungshinweise</p>
+                              <p className="text-[10px] font-semibold text-[var(--eds-text-tertiary)] uppercase tracking-wide mb-1">Anpassungshinweise</p>
                               <textarea
-                                className="w-full text-sm border border-slate-300 rounded px-2 py-1 h-16 resize-y"
+                                className="w-full text-sm border border-[var(--eds-border-strong)] rounded px-2 py-1 h-16 resize-y"
                                 value={mod.adaptationNotes}
                                 onChange={(e) => updateModule(i, "adaptationNotes", e.target.value)}
                                 placeholder="Anpassungshinweise eingeben..."
@@ -1216,9 +1216,9 @@ function RequirementsContent() {
                               />
                             </div>
                             <div>
-                              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Prompt / Anweisung zur Erstellung</p>
+                              <p className="text-[10px] font-semibold text-[var(--eds-text-tertiary)] uppercase tracking-wide mb-1">Prompt / Anweisung zur Erstellung</p>
                               <textarea
-                                className="w-full text-sm border border-slate-300 rounded px-2 py-1 h-24 resize-y font-mono text-xs"
+                                className="w-full text-sm border border-[var(--eds-border-strong)] rounded px-2 py-1 h-24 resize-y font-mono text-xs"
                                 value={mod.generationPrompt}
                                 onChange={(e) => updateModule(i, "generationPrompt", e.target.value)}
                                 placeholder="Prompt / Anweisung eingeben..."
@@ -1232,17 +1232,17 @@ function RequirementsContent() {
                   </div>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 flex items-start gap-2">
+                <div className="bg-[var(--eds-status-amber-bg)] border border-[var(--eds-status-amber-bg)] rounded-xl p-3 text-xs text-[var(--eds-status-amber)] flex items-start gap-2">
                   <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
                   <span>KI-generierte Empfehlungen — bitte prüfen, anpassen und ergänzen. Diese Vorschläge basieren auf dem eingegebenen Text und ersetzen keine fachliche Einschätzung.</span>
                 </div>
 
                 {adoptSuccess && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3" data-testid="section-adopt-success">
-                    <svg className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <div className="bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] rounded-xl p-4 flex items-start gap-3" data-testid="section-adopt-success">
+                    <svg className="w-5 h-5 text-[var(--eds-status-green)] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-emerald-800">Erfolgreich übernommen</p>
-                      <p className="text-xs text-emerald-600 mt-0.5">
+                      <p className="text-xs text-[var(--eds-status-green)] mt-0.5">
                         Daten wurden in das Assessment &laquo;{adoptSuccess.assessmentName}&raquo; übernommen.
                         {adoptSuccess.competenciesApplied > 0 && ` ${adoptSuccess.competenciesApplied} Kompetenz${adoptSuccess.competenciesApplied !== 1 ? "en" : ""} angelegt.`}
                       </p>
@@ -1262,7 +1262,7 @@ function RequirementsContent() {
                     {assessmentId && (
                       <button
                         onClick={() => router.push(`/w/${slug}/admin/assessments/${assessmentId}`)}
-                        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition"
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-tertiary)] hover:bg-[var(--eds-bg-sunken)] transition"
                         data-testid="link-back-assessment"
                       >
                         ← Zurück zum Assessment
@@ -1272,7 +1272,7 @@ function RequirementsContent() {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={handleDownloadPdf}
-                      className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition flex items-center gap-2"
+                      className="px-4 py-2 rounded-lg border border-[var(--eds-border)] text-sm font-medium text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)] transition flex items-center gap-2"
                       data-testid="button-download-pdf"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>

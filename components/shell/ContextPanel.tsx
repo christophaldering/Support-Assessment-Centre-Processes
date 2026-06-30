@@ -364,14 +364,13 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
   const verwaltungRoutes = [
     `${base}/users`, `${base}/consents`, `${base}/access-requests`,
     `${base}/brand-rules`, `${base}/theme`, `${base}/ai-governance`,
-    `${base}/intelligence`, `${base}/audio`, `${base}/document-sharing`,
-    `${base}/prompt-library`,
+    `${base}/intelligence`, `${base}/audio`, `${base}/prompt-library`,
   ];
   const verwaltungActive = verwaltungRoutes.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 
-  const isDrRoute = pathname.startsWith(`${base}/document-sharing`);
+  const isDrRoute = pathname.startsWith(`${base}/document-sharing`) || pathname.startsWith(`${base}/dr`);
 
   const flagProps = { featureFlags, isMaster, base };
 
@@ -475,7 +474,6 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
               <FilteredNavLink routeSegment="intelligence"      href={`${base}/intelligence`}      label="Advanced Intelligence"        icon={<IcoBrain />}       {...flagProps} />
               <FilteredNavLink routeSegment="audio"             href={`${base}/audio`}             label="Audio & Transkription"        icon={<IcoMic />}         {...flagProps} />
               <FilteredNavLink routeSegment="prompt-library"    href={`${base}/prompt-library`}    label="KI-Prompts"                   icon={<IcoPrompt />}      {...flagProps} />
-              <FilteredNavLink routeSegment="document-sharing"  href={`${base}/document-sharing`}  label="Externe Dokumentenfreigabe"   icon={<IcoShare />}       {...flagProps} />
             </CollapsibleGroup>
           </>
         )}

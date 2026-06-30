@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/shared/PageHeader";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { AI_FEATURES, PROVIDER_INFO } from "@/lib/llm/types";
@@ -90,7 +91,7 @@ export default function AiGovernancePage() {
       <div className="py-8 px-6 lg:px-10 space-y-6" data-testid="ai-governance-loading">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-64" />
-          <div className="h-64 bg-gray-100 rounded" />
+          <div className="h-64 bg-[var(--eds-bg-sunken)] rounded" />
         </div>
       </div>
     );
@@ -99,32 +100,30 @@ export default function AiGovernancePage() {
   if (!settings) {
     return (
       <div className="py-8 px-6 lg:px-10" data-testid="ai-governance-error">
-        <p className="text-red-600">Einstellungen konnten nicht geladen werden.</p>
+        <p className="text-[var(--eds-status-red)]">Einstellungen konnten nicht geladen werden.</p>
       </div>
     );
   }
 
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6" data-testid="ai-governance-page">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900" data-testid="text-page-title">AI Governance & Provider Management</h1>
-          <p className="text-slate-500 mt-1">KI-Provider konfigurieren, Compliance-Modus wählen und Funktionen steuern</p>
-        </div>
-        {saving && <span className="text-sm text-amber-600 animate-pulse">Speichern...</span>}
-      </div>
+      <PageHeader
+        title="AI Governance & Provider Management"
+        description="KI-Provider konfigurieren, Compliance-Modus wählen und Funktionen steuern"
+        actions={saving ? <span className="text-sm text-[var(--eds-status-amber)] animate-pulse">Speichern...</span> : undefined}
+      />
 
-      <div className="flex gap-2 border-b border-slate-200">
+      <div className="flex gap-2 border-b border-[var(--eds-border)]">
         <button
           onClick={() => setActiveTab("settings")}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === "settings" ? "border-[#A6473B] text-[#A6473B]" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === "settings" ? "border-[#A6473B] text-[#A6473B]" : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"}`}
           data-testid="tab-settings"
         >
           Einstellungen
         </button>
         <button
           onClick={() => setActiveTab("audit")}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === "audit" ? "border-[#A6473B] text-[#A6473B]" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === "audit" ? "border-[#A6473B] text-[#A6473B]" : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"}`}
           data-testid="tab-audit"
         >
           Audit Log ({audit.length})
@@ -134,13 +133,13 @@ export default function AiGovernancePage() {
       {activeTab === "settings" ? (
         <div className="space-y-8">
           {/* Master Kill Switch */}
-          <div className={`rounded-xl border-2 p-6 ${settings.aiMasterDisabled ? "border-red-300 bg-red-50" : "border-green-200 bg-green-50/50"}`} data-testid="section-kill-switch">
+          <div className={`rounded-xl border-2 p-6 ${settings.aiMasterDisabled ? "border-[var(--eds-status-red)] bg-[var(--eds-status-red-bg)]" : "border-[var(--eds-status-green-bg)] bg-[var(--eds-status-green-bg)]/50"}`} data-testid="section-kill-switch">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-[var(--eds-text-primary)] flex items-center gap-2">
                   {settings.aiMasterDisabled ? "⛔" : "✅"} AI Master Switch
                 </h2>
-                <p className="text-sm text-slate-600 mt-1">
+                <p className="text-sm text-[var(--eds-text-secondary)] mt-1">
                   {settings.aiMasterDisabled
                     ? "Alle KI-Funktionen sind deaktiviert. Es werden keine API-Calls durchgeführt."
                     : "KI-Funktionen sind aktiv. Der ausgewählte Provider wird für alle Anfragen verwendet."}
@@ -148,7 +147,7 @@ export default function AiGovernancePage() {
               </div>
               <button
                 onClick={() => updateSettings({ aiMasterDisabled: !settings.aiMasterDisabled })}
-                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors ${settings.aiMasterDisabled ? "bg-red-500" : "bg-green-500"}`}
+                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors ${settings.aiMasterDisabled ? "bg-[var(--eds-status-red-bg)]0" : "bg-[var(--eds-status-green-bg)]0"}`}
                 data-testid="toggle-master-switch"
               >
                 <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform ${settings.aiMasterDisabled ? "translate-x-1" : "translate-x-9"}`} />
@@ -157,8 +156,8 @@ export default function AiGovernancePage() {
           </div>
 
           {/* Provider Selection */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6" data-testid="section-provider">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">LLM Provider</h2>
+          <div className="bg-white rounded-xl border border-[var(--eds-border)] p-6" data-testid="section-provider">
+            <h2 className="text-lg font-semibold text-[var(--eds-text-primary)] mb-4">LLM Provider</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {(Object.entries(PROVIDER_INFO) as [ProviderKey, typeof PROVIDER_INFO[ProviderKey]][]).map(([key, info]) => {
                 const isActive = settings.activeLlmProvider === key;
@@ -170,8 +169,8 @@ export default function AiGovernancePage() {
                     disabled={!isAvailable}
                     className={`relative rounded-lg border-2 p-4 text-left transition-all ${
                       isActive ? "border-[#A6473B] bg-[#A6473B]/5 ring-1 ring-[#A6473B]/20" :
-                      isAvailable ? "border-slate-200 hover:border-slate-300 bg-white" :
-                      "border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed"
+                      isAvailable ? "border-[var(--eds-border)] hover:border-[var(--eds-border-strong)] bg-white" :
+                      "border-[var(--eds-border)] bg-[var(--eds-bg-sunken)] opacity-60 cursor-not-allowed"
                     }`}
                     data-testid={`provider-${key}`}
                   >
@@ -181,9 +180,9 @@ export default function AiGovernancePage() {
                     {!isAvailable && (
                       <span className="absolute top-2 right-2 bg-slate-400 text-white text-xs px-2 py-0.5 rounded-full">Kommt bald</span>
                     )}
-                    <h3 className="font-semibold text-slate-900">{info.name}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">{info.region}</p>
-                    <p className="text-sm text-slate-600 mt-2">{info.description}</p>
+                    <h3 className="font-semibold text-[var(--eds-text-primary)]">{info.name}</h3>
+                    <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">{info.region}</p>
+                    <p className="text-sm text-[var(--eds-text-secondary)] mt-2">{info.description}</p>
                   </button>
                 );
               })}
@@ -191,8 +190,8 @@ export default function AiGovernancePage() {
           </div>
 
           {/* Compliance Mode */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6" data-testid="section-compliance">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Compliance-Modus</h2>
+          <div className="bg-white rounded-xl border border-[var(--eds-border)] p-6" data-testid="section-compliance">
+            <h2 className="text-lg font-semibold text-[var(--eds-text-primary)] mb-4">Compliance-Modus</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {COMPLIANCE_MODES.map((mode) => {
                 const isActive = settings.complianceMode === mode.key;
@@ -201,15 +200,15 @@ export default function AiGovernancePage() {
                     key={mode.key}
                     onClick={() => updateSettings({ complianceMode: mode.key })}
                     className={`rounded-lg border-2 p-4 text-left transition-all ${
-                      isActive ? "border-[#297587] bg-[#297587]/5 ring-1 ring-[#297587]/20" : "border-slate-200 hover:border-slate-300"
+                      isActive ? "border-[#297587] bg-[#297587]/5 ring-1 ring-[#297587]/20" : "border-[var(--eds-border)] hover:border-[var(--eds-border-strong)]"
                     }`}
                     data-testid={`compliance-${mode.key}`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xl">{mode.icon}</span>
-                      <h3 className="font-semibold text-slate-900">{mode.label}</h3>
+                      <h3 className="font-semibold text-[var(--eds-text-primary)]">{mode.label}</h3>
                     </div>
-                    <p className="text-sm text-slate-600">{mode.description}</p>
+                    <p className="text-sm text-[var(--eds-text-secondary)]">{mode.description}</p>
                     {isActive && <p className="text-xs text-[#297587] font-medium mt-2">● Aktiv</p>}
                   </button>
                 );
@@ -218,9 +217,9 @@ export default function AiGovernancePage() {
           </div>
 
           {/* Feature Toggles */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6" data-testid="section-features">
-            <h2 className="text-lg font-semibold text-slate-900 mb-1">Feature-Steuerung</h2>
-            <p className="text-sm text-slate-500 mb-4">Einzelne KI-Funktionen gezielt aktivieren oder deaktivieren</p>
+          <div className="bg-white rounded-xl border border-[var(--eds-border)] p-6" data-testid="section-features">
+            <h2 className="text-lg font-semibold text-[var(--eds-text-primary)] mb-1">Feature-Steuerung</h2>
+            <p className="text-sm text-[var(--eds-text-tertiary)] mb-4">Einzelne KI-Funktionen gezielt aktivieren oder deaktivieren</p>
             <div className="space-y-2">
               {AI_FEATURES.map((feature) => {
                 const isDisabled = settings.aiFeaturesDisabled.includes(feature.key);
@@ -228,20 +227,20 @@ export default function AiGovernancePage() {
                   <div
                     key={feature.key}
                     className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
-                      isDisabled ? "border-red-200 bg-red-50/50" : "border-slate-100 bg-slate-50/50"
+                      isDisabled ? "border-[var(--eds-status-red-bg)] bg-[var(--eds-status-red-bg)]/50" : "border-[var(--eds-border)] bg-[var(--eds-bg-sunken)]/50"
                     }`}
                     data-testid={`feature-row-${feature.key}`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className={`w-2 h-2 rounded-full ${isDisabled ? "bg-red-400" : "bg-green-400"}`} />
-                      <span className="text-sm font-medium text-slate-700">{feature.label}</span>
+                      <span className={`w-2 h-2 rounded-full ${isDisabled ? "bg-[var(--eds-status-red)]" : "bg-[var(--eds-status-green)]"}`} />
+                      <span className="text-sm font-medium text-[var(--eds-text-primary)]">{feature.label}</span>
                     </div>
                     <button
                       onClick={() => toggleFeature(feature.key)}
                       disabled={settings.aiMasterDisabled}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        settings.aiMasterDisabled ? "bg-slate-200 cursor-not-allowed" :
-                        isDisabled ? "bg-red-400" : "bg-green-500"
+                        settings.aiMasterDisabled ? "bg-[var(--eds-border)] cursor-not-allowed" :
+                        isDisabled ? "bg-[var(--eds-status-red)]" : "bg-[var(--eds-status-green-bg)]0"
                       }`}
                       data-testid={`toggle-feature-${feature.key}`}
                     >
@@ -257,50 +256,50 @@ export default function AiGovernancePage() {
         </div>
       ) : (
         /* Audit Log Tab */
-        <div className="bg-white rounded-xl border border-slate-200" data-testid="section-audit-log">
-          <div className="p-4 border-b border-slate-100">
-            <h2 className="text-lg font-semibold text-slate-900">Änderungsprotokoll</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Alle Konfigurationsänderungen und blockierte Anfragen</p>
+        <div className="bg-white rounded-xl border border-[var(--eds-border)]" data-testid="section-audit-log">
+          <div className="p-4 border-b border-[var(--eds-border)]">
+            <h2 className="text-lg font-semibold text-[var(--eds-text-primary)]">Änderungsprotokoll</h2>
+            <p className="text-sm text-[var(--eds-text-tertiary)] mt-0.5">Alle Konfigurationsänderungen und blockierte Anfragen</p>
           </div>
           {audit.length === 0 ? (
-            <div className="p-8 text-center text-slate-400" data-testid="audit-empty">
+            <div className="p-8 text-center text-[var(--eds-text-disabled)]" data-testid="audit-empty">
               Noch keine Einträge vorhanden.
             </div>
           ) : (
             <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
               {audit.map((entry) => (
-                <div key={entry.id} className="p-4 hover:bg-slate-50 transition-colors" data-testid={`audit-entry-${entry.id}`}>
+                <div key={entry.id} className="p-4 hover:bg-[var(--eds-bg-sunken)] transition-colors" data-testid={`audit-entry-${entry.id}`}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className={`inline-block w-2 h-2 rounded-full ${
-                          entry.action.includes("blocked") ? "bg-red-400" :
-                          entry.action.includes("disabled") ? "bg-amber-400" : "bg-blue-400"
+                          entry.action.includes("blocked") ? "bg-[var(--eds-status-red)]" :
+                          entry.action.includes("disabled") ? "bg-amber-400" : "bg-[var(--eds-status-blue)]"
                         }`} />
-                        <span className="text-sm font-medium text-slate-900">{entry.action}</span>
+                        <span className="text-sm font-medium text-[var(--eds-text-primary)]">{entry.action}</span>
                       </div>
-                      <div className="text-xs text-slate-500 mt-1">
+                      <div className="text-xs text-[var(--eds-text-tertiary)] mt-1">
                         von <span className="font-medium">{entry.actor || "System"}</span>
                       </div>
                     </div>
-                    <span className="text-xs text-slate-400 whitespace-nowrap">
+                    <span className="text-xs text-[var(--eds-text-disabled)] whitespace-nowrap">
                       {new Date(entry.createdAt).toLocaleString("de-DE")}
                     </span>
                   </div>
                   {(entry.previousValue || entry.newValue) && (
                     <details className="mt-2 text-xs">
-                      <summary className="text-slate-400 cursor-pointer hover:text-slate-600">Details anzeigen</summary>
+                      <summary className="text-[var(--eds-text-disabled)] cursor-pointer hover:text-[var(--eds-text-secondary)]">Details anzeigen</summary>
                       <div className="mt-1 grid grid-cols-2 gap-2">
                         {entry.previousValue && (
-                          <div className="bg-red-50 rounded p-2">
-                            <span className="text-red-600 font-medium">Vorher:</span>
-                            <pre className="text-slate-600 mt-1 whitespace-pre-wrap break-all">{JSON.stringify(entry.previousValue, null, 2)}</pre>
+                          <div className="bg-[var(--eds-status-red-bg)] rounded p-2">
+                            <span className="text-[var(--eds-status-red)] font-medium">Vorher:</span>
+                            <pre className="text-[var(--eds-text-secondary)] mt-1 whitespace-pre-wrap break-all">{JSON.stringify(entry.previousValue, null, 2)}</pre>
                           </div>
                         )}
                         {entry.newValue && (
-                          <div className="bg-green-50 rounded p-2">
-                            <span className="text-green-600 font-medium">Nachher:</span>
-                            <pre className="text-slate-600 mt-1 whitespace-pre-wrap break-all">{JSON.stringify(entry.newValue, null, 2)}</pre>
+                          <div className="bg-[var(--eds-status-green-bg)] rounded p-2">
+                            <span className="text-[var(--eds-status-green)] font-medium">Nachher:</span>
+                            <pre className="text-[var(--eds-text-secondary)] mt-1 whitespace-pre-wrap break-all">{JSON.stringify(entry.newValue, null, 2)}</pre>
                           </div>
                         )}
                       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/shared/PageHeader";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
@@ -44,20 +45,20 @@ const REPORT_TYPE_META: Record<ReportType, { label: string; description: string 
 };
 
 const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
-  draft: { bg: "bg-slate-50", text: "text-slate-600", label: "Entwurf" },
-  uploaded: { bg: "bg-blue-50", text: "text-blue-600", label: "Hochgeladen" },
-  anonymized: { bg: "bg-amber-50", text: "text-amber-700", label: "Anonymisiert" },
-  analyzed: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Analysiert" },
-  active: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Aktiv" },
+  draft: { bg: "bg-[var(--eds-bg-sunken)]", text: "text-[var(--eds-text-secondary)]", label: "Entwurf" },
+  uploaded: { bg: "bg-[var(--eds-status-blue-bg)]", text: "text-[var(--eds-status-blue)]", label: "Hochgeladen" },
+  anonymized: { bg: "bg-[var(--eds-status-amber-bg)]", text: "text-[var(--eds-status-amber)]", label: "Anonymisiert" },
+  analyzed: { bg: "bg-[var(--eds-status-green-bg)]", text: "text-[var(--eds-status-green)]", label: "Analysiert" },
+  active: { bg: "bg-[var(--eds-status-green-bg)]", text: "text-[var(--eds-status-green)]", label: "Aktiv" },
 };
 
 const ANALYSIS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
-  pending: { bg: "bg-slate-50", text: "text-slate-500", label: "Ausstehend" },
-  processing: { bg: "bg-blue-50", text: "text-blue-600", label: "In Bearbeitung" },
-  extracting: { bg: "bg-blue-50", text: "text-blue-600", label: "Extrahiere…" },
-  completed: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Abgeschlossen" },
+  pending: { bg: "bg-[var(--eds-bg-sunken)]", text: "text-[var(--eds-text-tertiary)]", label: "Ausstehend" },
+  processing: { bg: "bg-[var(--eds-status-blue-bg)]", text: "text-[var(--eds-status-blue)]", label: "In Bearbeitung" },
+  extracting: { bg: "bg-[var(--eds-status-blue-bg)]", text: "text-[var(--eds-status-blue)]", label: "Extrahiere…" },
+  completed: { bg: "bg-[var(--eds-status-green-bg)]", text: "text-[var(--eds-status-green)]", label: "Abgeschlossen" },
   analyzed: { bg: "bg-teal-50", text: "text-teal-700", label: "Analysiert ✓" },
-  failed: { bg: "bg-red-50", text: "text-red-600", label: "Fehlgeschlagen" },
+  failed: { bg: "bg-[var(--eds-status-red-bg)]", text: "text-[var(--eds-status-red)]", label: "Fehlgeschlagen" },
 };
 
 function formatDate(dateStr: string | null): string {
@@ -119,17 +120,14 @@ export default function GutachtenGeneratorPage() {
 
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
+        <PageHeader
+          title="Gutachten-Generator"
+          description="Gutachten erstellen: One-Pager, Ergebnisberichte und Gesamtauswertungen für Kandidatenvergleiche"
+        />
         <div className="mb-8">
-          <h1 className="text-2xl font-bold" style={{ color: "#A6473B" }} data-testid="heading-title">
-            Gutachten-Generator
-          </h1>
-          <p className="text-sm text-slate-500 mt-1" data-testid="text-subtitle">
-            Erstellen Sie professionelle Gutachten in drei Formaten: One-Pager für schnelle Übersichten,
-            ausführliche Ergebnisberichte und Gesamtauswertungen für Kandidatenvergleiche.
-          </p>
           <a
             href={`/w/${workspaceSlug}/admin/prompt-library`}
-            className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-[#297587] mt-2 transition-colors"
+            className="inline-flex items-center gap-1 text-xs text-[var(--eds-text-disabled)] hover:text-[#297587] mt-2 transition-colors"
             data-testid="link-prompt-library-gutachten"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -138,12 +136,12 @@ export default function GutachtenGeneratorPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700" data-testid="text-error">
+          <div className="mb-6 p-3 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-lg text-sm text-[var(--eds-status-red)]" data-testid="text-error">
             {error}
           </div>
         )}
 
-        <div className="flex gap-1 mb-6 border-b border-slate-200">
+        <div className="flex gap-1 mb-6 border-b border-[var(--eds-border)]">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -152,7 +150,7 @@ export default function GutachtenGeneratorPage() {
               className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === tab.key
                   ? "border-current"
-                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"
               }`}
               style={activeTab === tab.key ? { color: "#297587", borderColor: "#297587" } : {}}
             >
@@ -190,13 +188,13 @@ function ReportTypeSection({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="bg-white rounded-xl border border-[var(--eds-border)] p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold" style={{ color: "#297587" }} data-testid={`heading-${reportType}`}>
               {meta.label}
             </h2>
-            <p className="text-sm text-slate-500">{meta.description}</p>
+            <p className="text-sm text-[var(--eds-text-tertiary)]">{meta.description}</p>
           </div>
           <button
             onClick={() => setShowUpload(!showUpload)}
@@ -222,16 +220,16 @@ function ReportTypeSection({
       </div>
 
       {loading && (
-        <div className="text-center py-8 text-sm text-slate-400">Vorlagen werden geladen…</div>
+        <div className="text-center py-8 text-sm text-[var(--eds-text-disabled)]">Vorlagen werden geladen…</div>
       )}
 
       {!loading && templates.length === 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-8 text-center" data-testid={`empty-${reportType}`}>
+        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-8 text-center" data-testid={`empty-${reportType}`}>
           <div className="text-3xl mb-3">📄</div>
-          <p className="text-slate-500 text-sm">
+          <p className="text-[var(--eds-text-tertiary)] text-sm">
             Noch keine Vorlagen für {meta.label} vorhanden.
           </p>
-          <p className="text-slate-400 text-xs mt-1">
+          <p className="text-[var(--eds-text-disabled)] text-xs mt-1">
             Laden Sie eine PPTX-Beispieldatei hoch, um zu beginnen.
           </p>
         </div>
@@ -307,21 +305,21 @@ function UploadForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 p-4 rounded-lg border border-slate-200" style={{ backgroundColor: "#EFF4F5" }}>
+    <form onSubmit={handleSubmit} className="mt-4 p-4 rounded-lg border border-[var(--eds-border)]" style={{ backgroundColor: "#EFF4F5" }}>
       {error && (
-        <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600" data-testid="text-upload-error">
+        <div className="mb-3 p-2 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded text-sm text-[var(--eds-status-red)]" data-testid="text-upload-error">
           {error}
         </div>
       )}
 
       <div className="mb-4">
-        <label className="block text-sm font-medium text-slate-700 mb-1">Vorlagenname *</label>
+        <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Vorlagenname *</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           data-testid="input-template-name"
-          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-transparent"
+          className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:border-transparent"
           style={{ "--tw-ring-color": "#297587" } as React.CSSProperties}
           placeholder="z.B. Standard One-Pager 2026"
           required
@@ -329,7 +327,7 @@ function UploadForm({
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-medium text-slate-700 mb-1">PPTX-Beispieldatei</label>
+        <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">PPTX-Beispieldatei</label>
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
@@ -337,17 +335,17 @@ function UploadForm({
           onClick={() => fileInputRef.current?.click()}
           data-testid="dropzone-file"
           className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-            dragOver ? "border-[#297587] bg-[#297587]/5" : "border-slate-300 hover:border-[#297587]"
+            dragOver ? "border-[#297587] bg-[#297587]/5" : "border-[var(--eds-border-strong)] hover:border-[#297587]"
           }`}
         >
           {file ? (
             <div className="flex items-center justify-center gap-2">
-              <span className="text-sm font-medium text-slate-700">{file.name}</span>
-              <span className="text-xs text-slate-400">({formatFileSize(file.size)})</span>
+              <span className="text-sm font-medium text-[var(--eds-text-primary)]">{file.name}</span>
+              <span className="text-xs text-[var(--eds-text-disabled)]">({formatFileSize(file.size)})</span>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                className="text-xs text-red-500 hover:text-red-700 ml-2"
+                className="text-xs text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] ml-2"
                 data-testid="button-remove-file"
               >
                 Entfernen
@@ -356,10 +354,10 @@ function UploadForm({
           ) : (
             <div>
               <div className="text-2xl mb-1">📎</div>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-[var(--eds-text-secondary)]">
                 PPTX-Datei hierher ziehen oder <span style={{ color: "#297587" }} className="font-medium">klicken</span>
               </p>
-              <p className="text-xs text-slate-400 mt-1">PowerPoint-Vorlagen (.pptx)</p>
+              <p className="text-xs text-[var(--eds-text-disabled)] mt-1">PowerPoint-Vorlagen (.pptx)</p>
             </div>
           )}
           <input
@@ -378,7 +376,7 @@ function UploadForm({
           type="button"
           onClick={onCancel}
           data-testid="button-cancel-upload"
-          className="rounded-lg border border-slate-200 text-slate-600 text-sm font-medium px-4 py-2 hover:bg-slate-50 transition-colors"
+          className="rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] text-sm font-medium px-4 py-2 hover:bg-[var(--eds-bg-sunken)] transition-colors"
         >
           Abbrechen
         </button>
@@ -409,16 +407,16 @@ function StyleProfileDisplay({ profile }: { profile: Record<string, unknown> }) 
   return (
     <div className="space-y-3">
       {Object.entries(profile).map(([key, val]) => (
-        <div key={key} className="bg-white rounded-lg border border-slate-100 p-3">
+        <div key={key} className="bg-white rounded-lg border border-[var(--eds-border)] p-3">
           <div className="text-xs font-semibold text-teal-700 mb-1">{STYLE_PROFILE_LABELS[key] ?? key}</div>
           {Array.isArray(val) ? (
             <ul className="list-disc list-inside space-y-0.5">
               {(val as string[]).map((item, i) => (
-                <li key={i} className="text-xs text-slate-600">{item}</li>
+                <li key={i} className="text-xs text-[var(--eds-text-secondary)]">{item}</li>
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-slate-600">{String(val)}</p>
+            <p className="text-xs text-[var(--eds-text-secondary)]">{String(val)}</p>
           )}
         </div>
       ))}
@@ -499,14 +497,14 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden" data-testid={`card-template-${template.id}`}>
+    <div className="bg-white border border-[var(--eds-border)] rounded-xl overflow-hidden" data-testid={`card-template-${template.id}`}>
       <div
-        className="p-6 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors"
+        className="p-6 flex items-center justify-between cursor-pointer hover:bg-[var(--eds-bg-sunken)]/50 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-1 flex-wrap">
-            <h3 className="font-semibold text-slate-800 truncate" data-testid={`text-template-name-${template.id}`}>
+            <h3 className="font-semibold text-[var(--eds-text-primary)] truncate" data-testid={`text-template-name-${template.id}`}>
               {template.name}
             </h3>
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge.bg} ${statusBadge.text}`} data-testid={`badge-status-${template.id}`}>
@@ -527,7 +525,7 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
             </span>
             <DocumentOriginBadge origin={resolveOriginForReportTemplate(template)} />
           </div>
-          <div className="flex gap-4 text-xs text-slate-400">
+          <div className="flex gap-4 text-xs text-[var(--eds-text-disabled)]">
             {template.sourceFileName && (
               <span data-testid={`text-filename-${template.id}`}>📄 {template.sourceFileName}</span>
             )}
@@ -549,7 +547,7 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
             </button>
           )}
           {isExtracting && (
-            <span className="text-xs text-blue-600 animate-pulse">Extrahiere…</span>
+            <span className="text-xs text-[var(--eds-status-blue)] animate-pulse">Extrahiere…</span>
           )}
           <button
             onClick={(e) => e.stopPropagation()}
@@ -559,49 +557,49 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
           >
             Bericht generieren
           </button>
-          <span className="text-slate-400 text-sm">{expanded ? "▲" : "▼"}</span>
+          <span className="text-[var(--eds-text-disabled)] text-sm">{expanded ? "▲" : "▼"}</span>
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t border-slate-200 p-6" style={{ backgroundColor: "#EFF4F5" }}>
+        <div className="border-t border-[var(--eds-border)] p-6" style={{ backgroundColor: "#EFF4F5" }}>
           {actionError && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700" data-testid={`error-action-${template.id}`}>
+            <div className="mb-4 p-3 rounded-lg bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] text-xs text-[var(--eds-status-red)]" data-testid={`error-action-${template.id}`}>
               {actionError}
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 className="text-sm font-semibold text-slate-700 mb-3">Vorlageninformationen</h4>
+              <h4 className="text-sm font-semibold text-[var(--eds-text-primary)] mb-3">Vorlageninformationen</h4>
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Berichtstyp</dt>
-                  <dd className="font-medium text-slate-700">{REPORT_TYPE_META[template.reportType as ReportType]?.label || template.reportType}</dd>
+                  <dt className="text-[var(--eds-text-tertiary)]">Berichtstyp</dt>
+                  <dd className="font-medium text-[var(--eds-text-primary)]">{REPORT_TYPE_META[template.reportType as ReportType]?.label || template.reportType}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Quelldatei</dt>
-                  <dd className="font-medium text-slate-700">{template.sourceFileName || "–"}</dd>
+                  <dt className="text-[var(--eds-text-tertiary)]">Quelldatei</dt>
+                  <dd className="font-medium text-[var(--eds-text-primary)]">{template.sourceFileName || "–"}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Dateigröße</dt>
-                  <dd className="font-medium text-slate-700">{formatFileSize(template.sourceFileSize)}</dd>
+                  <dt className="text-[var(--eds-text-tertiary)]">Dateigröße</dt>
+                  <dd className="font-medium text-[var(--eds-text-primary)]">{formatFileSize(template.sourceFileSize)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Anonymisiert</dt>
-                  <dd className="font-medium text-slate-700">{template.isAnonymized ? "Ja ✓" : "Nein"}</dd>
+                  <dt className="text-[var(--eds-text-tertiary)]">Anonymisiert</dt>
+                  <dd className="font-medium text-[var(--eds-text-primary)]">{template.isAnonymized ? "Ja ✓" : "Nein"}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Stilreferenz aktiv</dt>
-                  <dd className="font-medium text-slate-700">
+                  <dt className="text-[var(--eds-text-tertiary)]">Stilreferenz aktiv</dt>
+                  <dd className="font-medium text-[var(--eds-text-primary)]">
                     {template.useForStyleGuidance ? (
                       <span className="text-teal-700">Ja ✦</span>
                     ) : (
-                      <span className="text-slate-400">Nein</span>
+                      <span className="text-[var(--eds-text-disabled)]">Nein</span>
                     )}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Analyse-Status</dt>
+                  <dt className="text-[var(--eds-text-tertiary)]">Analyse-Status</dt>
                   <dd>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${analysisBadge.bg} ${analysisBadge.text}`}>
                       {analysisBadge.label}
@@ -609,13 +607,13 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Zuletzt aktualisiert</dt>
-                  <dd className="font-medium text-slate-700">{formatDate(template.updatedAt)}</dd>
+                  <dt className="text-[var(--eds-text-tertiary)]">Zuletzt aktualisiert</dt>
+                  <dd className="font-medium text-[var(--eds-text-primary)]">{formatDate(template.updatedAt)}</dd>
                 </div>
               </dl>
 
               {isAnalyzed && !template.useForStyleGuidance && (
-                <div className="mt-5 pt-4 border-t border-slate-200 space-y-3" data-testid={`activate-section-${template.id}`}>
+                <div className="mt-5 pt-4 border-t border-[var(--eds-border)] space-y-3" data-testid={`activate-section-${template.id}`}>
                   <label className="flex items-start gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -624,7 +622,7 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
                       className="mt-0.5 accent-teal-600"
                       data-testid={`checkbox-anon-confirmed-${template.id}`}
                     />
-                    <span className="text-xs text-slate-600">
+                    <span className="text-xs text-[var(--eds-text-secondary)]">
                       Ich bestätige, dass alle personenbezogenen Daten vollständig entfernt wurden und die Nutzung als Stilreferenz datenschutzkonform ist.
                     </span>
                   </label>
@@ -641,12 +639,12 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
               )}
 
               {template.useForStyleGuidance && (
-                <div className="mt-5 pt-4 border-t border-slate-200" data-testid={`deactivate-section-${template.id}`}>
+                <div className="mt-5 pt-4 border-t border-[var(--eds-border)]" data-testid={`deactivate-section-${template.id}`}>
                   <button
                     onClick={handleDeactivate}
                     disabled={deactivating}
                     data-testid={`button-deactivate-style-${template.id}`}
-                    className="w-full rounded-lg text-xs font-medium px-3 py-2 border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
+                    className="w-full rounded-lg text-xs font-medium px-3 py-2 border border-[var(--eds-border-strong)] text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)] transition-colors disabled:opacity-40"
                   >
                     {deactivating ? "Wird deaktiviert…" : "Stilreferenz deaktivieren"}
                   </button>
@@ -657,20 +655,20 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
             <div>
               {isAnalyzed && template.styleRulesJson ? (
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Stilprofil</h4>
+                  <h4 className="text-sm font-semibold text-[var(--eds-text-primary)] mb-3">Stilprofil</h4>
                   <StyleProfileDisplay profile={template.styleRulesJson} />
                 </div>
               ) : (
                 <>
-                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Struktur-Vorschau</h4>
+                  <h4 className="text-sm font-semibold text-[var(--eds-text-primary)] mb-3">Struktur-Vorschau</h4>
                   {template.structureJson ? (
-                    <div className="bg-white rounded-lg border border-slate-200 p-3" data-testid={`structure-preview-${template.id}`}>
-                      <pre className="text-xs text-slate-600 whitespace-pre-wrap overflow-auto max-h-48">
+                    <div className="bg-white rounded-lg border border-[var(--eds-border)] p-3" data-testid={`structure-preview-${template.id}`}>
+                      <pre className="text-xs text-[var(--eds-text-secondary)] whitespace-pre-wrap overflow-auto max-h-48">
                         {JSON.stringify(template.structureJson, null, 2)}
                       </pre>
                     </div>
                   ) : (
-                    <div className="bg-white rounded-lg border border-slate-200 p-4 text-center text-sm text-slate-400">
+                    <div className="bg-white rounded-lg border border-[var(--eds-border)] p-4 text-center text-sm text-[var(--eds-text-disabled)]">
                       {template.sourceFilePath
                         ? "Datei vorhanden — Analyse starten um Stilprofil zu extrahieren."
                         : "Struktur wird nach der Analyse verfügbar."}

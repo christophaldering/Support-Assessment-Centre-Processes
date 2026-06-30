@@ -105,7 +105,7 @@ export default function ThemeEditorPage() {
   if (loading) {
     return (
       <div className="py-8 px-6 lg:px-10 flex items-center justify-center">
-        <p className="text-sm text-slate-400">Laden…</p>
+        <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>
       </div>
     );
   }
@@ -120,25 +120,25 @@ export default function ThemeEditorPage() {
           >
             Theme Editor
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-[var(--eds-text-tertiary)]">
             Workspace-Branding und visuelle Identität anpassen
           </p>
         </div>
 
         {message && (
-          <div className="mb-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800" data-testid="text-success">
+          <div className="mb-4 bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] rounded-xl p-4 text-sm text-emerald-800" data-testid="text-success">
             {message}
           </div>
         )}
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800" data-testid="text-error">
+          <div className="mb-4 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-xl p-4 text-sm text-[var(--eds-status-red)]" data-testid="text-error">
             {error}
           </div>
         )}
 
         <div className="grid lg:grid-cols-2 gap-8">
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4" style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}>
                 Farben
               </h2>
@@ -151,17 +151,17 @@ export default function ThemeEditorPage() {
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4" style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}>
                 Schriftarten
               </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Fließtext-Schriftart</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Fließtext-Schriftart</label>
                   <select
                     value={theme.fontFamily}
                     onChange={(e) => updateField("fontFamily", e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                     data-testid="select-font-family"
                   >
                     {BODY_FONTS.map((f) => (
@@ -170,11 +170,11 @@ export default function ThemeEditorPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Überschriften-Schriftart</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Überschriften-Schriftart</label>
                   <select
                     value={theme.fontFamilyHeading}
                     onChange={(e) => updateField("fontFamilyHeading", e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                     data-testid="select-font-family-heading"
                   >
                     {HEADING_FONTS.map((f) => (
@@ -185,18 +185,18 @@ export default function ThemeEditorPage() {
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4" style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}>
                 Logo
               </h2>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Logo-URL</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Logo-URL</label>
                 <input
                   type="url"
                   value={theme.logoUrl}
                   onChange={(e) => updateField("logoUrl", e.target.value)}
                   placeholder="https://example.com/logo.png"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                  className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                   data-testid="input-logo-url"
                 />
               </div>
@@ -219,7 +219,7 @@ export default function ThemeEditorPage() {
                 Vorschau
               </h2>
               <div
-                className="border border-slate-200 rounded-xl overflow-hidden shadow-lg"
+                className="border border-[var(--eds-border)] rounded-xl overflow-hidden shadow-lg"
                 data-testid="preview-panel"
               >
                 <div
@@ -328,20 +328,20 @@ function ColorField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">{label}</label>
       <div className="flex items-center gap-2">
         <input
           type="color"
           value={value.startsWith("#") ? value : "#000000"}
           onChange={(e) => onChange(e.target.value)}
-          className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5"
+          className="w-10 h-10 rounded-lg border border-[var(--eds-border)] cursor-pointer p-0.5"
           data-testid={`${testId}-picker`}
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+          className="flex-1 rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
           data-testid={testId}
         />
       </div>

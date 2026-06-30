@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/shared/PageHeader";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -25,15 +26,15 @@ interface Assessment {
 const ALL_ROLES = getDisplayRoles();
 const ROLE_LABELS: Record<string, string> = { ...ROLE_DISPLAY_NAMES };
 const ROLE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  MASTER_ADMIN: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
+  MASTER_ADMIN: { bg: "bg-[var(--eds-status-red-bg)]", text: "text-[var(--eds-status-red)]", border: "border-[var(--eds-status-red-bg)]" },
   WORKSPACE_ADMIN: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
   ADMIN: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
-  MODERATOR: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  MODERATOR: { bg: "bg-[var(--eds-status-blue-bg)]", text: "text-[var(--eds-status-blue)]", border: "border-[var(--eds-status-blue-bg)]" },
   OBSERVER: { bg: "bg-teal-50", text: "text-teal-700", border: "border-teal-200" },
   PROJECT_OFFICE: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
   PROJECT_ASSISTANT: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
-  CLIENT: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
-  HR_CLIENT: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+  CLIENT: { bg: "bg-[var(--eds-status-amber-bg)]", text: "text-[var(--eds-status-amber)]", border: "border-[var(--eds-status-amber-bg)]" },
+  HR_CLIENT: { bg: "bg-[var(--eds-status-amber-bg)]", text: "text-[var(--eds-status-amber)]", border: "border-[var(--eds-status-amber-bg)]" },
   CANDIDATE: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
 };
 
@@ -224,39 +225,39 @@ export default function UserManagementPage() {
 
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-brand-navy">Benutzer</h1>
-            <p className="text-sm text-slate-500">{users.length} Benutzer in diesem Workspace</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              disabled
-              className="rounded-lg border border-slate-200 text-slate-400 text-sm font-medium px-4 py-2 cursor-not-allowed"
-              title="CSV-Import kommt in einer zukünftigen Version"
-              data-testid="button-csv-import"
-            >
-              CSV Import
-            </button>
-            <button
-              onClick={() => setShowCreate(!showCreate)}
-              data-testid="button-create-user"
-              className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
-            >
-              {showCreate ? "Abbrechen" : "Neuer Benutzer"}
-            </button>
-          </div>
-        </div>
+        <PageHeader
+          title="Benutzer"
+          description={`${users.length} Benutzer in diesem Workspace`}
+          actions={
+            <div className="flex gap-2">
+              <button
+                disabled
+                className="rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-disabled)] text-sm font-medium px-4 py-2 cursor-not-allowed"
+                title="CSV-Import kommt in einer zukünftigen Version"
+                data-testid="button-csv-import"
+              >
+                CSV Import
+              </button>
+              <button
+                onClick={() => setShowCreate(!showCreate)}
+                data-testid="button-create-user"
+                className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
+              >
+                {showCreate ? "Abbrechen" : "Neuer Benutzer"}
+              </button>
+            </div>
+          }
+        />
 
-        {error && <p className="text-sm text-red-500 mb-4" data-testid="text-error">{error}</p>}
+        {error && <p className="text-sm text-[var(--eds-status-red)] mb-4" data-testid="text-error">{error}</p>}
 
         {showCreate && (
-          <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6">
+          <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 mb-6">
             <h2 className="text-lg font-semibold text-brand-navy mb-4">Neuen Benutzer erstellen</h2>
             <form onSubmit={handleCreate} className="space-y-4" data-testid="form-create-user">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Name</label>
                   <input
                     type="text"
                     value={newName}
@@ -264,11 +265,11 @@ export default function UserManagementPage() {
                     placeholder="Vollständiger Name"
                     required
                     data-testid="input-name"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">E-Mail</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">E-Mail</label>
                   <input
                     type="email"
                     value={newEmail}
@@ -276,13 +277,13 @@ export default function UserManagementPage() {
                     placeholder="benutzer@email.de"
                     required
                     data-testid="input-email"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Passwort</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Passwort</label>
                 <input
                   type="text"
                   value={newPassword}
@@ -290,12 +291,12 @@ export default function UserManagementPage() {
                   placeholder="Initiales Passwort"
                   required
                   data-testid="input-password"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                  className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Rollen</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-2">Rollen</label>
                 <div className="flex flex-wrap gap-2">
                   {ALL_ROLES.map((role) => (
                     <button
@@ -306,7 +307,7 @@ export default function UserManagementPage() {
                       className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
                         newRoles.includes(role)
                           ? "bg-brand-blue text-white border-brand-blue"
-                          : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                          : "bg-white text-[var(--eds-text-secondary)] border-[var(--eds-border)] hover:border-[var(--eds-border-strong)]"
                       }`}
                     >
                       {ROLE_LABELS[role]}
@@ -317,12 +318,12 @@ export default function UserManagementPage() {
 
               {newRoles.includes("CANDIDATE") && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Assessment zuweisen</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1">Assessment zuweisen</label>
                   <select
                     value={newAssessmentId}
                     onChange={(e) => setNewAssessmentId(e.target.value)}
                     data-testid="select-assessment"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   >
                     <option value="">Kein Assessment</option>
                     {assessments.map((a) => (
@@ -334,7 +335,7 @@ export default function UserManagementPage() {
                 </div>
               )}
 
-              {createError && <p className="text-sm text-red-500" data-testid="text-create-error">{createError}</p>}
+              {createError && <p className="text-sm text-[var(--eds-status-red)]" data-testid="text-create-error">{createError}</p>}
 
               <button
                 type="submit"
@@ -348,12 +349,12 @@ export default function UserManagementPage() {
           </div>
         )}
 
-        {loading && <p className="text-sm text-slate-400">Laden…</p>}
+        {loading && <p className="text-sm text-[var(--eds-text-disabled)]">Laden…</p>}
 
         {actionError && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 flex items-center justify-between" data-testid="text-action-error">
-            <p className="text-sm text-red-700">{actionError}</p>
-            <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600">
+          <div className="bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-xl p-3 mb-4 flex items-center justify-between" data-testid="text-action-error">
+            <p className="text-sm text-[var(--eds-status-red)]">{actionError}</p>
+            <button onClick={() => setActionError(null)} className="text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)]">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
@@ -368,7 +369,7 @@ export default function UserManagementPage() {
             return (
               <div
                 key={u.id}
-                className={`bg-white border rounded-xl p-5 transition-all ${isDeleting ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}
+                className={`bg-white border rounded-xl p-5 transition-all ${isDeleting ? "border-[var(--eds-status-red)] bg-[var(--eds-status-red-bg)]/30" : "border-[var(--eds-border)]"}`}
                 data-testid={`card-user-${u.id}`}
               >
                 <div className="flex items-start justify-between gap-4">
@@ -378,18 +379,18 @@ export default function UserManagementPage() {
                       <span
                         className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${
                           u.status === "active"
-                            ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                            : "bg-red-50 text-red-500 border border-red-200"
+                            ? "bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)] border border-[var(--eds-status-green-bg)]"
+                            : "bg-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] border border-[var(--eds-status-red-bg)]"
                         }`}
                       >
                         {u.status === "active" ? "Aktiv" : "Inaktiv"}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mb-3" data-testid={`text-email-${u.id}`}>{u.email}</p>
+                    <p className="text-xs text-[var(--eds-text-tertiary)] mb-3" data-testid={`text-email-${u.id}`}>{u.email}</p>
 
                     <div className="flex flex-wrap items-center gap-1.5">
                       {u.roles.map((role) => {
-                        const colors = ROLE_COLORS[role] || { bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200" };
+                        const colors = ROLE_COLORS[role] || { bg: "bg-[var(--eds-bg-sunken)]", text: "text-[var(--eds-text-secondary)]", border: "border-[var(--eds-border)]" };
                         return (
                           <span
                             key={role}
@@ -421,7 +422,7 @@ export default function UserManagementPage() {
                           <button
                             onClick={() => setAddRoleDropdown(addRoleDropdown === u.id ? null : u.id)}
                             disabled={isLoading}
-                            className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-dashed border-slate-300 text-slate-400 hover:text-slate-600 hover:border-slate-400 transition-colors disabled:opacity-30"
+                            className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-dashed border-[var(--eds-border-strong)] text-[var(--eds-text-disabled)] hover:text-[var(--eds-text-secondary)] hover:border-[var(--eds-border-strong)] transition-colors disabled:opacity-30"
                             data-testid={`button-add-role-${u.id}`}
                           >
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -429,15 +430,15 @@ export default function UserManagementPage() {
                           </button>
 
                           {addRoleDropdown === u.id && (
-                            <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[180px]" data-testid={`dropdown-roles-${u.id}`}>
-                              <p className="px-3 py-1.5 text-[10px] font-bold tracking-widest text-slate-400 uppercase">Rolle hinzufügen</p>
+                            <div className="absolute top-full left-0 mt-1 bg-white border border-[var(--eds-border)] rounded-lg shadow-lg py-1 z-20 min-w-[180px]" data-testid={`dropdown-roles-${u.id}`}>
+                              <p className="px-3 py-1.5 text-[10px] font-bold tracking-widest text-[var(--eds-text-disabled)] uppercase">Rolle hinzufügen</p>
                               {availableRoles.map((role) => {
-                                const colors = ROLE_COLORS[role] || { bg: "bg-slate-100", text: "text-slate-600", border: "" };
+                                const colors = ROLE_COLORS[role] || { bg: "bg-[var(--eds-bg-sunken)]", text: "text-[var(--eds-text-secondary)]", border: "" };
                                 return (
                                   <button
                                     key={role}
                                     onClick={() => handleAddRole(u.id, role)}
-                                    className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
+                                    className="w-full text-left px-3 py-2 text-sm text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)] transition-colors flex items-center gap-2"
                                     data-testid={`button-assign-role-${u.id}-${role.toLowerCase()}`}
                                   >
                                     <span className={`w-2 h-2 rounded-full ${colors.bg} border ${colors.border}`} />
@@ -455,18 +456,18 @@ export default function UserManagementPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     {isDeleting ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-red-600 font-medium">Wirklich löschen?</span>
+                        <span className="text-xs text-[var(--eds-status-red)] font-medium">Wirklich löschen?</span>
                         <button
                           onClick={() => handleDeactivate(u.id)}
                           disabled={isLoading}
-                          className="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[var(--eds-status-red)] text-white hover:bg-[var(--eds-terracotta-dk)] transition-colors disabled:opacity-50"
                           data-testid={`button-confirm-delete-${u.id}`}
                         >
                           {isLoading ? "…" : "Ja, löschen"}
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(null)}
-                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors"
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-tertiary)] hover:bg-[var(--eds-bg-sunken)] transition-colors"
                           data-testid={`button-cancel-delete-${u.id}`}
                         >
                           Abbrechen
@@ -476,7 +477,7 @@ export default function UserManagementPage() {
                       u.status === "active" && (
                         <button
                           onClick={() => setDeleteConfirm(u.id)}
-                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 transition-colors"
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] hover:bg-[var(--eds-status-red-bg)] hover:border-[var(--eds-status-red)] transition-colors"
                           data-testid={`button-delete-${u.id}`}
                         >
                           Deaktivieren
@@ -490,8 +491,8 @@ export default function UserManagementPage() {
           })}
 
           {users.length === 0 && !loading && (
-            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center">
-              <p className="text-sm text-slate-400">Keine Benutzer vorhanden.</p>
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-8 text-center">
+              <p className="text-sm text-[var(--eds-text-disabled)]">Keine Benutzer vorhanden.</p>
             </div>
           )}
         </div>

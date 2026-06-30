@@ -2,6 +2,8 @@
 
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { resolveOriginForCaseStudy } from "@/lib/document-origin";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -393,52 +395,29 @@ export default function CaseStudyBuilderPage() {
 
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-lg font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-            Case-Studio
-          </h1>
-          <a
-            href={`/w/${workspaceSlug}/admin/prompt-library`}
-            className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-[#297587] mt-0.5 transition-colors"
-            data-testid="link-prompt-library-case-studio"
-          >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-            KI-Prompts anpassen
-          </a>
-        </div>
-        {mode !== "list" && (
-          <button
-            onClick={() => { setMode("list"); setError(""); setSuccess(""); }}
-            className="text-xs text-slate-500 hover:text-slate-800 transition-colors"
-            data-testid="button-back-list"
-          >
-            ← Zur Übersicht
-          </button>
-        )}
-      </div>
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-4 mb-6" data-testid="text-error">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-4 mb-6" data-testid="text-success">
-            {success}
-          </div>
-        )}
-
-        {mode === "list" && (
-          <>
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }} data-testid="text-page-title">
-                  Fallstudien
-                </h1>
-                <p className="text-sm mt-1 text-slate-400">
-                  Erstellen und verwalten Sie Fallstudien für Assessment-Übungen
-                </p>
-              </div>
+      <PageHeader
+        title="Case-Studio"
+        description="Erstellen und verwalten Sie Fallstudien für Assessment-Übungen"
+        actions={
+          <div className="flex items-center gap-3">
+            <a
+              href={`/w/${workspaceSlug}/admin/prompt-library`}
+              className="inline-flex items-center gap-1 text-xs text-[var(--eds-text-disabled)] hover:text-[#297587] transition-colors"
+              data-testid="link-prompt-library-case-studio"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              KI-Prompts anpassen
+            </a>
+            {mode !== "list" && (
+              <button
+                onClick={() => { setMode("list"); setError(""); setSuccess(""); }}
+                className="text-xs text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)] transition-colors"
+                data-testid="button-back-list"
+              >
+                ← Zur Übersicht
+              </button>
+            )}
+            {mode === "list" && (
               <button
                 onClick={() => setMode("choose")}
                 className="px-5 py-2.5 rounded-lg text-white text-sm font-medium transition-colors hover:opacity-90"
@@ -447,33 +426,47 @@ export default function CaseStudyBuilderPage() {
               >
                 + Neue Fallstudie
               </button>
-            </div>
+            )}
+          </div>
+        }
+      />
+        {error && (
+          <div className="bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] text-sm rounded-lg p-4 mb-6" data-testid="text-error">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] text-[var(--eds-status-green)] text-sm rounded-lg p-4 mb-6" data-testid="text-success">
+            {success}
+          </div>
+        )}
 
+        {mode === "list" && (
+          <>
             {loading ? (
-              <div className="text-center py-20 text-slate-400">Laden...</div>
+              <div className="text-center py-20 text-[var(--eds-text-disabled)]">Laden...</div>
             ) : caseStudies.length === 0 ? (
-              <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl">
-                <div className="text-4xl mb-4">📋</div>
-                <h3 className="text-lg font-semibold text-slate-600 mb-2">Noch keine Fallstudien</h3>
-                <p className="text-sm text-slate-400 mb-6 max-w-md mx-auto">
-                  Erstellen Sie Ihre erste Fallstudie — entweder per Upload einer bestehenden Fallstudie
-                  oder lassen Sie eine neue durch KI generieren.
-                </p>
-                <button
-                  onClick={() => setMode("choose")}
-                  className="px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90"
-                  style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
-                  data-testid="button-create-first"
-                >
-                  Erste Fallstudie erstellen
-                </button>
-              </div>
+              <EmptyState
+                icon={<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>}
+                title="Noch keine Fallstudien"
+                description="Erstellen Sie Ihre erste Fallstudie — entweder per Upload oder per KI-Generierung."
+                action={
+                  <button
+                    onClick={() => setMode("choose")}
+                    className="px-5 py-2.5 rounded-lg text-white text-sm font-medium hover:opacity-90"
+                    style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
+                    data-testid="button-create-first"
+                  >
+                    Erste Fallstudie erstellen
+                  </button>
+                }
+              />
             ) : (
               <div className="grid gap-4">
                 {caseStudies.map((cs) => (
                   <div
                     key={cs.id}
-                    className="rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow"
+                    className="rounded-xl border border-[var(--eds-border)] p-6 hover:shadow-md transition-shadow"
                     data-testid={`card-case-study-${cs.id}`}
                   >
                     <div className="flex items-start justify-between">
@@ -482,7 +475,7 @@ export default function CaseStudyBuilderPage() {
                           <img
                             src={cs.logoUrl}
                             alt={`${cs.companyName} Logo`}
-                            className="h-12 w-12 object-contain rounded-lg bg-white border border-slate-100 p-1 shrink-0"
+                            className="h-12 w-12 object-contain rounded-lg bg-white border border-[var(--eds-border)] p-1 shrink-0"
                             data-testid={`img-logo-${cs.id}`}
                           />
                         )}
@@ -501,11 +494,12 @@ export default function CaseStudyBuilderPage() {
                               </span>
                             )}
                             {cs.aiGenerated && (
-                              <span className="text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                              <span className="text-[10px] font-medium text-[var(--eds-status-blue)] bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] rounded-full px-2 py-0.5">
                                 KI
                               </span>
                             )}
                             <DocumentOriginBadge origin={resolveOriginForCaseStudy({ sourceType: cs.sourceType, aiGenerated: cs.aiGenerated })} />
+                            {/* no-eds-token: kein äquivalentes Token für Szenario-Typ-Badge (purple) */}
                             {cs._count && cs._count.derivedExercises > 0 && (
                               <span
                                 className="text-[10px] font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5 cursor-pointer hover:bg-purple-100 transition-colors"
@@ -516,9 +510,9 @@ export default function CaseStudyBuilderPage() {
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-slate-500 mb-2">{cs.title}</p>
-                          {cs.description && <p className="text-xs text-slate-400 mb-3">{cs.description}</p>}
-                          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+                          <p className="text-sm text-[var(--eds-text-tertiary)] mb-2">{cs.title}</p>
+                          {cs.description && <p className="text-xs text-[var(--eds-text-disabled)] mb-3">{cs.description}</p>}
+                          <div className="flex items-center gap-4 text-[11px] text-[var(--eds-text-disabled)]">
                             <span>Typ: {cs.type}</span>
                             <span>·</span>
                             <span>Schwierigkeit: {difficultyLabel(cs.difficulty)}</span>
@@ -534,11 +528,12 @@ export default function CaseStudyBuilderPage() {
                           href={`/api/w/${workspaceSlug}/case-studies/${cs.id}/export-pdf`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 transition-colors flex items-center gap-1"
+                          className="text-xs px-3 py-1.5 rounded-lg border border-[var(--eds-border)] hover:border-[var(--eds-border-strong)] text-[var(--eds-text-secondary)] hover:text-[var(--eds-text-primary)] transition-colors flex items-center gap-1"
                           data-testid={`button-export-pdf-${cs.id}`}
                         >
                           <span>📄</span> PDF
                         </a>
+                        {/* no-eds-token: kein äquivalentes Token für Logo-Button (purple) */}
                         {!cs.logoUrl && (
                           <button
                             onClick={async () => {
@@ -555,7 +550,7 @@ export default function CaseStudyBuilderPage() {
                         )}
                         <Link
                           href={`${base}/case-studio/${cs.id}`}
-                          className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 transition-colors"
+                          className="text-xs px-3 py-1.5 rounded-lg border border-[var(--eds-border)] hover:border-[var(--eds-border-strong)] text-[var(--eds-text-secondary)] hover:text-[var(--eds-text-primary)] transition-colors"
                           data-testid={`link-view-${cs.id}`}
                         >
                           Ansehen
@@ -572,7 +567,7 @@ export default function CaseStudyBuilderPage() {
                         )}
                         <button
                           onClick={() => handleDelete(cs.id)}
-                          className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:text-red-700 hover:border-red-300 transition-colors"
+                          className="text-xs px-3 py-1.5 rounded-lg border border-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] hover:border-[var(--eds-status-red)] transition-colors"
                           data-testid={`button-delete-${cs.id}`}
                         >
                           Löschen
@@ -580,25 +575,25 @@ export default function CaseStudyBuilderPage() {
                       </div>
                     </div>
                     {expandedScenarioId === cs.id && (
-                      <div className="mt-4 pt-4 border-t border-slate-100" data-testid={`section-derived-exercises-${cs.id}`}>
-                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
+                      <div className="mt-4 pt-4 border-t border-[var(--eds-border)]" data-testid={`section-derived-exercises-${cs.id}`}>
+                        <h4 className="text-xs font-bold text-[var(--eds-text-tertiary)] uppercase tracking-wide mb-3">
                           Verknüpfte Übungen
                         </h4>
                         {!derivedExercises[cs.id] ? (
-                          <p className="text-xs text-slate-400">Laden...</p>
+                          <p className="text-xs text-[var(--eds-text-disabled)]">Laden...</p>
                         ) : derivedExercises[cs.id].length === 0 ? (
-                          <p className="text-xs text-slate-400">Keine verknüpften Übungen gefunden.</p>
+                          <p className="text-xs text-[var(--eds-text-disabled)]">Keine verknüpften Übungen gefunden.</p>
                         ) : (
                           <div className="space-y-2">
                             {derivedExercises[cs.id].map((ex) => (
                               <Link
                                 key={ex.id}
                                 href={`/w/${workspaceSlug}/admin/exercise-library`}
-                                className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                                className="flex items-center justify-between p-3 rounded-lg bg-[var(--eds-bg-sunken)] hover:bg-[var(--eds-bg-sunken)] transition-colors"
                                 data-testid={`link-derived-exercise-${ex.id}`}
                               >
-                                <span className="text-sm text-slate-700 font-medium">{ex.title}</span>
-                                <span className="text-[10px] font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded">
+                                <span className="text-sm text-[var(--eds-text-primary)] font-medium">{ex.title}</span>
+                                <span className="text-[10px] font-medium text-[var(--eds-text-tertiary)] bg-white border border-[var(--eds-border)] px-2 py-0.5 rounded">
                                   {ex.exerciseType}
                                 </span>
                               </Link>
@@ -616,27 +611,27 @@ export default function CaseStudyBuilderPage() {
 
         {mode === "choose" && (
           <div className="max-w-3xl mx-auto">
-            <h1 className="text-2xl font-bold tracking-tight mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <h2 className="text-xl font-bold text-[var(--eds-text-primary)] mb-2">
               Neue Fallstudie erstellen
-            </h1>
-            <p className="text-sm text-slate-400 mb-6">
+            </h2>
+            <p className="text-sm text-[var(--eds-text-disabled)] mb-6">
               Wählen Sie, wie Sie die Fallstudie erstellen möchten
             </p>
 
             <label
-              className="flex items-center gap-3 p-4 mb-6 rounded-lg border border-slate-200 hover:border-[#297587] cursor-pointer transition-colors"
+              className="flex items-center gap-3 p-4 mb-6 rounded-lg border border-[var(--eds-border)] hover:border-[#297587] cursor-pointer transition-colors"
               data-testid="toggle-overarching-scenario"
             >
               <input
                 type="checkbox"
                 checked={isOverarchingScenario}
                 onChange={(e) => setIsOverarchingScenario(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-[#297587] focus:ring-[#297587]"
+                className="w-4 h-4 rounded border-[var(--eds-border-strong)] text-[#297587] focus:ring-[#297587]"
                 data-testid="checkbox-overarching-scenario"
               />
               <div>
-                <span className="text-sm font-medium text-slate-700">Als Rahmenszenario verwenden</span>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <span className="text-sm font-medium text-[var(--eds-text-primary)]">Als Rahmenszenario verwenden</span>
+                <p className="text-xs text-[var(--eds-text-disabled)] mt-0.5">
                   Rahmenszenarios können mit mehreren Übungen aus der Bibliothek verknüpft werden
                 </p>
               </div>
@@ -645,40 +640,40 @@ export default function CaseStudyBuilderPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <button
                 onClick={() => { setMode("upload"); setUploadStep("upload"); setUploadFile(null); setUploadText(""); }}
-                className="rounded-xl border-2 border-slate-200 p-8 text-left hover:border-[hsl(14,48%,44%)] hover:shadow-lg transition-all group"
+                className="rounded-xl border-2 border-[var(--eds-border)] p-8 text-left hover:border-[hsl(14,48%,44%)] hover:shadow-lg transition-all group"
                 data-testid="button-mode-upload"
               >
                 <div className="text-4xl mb-4">📄</div>
                 <h3 className="text-lg font-semibold mb-2 group-hover:text-[hsl(14,48%,44%)]" style={{ fontFamily: "'Playfair Display', serif" }}>
                   Bestehende Fallstudie hochladen
                 </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-sm text-[var(--eds-text-disabled)] leading-relaxed">
                   Laden Sie ein bestehendes Dokument (Word, PDF, TXT) hoch.
                   Die KI analysiert den Inhalt und überführt ihn automatisch in das strukturierte Datenraum-Format.
                 </p>
-                <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
-                  <span className="bg-slate-100 px-2 py-0.5 rounded">DOCX</span>
-                  <span className="bg-slate-100 px-2 py-0.5 rounded">PDF</span>
-                  <span className="bg-slate-100 px-2 py-0.5 rounded">TXT</span>
+                <div className="mt-4 flex items-center gap-2 text-xs text-[var(--eds-text-disabled)]">
+                  <span className="bg-[var(--eds-bg-sunken)] px-2 py-0.5 rounded">DOCX</span>
+                  <span className="bg-[var(--eds-bg-sunken)] px-2 py-0.5 rounded">PDF</span>
+                  <span className="bg-[var(--eds-bg-sunken)] px-2 py-0.5 rounded">TXT</span>
                 </div>
               </button>
 
               <button
                 onClick={() => setMode("generate")}
-                className="rounded-xl border-2 border-slate-200 p-8 text-left hover:border-[hsl(14,48%,44%)] hover:shadow-lg transition-all group"
+                className="rounded-xl border-2 border-[var(--eds-border)] p-8 text-left hover:border-[hsl(14,48%,44%)] hover:shadow-lg transition-all group"
                 data-testid="button-mode-generate"
               >
                 <div className="text-4xl mb-4">🤖</div>
                 <h3 className="text-lg font-semibold mb-2 group-hover:text-[hsl(14,48%,44%)]" style={{ fontFamily: "'Playfair Display', serif" }}>
                   Neue Fallstudie per KI erstellen
                 </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-sm text-[var(--eds-text-disabled)] leading-relaxed">
                   Beantworten Sie Kernfragen zu Branche, Unternehmensgröße, strategischer Situation und Spannungsfeldern.
                   Die KI erstellt eine vollständige, realistische Fallstudie mit Datenraum.
                 </p>
-                <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
-                  <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded">KI-gestützt</span>
-                  <span className="bg-slate-100 px-2 py-0.5 rounded">Vollautomatisch</span>
+                <div className="mt-4 flex items-center gap-2 text-xs text-[var(--eds-text-disabled)]">
+                  <span className="bg-[var(--eds-status-blue-bg)] text-[var(--eds-status-blue)] px-2 py-0.5 rounded">KI-gestützt</span>
+                  <span className="bg-[var(--eds-bg-sunken)] px-2 py-0.5 rounded">Vollautomatisch</span>
                 </div>
               </button>
             </div>
@@ -687,9 +682,9 @@ export default function CaseStudyBuilderPage() {
 
         {mode === "upload" && (
           <div className="max-w-3xl mx-auto">
-            <h1 className="text-2xl font-bold tracking-tight mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <h2 className="text-xl font-bold text-[var(--eds-text-primary)] mb-2">
               Fallstudie hochladen
-            </h1>
+            </h2>
 
             <div className="flex items-center gap-4 mb-8">
               {["upload", "review", "processing"].map((step, i) => (
@@ -699,17 +694,17 @@ export default function CaseStudyBuilderPage() {
                       uploadStep === step
                         ? "text-white"
                         : ["upload", "review", "processing"].indexOf(uploadStep) > i
-                        ? "bg-green-100 text-green-700"
-                        : "bg-slate-100 text-slate-400"
+                        ? "bg-[var(--eds-status-green-bg)] text-[var(--eds-status-green)]"
+                        : "bg-[var(--eds-bg-sunken)] text-[var(--eds-text-disabled)]"
                     }`}
                     style={uploadStep === step ? { backgroundColor: "hsl(14, 48%, 44%)" } : {}}
                   >
                     {["upload", "review", "processing"].indexOf(uploadStep) > i ? "✓" : i + 1}
                   </div>
-                  <span className={`text-xs ${uploadStep === step ? "font-semibold" : "text-slate-400"}`}>
+                  <span className={`text-xs ${uploadStep === step ? "font-semibold" : "text-[var(--eds-text-disabled)]"}`}>
                     {step === "upload" ? "Datei wählen" : step === "review" ? "Inhalt prüfen" : "KI-Verarbeitung"}
                   </span>
-                  {i < 2 && <div className="w-8 h-px bg-slate-200 mx-1" />}
+                  {i < 2 && <div className="w-8 h-px bg-[var(--eds-border)] mx-1" />}
                 </div>
               ))}
             </div>
@@ -717,19 +712,19 @@ export default function CaseStudyBuilderPage() {
             {uploadStep === "upload" && (
               <div>
                 <div
-                  className="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center hover:border-[hsl(14,48%,44%)] transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-[var(--eds-border-strong)] rounded-xl p-12 text-center hover:border-[hsl(14,48%,44%)] transition-colors cursor-pointer"
                   onClick={() => document.getElementById("file-input")?.click()}
                   data-testid="dropzone-upload"
                 >
                   <div className="text-4xl mb-4">📁</div>
-                  <p className="text-sm text-slate-600 font-medium mb-1">
+                  <p className="text-sm text-[var(--eds-text-secondary)] font-medium mb-1">
                     Klicken Sie hier oder ziehen Sie eine Datei hinein
                   </p>
-                  <p className="text-xs text-slate-400">Unterstützt: DOCX, PDF, TXT (max. 50 MB)</p>
+                  <p className="text-xs text-[var(--eds-text-disabled)]">Unterstützt: DOCX, PDF, TXT (max. 50 MB)</p>
                   {uploadFile && (
-                    <div className="mt-4 bg-slate-50 rounded-lg p-3 inline-block">
-                      <span className="text-sm font-medium text-slate-700">{uploadFile.name}</span>
-                      <span className="text-xs text-slate-400 ml-2">({(uploadFile.size / 1024).toFixed(1)} KB)</span>
+                    <div className="mt-4 bg-[var(--eds-bg-sunken)] rounded-lg p-3 inline-block">
+                      <span className="text-sm font-medium text-[var(--eds-text-primary)]">{uploadFile.name}</span>
+                      <span className="text-xs text-[var(--eds-text-disabled)] ml-2">({(uploadFile.size / 1024).toFixed(1)} KB)</span>
                     </div>
                   )}
                   <input
@@ -758,23 +753,23 @@ export default function CaseStudyBuilderPage() {
 
             {uploadStep === "review" && (
               <div>
-                <div className="bg-slate-50 rounded-xl p-6 mb-6">
-                  <h3 className="text-sm font-semibold text-slate-700 mb-2">Extrahierter Text</h3>
-                  <p className="text-xs text-slate-400 mb-3">
+                <div className="bg-[var(--eds-bg-sunken)] rounded-xl p-6 mb-6">
+                  <h3 className="text-sm font-semibold text-[var(--eds-text-primary)] mb-2">Extrahierter Text</h3>
+                  <p className="text-xs text-[var(--eds-text-disabled)] mb-3">
                     Prüfen und bearbeiten Sie den extrahierten Text, bevor die KI ihn in das Datenraum-Format überführt.
                   </p>
                   <textarea
                     value={uploadText}
                     onChange={(e) => setUploadText(e.target.value)}
                     rows={15}
-                    className="w-full rounded-lg border border-slate-200 p-4 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 font-mono"
+                    className="w-full rounded-lg border border-[var(--eds-border)] p-4 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 font-mono"
                     data-testid="textarea-extracted-text"
                   />
                 </div>
                 <div className="flex justify-between">
                   <button
                     onClick={() => { setUploadStep("upload"); setUploadText(""); setUploadFile(null); }}
-                    className="px-5 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:border-slate-300 transition-colors"
+                    className="px-5 py-2.5 rounded-lg border border-[var(--eds-border)] text-sm text-[var(--eds-text-secondary)] hover:border-[var(--eds-border-strong)] transition-colors"
                     data-testid="button-back-upload"
                   >
                     ← Zurück
@@ -795,7 +790,7 @@ export default function CaseStudyBuilderPage() {
             {uploadStep === "processing" && (
               <div className="text-center py-20">
                 <div className="animate-spin text-4xl mb-4">⚙️</div>
-                <p className="text-sm text-slate-500">Datei wird analysiert...</p>
+                <p className="text-sm text-[var(--eds-text-tertiary)]">Datei wird analysiert...</p>
               </div>
             )}
           </div>
@@ -803,33 +798,33 @@ export default function CaseStudyBuilderPage() {
 
         {mode === "generate" && (
           <div className="max-w-3xl mx-auto">
-            <h1 className="text-2xl font-bold tracking-tight mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <h2 className="text-xl font-bold text-[var(--eds-text-primary)] mb-2">
               Neue Fallstudie generieren
-            </h1>
-            <p className="text-sm text-slate-400 mb-8">
+            </h2>
+            <p className="text-sm text-[var(--eds-text-disabled)] mb-8">
               Beschreiben Sie die gewünschte Fallstudie und die KI erstellt eine vollständige, realistische Fallstudie mit Datenraum.
             </p>
 
             <div className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Branche <span className="text-red-400">*</span>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">
+                    Branche <span className="text-[var(--eds-status-red)]">*</span>
                   </label>
                   <input
                     value={genParams.industry}
                     onChange={(e) => setGenParams({ ...genParams, industry: e.target.value })}
                     placeholder="z.B. Industriekonglomerat, Pharma, Technologie, Automotive..."
-                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                     data-testid="input-industry"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Unternehmensgröße</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">Unternehmensgröße</label>
                   <select
                     value={genParams.companySize}
                     onChange={(e) => setGenParams({ ...genParams, companySize: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                     data-testid="select-company-size"
                   >
                     <option>Großkonzern (&gt;10.000 MA)</option>
@@ -841,50 +836,50 @@ export default function CaseStudyBuilderPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Strategische Situation <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">
+                  Strategische Situation <span className="text-[var(--eds-status-red)]">*</span>
                 </label>
                 <textarea
                   value={genParams.strategicSituation}
                   onChange={(e) => setGenParams({ ...genParams, strategicSituation: e.target.value })}
                   placeholder="z.B. Turnaround nach Gewinneinbruch, Post-Merger-Integration, Digitale Transformation, Marktexpansion..."
                   rows={3}
-                  className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                  className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                   data-testid="textarea-strategic-situation"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Finanzielles Szenario</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">Finanzielles Szenario</label>
                 <textarea
                   value={genParams.financialScenario}
                   onChange={(e) => setGenParams({ ...genParams, financialScenario: e.target.value })}
                   placeholder="z.B. Sinkende Margen, Covenant-Bruch-Risiko, Hohe Verschuldung, Investitionsstau..."
                   rows={2}
-                  className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                  className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                   data-testid="textarea-financial-scenario"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Kernspannungen / Dilemmata</label>
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">Kernspannungen / Dilemmata</label>
                 <textarea
                   value={genParams.keyTensions}
                   onChange={(e) => setGenParams({ ...genParams, keyTensions: e.target.value })}
                   placeholder="z.B. Kurzfristige Renditeziele vs. langfristige Investitionen, Effizienz vs. Innovation, Zentralisierung vs. Autonomie..."
                   rows={2}
-                  className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                  className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                   data-testid="textarea-key-tensions"
                 />
               </div>
 
               <div className="grid md:grid-cols-4 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Zielgruppe / Level</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">Zielgruppe / Level</label>
                   <select
                     value={genParams.targetLevel}
                     onChange={(e) => setGenParams({ ...genParams, targetLevel: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                     data-testid="select-target-level"
                   >
                     <option>SE-Level / Vorstand</option>
@@ -894,11 +889,11 @@ export default function CaseStudyBuilderPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Schwierigkeitsgrad</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">Schwierigkeitsgrad</label>
                   <select
                     value={genParams.difficulty}
                     onChange={(e) => setGenParams({ ...genParams, difficulty: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                     data-testid="select-difficulty"
                   >
                     <option value="Hoch">Hoch</option>
@@ -907,41 +902,41 @@ export default function CaseStudyBuilderPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Sprache</label>
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">Sprache</label>
                   <select
                     value={genParams.language}
                     onChange={(e) => setGenParams({ ...genParams, language: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                     data-testid="select-language"
                   >
                     <option value="Deutsch">Deutsch</option>
                     <option value="Englisch">Englisch</option>
                   </select>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-[var(--eds-text-disabled)] mt-1">
                     Sprache aller Fallstudieninhalte
                   </p>
                 </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">
                   Referenzdatum (Stichtag)
                 </label>
                 <input
                   type="date"
                   value={genParams.referenceDate}
                   onChange={(e) => setGenParams({ ...genParams, referenceDate: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                  className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                   data-testid="input-reference-date"
                 />
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[var(--eds-text-disabled)] mt-1">
                   Alle Daten, Geschäftsjahre und E-Mails werden konsistent zu diesem Stichtag generiert
                 </p>
               </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6 bg-blue-50/50 rounded-xl p-5 border border-blue-100">
+              <div className="grid md:grid-cols-2 gap-6 bg-[var(--eds-status-blue-bg)]/50 rounded-xl p-5 border border-[var(--eds-border)]">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">
                     Bearbeitungszeit (Minuten)
                   </label>
                   <input
@@ -950,15 +945,15 @@ export default function CaseStudyBuilderPage() {
                     max="180"
                     value={genParams.candidateTime}
                     onChange={(e) => setGenParams({ ...genParams, candidateTime: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                     data-testid="input-candidate-time"
                   />
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-[var(--eds-text-disabled)] mt-1">
                     Wie viel Zeit hat der Kandidat für die Bearbeitung?
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label className="block text-sm font-medium text-[var(--eds-text-primary)] mb-1.5">
                     Anzahl Vorgänge / Dokumente
                   </label>
                   <input
@@ -967,10 +962,10 @@ export default function CaseStudyBuilderPage() {
                     max="40"
                     value={genParams.documentCount}
                     onChange={(e) => setGenParams({ ...genParams, documentCount: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30"
                     data-testid="input-document-count"
                   />
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-[var(--eds-text-disabled)] mt-1">
                     Gesamtzahl der E-Mails, Protokolle, News etc.
                   </p>
                 </div>
@@ -979,7 +974,7 @@ export default function CaseStudyBuilderPage() {
               <div className="pt-4 flex justify-between items-center">
                 <button
                   onClick={() => setMode("choose")}
-                  className="px-5 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:border-slate-300 transition-colors"
+                  className="px-5 py-2.5 rounded-lg border border-[var(--eds-border)] text-sm text-[var(--eds-text-secondary)] hover:border-[var(--eds-border-strong)] transition-colors"
                   data-testid="button-back-choose"
                 >
                   ← Zurück
@@ -988,7 +983,7 @@ export default function CaseStudyBuilderPage() {
                   <button
                     onClick={handleGenerateDirect}
                     disabled={generating || planning || !genParams.industry || !genParams.strategicSituation}
-                    className="px-5 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:border-slate-300 transition-colors disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-lg border border-[var(--eds-border)] text-sm text-[var(--eds-text-secondary)] hover:border-[var(--eds-border-strong)] transition-colors disabled:opacity-50"
                     data-testid="button-generate-direct"
                   >
                     {generating ? (
@@ -1022,23 +1017,23 @@ export default function CaseStudyBuilderPage() {
 
         {mode === "plan" && documentPlan && (
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold tracking-tight mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <h2 className="text-xl font-bold text-[var(--eds-text-primary)] mb-2">
               Dokumentenplan
-            </h1>
-            <p className="text-sm text-slate-400 mb-6">
+            </h2>
+            <p className="text-sm text-[var(--eds-text-disabled)] mb-6">
               Die KI hat folgende Dokumente für den Datenraum geplant. Wählen Sie Dokumente ab oder passen Sie Beschreibungen an.
             </p>
 
-            <div className="bg-slate-50 rounded-xl p-5 mb-6">
+            <div className="bg-[var(--eds-bg-sunken)] rounded-xl p-5 mb-6">
               <div className="flex items-center gap-4 mb-2">
                 <h3 className="text-base font-semibold" style={{ fontFamily: "'Playfair Display', serif", color: "hsl(14, 48%, 44%)" }}>
                   {documentPlan.companyName}
                 </h3>
-                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                <span className="text-xs bg-[var(--eds-status-blue-bg)] text-[var(--eds-status-blue)] px-2 py-0.5 rounded">
                   {documentPlan.documents.filter((d) => d.selected).length} / {documentPlan.documents.length} Dokumente ausgewählt
                 </span>
               </div>
-              <p className="text-sm text-slate-500">{documentPlan.companyDescription}</p>
+              <p className="text-sm text-[var(--eds-text-tertiary)]">{documentPlan.companyDescription}</p>
             </div>
 
             {(() => {
@@ -1065,8 +1060,8 @@ export default function CaseStudyBuilderPage() {
                   <div key={cat} className="mb-6">
                     <div className="flex items-center gap-2 mb-3">
                       <span>{catInfo.icon}</span>
-                      <h3 className="text-sm font-semibold text-slate-700">{catInfo.label}</h3>
-                      <span className="text-xs text-slate-400">({selectedCount}/{docs.length})</span>
+                      <h3 className="text-sm font-semibold text-[var(--eds-text-primary)]">{catInfo.label}</h3>
+                      <span className="text-xs text-[var(--eds-text-disabled)]">({selectedCount}/{docs.length})</span>
                     </div>
                     <div className="space-y-2">
                       {docs.map((doc) => (
@@ -1074,8 +1069,8 @@ export default function CaseStudyBuilderPage() {
                           key={doc.id}
                           className={`rounded-lg border p-4 transition-all ${
                             doc.selected
-                              ? "border-slate-200 bg-white"
-                              : "border-slate-100 bg-slate-50 opacity-60"
+                              ? "border-[var(--eds-border)] bg-white"
+                              : "border-[var(--eds-border)] bg-[var(--eds-bg-sunken)] opacity-60"
                           }`}
                           data-testid={`plan-doc-${doc.id}`}
                         >
@@ -1084,7 +1079,7 @@ export default function CaseStudyBuilderPage() {
                               type="checkbox"
                               checked={doc.selected}
                               onChange={() => toggleDocument(doc.id)}
-                              className="mt-1 rounded border-slate-300 text-[hsl(14,48%,44%)] focus:ring-[hsl(14,48%,44%)]"
+                              className="mt-1 rounded border-[var(--eds-border-strong)] text-[hsl(14,48%,44%)] focus:ring-[hsl(14,48%,44%)]"
                               data-testid={`checkbox-doc-${doc.id}`}
                             />
                             <div className="flex-1 min-w-0">
@@ -1092,21 +1087,21 @@ export default function CaseStudyBuilderPage() {
                                 <input
                                   value={doc.title}
                                   onChange={(e) => updateDocumentField(doc.id, "title", e.target.value)}
-                                  className="text-sm font-medium text-slate-800 bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-[hsl(14,48%,44%)] focus:ring-0 p-0 w-full transition-colors"
+                                  className="text-sm font-medium text-[var(--eds-text-primary)] bg-transparent border-0 border-b border-transparent hover:border-[var(--eds-border)] focus:border-[hsl(14,48%,44%)] focus:ring-0 p-0 w-full transition-colors"
                                   data-testid={`input-doc-title-${doc.id}`}
                                 />
                                 {doc.importance === "high" && (
-                                  <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded shrink-0">Wichtig</span>
+                                  <span className="text-[10px] bg-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] px-1.5 py-0.5 rounded shrink-0">Wichtig</span>
                                 )}
                               </div>
                               {doc.author && (
-                                <p className="text-xs text-slate-400 mb-1">Von: {doc.author}</p>
+                                <p className="text-xs text-[var(--eds-text-disabled)] mb-1">Von: {doc.author}</p>
                               )}
                               <textarea
                                 value={doc.description}
                                 onChange={(e) => updateDocumentField(doc.id, "description", e.target.value)}
                                 rows={1}
-                                className="text-xs text-slate-500 bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-[hsl(14,48%,44%)] focus:ring-0 p-0 w-full resize-none transition-colors"
+                                className="text-xs text-[var(--eds-text-tertiary)] bg-transparent border-0 border-b border-transparent hover:border-[var(--eds-border)] focus:border-[hsl(14,48%,44%)] focus:ring-0 p-0 w-full resize-none transition-colors"
                                 data-testid={`textarea-doc-desc-${doc.id}`}
                               />
                             </div>
@@ -1119,10 +1114,10 @@ export default function CaseStudyBuilderPage() {
               });
             })()}
 
-            <div className="pt-6 border-t border-slate-200 flex justify-between items-center">
+            <div className="pt-6 border-t border-[var(--eds-border)] flex justify-between items-center">
               <button
                 onClick={() => { setMode("generate"); setDocumentPlan(null); }}
-                className="px-5 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:border-slate-300 transition-colors"
+                className="px-5 py-2.5 rounded-lg border border-[var(--eds-border)] text-sm text-[var(--eds-text-secondary)] hover:border-[var(--eds-border-strong)] transition-colors"
                 data-testid="button-back-generate"
               >
                 ← Parameter anpassen
@@ -1150,16 +1145,16 @@ export default function CaseStudyBuilderPage() {
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <h2 className="text-xl font-bold text-[var(--eds-text-primary)]">
                   {previewData.companyName}
-                </h1>
-                <p className="text-sm text-slate-400 mt-1">{previewData.title}</p>
+                </h2>
+                <p className="text-sm text-[var(--eds-text-disabled)] mt-1">{previewData.title}</p>
               </div>
               <div className="flex items-center gap-3">
                 {statusBadge(previewData.status)}
                 <button
                   onClick={() => { setMode("list"); setPreviewData(null); setSuccess(""); }}
-                  className="px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:border-slate-300 transition-colors"
+                  className="px-4 py-2 rounded-lg border border-[var(--eds-border)] text-sm text-[var(--eds-text-secondary)] hover:border-[var(--eds-border-strong)] transition-colors"
                   data-testid="button-done-preview"
                 >
                   Fertig
@@ -1169,7 +1164,7 @@ export default function CaseStudyBuilderPage() {
 
             {(() => {
               const data = previewData.dataJson;
-              if (!data) return <p className="text-slate-400">Keine Daten verfügbar</p>;
+              if (!data) return <p className="text-[var(--eds-text-disabled)]">Keine Daten verfügbar</p>;
 
               return (
                 <div className="space-y-8">
@@ -1177,14 +1172,14 @@ export default function CaseStudyBuilderPage() {
                     <h2 className="text-lg font-semibold mb-4" style={{ fontFamily: "'Playfair Display', serif", color: "hsl(14, 48%, 44%)" }}>
                       Übersicht
                     </h2>
-                    <p className="text-sm text-slate-600 mb-4">{data.description}</p>
+                    <p className="text-sm text-[var(--eds-text-secondary)] mb-4">{data.description}</p>
                     {data.metrics && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {data.metrics.map((m: any, i: number) => (
-                          <div key={i} className="bg-slate-50 rounded-lg p-4">
-                            <p className="text-xs text-slate-400 mb-1">{m.label}</p>
-                            <p className="text-lg font-bold text-slate-700">{m.value}</p>
-                            <span className={`text-xs ${m.trend?.includes("down") ? "text-red-500" : m.trend === "up" ? "text-green-500" : "text-slate-400"}`}>
+                          <div key={i} className="bg-[var(--eds-bg-sunken)] rounded-lg p-4">
+                            <p className="text-xs text-[var(--eds-text-disabled)] mb-1">{m.label}</p>
+                            <p className="text-lg font-bold text-[var(--eds-text-primary)]">{m.value}</p>
+                            <span className={`text-xs ${m.trend?.includes("down") ? "text-[var(--eds-status-red)]" : m.trend === "up" ? "text-[var(--eds-status-green)]" : "text-[var(--eds-text-disabled)]"}`}>
                               {m.trend === "up" ? "↑" : m.trend?.includes("down") ? "↓" : "→"} {m.trend}
                             </span>
                           </div>
@@ -1200,15 +1195,15 @@ export default function CaseStudyBuilderPage() {
                       </h2>
                       <div className="grid md:grid-cols-2 gap-4">
                         {data.businessUnits.map((bu: any, i: number) => (
-                          <div key={i} className="border border-slate-200 rounded-lg p-4">
+                          <div key={i} className="border border-[var(--eds-border)] rounded-lg p-4">
                             <h4 className="font-semibold text-sm mb-2">{bu.name}</h4>
-                            <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 mb-2">
+                            <div className="grid grid-cols-2 gap-2 text-xs text-[var(--eds-text-tertiary)] mb-2">
                               <span>Umsatz: €{bu.revenue} Mrd</span>
                               <span>EBITDA: €{bu.ebitda} Mrd</span>
                               <span>Marge: {bu.margin}%</span>
                               <span>MA: {bu.employees?.toLocaleString()}</span>
                             </div>
-                            <p className="text-xs text-slate-400 italic">{bu.tension}</p>
+                            <p className="text-xs text-[var(--eds-text-disabled)] italic">{bu.tension}</p>
                           </div>
                         ))}
                       </div>
@@ -1222,13 +1217,13 @@ export default function CaseStudyBuilderPage() {
                       </h2>
                       <div className="space-y-3">
                         {data.emails.map((email: any, i: number) => (
-                          <div key={i} className="border border-slate-200 rounded-lg p-4">
+                          <div key={i} className="border border-[var(--eds-border)] rounded-lg p-4">
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-sm font-medium">{email.from}</span>
-                              <span className="text-xs text-slate-400">{email.date}</span>
+                              <span className="text-xs text-[var(--eds-text-disabled)]">{email.date}</span>
                             </div>
                             <p className="text-sm font-semibold mb-2">{email.subject}</p>
-                            <p className="text-xs text-slate-500 line-clamp-3">{email.content?.substring(0, 200)}...</p>
+                            <p className="text-xs text-[var(--eds-text-tertiary)] line-clamp-3">{email.content?.substring(0, 200)}...</p>
                           </div>
                         ))}
                       </div>
@@ -1242,16 +1237,16 @@ export default function CaseStudyBuilderPage() {
                       </h2>
                       <div className="grid md:grid-cols-2 gap-6">
                         <div>
-                          <h4 className="text-sm font-semibold text-slate-600 mb-3">Analysefragen</h4>
-                          <ol className="list-decimal list-inside space-y-2 text-sm text-slate-500">
+                          <h4 className="text-sm font-semibold text-[var(--eds-text-secondary)] mb-3">Analysefragen</h4>
+                          <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--eds-text-tertiary)]">
                             {previewData.questionsJson.analysis?.map((q: string, i: number) => (
                               <li key={i}>{q}</li>
                             ))}
                           </ol>
                         </div>
                         <div>
-                          <h4 className="text-sm font-semibold text-slate-600 mb-3">Schlussfolgerungen</h4>
-                          <ol className="list-decimal list-inside space-y-2 text-sm text-slate-500">
+                          <h4 className="text-sm font-semibold text-[var(--eds-text-secondary)] mb-3">Schlussfolgerungen</h4>
+                          <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--eds-text-tertiary)]">
                             {previewData.questionsJson.conclusions?.map((q: string, i: number) => (
                               <li key={i}>{q}</li>
                             ))}
