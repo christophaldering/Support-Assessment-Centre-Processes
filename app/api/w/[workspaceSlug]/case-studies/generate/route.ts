@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
 import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
+import { resolveSystemPrompt, PROMPT_SLOTS } from "@/lib/prompt-library";
 
 interface RouteContext {
   params: { workspaceSlug: string };
@@ -276,6 +277,7 @@ Bearbeitungszeit für den Kandidaten: ${candidateTime || 60} Minuten
 Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokolle, Nachrichtenartikel, etc. zusammen)${referenceDate ? `\nReferenzdatum (Stichtag): ${referenceDate}` : ""}${documentPlanInstructions}`;
 
       const routePath = `/api/w/${params.workspaceSlug}/case-studies/generate`;
+      const resolvedCaseStudyPrompt = await resolveSystemPrompt(workspace.id, "generate_case_study", PROMPT_SLOTS.generate_case_study.defaultPrompt);
 
       const result = await generateLLMOutput({
         taskName: "generate_case_study",
@@ -283,7 +285,7 @@ Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokoll
         input: userPrompt,
         route: routePath,
         options: {
-          systemPrompt: CASE_STUDY_SYSTEM_PROMPT,
+          systemPrompt: resolvedCaseStudyPrompt,
           responseFormat: "json",
           maxTokens: 16384,
         },
@@ -326,7 +328,7 @@ Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokoll
             input: `${userPrompt}\n\n${contPrompt}`,
             route: routePath,
             options: {
-              systemPrompt: CASE_STUDY_SYSTEM_PROMPT,
+              systemPrompt: resolvedCaseStudyPrompt,
               responseFormat: "json",
               maxTokens: 16384,
             },
@@ -408,7 +410,7 @@ Anzahl der zu erstellenden Vorgänge: ${documentCount || 15} (E-Mails, Protokoll
         input: `Dokument: ${fileName || "Fallstudie"}\n\nInhalt:\n${textContent}`,
         route: `/api/w/${params.workspaceSlug}/case-studies/generate`,
         options: {
-          systemPrompt: UPLOAD_PARSE_PROMPT,
+          systemPrompt: await resolveSystemPrompt(workspace.id, "parse_uploaded_case_study", PROMPT_SLOTS.parse_uploaded_case_study.defaultPrompt),
           responseFormat: "json",
           maxTokens: 16384,
         },

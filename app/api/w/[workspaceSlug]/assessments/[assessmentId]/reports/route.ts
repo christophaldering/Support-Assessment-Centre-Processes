@@ -8,6 +8,7 @@ import { getUploadUrl } from "@/lib/object-storage";
 import { generateDocx, generatePdf, generatePptx } from "@/lib/report-generator";
 import type { ReportData } from "@/lib/report-generator";
 import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
+import { resolveSystemPrompt, PROMPT_SLOTS } from "@/lib/prompt-library";
 
 interface RouteContext {
   params: { workspaceSlug: string; assessmentId: string };
@@ -182,7 +183,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
           route: "/api/w/[workspaceSlug]/assessments/[assessmentId]/reports",
           input: `Kandidat: ${candidate.name}\nAssessment: ${assessment.name}\n\nKompetenzwerte:\n${scoresText}\n\nBitte erstelle konkrete Entwicklungsempfehlungen.`,
           options: {
-            systemPrompt: `Du bist ein erfahrener Executive-Assessment-Berater. Erstelle basierend auf den folgenden Kompetenzwerten konkrete Entwicklungsempfehlungen für den Kandidaten. Antworte auf Deutsch, professionell und prägnant. Strukturiere die Empfehlungen in kurz- und mittelfristige Maßnahmen.`,
+            systemPrompt: await resolveSystemPrompt(workspace.id, "generate_report", PROMPT_SLOTS.generate_report.defaultPrompt),
             maxTokens: 2048,
           },
         });

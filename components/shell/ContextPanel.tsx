@@ -443,6 +443,7 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
               <FilteredNavLink routeSegment="ai-governance"    href={`${base}/ai-governance`}    label="AI-Governance"         {...flagProps} />
               <FilteredNavLink routeSegment="intelligence"     href={`${base}/intelligence`}      label="Advanced Intelligence" {...flagProps} />
               <FilteredNavLink routeSegment="audio"            href={`${base}/audio`}            label="Audio & Transkription" {...flagProps} />
+              <FilteredNavLink routeSegment="prompt-library"  href={`${base}/prompt-library`}   label="KI-Prompts"            {...flagProps} />
             </CollapsibleGroup>
 
             {/* ── Live-Assessments-Liste ── */}

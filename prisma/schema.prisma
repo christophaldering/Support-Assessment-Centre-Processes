@@ -57,8 +57,26 @@ model Workspace {
   aiAuditLogs        AiAuditLog[]
   dataRoomCategories DataRoomCategory[]
   dataRoomDocuments  PortalDocument[]   @relation("WorkspacePortalDocuments")
+  promptTemplates    PromptTemplate[]
 
   @@map("workspaces")
+}
+
+model PromptTemplate {
+  id           String   @id @default(cuid())
+  workspaceId  String   @map("workspace_id")
+  slotKey      String   @map("slot_key")
+  body         String   @db.Text
+  active       Boolean  @default(true)
+  updatedBy    String?  @map("updated_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, slotKey])
+  @@index([workspaceId])
+  @@map("prompt_templates")
 }
 
 model Client {

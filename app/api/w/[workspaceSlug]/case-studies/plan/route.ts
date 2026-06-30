@@ -1,46 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
 import { generateLLMOutput, isAIDisabled, create503Response } from "@/server/llm/adapter";
+import { resolveSystemPrompt, PROMPT_SLOTS } from "@/lib/prompt-library";
 
 interface RouteContext {
   params: { workspaceSlug: string };
 }
 
-const PLAN_SYSTEM_PROMPT = `Du bist ein Experte für Executive Assessment Center und planst die Dokumentenstruktur für realistische Fallstudien.
-
-Basierend auf den gegebenen Parametern, erstelle einen detaillierten Dokumentenplan für eine Fallstudie. Der Plan beschreibt alle Dokumente, die im Datenraum enthalten sein sollen.
-
-Antworte AUSSCHLIESSLICH mit validem JSON in folgender Struktur:
-
-{
-  "companyName": "<Vorgeschlagener Unternehmensname>",
-  "companyDescription": "<Kurzbeschreibung des Unternehmens (2-3 Sätze)>",
-  "documents": [
-    {
-      "id": "<eindeutige-id>",
-      "category": "<briefing|email|protocol|news|report|financial|hr>",
-      "title": "<Dokumenttitel>",
-      "description": "<Kurzbeschreibung des Inhalts (1-2 Sätze)>",
-      "author": "<Absender/Autor>",
-      "importance": "<high|medium|low>",
-      "selected": true
-    }
-  ]
-}
-
-Erstelle einen realistischen Mix aus Dokumenten. Die Gesamtanzahl wird vom Benutzer vorgegeben.
-
-Verteile die Dokumente proportional auf folgende Kategorien:
-- 1 Strategisches Briefing (category: briefing) [immer genau 1]
-- E-Mails von verschiedenen Stakeholdern mit unterschiedlichen Perspektiven und Spannungsfeldern (category: email) [ca. 30-40% der Gesamtanzahl]
-- Sitzungsprotokolle (Vorstand, Aufsichtsrat, Strategiemeeting) (category: protocol) [ca. 15-20%]
-- Nachrichtenartikel (Fachpresse, Wirtschaftsmedien) (category: news) [ca. 15-20%]
-- Interne Berichte (HR-Survey, Managementbewertung) (category: report) [ca. 10%]
-- 1 Finanzanalyse / Bilanzübersicht (category: financial) [immer genau 1]
-- 1 HR-Dashboard / Mitarbeiterkennzahlen (category: hr) [immer genau 1]
-
-Alle mit "selected": true.`;
+const PLAN_SYSTEM_PROMPT = PROMPT_SLOTS.plan_case_study.defaultPrompt;
 
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const session = getUserSession();
@@ -90,13 +59,23 @@ Zielgruppe/Level: ${targetLevel || "SE-Level/Vorstand"}
 Schwierigkeitsgrad: ${difficulty || "Hoch"}
 Anzahl der zu erstellenden Vorgänge/Dokumente insgesamt: ${parseInt(documentCount) || 15}. Erstelle EXAKT diese Anzahl an Dokumenten.${referenceDate ? `\nReferenzdatum (Stichtag): ${referenceDate}` : ""}`;
 
+    const workspace = await prisma.workspace.findUnique({
+      where: { slug: params.workspaceSlug },
+    });
+
+    const resolvedPlanPrompt = await resolveSystemPrompt(
+      workspace?.id ?? "",
+      "plan_case_study",
+      PLAN_SYSTEM_PROMPT
+    );
+
     const result = await generateLLMOutput({
       taskName: "plan_case_study",
       featureName: "case_study_generation",
       input: userPrompt,
       route: `/api/w/${params.workspaceSlug}/case-studies/plan`,
       options: {
-        systemPrompt: PLAN_SYSTEM_PROMPT,
+        systemPrompt: resolvedPlanPrompt,
         responseFormat: "json",
         maxTokens: 4096,
       },
