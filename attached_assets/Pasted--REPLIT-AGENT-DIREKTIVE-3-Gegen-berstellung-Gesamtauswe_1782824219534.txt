@@ -1,0 +1,79 @@
+# REPLIT AGENT — DIREKTIVE 3: Gegenüberstellung & Gesamtauswertung (Kandidatenvergleich)
+
+**Kontext:** In Projekten mit mehreren Kandidaten fehlt eine zugespitzte, visuelle Gegenüberstellung. Die Daten existieren bereits vollständig: die Analytics-API (`/api/w/[workspaceSlug]/analytics?assessmentId=…`) liefert pro Kandidat die normalisierten Kompetenzwerte (`candidateScores`) und Kompetenz-Durchschnitte (`competencyAverages`). Diese Direktive baut darauf eine **reine Lese-Ansicht** — kein neues Datenmodell, keine Migration, kein E-Mail-/PII-Bezug. Demo-relevant und vor dem Server-Umzug gefahrlos umsetzbar.
+
+**Arbeitsmodus:** Schritte 1–6 sequenziell, Commit nach jedem Schritt (`comparison: Schritt N — <Kurz>`). Schritt N+1 erst bei fehlerfreiem N (`npm run dev` startet, Seite lädt ohne Konsolenfehler).
+
+---
+
+## STRIKTE GRENZEN — NICHT ANFASSEN
+- Prisma-Schema — **keine Migration, kein neues Modell**. Diese Direktive ist rein lesend.
+- Auth, RBAC, `middleware.ts`, bestehende API-Logik (die Analytics-Route nur erweitern, falls zwingend nötig — bevorzugt unverändert konsumieren)
+- COMP BDP / ABCD / Candidate Portal
+- Footer-Credit-Zeile — wortgleich erhalten
+- **Keine neue Charting-Bibliothek** installieren. Visuals werden mit SVG/CSS handgebaut, konsistent zum bestehenden Analytics-Stil (die aktuelle Analytics-Seite rendert Balken bereits CSS-basiert). Das hält das Bundle schlank für den anstehenden Umzug.
+- Der bestehende Gutachten-Report-Typ „Gesamtauswertung" (`gesamtauswertung` in `app/w/[workspaceSlug]/admin/gutachten/page.tsx`) wird **nicht** ersetzt — diese Direktive ergänzt eine interaktive Bildschirm-Ansicht, der formale PDF-Report bleibt dort.
+
+---
+
+## SCHRITT 1 — Projekt-Scoping & Tab-Struktur in der Analytics-Seite
+Die Vergleichsansicht wird **als Tab in die bestehende Seite** `app/w/[workspaceSlug]/admin/analytics/page.tsx` integriert (kein neuer Top-Level-Nav-Punkt — die Navigation bleibt schlank).
+- Oben einen **Projekt-Auswahl** (Dropdown über die Assessments des Workspace) ergänzen. Auswahl steuert den `assessmentId`-Parameter aller Datenabrufe. „Alle Projekte" bleibt als Option erhalten (= bisheriges Verhalten).
+- Tab-Leiste einführen: **„Übersicht"** (= aktueller Seiteninhalt, unverändert) und **„Gegenüberstellung"** (neu, Schritte 2–4). Stil konsistent mit den übrigen Admin-Tabs (Terrakotta-Akzent, Satoshi).
+- Die Gegenüberstellung ist nur sinnvoll bei ≥ 2 Kandidaten mit Scores; bei weniger einen freundlichen Leerzustand zeigen („Mindestens zwei bewertete Kandidaten nötig").
+
+---
+
+## SCHRITT 2 — Datenaufbereitung (clientseitig, aus vorhandener API)
+Die `candidateScores`-Struktur aus der Analytics-API (`{ candidateId, candidateName, competencies: [{ name, normalized }] }`) clientseitig in eine **Matrix** umformen: Zeilen = Kompetenzen, Spalten = Kandidaten, Zellen = normalisierter Wert. Kompetenz-Reihenfolge stabil (alphabetisch oder nach erstem Auftreten). Kandidaten-Mehrfachauswahl ermöglichen (Checkboxen/Chips) — standardmäßig alle Kandidaten des Projekts ausgewählt, abwählbar für fokussierte Vergleiche.
+
+---
+
+## SCHRITT 3 — Visualisierungen (SVG/CSS, handgebaut)
+Drei Darstellungen in der Gegenüberstellung, untereinander:
+
+**a) Heatmap-Matrix (Kern):** CSS-Grid, Kompetenzen × Kandidaten. Zellenfarbe nach normalisiertem Wert über eine **sequenzielle, farbfehlsichtigkeits-taugliche Skala** (z. B. Lagune Hell → Lagune Türkis → Terrakotta für niedrig→hoch; **kein** reines Rot-Grün). Zahlenwert in der Zelle lesbar (Textkontrast je Hintergrund anpassen). Spaltenkopf = Kandidatenname, Zeilenkopf = Kompetenz.
+
+**b) Radar-/Netzdiagramm (Überlagerung):** handgebautes SVG. Achsen = Kompetenzen, eine farbige Polygon-Linie je ausgewähltem Kandidat (Legende mit Kandidatenfarbe). Bei vielen Kandidaten Lesbarkeit wahren (Linien halbtransparent). Max. sinnvoll ~5 gleichzeitig — bei mehr Hinweis, Auswahl einzugrenzen.
+
+**c) Ranking-Tabelle:** Kandidaten sortiert nach Gesamt-Score (Mittelwert der normalisierten Kompetenzwerte), absteigend. Spalten: Rang, Kandidat, Gesamt-Score, ggf. Stärkste/Schwächste Kompetenz. Sortierung per Spaltenklick umschaltbar.
+
+---
+
+## SCHRITT 4 — Export (leichtgewichtig)
+Eine druck-optimierte Ansicht + Button **„Als PDF exportieren"** über die Browser-Druckfunktion (`window.print()` mit einem Print-Stylesheet, das nur Heatmap + Radar + Ranking sauber umbricht, Navigation/Tabs ausblendet, Footer-Credit-Zeile mitdruckt). **Keine** neue serverseitige PDF-Pipeline bauen — für formale Berichte existiert der Gutachten-Generator. Auf der Gegenüberstellung einen dezenten Verweis dorthin setzen („Für formale Berichte: Gutachten-Generator → Gesamtauswertung").
+
+---
+
+## SCHRITT 5 — Feature-Flag & Verifikation
+- Den neuen Tab über das bestehende Feature-Flag-System schaltbar machen (Modul-Key z. B. `analytics` mitnutzen oder neuen `comparison`-Key in `MODULE_REGISTRY` ergänzen, konsistent zum Muster aus `lib/feature-flags.ts`).
+- Verifizieren: Projektwechsel lädt korrekt um; Kandidaten-Mehrfachauswahl wirkt auf alle drei Visuals; Leerzustand bei < 2 Kandidaten; Druckansicht sauber; keine Konsolenfehler.
+
+---
+
+## SCHRITT 6 — OPTIONAL: Teilnehmer-Roster pro Projekt (nur wenn Schritte 1–5 sauber)
+Dritter Tab **„Teilnehmer"** in derselben projekt-skopierten Analytics-Seite — **rein lesend, Status abgeleitet aus vorhandenen Daten, kein neues Feld, keine Migration**:
+- Tabelle der Kandidaten des gewählten Projekts mit abgeleitetem **Status**:
+  - **Angelegt** — User-Record existiert
+  - **Registriert** — `forcePasswordChange === false` (Kandidat hat Passwort gesetzt)
+  - **In Bearbeitung** — es existieren Observer-Ratings, Dokument-Views oder Self-Assessments für den Kandidaten
+  - **Ausgewertet** — es existieren konsolidierte Scores für den Kandidaten
+- Status als farbige Badges (Lagune/Terrakotta-Palette). Spalten: Name, E-Mail, Status, Anzahl bewerteter Kompetenzen.
+- **Kein** Versand, **keine** Termin-/Einladungsfunktion hier — das sind bewusst spätere, eigene Direktiven (Einlademanagement erst nach dem EU-Mail-Umzug).
+
+Falls die Ableitung eines Status-Signals zusätzliche Queries bräuchte, die die Seite spürbar verlangsamen: das betreffende Signal weglassen und im Abschluss-Commit vermerken, statt die Ladezeit zu opfern.
+
+---
+
+## SCHRITT 7 — Abschluss-Commit
+Dateiliste + Schritt-Zusammenfassung. Offene Punkte (z. B. weggelassene Status-Signale) explizit vermerken.
+
+---
+
+## Bei Mehrdeutigkeit
+Im Zweifel: rein lesend bleiben, keine API-/Schema-Änderung erzwingen. Lieber eine Visualisierung schlichter als einen Datenpfad fragil. Die Gegenüberstellung darf bestehende Analytics-Funktion nicht beeinträchtigen.
+
+---
+
+*© Christoph Aldering · Private initiative – for training reasons only – no data from reality so far!*
+*Direktive 3: Claude Opus 4.8, Juni 2026*

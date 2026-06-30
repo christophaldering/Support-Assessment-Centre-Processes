@@ -55,9 +55,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     where: { assessmentId: { in: assessmentIds } },
   });
 
-  const competencyNodeIds = [
-    ...new Set(consolidatedScores.map((s) => s.competencyNodeId)),
-  ];
+  const competencyNodeIds = Array.from(
+    new Set(consolidatedScores.map((s) => s.competencyNodeId))
+  );
 
   const competencyNodes = await prisma.competencyNode.findMany({
     where: { id: { in: competencyNodeIds } },
@@ -139,6 +139,66 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
   const candidateScores = Array.from(candidateScoresMap.values());
 
+  // ── Schritt 6: candidateStatus (only when a specific assessment is selected) ──
+  type CandidateStatus = "ausgewertet" | "in_bearbeitung" | "registriert" | "angelegt";
+  let candidateStatus: Array<{
+    candidateId: string;
+    candidateName: string;
+    email: string;
+    status: CandidateStatus;
+    scoredCompetencies: number;
+  }> = [];
+
+  if (assessmentId && assessments.length === 1) {
+    const assessment = assessments[0]!;
+    const candidateIds = assessment.candidates.map((c) => c.id);
+
+    if (candidateIds.length > 0) {
+      const [userDetails, ratingGroups] = await Promise.all([
+        prisma.user.findMany({
+          where: { id: { in: candidateIds } },
+          select: { id: true, email: true, forcePasswordChange: true },
+        }),
+        prisma.observerRating.groupBy({
+          by: ["candidateId"],
+          where: { assessmentId, candidateId: { in: candidateIds } },
+          _count: { _all: true },
+        }),
+      ]);
+
+      const userMap = new Map(userDetails.map((u) => [u.id, u]));
+      const ratingCountMap = new Map(
+        ratingGroups.map((r) => [r.candidateId, r._count._all])
+      );
+      const scoredMap = new Map<string, number>();
+      for (const score of consolidatedScores) {
+        if (candidateIds.includes(score.candidateId)) {
+          scoredMap.set(score.candidateId, (scoredMap.get(score.candidateId) ?? 0) + 1);
+        }
+      }
+
+      candidateStatus = candidateIds.map((cid) => {
+        const user = userMap.get(cid);
+        const scoreCount = scoredMap.get(cid) ?? 0;
+        const ratingCount = ratingCountMap.get(cid) ?? 0;
+
+        let status: CandidateStatus;
+        if (scoreCount > 0) status = "ausgewertet";
+        else if (ratingCount > 0) status = "in_bearbeitung";
+        else if (user && !user.forcePasswordChange) status = "registriert";
+        else status = "angelegt";
+
+        return {
+          candidateId: cid,
+          candidateName: uniqueCandidates.get(cid) || cid,
+          email: user?.email ?? "",
+          status,
+          scoredCompetencies: scoreCount,
+        };
+      });
+    }
+  }
+
   return NextResponse.json({
     totalAssessments,
     totalCandidates,
@@ -146,5 +206,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     averageScore,
     competencyAverages,
     candidateScores,
+    candidateStatus,
+    featureFlags: (workspace.featureFlags as Record<string, boolean>) ?? {},
   });
 }

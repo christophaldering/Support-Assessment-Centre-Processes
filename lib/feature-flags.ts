@@ -24,6 +24,7 @@ export const MODULE_REGISTRY: Record<string, { label: string; defaultReleased: b
   access_requests: { label: "Zugriffsanfragen", defaultReleased: true },
   ai_governance: { label: "AI-Governance", defaultReleased: true },
   prompt_library: { label: "KI-Prompts", defaultReleased: true },
+  comparison: { label: "Gegenüberstellung", defaultReleased: true },
 };
 
 export const NAV_MODULE_MAP: Record<string, string> = {
