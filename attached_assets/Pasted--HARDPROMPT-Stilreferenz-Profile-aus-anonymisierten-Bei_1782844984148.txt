@@ -1,0 +1,235 @@
+# HARDPROMPT — Stilreferenz-Profile aus anonymisierten Beispielgutachten
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden Schritte exakt in der angegebenen Reihenfolge aus.
+Du triffst KEINE eigenen Architektur-Entscheidungen, wo dieser Prompt eine
+Vorgabe macht. Bei Unklarheit: STOPP, fragen — NICHT improvisieren. Nach
+jedem Schritt erstellst du exakt den angegebenen Commit, mit exakt dem
+angegebenen Commit-Message-Text. Formulierungen wie „könnte", „ggf.",
+„optional", „nach Ermessen" kommen in diesem Dokument NICHT vor — jeder
+Punkt ist Pflicht.
+
+---
+
+## Zielbild (bindend)
+
+Admins können anonymisierte Beispielgutachten hochladen. Aus diesen wird
+NICHT der Originaltext, sondern ein ABSTRAHIERTES STILPROFIL (Tonalität,
+Satzbau-Muster, typische Formulierungen für Stärken/Entwicklungsfelder,
+Aufbau-Logik) extrahiert. Nur dieses Stilprofil — niemals der Originaltext
+— fließt als Zusatzkontext in den `generate_report`-Prompt ein, wenn ein
+Gutachten KI-gestützt erzeugt wird. Aktivierung pro Template ist ein
+EXPLIZITER, manueller Freigabe-Schritt durch einen Admin, kein
+Automatismus.
+
+## Bindende Tatsachenbasis (geprüft, nicht zu hinterfragen)
+
+- `ReportTemplate` (Prisma) existiert bereits mit `sourceFilePath`,
+  `anonymizedFilePath`, `isAnonymized`, `structureJson`, `styleRulesJson`,
+  `analysisStatus`. Diese Felder sind NUR für PPTX-Export-Vorlagen verdrahtet
+  (Layout/Struktur), NICHT für den Gutachten-Textgenerator.
+- `app/api/w/[workspaceSlug]/report-templates/route.ts` (GET/POST) ist die
+  EINZIGE bestehende API für `ReportTemplate`. Es gibt KEINE Analyse-,
+  Anonymisierungs- oder Aktivierungs-Route. `analysisStatus` bleibt nach
+  Upload für immer auf `"pending"` stehen — es gibt keinen Code, der das
+  ändert.
+- `app/w/[workspaceSlug]/admin/gutachten/page.tsx` zeigt `ReportTemplate`-
+  Karten inkl. `analysisStatus`-Badge bereits an, aber es gibt keine Aktion,
+  die diesen Status weiterschaltet.
+- Der eigentliche KI-Aufruf für Gutachtentext liegt in
+  `app/api/w/[workspaceSlug]/assessments/[assessmentId]/reports/route.ts`,
+  Zeile ~180: `generateLLMOutput({ ..., options: { systemPrompt: await
+  resolveSystemPrompt(workspace.id, "generate_report",
+  PROMPT_SLOTS.generate_report.defaultPrompt) } })`. Das ist der EINZIGE
+  Einfügepunkt für das Stilprofil.
+- `lib/prompt-library.ts` definiert `PROMPT_SLOTS` mit `key`, `label`,
+  `description`, `defaultPrompt`. Neue Slots werden NACH diesem Muster
+  angelegt.
+- `lib/audit.ts` exportiert `logAudit(entry: AuditEntry)` mit Feldern
+  `workspaceId, userId?, action, entityType, entityId?, details?,
+  ipAddress?`. JEDE Aktivierung/Deaktivierung eines Stilprofils MUSS
+  geloggt werden.
+
+## Nicht anfassen (absolutes Verbot, keine Ausnahmen)
+
+PPTX-Export-Vorlagen-Funktion von `ReportTemplate` (`reportType:
+"one_pager"` / `"gesamtauswertung"`, `structureJson`-Verwendung dort) ·
+`lib/report-generator.ts` (DOCX/PDF/PPTX-Rendering) · Auth-System · RBAC ·
+Consent-Management · bestehende `Report`-Datensätze · AI-Governance-Layer
+(`server/llm/adapter.ts` selbst — nur NUTZEN, nicht verändern) ·
+Object-Storage-Modul (`lib/object-storage.ts` — nur nutzen, nicht ändern).
+
+Wenn eine Änderung in diesem Prompt mit einer Regel hier kollidiert: STOPP.
+Konflikt melden, nicht ausführen.
+
+---
+
+## SCHRITT 1 — Schema-Erweiterung
+
+1. `ReportTemplate`: neues Feld
+   `useForStyleGuidance Boolean @default(false) @map("use_for_style_guidance")`.
+2. `ReportTemplate`: neues Feld
+   `anonymizationConfirmedById String? @map("anonymization_confirmed_by_id")`
+   + `anonymizationConfirmedAt DateTime? @map("anonymization_confirmed_at")`.
+   Diese beiden Felder werden NUR gesetzt, wenn ein Admin die Anonymisierung
+   manuell bestätigt hat (Schritt 4). Ohne diese Bestätigung darf
+   `useForStyleGuidance` NIEMALS `true` sein — das wird serverseitig
+   erzwungen (Schritt 2, Punkt 4).
+3. `analysisStatus`-Wertebereich erweitern um die Zustände `"extracting"`,
+   `"analyzed"`, `"failed"` (zusätzlich zu bestehendem `"pending"`).
+4. Migration ausführen, Prisma-Client regenerieren. Build muss danach ohne
+   Typfehler durchlaufen — sonst STOPP.
+
+**COMMIT (exakter Wortlaut):**
+`Schema: useForStyleGuidance und Anonymisierungs-Bestätigung für ReportTemplate`
+
+---
+
+## SCHRITT 2 — Anonymisierungs- und Extraktions-Pipeline
+
+1. Neue Prompt-Slots in `lib/prompt-library.ts` nach bestehendem Muster
+   anlegen:
+   - `anonymize_report_text`: System-Prompt, der aus Rohtext eines
+     Gutachtens JEDEN identifizierenden Inhalt entfernt — Namen,
+     Firmennamen, Datumsangaben, exakte Positionsbezeichnungen, exakte
+     Zahlenwerte, sonstige re-identifizierende Details. Ersetzt sie durch
+     generische Platzhalter. Gibt NUR den bereinigten Text zurück, KEINE
+     Kommentare.
+   - `extract_report_style_profile`: System-Prompt, der aus bereinigtem
+     Text ein STRUKTURIERTES JSON-Stilprofil extrahiert — KEINEN
+     Fließtext, KEINE Zitate über 15 Wörter aus dem Original. Pflichtfelder
+     im JSON: `tonality` (string), `sentenceLength` (string-Beschreibung),
+     `hedgingPhrases` (string[], generische Formulierungsmuster, NICHT
+     wörtliche Sätze aus dem Original), `structurePattern` (string[],
+     Abfolge der inhaltlichen Bausteine), `strengthsLanguagePattern`
+     (string), `developmentAreaLanguagePattern` (string).
+2. Neue Route `app/api/w/[workspaceSlug]/report-templates/[templateId]/analyze/route.ts`
+   (POST). Ablauf, GENAU in dieser Reihenfolge:
+   a. Auth/RBAC-Check identisch zu bestehender `report-templates/route.ts`.
+   b. `analysisStatus` auf `"extracting"` setzen.
+   c. Datei aus `sourceFilePath` laden, Text extrahieren (PDF → vorhandene
+      Extraktion in `lib/pdf-extract.mjs` nutzen; DOCX → vorhandene
+      `docx`-Bibliothek nutzen — KEINE neue Extraktions-Bibliothek
+      einführen).
+   d. `generateLLMOutput` mit Slot `anonymize_report_text` aufrufen,
+      Ergebnis ZWISCHENSPEICHERN, NICHT in der Datenbank persistieren.
+   e. `generateLLMOutput` mit Slot `extract_report_style_profile` auf dem
+      anonymisierten Zwischenergebnis aufrufen.
+   f. Ergebnis-JSON validieren (alle Pflichtfelder aus Punkt 1 vorhanden) —
+      bei fehlenden Feldern: `analysisStatus = "failed"`, Antwort mit
+      Fehlermeldung, NICHT weitermachen.
+   g. Bei Erfolg: `styleRulesJson` = extrahiertes Profil,
+      `analysisStatus = "analyzed"`, `isAnonymized = true`.
+      `anonymizedFilePath` bleibt `null` — der anonymisierte Volltext wird
+      NICHT dauerhaft gespeichert, nur das abstrahierte Profil.
+   h. `useForStyleGuidance` bleibt `false` — Aktivierung ist ausschließlich
+      über Schritt 4 möglich, NIEMALS automatisch nach Analyse.
+3. `isAIDisabled("report_generation")`-Check wie in der bestehenden
+   Reports-Route vor jedem LLM-Aufruf — bei deaktivierter KI: 503,
+   `analysisStatus` bleibt `"pending"`.
+4. Server-seitig in JEDER Stelle, die `useForStyleGuidance: true` setzen
+   könnte: HARTE Prüfung, dass `anonymizationConfirmedById` UND
+   `anonymizationConfirmedAt` gesetzt sind. Ohne diese: 400, Ablehnung.
+   Diese Regel gilt unabhängig vom Frontend — sie MUSS im Backend stehen.
+
+**COMMIT (exakter Wortlaut):**
+`Anonymisierungs- und Stilprofil-Extraktions-Pipeline für Beispielgutachten`
+
+---
+
+## SCHRITT 3 — Einspeisung ins Gutachten-Prompt
+
+1. In `app/api/w/[workspaceSlug]/assessments/[assessmentId]/reports/route.ts`,
+   UNMITTELBAR VOR dem bestehenden `generateLLMOutput`-Aufruf für
+   `generate_report`: lade ALLE `ReportTemplate`-Einträge mit
+   `workspaceId = workspace.id`, `reportType = "gutachten"`,
+   `useForStyleGuidance = true`, `analysisStatus = "analyzed"`.
+2. Existiert mindestens ein solcher Eintrag: baue einen Block
+   `"\n\n--- STILREFERENZ (abstrahiert, keine Originalinhalte) ---\n"` +
+   JSON-Serialisierung der `styleRulesJson`-Felder ALLER aktiven Templates
+   (max. 3 — bei mehr als 3 aktiven Templates: die 3 zuletzt aktualisierten
+   verwenden, Rest ignorieren) und hänge ihn an den von
+   `resolveSystemPrompt(...)` zurückgegebenen String an. KEIN separater
+   LLM-Aufruf für diesen Schritt — reine String-Konkatenation.
+3. Existiert kein aktiver Eintrag: Verhalten bleibt EXAKT wie heute, keine
+   Änderung am Prompt.
+4. `aiSections`-Array (bereits vorhanden) erhält bei Nutzung eines
+   Stilprofils zusätzlich den Wert `"style_reference_used"` — damit im
+   Report nachvollziehbar bleibt, dass eine Stilreferenz aktiv war.
+
+**COMMIT (exakter Wortlaut):**
+`Stilreferenz aus aktiven ReportTemplates in generate_report-Prompt eingespeist`
+
+---
+
+## SCHRITT 4 — Admin-UI: Prüfen, Freigeben, Aktivieren
+
+1. In `app/w/[workspaceSlug]/admin/gutachten/page.tsx`, `TemplateCard`-
+   Komponente: bei `analysisStatus === "pending"` und vorhandenem
+   `sourceFilePath` Button „Analysieren" ergänzen → ruft
+   `POST .../report-templates/[templateId]/analyze` auf, Karte aktualisiert
+   sich auf neuen Status.
+2. Bei `analysisStatus === "analyzed"`: Anzeige des extrahierten
+   `styleRulesJson` in lesbarer Form (Tonalität, Satzbau, Muster) PLUS
+   Checkbox „Anonymisierung geprüft und bestätigt — keine identifizierenden
+   Inhalte vorhanden" PLUS Button „Für KI-Gutachten aktivieren", der erst
+   nach gesetzter Checkbox klickbar ist.
+3. Klick auf „Für KI-Gutachten aktivieren" ruft neue Route
+   `PATCH .../report-templates/[templateId]/activate` auf. Diese Route
+   setzt `anonymizationConfirmedById = session.userId`,
+   `anonymizationConfirmedAt = now()`, `useForStyleGuidance = true` —
+   UND ruft `logAudit({ workspaceId, userId, action: "style_template_activated", entityType: "ReportTemplate", entityId: templateId })`
+   auf. Ohne erfolgreichen Audit-Log-Eintrag gilt die Aktivierung als
+   fehlgeschlagen — Transaktion zurückrollen.
+4. Analoge Route/Button zum Deaktivieren
+   (`useForStyleGuidance = false`), ebenfalls mit
+   `logAudit({ ..., action: "style_template_deactivated" })`.
+5. Badge auf der Karte: aktive Templates erhalten sichtbares Label
+   „Aktiv als Stilreferenz".
+
+**COMMIT (exakter Wortlaut):**
+`Admin-UI: Stilprofil prüfen, Anonymisierung bestätigen, aktivieren/deaktivieren mit Audit-Log`
+
+---
+
+## SCHRITT 5 — Validierung (alle Punkte MÜSSEN PASS sein)
+
+Führe JEDEN Check aus, bestätige PASS/FAIL einzeln. Bei FAIL: STOPP,
+beheben, erneut prüfen. Schritt gilt erst als abgeschlossen, wenn ALLE
+PASS sind.
+
+1. Upload eines Beispielgutachtens (PDF oder DOCX) über bestehende
+   Upload-UI → `ReportTemplate` mit `analysisStatus = "pending"` erstellt.
+   PASS/FAIL.
+2. Klick „Analysieren" → `analysisStatus` durchläuft `"extracting"` →
+   `"analyzed"`, `styleRulesJson` enthält alle 5 Pflichtfelder, KEIN
+   Originaltext/Originalzitat über 15 Wörter im gespeicherten JSON. PASS/FAIL.
+3. Ohne gesetzte Checkbox „Anonymisierung geprüft" ist „Aktivieren" nicht
+   klickbar UND ein direkter API-Aufruf ohne vorherige Bestätigung wird mit
+   400 abgelehnt. PASS/FAIL.
+4. Nach Aktivierung: Audit-Log enthält Eintrag
+   `action: "style_template_activated"` mit korrekter `entityId`. PASS/FAIL.
+5. Gutachten-Generierung für ein Assessment mit aktivem Stilprofil → System-
+   Prompt an die KI enthält nachweislich den „STILREFERENZ"-Block (Log/Debug-
+   Ausgabe prüfen). Ohne aktives Profil: Prompt identisch zum Vorher-
+   Zustand. PASS/FAIL.
+6. `aiSections` enthält `"style_reference_used"` nur, wenn tatsächlich ein
+   aktives Profil genutzt wurde. PASS/FAIL.
+7. PPTX-Export-Vorlagen-Funktion (`reportType: "one_pager"` /
+   `"gesamtauswertung"`) weiterhin unverändert funktionsfähig. PASS/FAIL.
+8. `npm run lint` — null Fehler. PASS/FAIL.
+9. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE Punkte PASS):**
+`Stilreferenz-Feature für Gutachten-Generator abgeschlossen und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Nach Commit 5: kurze Zusammenfassung — welche Dateien/Routen neu, welche
+Migration ausgeführt, welche Prompt-Slots ergänzt. Explizite Liste aller 9
+Validierungspunkte mit PASS/FAIL. Keine Selbsteinschätzung wie „sollte
+funktionieren" — nur verifizierte Ergebnisse aus tatsächlich ausgeführten
+Checks.

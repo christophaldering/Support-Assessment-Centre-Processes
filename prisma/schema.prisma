@@ -207,14 +207,18 @@ model Exercise {
   difficultyLevel String?  @map("difficulty_level")
   difficultyMeta  Json?    @map("difficulty_meta")
   aiGenerated     Boolean  @default(false) @map("ai_generated")
+  libraryItemId   String?  @map("library_item_id")
+  adaptationNotes String?  @map("adaptation_notes")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   assessment           Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  libraryItem          ExerciseLibraryItem? @relation(fields: [libraryItemId], references: [id], onDelete: SetNull)
   documents            Document[]
   competencyMappings   ExerciseCompetencyMapping[]
   observerRatings      ObserverRating[]
 
+  @@index([libraryItemId])
   @@map("exercises")
 }
 
@@ -660,6 +664,7 @@ model ExerciseLibraryItem {
   client             Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
   scenario           CaseStudy? @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
   variants           ExerciseLibraryVariant[]
+  exercises          Exercise[]
 
   @@index([workspaceId])
   @@index([workspaceId, exerciseType])
@@ -898,6 +903,8 @@ model CaseStudy {
 
   workspace             Workspace @relation(fields: [workspaceId], references: [id])
   derivedExercises      ExerciseLibraryItem[]
+  dataRoomCategories    DataRoomCategory[]
+  portalDocuments       PortalDocument[]
 
   @@index([workspaceId])
   @@map("case_studies")
@@ -924,13 +931,16 @@ model DataRoomCategory {
   color       String?
   sortOrder   Int      @default(0) @map("sort_order")
   workspaceId String   @map("workspace_id")
+  caseStudyId String?  @map("case_study_id")
   createdAt   DateTime @default(now()) @map("created_at")
 
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  caseStudy   CaseStudy? @relation(fields: [caseStudyId], references: [id], onDelete: SetNull)
   documents   PortalDocument[]
 
   @@unique([slug, workspaceId])
   @@index([workspaceId, sortOrder])
+  @@index([caseStudyId])
   @@map("data_room_categories")
 }
 
@@ -968,17 +978,20 @@ model PortalDocument {
   visibleUntil        DateTime? @map("visible_until")
   downloadAllowed     Boolean  @default(true) @map("download_allowed")
   sortOrder           Int      @default(0) @map("sort_order")
+  caseStudyId         String?  @map("case_study_id")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
   assessment          Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   workspace           Workspace? @relation("WorkspacePortalDocuments", fields: [workspaceId], references: [id])
   dataRoomCategory    DataRoomCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  caseStudy           CaseStudy? @relation(fields: [caseStudyId], references: [id], onDelete: SetNull)
   views               DataRoomDocumentView[]
 
   @@unique([slug, assessmentId])
   @@index([assessmentId, category])
   @@index([workspaceId, categoryId])
+  @@index([caseStudyId])
   @@map("portal_documents")
 }
 

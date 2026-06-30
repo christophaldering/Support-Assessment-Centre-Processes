@@ -551,7 +551,7 @@ export default function CaseStudyBuilderPage() {
                           </button>
                         )}
                         <Link
-                          href={`${base}/modules/case-study/${cs.id}`}
+                          href={`${base}/case-studio/${cs.id}`}
                           className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 transition-colors"
                           data-testid={`link-view-${cs.id}`}
                         >

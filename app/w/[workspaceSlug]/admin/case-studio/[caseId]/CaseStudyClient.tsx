@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { CaseStudyData, AssessmentQuestions, Email, StrategicAnalysis } from "@/lib/case-studies/varexia";
@@ -19,7 +19,8 @@ type Tab =
   | "internal-comms"
   | "external-comms"
   | "strategic-analysis"
-  | "hr-dashboard";
+  | "hr-dashboard"
+  | "dataroom";
 
 const tabList: { id: Tab; labelDe: string; icon: string }[] = [
   { id: "briefing", labelDe: "Briefing", icon: "📋" },
@@ -34,6 +35,7 @@ const tabList: { id: Tab; labelDe: string; icon: string }[] = [
   { id: "external-comms", labelDe: "Externe Kommunikation", icon: "📤" },
   { id: "strategic-analysis", labelDe: "Strategische Analyse", icon: "🔍" },
   { id: "hr-dashboard", labelDe: "HR-Dashboard", icon: "👥" },
+  { id: "dataroom", labelDe: "Datenraum-Dokumente", icon: "🗂️" },
 ];
 
 function formatCurrency(value: number): string {
@@ -48,6 +50,18 @@ interface Props {
   caseStudyId?: string | null;
 }
 
+interface DataRoomCategory {
+  id: string; slug: string; label: string; labelEn: string | null;
+  icon: string | null; color: string | null; sortOrder: number;
+  _count?: { documents: number };
+}
+interface DataRoomDoc {
+  id: string; title: string; description: string | null;
+  documentType: string; isImportant: boolean; isNew: boolean;
+  sortOrder: number; categoryId: string | null;
+  dataRoomCategory: { label: string; icon: string | null; color: string | null } | null;
+}
+
 export default function CaseStudyClient({ data, questions, workspaceSlug, logoUrl, caseStudyId }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("briefing");
   const [selectedEmailId, setSelectedEmailId] = useState<string>("");
@@ -58,6 +72,9 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
   const [generatingLogo, setGeneratingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [editingDoc, setEditingDoc] = useState<{ type: string; id: string } | null>(null);
+  const [drCategories, setDrCategories] = useState<DataRoomCategory[]>([]);
+  const [drDocuments, setDrDocuments] = useState<DataRoomDoc[]>([]);
+  const [drLoading, setDrLoading] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [localData, setLocalData] = useState<CaseStudyData>(data);
@@ -171,6 +188,23 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
     setSavingBriefing(false);
   };
 
+  // Load data-room data when tab becomes active
+  useEffect(() => {
+    if (activeTab === "dataroom" && caseStudyId && !drLoading && drCategories.length === 0) {
+      setDrLoading(true);
+      Promise.all([
+        fetch(`/api/w/${workspaceSlug}/case-studies/${caseStudyId}/data-room/categories`).then((r) => r.json()),
+        fetch(`/api/w/${workspaceSlug}/case-studies/${caseStudyId}/data-room/documents`).then((r) => r.json()),
+      ])
+        .then(([cats, docs]) => {
+          setDrCategories(Array.isArray(cats) ? cats : []);
+          setDrDocuments(Array.isArray(docs) ? docs : []);
+        })
+        .catch(() => {})
+        .finally(() => setDrLoading(false));
+    }
+  }, [activeTab, caseStudyId, workspaceSlug]);
+
   const internalEmails = localData.emails.filter((e) => e.category === "internal" || !e.category);
   const externalEmails = localData.emails.filter((e) => e.category === "external");
 
@@ -188,6 +222,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
       case "external-comms": return externalEmails.length > 0;
       case "strategic-analysis": return !!(localData.strategicAnalysis);
       case "hr-dashboard": return !!(localData.hrSurvey && localData.hrSurvey.categories.length > 0);
+      case "dataroom": return !!caseStudyId;
       default: return true;
     }
   });
@@ -205,11 +240,11 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
         <div className="max-w-[1600px] mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
-              href={`${base}/modules`}
+              href={`${base}/case-studio`}
               className="text-xs font-medium text-white/70 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-back-modules"
+              data-testid="link-back-case-studio"
             >
-              ← Module
+              ← Fallstudien-Werkstatt
             </Link>
             {currentLogoUrl && (
               <img src={currentLogoUrl} alt={`${localData.name} Logo`} className="h-7 w-auto object-contain" data-testid="img-case-logo" />
@@ -1778,6 +1813,108 @@ function EmailListPanel({
           </div>
         )}
       </div>
+
+      {/* ── Datenraum-Dokumente Tab ── */}
+      {activeTab === "dataroom" && (
+        <div className="flex-1 p-8">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-xl font-bold text-slate-900 mb-2">Datenraum-Dokumente</h2>
+            <p className="text-sm text-slate-500 mb-6">
+              Diese Dokumente und Kategorien sind direkt mit der Fallstudie verknüpft und im Kandidaten-Portal verfügbar.
+            </p>
+
+            {drLoading && (
+              <div className="flex items-center gap-2 text-sm text-slate-400 py-8">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                Lade Datenraum-Daten…
+              </div>
+            )}
+
+            {!drLoading && drCategories.length === 0 && (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+                <div className="text-4xl mb-3">🗂️</div>
+                <p className="text-sm font-medium text-slate-600">Keine Kategorien vorhanden</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Kategorien und Dokumente werden über die Admin-Datenraum-Verwaltung gepflegt.
+                </p>
+              </div>
+            )}
+
+            {!drLoading && drCategories.length > 0 && (
+              <div className="space-y-6">
+                {drCategories.map((cat) => {
+                  const catDocs = drDocuments.filter((d) => d.categoryId === cat.id);
+                  return (
+                    <div key={cat.id} className="rounded-xl border border-slate-200 overflow-hidden">
+                      <div className="bg-slate-900 text-white px-5 py-3 flex items-center gap-3">
+                        {cat.icon && <span className="text-lg">{cat.icon}</span>}
+                        <span className="font-semibold text-sm">{cat.label}</span>
+                        <span className="ml-auto text-xs text-white/50">{catDocs.length} Dokument{catDocs.length !== 1 ? "e" : ""}</span>
+                      </div>
+                      {catDocs.length === 0 ? (
+                        <div className="px-5 py-4 text-xs text-slate-400 italic">Keine Dokumente in dieser Kategorie</div>
+                      ) : (
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-slate-100 bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
+                              <th className="px-5 py-2 text-left font-medium">Titel</th>
+                              <th className="px-5 py-2 text-left font-medium">Typ</th>
+                              <th className="px-5 py-2 text-left font-medium">Flags</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {catDocs.map((doc) => (
+                              <tr key={doc.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                <td className="px-5 py-3 font-medium text-slate-800">{doc.title}</td>
+                                <td className="px-5 py-3 text-slate-500">
+                                  <span className="inline-block bg-slate-100 rounded px-2 py-0.5 text-xs">{doc.documentType}</span>
+                                </td>
+                                <td className="px-5 py-3 flex gap-1.5">
+                                  {doc.isImportant && <span className="text-[10px] bg-amber-100 text-amber-700 rounded px-1.5 py-0.5 font-medium">Wichtig</span>}
+                                  {doc.isNew && <span className="text-[10px] bg-teal-100 text-teal-700 rounded px-1.5 py-0.5 font-medium">Neu</span>}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Docs without category */}
+                {drDocuments.filter((d) => !d.categoryId).length > 0 && (
+                  <div className="rounded-xl border border-slate-200 overflow-hidden">
+                    <div className="bg-slate-700 text-white px-5 py-3 flex items-center gap-3">
+                      <span className="text-lg">📄</span>
+                      <span className="font-semibold text-sm">Ohne Kategorie</span>
+                    </div>
+                    <table className="w-full text-sm">
+                      <tbody>
+                        {drDocuments.filter((d) => !d.categoryId).map((doc) => (
+                          <tr key={doc.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                            <td className="px-5 py-3 font-medium text-slate-800">{doc.title}</td>
+                            <td className="px-5 py-3 text-slate-500">
+                              <span className="inline-block bg-slate-100 rounded px-2 py-0.5 text-xs">{doc.documentType}</span>
+                            </td>
+                            <td className="px-5 py-3 flex gap-1.5">
+                              {doc.isImportant && <span className="text-[10px] bg-amber-100 text-amber-700 rounded px-1.5 py-0.5 font-medium">Wichtig</span>}
+                              {doc.isNew && <span className="text-[10px] bg-teal-100 text-teal-700 rounded px-1.5 py-0.5 font-medium">Neu</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

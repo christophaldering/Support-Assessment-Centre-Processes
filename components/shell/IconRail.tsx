@@ -140,9 +140,9 @@ export default function IconRail({ workspaceSlug, userRoles, isMaster }: IconRai
           } as RailItem,
           {
             id: "dataroom",
-            label: "Datenraum-Tracking",
-            href: `${base}/dr`,
-            matchPrefix: `${base}/dr`,
+            label: "Externe Freigabe",
+            href: `${base}/document-sharing`,
+            matchPrefix: `${base}/document-sharing`,
             roles: ["MASTER_ADMIN"],
             icon: <LinkIcon />,
           } as RailItem,

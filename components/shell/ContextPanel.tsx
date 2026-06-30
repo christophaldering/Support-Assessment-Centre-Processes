@@ -233,12 +233,12 @@ function AssessmentContextNav({ assessmentId, base }: { assessmentId: string; ba
   );
 }
 
-/** Mini-nav shown in ContextPanel when the user is on a /dr route (Master only) */
+/** Mini-nav shown in ContextPanel when the user is on a /document-sharing route (Master only) */
 function DataroomContextNav({ base }: { base: string }) {
   const pathname = usePathname() ?? "";
   const items = [
-    { label: "Zugriffslinks", href: `${base}/dr` },
-    { label: "Konfiguration", href: `${base}/dr/setup`, indented: true },
+    { label: "Freigabe-Links", href: `${base}/document-sharing` },
+    { label: "Konfiguration", href: `${base}/document-sharing/setup`, indented: true },
   ];
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
@@ -247,8 +247,7 @@ function DataroomContextNav({ base }: { base: string }) {
         color: "var(--eds-text-tertiary)", letterSpacing: "0.06em",
         textTransform: "uppercase", padding: "6px 8px 4px",
       }}>
-        Datenraum-Tracking
-      </div>
+        Externe Freigabe</div>
       {items.map((item) => {
         const isActive = item.indented
           ? pathname === item.href
@@ -333,14 +332,14 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
   const verwaltungRoutes = [
     `${base}/users`, `${base}/consents`, `${base}/access-requests`,
     `${base}/brand-rules`, `${base}/theme`, `${base}/ai-governance`,
-    `${base}/intelligence`, `${base}/audio`,
+    `${base}/intelligence`, `${base}/audio`, `${base}/document-sharing`,
   ];
   const verwaltungActive = verwaltungRoutes.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 
-  // Sonderfunktionen: /dr routes — only Master sees the context nav there
-  const isDrRoute = pathname.startsWith(`${base}/dr`);
+  // Sonderfunktionen: /document-sharing routes — only Master sees the context nav there
+  const isDrRoute = pathname.startsWith(`${base}/document-sharing`);
 
   // Helper to build FilteredNavLink props
   const flagProps = { featureFlags, isMaster, base };
@@ -423,9 +422,9 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
 
             {/* ── Übungsentwicklung ── */}
             <GroupLabel label="Übungsentwicklung" />
-            <FilteredNavLink routeSegment="modules"          href={`${base}/modules`}          label="Modul-Designer"       {...flagProps} />
-            <FilteredNavLink routeSegment="exercise-library" href={`${base}/exercise-library`} label="Baustein-Bibliothek"  {...flagProps} />
-            <FilteredNavLink routeSegment="data-room"        href={`${base}/data-room`}        label="Fallstudie"           {...flagProps} />
+            <FilteredNavLink routeSegment="exercise-library" href={`${base}/exercise-library`} label="Baustein-Bibliothek"    {...flagProps} />
+            <FilteredNavLink routeSegment="case-studio"      href={`${base}/case-studio`}      label="Fallstudien-Werkstatt"  {...flagProps} />
+            <FilteredNavLink routeSegment="modules"          href={`${base}/modules`}          label="Modul-Designer"         {...flagProps} />
 
             {/* ── Durchführung & Auswertung ── */}
             <GroupLabel label="Durchführung & Auswertung" />
@@ -443,7 +442,8 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
               <FilteredNavLink routeSegment="ai-governance"    href={`${base}/ai-governance`}    label="AI-Governance"         {...flagProps} />
               <FilteredNavLink routeSegment="intelligence"     href={`${base}/intelligence`}      label="Advanced Intelligence" {...flagProps} />
               <FilteredNavLink routeSegment="audio"            href={`${base}/audio`}            label="Audio & Transkription" {...flagProps} />
-              <FilteredNavLink routeSegment="prompt-library"  href={`${base}/prompt-library`}   label="KI-Prompts"            {...flagProps} />
+              <FilteredNavLink routeSegment="prompt-library"    href={`${base}/prompt-library`}    label="KI-Prompts"                  {...flagProps} />
+              <FilteredNavLink routeSegment="document-sharing" href={`${base}/document-sharing`}  label="Externe Dokumentenfreigabe"  {...flagProps} />
             </CollapsibleGroup>
 
             {/* ── Live-Assessments-Liste ── */}

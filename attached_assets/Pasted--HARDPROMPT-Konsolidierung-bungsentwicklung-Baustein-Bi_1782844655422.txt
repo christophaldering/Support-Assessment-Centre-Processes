@@ -1,0 +1,242 @@
+# HARDPROMPT — Konsolidierung „Übungsentwicklung"
+## (Baustein-Bibliothek / Fallstudien-Werkstatt / Modul-Designer)
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden 6 Schritte exakt in der angegebenen Reihenfolge aus.
+Du triffst KEINE eigenen Architektur-Entscheidungen, wo dieser Prompt eine
+Vorgabe macht. Wo etwas nicht eindeutig spezifiziert ist, hältst du an und
+fragst — du erfindest KEINE Lösung. Nach jedem Schritt erstellst du exakt
+den angegebenen Commit, mit exakt dem angegebenen Commit-Message-Text.
+
+ES GIBT KEINE OPTIONALEN TEILSCHRITTE. JEDER PUNKT IST PFLICHT.
+Formulierungen wie „könnte", „ggf.", "optional", "nach Ermessen" kommen in
+diesem Dokument NICHT vor. Wenn du eine Stelle im Code findest, die diesem
+Prompt widerspricht, BRICHST DU NICHT AB und IMPROVISIERST NICHT — du hältst
+an dieser Stelle an und meldest den Konflikt, bevor du weitermachst.
+
+---
+
+## Zielbild (bindend, nicht zur Diskussion)
+
+Drei Bereiche, jeder mit GENAU EINER Verantwortung, KEINE Überschneidung:
+
+1. **Baustein-Bibliothek** — DER EINZIGE Ort im gesamten System, an dem
+   neue, wiederverwendbare Bausteine erstellt werden. Kein anderer Bereich
+   darf eine eigene Erstellungs-UI für Bausteine besitzen.
+2. **Fallstudien-Werkstatt** — gleichrangiger, eigenständiger Top-Level-
+   Bereich (NICHT Unterpunkt von Bibliothek oder Modul-Designer). Einziger
+   Ort zur Erstellung von `CaseStudy`-Datensätzen inkl. zugehöriger
+   Datenraum-Dokumente.
+3. **Modul-Designer** — erstellt NICHTS. Ausschließlich Auswahl, Anpassung
+   und Sequenzierung bestehender Bibliotheks-Bausteine für ein konkretes
+   Assessment.
+
+**Externe Dokumentenfreigabe** (vormals `/admin/dr`) ist VOLLSTÄNDIG
+getrennt von allem oben Genannten und gehört unter „Verwaltung". Diese
+Trennung ist nicht verhandelbar.
+
+## Bindende Tatsachenbasis (geprüft, nicht zu hinterfragen)
+
+- `persistBlueprints()` in `app/w/[workspaceSlug]/admin/modules/page.tsx`
+  schreibt AUSSCHLIESSLICH in `localStorage`. Es existiert KEINE
+  Datenbank-Persistenz für „Erstellte Bausteine" im Modul-Designer. Es gibt
+  NICHTS zu migrieren — diese Daten sind nie zentral gespeichert worden.
+- `PortalDocument` und `DataRoomCategory` haben AKTUELL KEINE Relation zu
+  `CaseStudy`. Diese Relation wird in Schritt 1 verbindlich angelegt.
+- `Exercise` hat AKTUELL KEINE Relation zu `ExerciseLibraryItem`. Diese
+  Relation wird in Schritt 1 verbindlich angelegt.
+- Drei Code-Stellen widersprechen sich heute in ihrem mentalen Modell:
+  `components/shell/ContextPanel.tsx`, `app/master/page.tsx`,
+  `app/landing/`, `app/tour/`, `app/api/tour-pptx/route.ts`. ALLE müssen
+  am Ende konsistent sein — keine Ausnahme.
+- `/dr/[token]` und `/dr/view` sind öffentliche, bereits ausgelieferte
+  Links. Diese beiden Routen ÄNDERST DU NICHT — weder Pfad noch Verhalten.
+- Alte Routen werden ERSATZLOS GELÖSCHT. KEINE Redirects, KEINE
+  Kompatibilitäts-Schicht. Das ist explizit autorisiert.
+
+## Nicht anfassen (absolutes Verbot, keine Ausnahmen)
+
+Auth-System · RBAC · `/comp-bdp` · `/abcd-bdp` · Audio-Pipeline ·
+Report-Generierung (DOCX/PDF/PPTX) · `server/llm/` · Observer-Rating-System ·
+Konsolidierungs-Engine · `/dr/[token]/route.ts` · `/dr/view/route.ts` ·
+bestehende Datensätze in `ExerciseLibraryItem`, `CaseStudy`,
+`PortalDocument` (nur additiv erweitern, NIEMALS löschen oder Daten
+verwerfen).
+
+Wenn eine Änderung in diesem Prompt mit einer Regel in diesem Abschnitt
+kollidiert: STOPP. Nicht ausführen. Konflikt melden.
+
+---
+
+## SCHRITT 1 — Schema-Migration
+
+Führe GENAU diese Änderungen aus, keine zusätzlichen, keine ausgelassen:
+
+1. `DataRoomCategory.caseStudyId String?` + Relation zu `CaseStudy`,
+   `onDelete: SetNull`.
+2. `PortalDocument.caseStudyId String?` + Relation zu `CaseStudy`,
+   `onDelete: SetNull`. `assessmentId` bleibt UNVERÄNDERT bestehen.
+3. `CaseStudy.dataRoomCategories DataRoomCategory[]` und
+   `CaseStudy.portalDocuments PortalDocument[]`.
+4. `Exercise.libraryItemId String?` + Relation zu `ExerciseLibraryItem`,
+   `onDelete: SetNull`.
+5. Migration ausführen. Prisma-Client regenerieren. Build muss danach ohne
+   Typfehler durchlaufen — wenn nicht, STOPP, nicht weitermachen.
+6. Backfill-Script schreiben und ausführen: ALLE bestehenden Varexia-Demo-
+   `DataRoomCategory`- und `PortalDocument`-Einträge erhalten `caseStudyId`
+   der Varexia-`CaseStudy` (`isOverarchingScenario: true`). Existiert diese
+   `CaseStudy` noch nicht, LEGST DU SIE im selben Script an — du fragst
+   nicht nach, du erstellst sie mit plausiblen Varexia-Werten.
+
+**COMMIT (exakter Wortlaut):**
+`Schema: CaseStudy-Relationen für Data-Room-Docs und Exercise-Library-Referenz`
+
+---
+
+## SCHRITT 2 — Fallstudien-Werkstatt verselbstständigen
+
+1. Verschiebe `app/w/[workspaceSlug]/admin/modules/case-study-builder/`
+   VOLLSTÄNDIG nach `app/w/[workspaceSlug]/admin/case-studio/`.
+2. Führe `app/w/[workspaceSlug]/admin/modules/case-study/[caseId]/` und
+   `app/w/[workspaceSlug]/admin/modules/case-study-dataroom/` (inkl.
+   `varexia/`) zu `app/w/[workspaceSlug]/admin/case-studio/[caseId]/` und
+   `.../[caseId]/data-room/` zusammen. Dubletten werden ELIMINIERT — am
+   Ende existiert JEDE Funktion genau EINMAL im Code, nicht zweimal mit
+   leicht unterschiedlichem Stand.
+3. Baue innerhalb der Werkstatt einen Tab „Datenraum-Dokumente", der
+   `DataRoomCategory`/`PortalDocument` GEFILTERT NACH `caseStudyId` der
+   aktuell geöffneten Fallstudie verwaltet. Das ersetzt die alte separate
+   `/admin/data-room`-UI vollständig — diese UI existiert danach NICHT
+   MEHR als eigene Route.
+4. Neue API-Endpunkte:
+   `/case-studies/[caseStudyId]/data-room/categories`,
+   `/case-studies/[caseStudyId]/data-room/documents`.
+5. LÖSCHEN, nicht behalten, nicht auskommentieren:
+   `app/w/[workspaceSlug]/admin/data-room/`,
+   `app/w/[workspaceSlug]/admin/case-study/page.tsx`.
+
+**COMMIT (exakter Wortlaut):**
+`Fallstudien-Werkstatt als eigenständiger Bereich, Datenraum-Dokumente fallstudienbasiert`
+
+---
+
+## SCHRITT 3 — Bibliothek als alleiniger Erstellungsort
+
+1. Erweitere „Neuer Baustein" in `exercise-library/page.tsx` um
+   PFLICHT-optionalen Verweis auf eine `RequirementsAnalysis` als
+   KI-Kontext.
+2. Füge Aktion „Fallstudie erstellen" hinzu → Link auf `/admin/case-studio`.
+3. SERVER-SEITIGE Pflichtfeld-Validierung in
+   `app/api/w/[workspaceSlug]/exercise-library/route.ts` (POST):
+   `scope` und — falls `scope !== "general"` — `clientId` MÜSSEN gesetzt
+   sein. Request OHNE diese Felder wird mit 400 abgelehnt. Das ist eine
+   harte serverseitige Regel, KEINE reine Frontend-Validierung, die sich
+   umgehen lässt.
+4. Filter/Badge „Szenario-Baustein" für Items mit gesetztem `scenarioId`,
+   mit Link zur referenzierten Fallstudie.
+
+**COMMIT (exakter Wortlaut):**
+`Bibliothek: Anforderungsanalyse-Kontext, Fallstudien-Verweis, Scope-Pflichtfeld serverseitig erzwungen`
+
+---
+
+## SCHRITT 4 — Modul-Designer auf reine Assembly reduzieren
+
+1. ENTFERNE VOLLSTÄNDIG aus `modules/page.tsx`: `view`-Modi `"manual"` und
+   `"ai"`, sowie JEDEN Code-Pfad, der `persistBlueprints`/`localStorage`
+   für Bausteine nutzt. Kein Rest-Code, keine toten Funktionen stehen
+   lassen.
+2. Ersetze durch Auswahl-UI gegen
+   `/api/w/[workspaceSlug]/exercise-library` (gefiltert nach
+   Scope/Client/Tags) sowie Szenario-Bausteine (`scenarioId`).
+3. „Übernehmen" MUSS einen echten `Exercise`-Datensatz erzeugen via
+   `POST /api/w/[workspaceSlug]/assessments/[assessmentId]/exercises`,
+   mit `libraryItemId` gesetzt auf das Quell-Item. Adaptation Notes werden
+   als Override AUF DEM EXERCISE-DATENSATZ gespeichert, NIEMALS auf dem
+   Bibliotheks-Original — das Original bleibt für andere Assessments
+   unverändert wiederverwendbar.
+4. „KI ausarbeiten" aus einem Requirement-Vorschlag MUSS auf
+   `/admin/exercise-library?createFrom=requirement&...` verlinken. Es gibt
+   KEINE inline KI-Erzeugung mehr im Modul-Designer.
+5. Benenne „Erstellte Bausteine" um in „Übernommene Bausteine", gespeist
+   AUSSCHLIESSLICH aus echten `Exercise`-Datensätzen via
+   `GET .../assessments/[assessmentId]/exercises`.
+
+**COMMIT (exakter Wortlaut):**
+`Modul-Designer: reine Assembly aus Bibliothek, echte Exercise-Persistenz statt localStorage`
+
+---
+
+## SCHRITT 5 — Navigation, Feature-Flags, Querverweise
+
+1. `lib/feature-flags.ts`:
+   - `case_studio`-Label → `"Fallstudien-Werkstatt"`.
+   - Neuer Eintrag: `document_sharing: { label: "Externe Dokumentenfreigabe", defaultReleased: true }`.
+   - `NAV_MODULE_MAP`: Einträge `"case-study-builder"` und `"data-room"`
+     ENTFERNEN. Ersetzen durch `"case-studio": "case_studio"` und
+     `"document-sharing": "document_sharing"`.
+2. `components/shell/ContextPanel.tsx`:
+   - Gruppe „Übungsentwicklung": EXAKTE Reihenfolge
+     Baustein-Bibliothek → Fallstudien-Werkstatt (`/case-studio`) →
+     Modul-Designer. Keine andere Reihenfolge.
+   - Verweis auf `/admin/dr` AUS „Übungsentwicklung" ENTFERNEN. Stattdessen
+     unter `CollapsibleGroup label="Verwaltung"`:
+     `Externe Dokumentenfreigabe` → `${base}/document-sharing`.
+3. `app/w/[workspaceSlug]/admin/dr/` → VOLLSTÄNDIG umbenennen nach
+   `app/w/[workspaceSlug]/admin/document-sharing/`. Jedes Vorkommen von
+   „Datenraum-Zugänge" im UI-Text → „Externe Freigabe-Links". JEDES
+   Vorkommen von „Datenraum" im Kontext dieser Funktion entfernen — KEIN
+   Restvorkommen des Wortes „Datenraum" außerhalb von Fallstudien-Werkstatt
+   und Kandidatenportal ist nach diesem Schritt zulässig.
+   `app/dr/[token]/route.ts` und `app/dr/view/route.ts`: NICHT ANFASSEN.
+4. `app/master/page.tsx`: `href` für `case-studio` → `/w/${WS}/admin/case-studio`.
+5. Durchsuche `app/landing/`, `app/tour/`, `app/api/tour-pptx/` VOLLSTÄNDIG
+   nach `case-study-builder`, `/admin/data-room`, `/admin/dr`. JEDEN Treffer
+   auf den neuen Pfad umstellen — keinen auslassen, auch nicht in
+   Kommentaren oder Strings, die "unwichtig" erscheinen.
+6. LÖSCHEN: `app/w/[workspaceSlug]/admin/case-study/page.tsx` und alle in
+   Schritt 2 verschobenen Alt-Ordner, sofern noch vorhanden.
+
+**COMMIT (exakter Wortlaut):**
+`Navigation, Feature-Flags und alle Querverweise auf neue Struktur umgestellt`
+
+---
+
+## SCHRITT 6 — Validierung (alle Punkte MÜSSEN bestanden werden)
+
+Führe JEDEN der folgenden Checks aus und bestätige explizit PASS/FAIL für
+jeden einzelnen Punkt. Bei JEDEM FAIL: STOPP, beheben, erneut prüfen.
+Du erklärst diesen Schritt NICHT für abgeschlossen, solange auch nur ein
+Punkt FAIL ist.
+
+1. Bibliothek → Baustein anlegen (mit Anforderungsanalyse-Kontext) →
+   Eintrag erscheint in Liste. PASS/FAIL.
+2. Bibliothek → Fallstudie erstellen → Werkstatt → Datenraum-Dokument
+   hochladen → erscheint korrekt gefiltert in der Werkstatt. `/admin/data-room`
+   liefert 404. PASS/FAIL.
+3. Modul-Designer → Baustein übernehmen → DB-Check zeigt echten
+   `Exercise`-Datensatz mit gesetztem `libraryItemId`, NICHT localStorage.
+   PASS/FAIL.
+4. `/candidate/data-room` weiterhin funktionsfähig mit den per Backfill
+   verlinkten Varexia-Dokumenten. PASS/FAIL.
+5. `/admin/document-sharing` erreichbar. Bestehender `/dr/[token]`-Link
+   aus Seed-Daten weiterhin gültig und unverändert. PASS/FAIL.
+6. `npm run lint` — null Fehler. PASS/FAIL.
+7. `npm run build` — null Fehler. PASS/FAIL.
+8. Volltextsuche nach `"Datenraum-Zugänge"`, `case-study-builder`,
+   `/admin/data-room` über das GESAMTE Repository (nicht nur app/) liefert
+   NULL Treffer außerhalb von Git-Historie. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE Punkte PASS):**
+`Übungsentwicklung-Umbau abgeschlossen und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Nach Commit 6 lieferst du eine kurze Zusammenfassung: welche Dateien
+gelöscht, welche neu angelegt, welche Migration ausgeführt wurde, und eine
+explizite Liste aller 8 Validierungspunkte mit PASS/FAIL. Keine
+Selbsteinschätzung wie „sollte funktionieren" — nur verifizierte Ergebnisse
+aus tatsächlich ausgeführten Checks.

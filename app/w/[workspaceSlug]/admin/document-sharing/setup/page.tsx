@@ -83,7 +83,7 @@ export default function DataRoomSetupPage() {
 
   const loadStatus = () => {
     setLoadingStatus(true);
-    fetch(`/api/w/${params.workspaceSlug}/admin/dr/file-status`)
+    fetch(`/api/w/${params.workspaceSlug}/admin/document-sharing/file-status`)
       .then((r) => r.json())
       .then((d) => { if (d.ok) setStatus(d); })
       .catch(() => {})
@@ -95,8 +95,8 @@ export default function DataRoomSetupPage() {
   return (
     <div style={S.wrap}>
       <nav style={S.breadcrumb}>
-        <button onClick={() => router.push(`/w/${params.workspaceSlug}/admin/dr`)} style={S.backBtn}>
-          ← Datenraum-Zugänge
+        <button onClick={() => router.push(`/w/${params.workspaceSlug}/admin/document-sharing`)} style={S.backBtn}>
+          ← Externe Freigabe-Links
         </button>
       </nav>
 
@@ -290,11 +290,11 @@ export default function DataRoomSetupPage() {
           <li>
             Einen Test-Link anlegen:{" "}
             <button
-              onClick={() => router.push(`/w/${params.workspaceSlug}/admin/dr`)}
+              onClick={() => router.push(`/w/${params.workspaceSlug}/admin/document-sharing`)}
               style={S.linkBtn}
               data-testid="button-go-create"
             >
-              → Datenraum-Zugänge öffnen
+              → Externe Freigabe-Links öffnen
             </button>
           </li>
           <li>Den generierten Link in einem neuen Fenster/Tab öffnen</li>
@@ -302,7 +302,7 @@ export default function DataRoomSetupPage() {
           <li>
             Zurück zur Auswertung:{" "}
             <button
-              onClick={() => router.push(`/w/${params.workspaceSlug}/admin/dr`)}
+              onClick={() => router.push(`/w/${params.workspaceSlug}/admin/document-sharing`)}
               style={S.linkBtn}
               data-testid="button-go-eval"
             >
@@ -359,7 +359,7 @@ export default function DataRoomSetupPage() {
           ))}
         </div>
         <button
-          onClick={() => router.push(`/w/${params.workspaceSlug}/admin/dr`)}
+          onClick={() => router.push(`/w/${params.workspaceSlug}/admin/document-sharing`)}
           style={S.btnPrimary}
           data-testid="button-open-dashboard"
         >

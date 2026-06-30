@@ -91,7 +91,7 @@ export default function DataRoomLinksPage() {
 
   const loadLinks = () => {
     setLoading(true);
-    fetch(`/api/w/${params.workspaceSlug}/admin/dr/links`)
+    fetch(`/api/w/${params.workspaceSlug}/admin/document-sharing/links`)
       .then((r) => r.json())
       .then((d) => setLinks(d.links || []))
       .catch(() => {})
@@ -99,7 +99,7 @@ export default function DataRoomLinksPage() {
   };
 
   const loadLive = () => {
-    fetch(`/api/w/${params.workspaceSlug}/admin/dr/links/live`)
+    fetch(`/api/w/${params.workspaceSlug}/admin/document-sharing/links/live`)
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) {
@@ -132,7 +132,7 @@ export default function DataRoomLinksPage() {
     setCreating(true);
     const emailAtCreation = form.email;
     try {
-      const res = await fetch(`/api/w/${params.workspaceSlug}/admin/dr/links`, {
+      const res = await fetch(`/api/w/${params.workspaceSlug}/admin/document-sharing/links`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -153,7 +153,7 @@ export default function DataRoomLinksPage() {
 
   const handleRevoke = async (id: string) => {
     if (!confirm("Diesen Link sperren? Das kann nicht rückgängig gemacht werden.")) return;
-    await fetch(`/api/w/${params.workspaceSlug}/admin/dr/links`, {
+    await fetch(`/api/w/${params.workspaceSlug}/admin/document-sharing/links`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
@@ -173,7 +173,7 @@ export default function DataRoomLinksPage() {
     setSendingId(id);
     try {
       const res = await fetch(
-        `/api/w/${params.workspaceSlug}/admin/dr/links/${id}/send`,
+        `/api/w/${params.workspaceSlug}/admin/document-sharing/links/${id}/send`,
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }
       );
       const data = await res.json();
@@ -195,7 +195,7 @@ export default function DataRoomLinksPage() {
       <header style={S.header}>
         <div>
           <div style={S.eyebrow}>ConVia · Magic-Link-Verwaltung</div>
-          <h1 style={S.h1}>Datenraum-Zugänge</h1>
+          <h1 style={S.h1}>Externe Freigabe-Links</h1>
           <p style={S.sub}>Erstelle tokenisierte Einladungslinks für Kandidaten — kein Passwort nötig.</p>
         </div>
       </header>
@@ -242,7 +242,7 @@ export default function DataRoomLinksPage() {
                   <span style={S.liveMetaChip}>{s.dataRoomSlug}</span>
                 </div>
                 <button
-                  onClick={() => router.push(`/w/${params.workspaceSlug}/admin/dr/${s.linkId}`)}
+                  onClick={() => router.push(`/w/${params.workspaceSlug}/admin/document-sharing/${s.linkId}`)}
                   style={S.liveViewBtn}
                   data-testid={`live-view-${s.linkId}`}
                 >
@@ -415,7 +415,7 @@ export default function DataRoomLinksPage() {
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button
-                      onClick={() => router.push(`/w/${params.workspaceSlug}/admin/dr/${l.id}`)}
+                      onClick={() => router.push(`/w/${params.workspaceSlug}/admin/document-sharing/${l.id}`)}
                       style={S.btnSmall}
                       data-testid={`button-view-${l.id}`}
                     >

@@ -11,7 +11,7 @@ export const MODULE_REGISTRY: Record<string, { label: string; defaultReleased: b
   requirements: { label: "Anforderungsanalyse", defaultReleased: true },
   exercise_library: { label: "Baustein-Bibliothek", defaultReleased: true },
   modules: { label: "Modul-Designer", defaultReleased: true },
-  case_studio: { label: "Case-Studio / Fallstudie", defaultReleased: true },
+  case_studio: { label: "Fallstudien-Werkstatt", defaultReleased: true },
   observation_sheets: { label: "Beobachtungsbogen-Tool", defaultReleased: true },
   analytics: { label: "Analytics & Berichte", defaultReleased: true },
   brand_rules: { label: "Corporate Design", defaultReleased: true },
@@ -25,6 +25,7 @@ export const MODULE_REGISTRY: Record<string, { label: string; defaultReleased: b
   ai_governance: { label: "AI-Governance", defaultReleased: true },
   prompt_library: { label: "KI-Prompts", defaultReleased: true },
   comparison: { label: "Gegenüberstellung", defaultReleased: true },
+  document_sharing: { label: "Externe Dokumentenfreigabe", defaultReleased: true },
 };
 
 export const NAV_MODULE_MAP: Record<string, string> = {
@@ -32,8 +33,8 @@ export const NAV_MODULE_MAP: Record<string, string> = {
   requirements: "requirements",
   "exercise-library": "exercise_library",
   modules: "modules",
-  "case-study-builder": "case_studio",
-  "data-room": "case_studio",
+  "case-studio": "case_studio",
+  "document-sharing": "document_sharing",
   "observation-sheets": "observation_sheets",
   analytics: "analytics",
   "brand-rules": "brand_rules",

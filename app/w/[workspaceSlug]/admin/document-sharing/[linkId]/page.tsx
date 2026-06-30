@@ -71,7 +71,7 @@ export default function DataRoomEvaluationPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/w/${params.workspaceSlug}/admin/dr/links/${params.linkId}/events`)
+    fetch(`/api/w/${params.workspaceSlug}/admin/document-sharing/links/${params.linkId}/events`)
       .then((r) => r.json())
       .then((d) => {
         setEvents(d.events || []);
@@ -122,7 +122,7 @@ export default function DataRoomEvaluationPage() {
   return (
     <div style={S.wrap}>
       <nav style={S.breadcrumb}>
-        <button onClick={() => router.push(`/w/${params.workspaceSlug}/admin/dr`)} style={S.backBtn}>
+        <button onClick={() => router.push(`/w/${params.workspaceSlug}/admin/document-sharing`)} style={S.backBtn}>
           ← Alle Links
         </button>
       </nav>
