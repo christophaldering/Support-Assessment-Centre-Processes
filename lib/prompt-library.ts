@@ -239,7 +239,9 @@ export type PromptSlotKey =
   | "generate_report"
   | "generate_case_study"
   | "plan_case_study"
-  | "parse_uploaded_case_study";
+  | "parse_uploaded_case_study"
+  | "anonymize_report_text"
+  | "extract_report_style_profile";
 
 export interface PromptSlot {
   key: PromptSlotKey;
@@ -247,6 +249,38 @@ export interface PromptSlot {
   description: string;
   defaultPrompt: string;
 }
+
+export const DEFAULT_ANONYMIZE_REPORT_PROMPT = `Du bist ein Datenschutz-Experte. Deine Aufgabe: Entferne aus dem folgenden Gutachten-Text JEDEN identifizierenden Inhalt vollständig.
+
+Zu entfernen (ersetze durch generische Platzhalter in eckigen Klammern):
+- Personennamen → [NAME]
+- Firmennamen, Organisationen → [UNTERNEHMEN]
+- Genaue Datumsangaben → [DATUM]
+- Exakte Positionsbezeichnungen (sofern re-identifizierend) → [POSITION]
+- Exakte Zahlenwerte (Umsatz, Gehalt, etc.) → [BETRAG]
+- Ortsnamen (sofern re-identifizierend) → [ORT]
+- Sonstige re-identifizierende Details → [DETAIL]
+
+Gib NUR den bereinigten Text zurück. Keine Kommentare, keine Erklärungen, kein JSON. Nur der bereinigte Fließtext.`;
+
+export const DEFAULT_EXTRACT_STYLE_PROFILE_PROMPT = `Du bist ein Experte für Sprach- und Stilanalyse von Führungskräfte-Gutachten. Analysiere den folgenden (bereits anonymisierten) Gutachten-Text und extrahiere ein strukturiertes Stilprofil.
+
+WICHTIG:
+- Gib AUSSCHLIESSLICH valides JSON zurück — kein Fließtext, keine Erklärungen außerhalb des JSON
+- Keine wörtlichen Zitate aus dem Original, die länger als 15 Wörter sind
+- Abstrahiere Muster und Formulierungslogiken, zitiere NICHT den Originaltext
+
+Das JSON MUSS exakt diese Struktur haben:
+{
+  "tonality": "<Beschreibung der Gesamttonalität — z.B. sachlich-distanziert, wertschätzend-konstruktiv, direktiv-klar>",
+  "sentenceLength": "<Beschreibung typischer Satzlänge und -komplexität>",
+  "hedgingPhrases": ["<generisches Formulierungsmuster 1>", "<Muster 2>", "<Muster 3>"],
+  "structurePattern": ["<Inhaltlicher Baustein 1>", "<Baustein 2>", "<Baustein 3>"],
+  "strengthsLanguagePattern": "<Beschreibung wie Stärken sprachlich eingeführt und formuliert werden>",
+  "developmentAreaLanguagePattern": "<Beschreibung wie Entwicklungsfelder sprachlich eingeführt und formuliert werden>"
+}
+
+Antworte NUR mit dem JSON-Objekt.`;
 
 export const PROMPT_SLOTS: Record<PromptSlotKey, PromptSlot> = {
   generate_report: {
@@ -276,6 +310,20 @@ export const PROMPT_SLOTS: Record<PromptSlotKey, PromptSlot> = {
     description:
       "System-Prompt für das Auswerten und Überführen eines hochgeladenen Dokuments in das standardisierte Fallstudien-Format.",
     defaultPrompt: DEFAULT_UPLOAD_PARSE_PROMPT,
+  },
+  anonymize_report_text: {
+    key: "anonymize_report_text",
+    label: "Gutachten-Text anonymisieren",
+    description:
+      "System-Prompt für die vollständige Entfernung identifizierender Inhalte aus einem Beispielgutachten. Gibt ausschließlich den bereinigten Text zurück.",
+    defaultPrompt: DEFAULT_ANONYMIZE_REPORT_PROMPT,
+  },
+  extract_report_style_profile: {
+    key: "extract_report_style_profile",
+    label: "Stilprofil aus Gutachten extrahieren",
+    description:
+      "System-Prompt für die Extraktion eines strukturierten JSON-Stilprofils (Tonalität, Satzbau, Formulierungsmuster) aus einem anonymisierten Beispielgutachten.",
+    defaultPrompt: DEFAULT_EXTRACT_STYLE_PROFILE_PROMPT,
   },
 };
 

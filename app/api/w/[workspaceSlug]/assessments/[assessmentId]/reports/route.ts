@@ -177,13 +177,34 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
           )
           .join("\n");
 
+        // Schritt 3: Stilreferenz aus aktiven ReportTemplates (max. 3, zuletzt aktualisiert)
+        const activeStyleTemplates = await prisma.reportTemplate.findMany({
+          where: {
+            workspaceId: workspace.id,
+            reportType: "gutachten",
+            useForStyleGuidance: true,
+            analysisStatus: "analyzed",
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 3,
+        });
+
+        let resolvedSystemPrompt = await resolveSystemPrompt(workspace.id, "generate_report", PROMPT_SLOTS.generate_report.defaultPrompt);
+        if (activeStyleTemplates.length > 0) {
+          const styleBlock = activeStyleTemplates
+            .map((t) => JSON.stringify(t.styleRulesJson, null, 2))
+            .join("\n---\n");
+          resolvedSystemPrompt += `\n\n--- STILREFERENZ (abstrahiert, keine Originalinhalte) ---\n${styleBlock}`;
+          aiSections.push("style_reference_used");
+        }
+
         const llmResult = await generateLLMOutput({
           featureName: "report_generation",
           taskName: "generate_report",
           route: "/api/w/[workspaceSlug]/assessments/[assessmentId]/reports",
           input: `Kandidat: ${candidate.name}\nAssessment: ${assessment.name}\n\nKompetenzwerte:\n${scoresText}\n\nBitte erstelle konkrete Entwicklungsempfehlungen.`,
           options: {
-            systemPrompt: await resolveSystemPrompt(workspace.id, "generate_report", PROMPT_SLOTS.generate_report.defaultPrompt),
+            systemPrompt: resolvedSystemPrompt,
             maxTokens: 2048,
           },
         });

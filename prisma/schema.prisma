@@ -562,10 +562,13 @@ model ReportTemplate {
   isAnonymized        Boolean  @default(false) @map("is_anonymized")
   structureJson       Json?    @map("structure_json")
   styleRulesJson      Json?    @map("style_rules_json")
-  analysisStatus      String   @default("pending") @map("analysis_status")
-  status              String   @default("draft")
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+  analysisStatus                String    @default("pending") @map("analysis_status")
+  useForStyleGuidance           Boolean   @default(false) @map("use_for_style_guidance")
+  anonymizationConfirmedById    String?   @map("anonymization_confirmed_by_id")
+  anonymizationConfirmedAt      DateTime? @map("anonymization_confirmed_at")
+  status                        String    @default("draft")
+  createdAt                     DateTime  @default(now()) @map("created_at")
+  updatedAt                     DateTime  @updatedAt @map("updated_at")
 
   workspace           Workspace @relation(fields: [workspaceId], references: [id])
 

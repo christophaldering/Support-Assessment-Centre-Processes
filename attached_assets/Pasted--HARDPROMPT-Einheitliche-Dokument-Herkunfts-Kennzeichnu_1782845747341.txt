@@ -1,0 +1,224 @@
+# HARDPROMPT — Einheitliche Dokument-Herkunfts-Kennzeichnung
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden Schritte exakt in der angegebenen Reihenfolge aus.
+Du triffst KEINE eigenen Architektur-Entscheidungen, wo dieser Prompt eine
+Vorgabe macht. Bei Unklarheit: STOPP, fragen — NICHT improvisieren. Nach
+jedem Schritt erstellst du exakt den angegebenen Commit, mit exakt dem
+angegebenen Commit-Message-Text. Formulierungen wie „könnte", „ggf.",
+„optional", „nach Ermessen" kommen in diesem Dokument NICHT vor — jeder
+Punkt ist Pflicht.
+
+---
+
+## Zielbild (bindend)
+
+Jedes Dokument/Artefakt, das irgendwo in der Plattform angezeigt wird,
+zeigt EINEN von drei einheitlichen Herkunfts-Zuständen an:
+
+- **BEREITGESTELLT** — reiner menschlicher Upload, unverändert.
+- **ABGELEITET** — menschlicher Upload, von der KI/System aufbereitet,
+  analysiert oder transformiert.
+- **GENERIERT** — vollständig KI/System-erzeugt, kein menschlicher
+  Quelltext.
+
+DIES IST AUSDRÜCKLICH KEINE SCHEMA-MIGRATION der bestehenden Datei-Felder
+(`objectPath`, `sourceFilePath`, `originalFileKey`, `fileObjectPath`
+bleiben UNVERÄNDERT in Namen und Bedeutung bestehen). Stattdessen wird EINE
+zentrale Mapping-Schicht gebaut, die aus den bestehenden, uneinheitlichen
+Feldern pro Modell den einheitlichen Status ableitet, plus EINE geteilte
+UI-Komponente, die diesen Status überall gleich darstellt.
+
+## Bindende Tatsachenbasis (geprüft, nicht zu hinterfragen)
+
+Folgende Modelle und Felder existieren HEUTE so im Schema — du verifizierst
+sie vor Beginn gegen den aktuellen Stand von `prisma/schema.prisma` und
+hältst an, falls ein Feld nicht mehr existiert oder umbenannt wurde:
+
+| Modell | relevante Felder | Pfad-Feldname |
+|---|---|---|
+| `Document` | (keine Origin-Felder) | `objectPath` |
+| `AudioRecording` | (keine Origin-Felder) | `objectPath` |
+| `Report` | (keine Origin-Felder, Modell ist konzeptionell immer Output) | `objectPath` |
+| `ReportTemplate` | `isAnonymized`, `analysisStatus`, `useForStyleGuidance` (aus vorherigem Hardprompt) | `sourceFilePath` |
+| `RequirementsAnalysis` | `inputType`, `transcript`, `proposal` (Json) | `objectPath` |
+| `CompetencyModel` | `sourceType` | (kein Pfadfeld, Inhalt in DB) |
+| `WorkspaceStyleGuide` | `sourceType` | `fileObjectPath` |
+| `ExerciseLibraryItem` | `sourceContext`, `basedOnId` | `originalFileKey` |
+| `ObservationSheet` | `aiGenerated` | `fileName` |
+| `ObservationSheetTemplate` | `aiGenerated` | `originalFileKey` |
+| `CaseStudy` | `sourceType`, `aiGenerated` | `sourceFilePath` |
+| `PortalDocument` | (keine Origin-Felder) | `objectPath` |
+| `Assessment`, `Exercise`, `ObserverRating`, `PredictiveProfile`, `DevelopmentBlueprint`, `DiagnosticHypothesis` | `aiGenerated` | — |
+
+Besonderheit `RequirementsAnalysis`: EIN Datensatz enthält GLEICHZEITIG
+bereitgestellten Input (`objectPath`/`transcript`) UND generierten Output
+(`proposal`). Hier wird der Status NICHT auf Datensatz-Ebene, sondern PRO
+ANZEIGE-KONTEXT bestimmt (siehe Schritt 2, Sonderfall).
+
+## Nicht anfassen (absolutes Verbot, keine Ausnahmen)
+
+Bestehende Feldnamen in `prisma/schema.prisma` (KEINE Umbenennung,
+KEINE neue Migration an diesen Feldern) · bestehende Werte in
+`sourceType`/`inputType`/`aiGenerated` (nur LESEN, nicht überschreiben) ·
+Auth-System · RBAC · Object-Storage-Modul · `server/llm/adapter.ts` ·
+sämtliche in vorherigen Hardprompts beschriebene Funktionen
+(Übungsentwicklung-Umbau, Stilreferenz-Pipeline) — diese Direktive baut
+NUR zusätzliche Anzeige-Logik, verändert KEINE bestehende Geschäftslogik.
+
+Wenn eine Änderung in diesem Prompt mit einer Regel hier kollidiert: STOPP.
+Konflikt melden, nicht ausführen.
+
+---
+
+## SCHRITT 1 — Zentrales Origin-Enum und Adapter
+
+1. Neue Datei `lib/document-origin.ts`. Exportiere:
+   ```
+   export type DocumentOrigin = "PROVIDED" | "DERIVED" | "GENERATED";
+   ```
+2. In derselben Datei: EINE Adapter-Funktion PRO Modell aus der Tabelle
+   oben, exakt benannt nach Muster `resolveOriginFor<Modellname>`, z. B.
+   `resolveOriginForReportTemplate(template: { isAnonymized: boolean; analysisStatus: string }): DocumentOrigin`.
+3. Mapping-Regeln, GENAU so umsetzen, keine eigene Interpretation:
+   - `Document`, `AudioRecording`, `PortalDocument` → IMMER `"PROVIDED"`.
+   - `Report` → IMMER `"GENERATED"`.
+   - `ReportTemplate` → `analysisStatus === "analyzed"` UND `isAnonymized === true`
+     → `"DERIVED"`. Sonst `"PROVIDED"`.
+   - `CompetencyModel`, `WorkspaceStyleGuide`, `CaseStudy` (Feld `sourceType`)
+     → Wert `"manual"` oder `"upload"` → `"PROVIDED"`. Wert `"ai"` →
+     `"GENERATED"`. Jeder andere Wert (z. B. enthält Substring `"upload"`
+     UND es existiert ein zugehöriges `aiGenerated === true`/
+     `analysisStatus === "analyzed"`-Signal im selben Modell) → `"DERIVED"`.
+     Trifft keine Regel zu: STOPP, exakten Wert im Code dokumentieren und
+     melden statt zu raten.
+   - `ExerciseLibraryItem` → `basedOnId !== null` UND `originalFileKey !== null`
+     → `"DERIVED"`. Nur `originalFileKey !== null` → `"PROVIDED"`. Keins
+     von beiden → `"GENERATED"`.
+   - `ObservationSheet`, `ObservationSheetTemplate` →
+     `originalFileKey !== null/fileName !== null` UND `aiGenerated === true`
+     → `"DERIVED"`. Nur Datei vorhanden, `aiGenerated === false` →
+     `"PROVIDED"`. Keine Datei, `aiGenerated === true` → `"GENERATED"`.
+   - `Assessment`, `Exercise`, `ObserverRating` → `aiGenerated === true`
+     → `"GENERATED"`, sonst `"PROVIDED"`.
+   - `PredictiveProfile`, `DevelopmentBlueprint`, `DiagnosticHypothesis`
+     → IMMER `"GENERATED"` (Default `aiGenerated: true`, kein
+     Gegenbeispiel im Schema vorhanden).
+4. Jede Funktion MUSS vollständig typisiert sein (keine `any`-Parameter),
+   JSDoc-Kommentar mit Verweis auf die Quellfelder.
+
+**COMMIT (exakter Wortlaut):**
+`lib/document-origin.ts: zentrales Origin-Enum und Modell-Adapter`
+
+---
+
+## SCHRITT 2 — Geteilte UI-Komponente
+
+1. Neue Datei `components/shared/DocumentOriginBadge.tsx`. Props:
+   `{ origin: DocumentOrigin; size?: "sm" | "md" }`.
+2. Darstellung, GENAU diese drei Zustände, keine weiteren Varianten:
+   - `"PROVIDED"` → Label „Hochgeladen", neutrale/graue Badge-Farbe.
+   - `"DERIVED"` → Label „KI-aufbereitet", Bernstein/Amber-Badge-Farbe
+     (konsistent mit bestehendem `ANALYSIS_BADGES`-Muster in
+     `app/w/[workspaceSlug]/admin/gutachten/page.tsx` — dieselbe
+     Farbpalette wiederverwenden, keine neue einführen).
+   - `"GENERATED"` → Label „KI-generiert", Lila/Purple-Badge-Farbe
+     (konsistent mit bestehendem `bg-purple-50 text-purple-600`-Muster in
+     derselben Datei).
+3. Komponente ist rein präsentational — KEINE eigene Datenabfrage, KEINE
+   API-Calls. Empfängt `origin` immer von außen, berechnet via Schritt-1-
+   Adapter-Funktionen am Aufrufort.
+4. Sonderfall `RequirementsAnalysis`: an Anzeigeorten, die SOWOHL Input
+   (Audiodatei/Transkript) ALS AUCH Output (`proposal`) gleichzeitig
+   zeigen, werden ZWEI Badges nebeneinander gerendert — eine für den
+   Input-Teil (`"PROVIDED"`, fest, da `RequirementsAnalysis` immer auf
+   menschlichem Input basiert), eine für den Output-Teil (`"GENERATED"`,
+   fest, sobald `proposal !== null`). KEIN gemeinsamer Einzel-Badge für
+   diesen Datensatz-Typ.
+
+**COMMIT (exakter Wortlaut):**
+`components/shared/DocumentOriginBadge.tsx: geteilte Herkunfts-Badge-Komponente`
+
+---
+
+## SCHRITT 3 — Einbindung an allen Anzeigeorten
+
+Binde `DocumentOriginBadge` GENAU an folgenden Stellen ein — jede Zeile ist
+Pflicht, keine darf ausgelassen werden:
+
+1. `app/w/[workspaceSlug]/admin/gutachten/page.tsx`, `TemplateCard` —
+   Badge für `ReportTemplate` ergänzen (zusätzlich zu bestehenden Badges,
+   nicht ersetzend).
+2. `app/w/[workspaceSlug]/admin/exercise-library/page.tsx` — Badge pro
+   Listeneintrag für `ExerciseLibraryItem`.
+3. `app/w/[workspaceSlug]/admin/case-studio/` (Fallstudien-Werkstatt,
+   Pfad gemäß vorherigem Hardprompt „Übungsentwicklung-Umbau" — falls
+   dieser noch nicht ausgeführt wurde, an der AKTUELLEN Stelle
+   `app/w/[workspaceSlug]/admin/modules/case-study-builder/page.tsx`
+   einbinden und vermerken, dass nach Ausführung des anderen Hardprompts
+   eine Pfad-Anpassung nötig ist) — Badge für `CaseStudy`.
+4. `app/w/[workspaceSlug]/admin/observation-sheets/` — Badge pro
+   `ObservationSheet`/`ObservationSheetTemplate`-Eintrag.
+5. `app/w/[workspaceSlug]/admin/requirements/` — Badge-Paar (Input/Output,
+   siehe Schritt 2 Punkt 4) pro `RequirementsAnalysis`-Eintrag.
+6. `app/w/[workspaceSlug]/admin/reports/` (Berichte-Export-Übersicht) —
+   Badge `"GENERATED"` pro `Report`-Eintrag (fest, kein Adapter-Aufruf
+   nötig, da Report immer generiert ist — aber Komponente trotzdem nutzen,
+   nicht eigenes Label bauen).
+7. `app/w/[workspaceSlug]/admin/audio/` — Badge `"PROVIDED"` pro
+   `AudioRecording`-Eintrag.
+8. `app/w/[workspaceSlug]/admin/theme/` (Corporate Design /
+   `WorkspaceStyleGuide`-Upload-Liste) — Badge pro Eintrag.
+9. `app/w/[workspaceSlug]/admin/competencies/` — Badge pro
+   `CompetencyModel`-Eintrag.
+
+An KEINER der neun Stellen wird bestehendes Markup ersetzt oder entfernt —
+die Badge wird ADDITIV neben/unter den bestehenden Status-Anzeigen
+platziert.
+
+**COMMIT (exakter Wortlaut):**
+`DocumentOriginBadge an allen neun Anzeigeorten eingebunden`
+
+---
+
+## SCHRITT 4 — Validierung (alle Punkte MÜSSEN PASS sein)
+
+Führe JEDEN Check aus, bestätige PASS/FAIL einzeln. Bei FAIL: STOPP,
+beheben, erneut prüfen.
+
+1. Für jedes der 13 Modelle aus der Tabelle in der Tatsachenbasis: mindestens
+   ein Testdatensatz pro relevantem `DocumentOrigin`-Zustand erzeugen
+   (soweit im Modell möglich) und visuell verifizieren, dass die korrekte
+   Badge erscheint. PASS/FAIL pro Modell, einzeln aufgelistet.
+2. `RequirementsAnalysis`-Sonderfall: Badge-Paar erscheint korrekt, NICHT
+   ein einzelner irreführender Badge. PASS/FAIL.
+3. Keine bestehende Funktionalität an den neun Einbindungsorten aus
+   Schritt 3 wurde verändert (nur additiv ergänzt) — Stichproben-Vergleich
+   Vorher/Nachher. PASS/FAIL.
+4. `lib/document-origin.ts` enthält KEINE `any`-Typen. PASS/FAIL.
+5. `npm run lint` — null Fehler. PASS/FAIL.
+6. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE Punkte PASS):**
+`Dokument-Herkunfts-Kennzeichnung abgeschlossen und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Nach finalem Commit: kurze Zusammenfassung — welche Dateien neu, welche
+Einbindungsorte tatsächlich umgesetzt (alle neun einzeln bestätigen).
+Explizite Liste aller Validierungspunkte mit PASS/FAIL, inkl. der
+13 Modell-Einzelchecks aus Punkt 1. Keine Selbsteinschätzung wie „sollte
+funktionieren" — nur verifizierte Ergebnisse aus tatsächlich ausgeführten
+Checks.
+
+## Hinweis für künftige Hardprompts (nicht Teil dieser Ausführung)
+
+Die tiefere Vereinheitlichung der Pfad-Feldnamen
+(`objectPath`/`sourceFilePath`/`originalFileKey`/`fileObjectPath` auf
+einen gemeinsamen Namen zusammenführen) ist bewusst NICHT Teil dieser
+Direktive. Das ist ein separates, größeres Migrationsprojekt mit höherem
+Risiko und vorwiegend internem Nutzen — wird nur auf explizite Anweisung
+als eigener Hardprompt aufgesetzt.

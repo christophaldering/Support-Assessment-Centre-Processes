@@ -16,6 +16,9 @@ interface ReportTemplate {
   structureJson: Record<string, unknown> | null;
   styleRulesJson: Record<string, unknown> | null;
   analysisStatus: string;
+  useForStyleGuidance: boolean;
+  anonymizationConfirmedById: string | null;
+  anonymizationConfirmedAt: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -49,7 +52,9 @@ const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }>
 const ANALYSIS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
   pending: { bg: "bg-slate-50", text: "text-slate-500", label: "Ausstehend" },
   processing: { bg: "bg-blue-50", text: "text-blue-600", label: "In Bearbeitung" },
+  extracting: { bg: "bg-blue-50", text: "text-blue-600", label: "Extrahiere…" },
   completed: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Abgeschlossen" },
+  analyzed: { bg: "bg-teal-50", text: "text-teal-700", label: "Analysiert ✓" },
   failed: { bg: "bg-red-50", text: "text-red-600", label: "Fehlgeschlagen" },
 };
 
@@ -232,7 +237,7 @@ function ReportTypeSection({
 
       <div className="space-y-4">
         {templates.map((template) => (
-          <TemplateCard key={template.id} template={template} workspaceSlug={workspaceSlug} />
+          <TemplateCard key={template.id} template={template} workspaceSlug={workspaceSlug} onRefresh={fetchTemplates} />
         ))}
       </div>
     </div>
@@ -389,10 +394,107 @@ function UploadForm({
   );
 }
 
-function TemplateCard({ template, workspaceSlug }: { template: ReportTemplate; workspaceSlug: string }) {
+const STYLE_PROFILE_LABELS: Record<string, string> = {
+  tonality: "Tonalität",
+  sentenceLength: "Satzbau",
+  hedgingPhrases: "Typische Formulierungen",
+  structurePattern: "Aufbau-Bausteine",
+  strengthsLanguagePattern: "Stärken-Sprache",
+  developmentAreaLanguagePattern: "Entwicklungsfeld-Sprache",
+};
+
+function StyleProfileDisplay({ profile }: { profile: Record<string, unknown> }) {
+  return (
+    <div className="space-y-3">
+      {Object.entries(profile).map(([key, val]) => (
+        <div key={key} className="bg-white rounded-lg border border-slate-100 p-3">
+          <div className="text-xs font-semibold text-teal-700 mb-1">{STYLE_PROFILE_LABELS[key] ?? key}</div>
+          {Array.isArray(val) ? (
+            <ul className="list-disc list-inside space-y-0.5">
+              {(val as string[]).map((item, i) => (
+                <li key={i} className="text-xs text-slate-600">{item}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-slate-600">{String(val)}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TemplateCard({ template, workspaceSlug, onRefresh }: { template: ReportTemplate; workspaceSlug: string; onRefresh: () => void }) {
   const [expanded, setExpanded] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [activating, setActivating] = useState(false);
+  const [deactivating, setDeactivating] = useState(false);
+  const [anonConfirmed, setAnonConfirmed] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
   const statusBadge = STATUS_BADGES[template.status] || STATUS_BADGES.draft;
   const analysisBadge = ANALYSIS_BADGES[template.analysisStatus] || ANALYSIS_BADGES.pending;
+  const canAnalyze = !!template.sourceFilePath && ["pending", "failed"].includes(template.analysisStatus) && !analyzing;
+  const isExtracting = template.analysisStatus === "extracting" || analyzing;
+  const isAnalyzed = template.analysisStatus === "analyzed";
+
+  async function handleAnalyze(e: React.MouseEvent) {
+    e.stopPropagation();
+    setActionError(null);
+    setAnalyzing(true);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/report-templates/${template.id}/analyze`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `HTTP ${res.status}`);
+      }
+      onRefresh();
+    } catch (err) {
+      setActionError(String(err));
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  async function handleActivate(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!anonConfirmed) {
+      setActionError("Bitte bestätigen Sie zuerst, dass alle personenbezogenen Daten entfernt wurden.");
+      return;
+    }
+    setActionError(null);
+    setActivating(true);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/report-templates/${template.id}/activate`, { method: "PATCH" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `HTTP ${res.status}`);
+      }
+      onRefresh();
+    } catch (err) {
+      setActionError(String(err));
+    } finally {
+      setActivating(false);
+    }
+  }
+
+  async function handleDeactivate(e: React.MouseEvent) {
+    e.stopPropagation();
+    setActionError(null);
+    setDeactivating(true);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/report-templates/${template.id}/deactivate`, { method: "PATCH" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `HTTP ${res.status}`);
+      }
+      onRefresh();
+    } catch (err) {
+      setActionError(String(err));
+    } finally {
+      setDeactivating(false);
+    }
+  }
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden" data-testid={`card-template-${template.id}`}>
@@ -401,13 +503,18 @@ function TemplateCard({ template, workspaceSlug }: { template: ReportTemplate; w
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-1">
+          <div className="flex items-center gap-3 mb-1 flex-wrap">
             <h3 className="font-semibold text-slate-800 truncate" data-testid={`text-template-name-${template.id}`}>
               {template.name}
             </h3>
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge.bg} ${statusBadge.text}`} data-testid={`badge-status-${template.id}`}>
               {statusBadge.label}
             </span>
+            {template.useForStyleGuidance && (
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-800" data-testid={`badge-style-active-${template.id}`}>
+                ✦ Aktiv als Stilreferenz
+              </span>
+            )}
             {template.isAnonymized && (
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-600" data-testid={`badge-anonymized-${template.id}`}>
                 Anonymisierung ✓
@@ -428,10 +535,21 @@ function TemplateCard({ template, workspaceSlug }: { template: ReportTemplate; w
           </div>
         </div>
         <div className="flex items-center gap-3 ml-4">
+          {canAnalyze && (
+            <button
+              onClick={handleAnalyze}
+              data-testid={`button-analyze-${template.id}`}
+              className="rounded-lg text-white text-xs font-medium px-3 py-1.5 hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: "#297587" }}
+            >
+              Analysieren
+            </button>
+          )}
+          {isExtracting && (
+            <span className="text-xs text-blue-600 animate-pulse">Extrahiere…</span>
+          )}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
+            onClick={(e) => e.stopPropagation()}
             data-testid={`button-generate-report-${template.id}`}
             className="rounded-lg text-white text-xs font-medium px-3 py-1.5 hover:opacity-90 transition-opacity"
             style={{ backgroundColor: "#A6473B" }}
@@ -444,6 +562,11 @@ function TemplateCard({ template, workspaceSlug }: { template: ReportTemplate; w
 
       {expanded && (
         <div className="border-t border-slate-200 p-6" style={{ backgroundColor: "#EFF4F5" }}>
+          {actionError && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700" data-testid={`error-action-${template.id}`}>
+              {actionError}
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h4 className="text-sm font-semibold text-slate-700 mb-3">Vorlageninformationen</h4>
@@ -465,6 +588,16 @@ function TemplateCard({ template, workspaceSlug }: { template: ReportTemplate; w
                   <dd className="font-medium text-slate-700">{template.isAnonymized ? "Ja ✓" : "Nein"}</dd>
                 </div>
                 <div className="flex justify-between">
+                  <dt className="text-slate-500">Stilreferenz aktiv</dt>
+                  <dd className="font-medium text-slate-700">
+                    {template.useForStyleGuidance ? (
+                      <span className="text-teal-700">Ja ✦</span>
+                    ) : (
+                      <span className="text-slate-400">Nein</span>
+                    )}
+                  </dd>
+                </div>
+                <div className="flex justify-between">
                   <dt className="text-slate-500">Analyse-Status</dt>
                   <dd>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${analysisBadge.bg} ${analysisBadge.text}`}>
@@ -477,31 +610,70 @@ function TemplateCard({ template, workspaceSlug }: { template: ReportTemplate; w
                   <dd className="font-medium text-slate-700">{formatDate(template.updatedAt)}</dd>
                 </div>
               </dl>
-            </div>
 
-            <div>
-              <h4 className="text-sm font-semibold text-slate-700 mb-3">Struktur-Vorschau</h4>
-              {template.structureJson ? (
-                <div className="bg-white rounded-lg border border-slate-200 p-3" data-testid={`structure-preview-${template.id}`}>
-                  <pre className="text-xs text-slate-600 whitespace-pre-wrap overflow-auto max-h-48">
-                    {JSON.stringify(template.structureJson, null, 2)}
-                  </pre>
-                </div>
-              ) : (
-                <div className="bg-white rounded-lg border border-slate-200 p-4 text-center text-sm text-slate-400">
-                  Struktur wird nach der Analyse verfügbar.
+              {isAnalyzed && !template.useForStyleGuidance && (
+                <div className="mt-5 pt-4 border-t border-slate-200 space-y-3" data-testid={`activate-section-${template.id}`}>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={anonConfirmed}
+                      onChange={(e) => setAnonConfirmed(e.target.checked)}
+                      className="mt-0.5 accent-teal-600"
+                      data-testid={`checkbox-anon-confirmed-${template.id}`}
+                    />
+                    <span className="text-xs text-slate-600">
+                      Ich bestätige, dass alle personenbezogenen Daten vollständig entfernt wurden und die Nutzung als Stilreferenz datenschutzkonform ist.
+                    </span>
+                  </label>
+                  <button
+                    onClick={handleActivate}
+                    disabled={activating || !anonConfirmed}
+                    data-testid={`button-activate-style-${template.id}`}
+                    className="w-full rounded-lg text-white text-xs font-medium px-3 py-2 hover:opacity-90 transition-opacity disabled:opacity-40"
+                    style={{ backgroundColor: "#297587" }}
+                  >
+                    {activating ? "Wird aktiviert…" : "Als Stilreferenz aktivieren"}
+                  </button>
                 </div>
               )}
 
-              {template.styleRulesJson && (
-                <div className="mt-3">
-                  <h4 className="text-sm font-semibold text-slate-700 mb-2">Style-Regeln</h4>
-                  <div className="bg-white rounded-lg border border-slate-200 p-3" data-testid={`style-preview-${template.id}`}>
-                    <pre className="text-xs text-slate-600 whitespace-pre-wrap overflow-auto max-h-48">
-                      {JSON.stringify(template.styleRulesJson, null, 2)}
-                    </pre>
-                  </div>
+              {template.useForStyleGuidance && (
+                <div className="mt-5 pt-4 border-t border-slate-200" data-testid={`deactivate-section-${template.id}`}>
+                  <button
+                    onClick={handleDeactivate}
+                    disabled={deactivating}
+                    data-testid={`button-deactivate-style-${template.id}`}
+                    className="w-full rounded-lg text-xs font-medium px-3 py-2 border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
+                  >
+                    {deactivating ? "Wird deaktiviert…" : "Stilreferenz deaktivieren"}
+                  </button>
                 </div>
+              )}
+            </div>
+
+            <div>
+              {isAnalyzed && template.styleRulesJson ? (
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Stilprofil</h4>
+                  <StyleProfileDisplay profile={template.styleRulesJson} />
+                </div>
+              ) : (
+                <>
+                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Struktur-Vorschau</h4>
+                  {template.structureJson ? (
+                    <div className="bg-white rounded-lg border border-slate-200 p-3" data-testid={`structure-preview-${template.id}`}>
+                      <pre className="text-xs text-slate-600 whitespace-pre-wrap overflow-auto max-h-48">
+                        {JSON.stringify(template.structureJson, null, 2)}
+                      </pre>
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-lg border border-slate-200 p-4 text-center text-sm text-slate-400">
+                      {template.sourceFilePath
+                        ? "Datei vorhanden — Analyse starten um Stilprofil zu extrahieren."
+                        : "Struktur wird nach der Analyse verfügbar."}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
