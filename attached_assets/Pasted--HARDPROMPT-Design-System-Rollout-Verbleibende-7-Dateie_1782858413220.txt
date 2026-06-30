@@ -1,0 +1,70 @@
+# HARDPROMPT — Design-System-Rollout: Verbleibende 7 Dateien
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die Änderungen exakt wie beschrieben aus — nichts mehr, nichts
+weniger. Bei Unklarheit: STOPP, fragen — NICHT improvisieren.
+
+## Bindende Tatsachenbasis (aktueller Stand, per git pull verifiziert)
+
+Folgende 7 Dateien nutzen NOCH rohe Tailwind-Farbklassen (`slate-*`,
+`gray-*`, `blue-600`, `blue-50` u.ä.) statt `var(--eds-*)`-Tokens:
+
+1. `app/w/[workspaceSlug]/admin/DashboardClient.tsx`
+2. `app/w/[workspaceSlug]/admin/requirements/page.tsx`
+3. `app/w/[workspaceSlug]/admin/ai-governance/page.tsx`
+4. `app/w/[workspaceSlug]/admin/assessments/[assessmentId]/page.tsx`
+5. `app/w/[workspaceSlug]/admin/assessments/[assessmentId]/PortalManagementSection.tsx`
+6. `app/w/[workspaceSlug]/admin/case-studio/[caseId]/CaseStudyClient.tsx`
+7. `app/w/[workspaceSlug]/admin/exercise-library/page.tsx`
+
+Folgende Komponenten existieren BEREITS in `components/shared/` und werden
+genutzt — NICHT neu bauen:
+`Card.tsx`, `EmptyState.tsx`, `PageHeader.tsx`, `ModuleIcon.tsx`.
+
+## Nicht anfassen
+
+Strukturelle Logik, State-Management, API-Calls in allen 7 Dateien —
+NUR Klassen/Styles/Markup für visuelle Darstellung ändern, NIEMALS
+Funktionalität · Kandidatenportal · `app/master/` · `components/shell/`.
+
+---
+
+## Regel für JEDE der 7 Dateien (ohne Ausnahme)
+
+1. Alle rohen Tailwind-Farbklassen (`slate-*`, `gray-*`, `blue-*`,
+   `red-*`, `green-*`, `amber-*`, `purple-*`) durch `var(--eds-*)`-Tokens
+   ersetzen via `style={{ ... }}` oder Tailwind-Arbitrary-Value
+   `text-[var(--eds-text-secondary)]`.
+   **Erlaubte Ausnahme:** Status-Badge-Muster ohne äquivalentes
+   `--eds-status-*`-Token — direkt darüber kommentieren:
+   `// no-eds-token: kein äquivalentes Token`.
+2. Seitenkopf (`<h1>` + Beschreibungstext) durch `<PageHeader>` ersetzen.
+3. Leerzustände durch `<EmptyState>` ersetzen — mit Icon, Titel,
+   Beschreibung, `action`-Prop wo sinnvoll.
+4. Modultyp-Icons durch `<ModuleIcon>` ersetzen wo vorhanden.
+5. Karten-Container: `<Card variant="primary">` für primäre Aktionsbereiche,
+   `<Card variant="secondary">` für Listen/Übersichten.
+6. KEINE Änderung an State, Props, API-Calls, Event-Handlern.
+
+---
+
+## Validierung
+
+1. `grep -rl "slate-\|gray-\|blue-600\|blue-50" app/w/[workspaceSlug]/admin`
+   liefert NULL Treffer außerhalb erlaubter `// no-eds-token`-Ausnahmen.
+   PASS/FAIL.
+2. Alle 7 Dateien bearbeitet — einzeln bestätigen. PASS/FAIL.
+3. Keine funktionale Regression — je 1 Klick-Durchlauf pro Seite.
+   PASS/FAIL.
+4. `npm run lint` — null Fehler. PASS/FAIL.
+5. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`Design-Rollout: verbleibende 7 Dateien auf Token-System umgestellt`
+
+## Abschluss-Statement (Pflicht)
+
+Alle 7 Dateien einzeln mit PASS/FAIL bestätigen. Liste erlaubter
+Token-Ausnahmen mit Begründung. Alle 5 Validierungspunkte mit PASS/FAIL.
+Keine Selbsteinschätzung.
