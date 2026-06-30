@@ -431,7 +431,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-8" data-testid="section-organigramm">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#0d9488]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--eds-lagune)]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="absolute bottom-0 left-0 w-40 h-40 bg-[var(--eds-status-green)]/10 rounded-full translate-y-1/2 -translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-teal-100 border border-white/20 text-xs font-medium mb-3">
@@ -794,7 +794,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-8" data-testid="section-financials">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#059669]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--eds-status-green)]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-emerald-100 border border-white/20 text-xs font-medium mb-3">
                       Financial Analysis
@@ -1049,7 +1049,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-6" data-testid="section-protocols">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-violet-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#9333ea]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--eds-type-roleplay)]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-purple-100 border border-white/20 text-xs font-medium mb-3">
                       Meeting Protocols
@@ -1174,7 +1174,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-6" data-testid="section-news">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-rose-900 via-rose-800 to-pink-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#e11d48]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--eds-status-red)]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-rose-100 border border-white/20 text-xs font-medium mb-3">
                       News & Media
@@ -1309,7 +1309,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-6" data-testid="section-internal-comms">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-cyan-900 via-cyan-800 to-teal-700 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#0891b2]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--eds-lagune-dk)]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-cyan-100 border border-white/20 text-xs font-medium mb-3">
                       Internal Communications
@@ -1340,7 +1340,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-6" data-testid="section-external-comms">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-900 via-indigo-800 to-blue-900 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#4f46e5]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--eds-status-blue)]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-indigo-100 border border-white/20 text-xs font-medium mb-3">
                       External Communications
@@ -1371,7 +1371,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-8" data-testid="section-strategic-analysis">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-violet-900 via-violet-800 to-purple-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#7c3aed]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--eds-type-roleplay)]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-violet-100 border border-white/20 text-xs font-medium mb-3">
                       Strategic Assessment
@@ -1548,7 +1548,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-8" data-testid="section-hr-dashboard">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-orange-900 via-orange-800 to-amber-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#ea580c]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--eds-terracotta)]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-orange-100 border border-white/20 text-xs font-medium mb-3">
                       HR Analytics
