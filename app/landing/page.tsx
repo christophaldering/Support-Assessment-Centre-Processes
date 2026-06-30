@@ -1150,7 +1150,11 @@ export default function LandingPage() {
                 {accessCards.map((card) => (
                   <div
                     key={card.id}
-                    className="bg-white rounded-2xl border border-slate-200 p-6 text-left"
+                    onClick={() => { setActiveMode(card.id); setError(""); }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveMode(card.id); setError(""); } }}
+                    className="bg-white rounded-2xl border border-slate-200 p-6 text-left cursor-pointer hover:shadow-lg hover:border-slate-300 transition"
                     data-testid={`card-access-${card.id}`}
                   >
                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient} text-white flex items-center justify-center mb-4`}>
