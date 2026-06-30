@@ -1,0 +1,85 @@
+# HARDPROMPT — AI-Panel Toggle (Diagnostik-Assistent ein-/ausblenden)
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden Schritte exakt in der angegebenen Reihenfolge aus.
+Bei Unklarheit: STOPP, fragen — NICHT improvisieren. Nach jedem Schritt
+erstellst du exakt den angegebenen Commit. Keine Optionalität.
+
+## Bindende Tatsachenbasis (aktueller Stand, per git pull verifiziert)
+
+- `components/shell/ShellClient.tsx` rendert `<AIPanel>` BEDINGUNGSLOS
+  (Zeile ~92: `<AIPanel workspaceSlug={workspaceSlug} />`). Es gibt
+  KEINEN Toggle, KEINEN Visibility-State, KEINE User-Preference.
+- `components/shell/AIPanel.tsx` existiert als eigenständige Komponente.
+- `components/shell/TopBar.tsx` existiert und ist der korrekte Ort für
+  den Toggle-Button (sichtbar, persistent, nahe am Panel).
+- `styles/tokens.css` definiert `--eds-ai-panel-width: 280px` — dieser
+  Wert wird für das Layout verwendet.
+- KEINE serverseitige Persistenz für diese Präferenz erforderlich —
+  `localStorage` ist für User-UI-Präferenzen (kein Geschäftsdaten-Bezug)
+  explizit erlaubt.
+
+## Nicht anfassen
+
+Inhalt/Logik von `AIPanel.tsx` selbst · Auth/RBAC · alle anderen
+Shell-Komponenten außer `ShellClient.tsx` und `TopBar.tsx` (nur minimal
+ergänzen) · Kandidatenportal.
+
+---
+
+## SCHRITT 1 — Toggle-State und Layout-Anpassung in ShellClient
+
+1. In `components/shell/ShellClient.tsx`:
+   - State ergänzen:
+     `const [aiPanelOpen, setAiPanelOpen] = useState<boolean>(() => { try { return localStorage.getItem("eds_ai_panel_open") !== "false"; } catch { return true; } })`.
+     Default IMMER `true` (Panel standardmäßig offen).
+   - Bei State-Änderung: `localStorage.setItem("eds_ai_panel_open", String(aiPanelOpen))`.
+   - `<AIPanel>` nur rendern wenn `aiPanelOpen === true`.
+   - Das Vier-Zonen-Layout (`grid-template-columns` o.ä.) MUSS auf
+     `aiPanelOpen` reagieren: bei `false` entfällt die
+     `--eds-ai-panel-width`-Spalte, der Content-Bereich füllt den
+     freiwerdenden Platz. Kein abruptes Springen — CSS-`transition`
+     auf `grid-template-columns` oder `width` mit
+     `var(--eds-transition-slow)`.
+   - `setAiPanelOpen` via React-Context oder Prop an `TopBar` weitergeben
+     (kein globaler State-Manager, kein Zustand-Drilling durch mehr als
+     zwei Ebenen — direkte Prop an TopBar ist der korrekte Weg).
+
+## SCHRITT 2 — Toggle-Button in TopBar
+
+1. In `components/shell/TopBar.tsx`: Toggle-Button ergänzen, GENAU so:
+   - Rechts im TopBar, unmittelbar links vom User-Avatar/Profil-Bereich.
+   - Icon: bei `aiPanelOpen = true` → „Panel schließen"-Icon (zwei Pfeile
+     nach rechts oder Sidebar-Collapse-Icon, 16px, Outline-Stil konsistent
+     mit bestehenden Icons); bei `false` → „Panel öffnen"-Icon (zwei Pfeile
+     nach links oder Sidebar-Expand-Icon).
+   - Tooltip (`title`-Attribut): `"Diagnostik-Assistent ausblenden"` bzw.
+     `"Diagnostik-Assistent einblenden"`.
+   - Farbe: `var(--eds-text-tertiary)` im Ruhezustand,
+     `var(--eds-text-primary)` on hover — konsistent mit bestehendem
+     TopBar-Stil.
+   - KEINE eigene Klasse oder Farbwert außerhalb des Token-Systems.
+
+**COMMIT (exakter Wortlaut):**
+`AI-Panel Toggle: Diagnostik-Assistent ein- und ausblendbar mit localStorage-Persistenz`
+
+---
+
+## SCHRITT 3 — Validierung
+
+1. Panel standardmäßig geöffnet bei erstem Aufruf (kein localStorage-
+   Eintrag vorhanden). PASS/FAIL.
+2. Klick auf Toggle → Panel schließt sich, Content-Bereich wächst ohne
+   Layout-Sprung. PASS/FAIL.
+3. Seite neu laden → Panel-Zustand bleibt erhalten (localStorage). PASS/FAIL.
+4. Toggle erneut → Panel öffnet sich wieder. PASS/FAIL.
+5. `npm run lint` — null Fehler. PASS/FAIL.
+6. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`AI-Panel Toggle abgeschlossen und validiert`
+
+## Abschluss-Statement (Pflicht)
+
+Alle 6 Validierungspunkte mit PASS/FAIL. Keine Selbsteinschätzung.

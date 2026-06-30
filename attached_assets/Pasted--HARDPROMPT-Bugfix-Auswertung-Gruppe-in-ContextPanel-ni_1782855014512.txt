@@ -1,0 +1,73 @@
+# HARDPROMPT — Bugfix: „Auswertung"-Gruppe in ContextPanel nicht einklappbar
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst exakt die folgenden Änderungen aus — nichts mehr, nichts weniger.
+Bei Unklarheit: STOPP, fragen — NICHT improvisieren.
+
+## Problembeschreibung (geprüft, nicht zu hinterfragen)
+
+In `components/shell/ContextPanel.tsx` ist die Gruppe „Auswertung" als
+statische `<GroupLabel>`-Komponente implementiert — sie hat KEINEN
+Click-Handler, KEINEN Toggle. Alle anderen Gruppen
+(Diagnostik-Aufbau, Übungsentwicklung, Verwaltung) verwenden
+`<CollapsibleGroup>` mit ein-/ausklappbarem Verhalten. Das ist der Bug.
+
+## Nicht anfassen
+
+Alles außer `components/shell/ContextPanel.tsx`. Keine anderen Dateien.
+
+---
+
+## SCHRITT 1 — `auswertungActive`-Variable ergänzen
+
+In `components/shell/ContextPanel.tsx`, NACH der bestehenden
+`verwaltungActive`-Block und VOR `const isDrRoute`:
+
+```ts
+const auswertungRoutes = [
+  `${base}/analytics`, `${base}/reports`, `${base}/gutachten`,
+];
+const auswertungActive = auswertungRoutes.some(
+  (p) => pathname === p || pathname.startsWith(p + "/")
+);
+```
+
+## SCHRITT 2 — `<GroupLabel>` durch `<CollapsibleGroup>` ersetzen
+
+Den folgenden Block:
+
+```tsx
+<GroupLabel label="Auswertung" />
+<FilteredNavLink routeSegment="analytics"  href={`${base}/analytics`}  label="Analytics & Berichte"  icon={<IcoBarChart />}   {...flagProps} />
+<FilteredNavLink routeSegment="reports"    href={`${base}/reports`}    label="Berichte (Export)"     icon={<IcoDownload />}   {...flagProps} />
+<FilteredNavLink routeSegment="gutachten"  href={`${base}/gutachten`}  label="Gutachten-Generator"   icon={<IcoFeather />}    {...flagProps} />
+```
+
+ERSETZEN durch:
+
+```tsx
+<CollapsibleGroup label="Auswertung" defaultOpen={auswertungActive} forceOpen={auswertungActive}>
+  <FilteredNavLink routeSegment="analytics"  href={`${base}/analytics`}  label="Analytics & Berichte"  icon={<IcoBarChart />}   {...flagProps} />
+  <FilteredNavLink routeSegment="reports"    href={`${base}/reports`}    label="Berichte (Export)"     icon={<IcoDownload />}   {...flagProps} />
+  <FilteredNavLink routeSegment="gutachten"  href={`${base}/gutachten`}  label="Gutachten-Generator"   icon={<IcoFeather />}    {...flagProps} />
+</CollapsibleGroup>
+```
+
+---
+
+## Validierung
+
+1. „Auswertung" klappt per Klick ein und aus. PASS/FAIL.
+2. Navigation zu `/analytics`, `/reports` oder `/gutachten` → Gruppe
+   klappt automatisch auf. PASS/FAIL.
+3. Alle anderen Gruppen (Diagnostik-Aufbau, Übungsentwicklung, Verwaltung)
+   verhalten sich unverändert. PASS/FAIL.
+4. `npm run lint` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut):**
+`Fix: Auswertung-Gruppe als CollapsibleGroup statt statischer GroupLabel`
+
+## Abschluss-Statement (Pflicht)
+
+Alle 4 Validierungspunkte mit PASS/FAIL. Keine Selbsteinschätzung.

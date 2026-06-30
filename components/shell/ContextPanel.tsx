@@ -370,6 +370,13 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 
+  const auswertungRoutes = [
+    `${base}/analytics`, `${base}/reports`, `${base}/gutachten`,
+  ];
+  const auswertungActive = auswertungRoutes.some(
+    (p) => pathname === p || pathname.startsWith(p + "/")
+  );
+
   const isDrRoute = pathname.startsWith(`${base}/document-sharing`) || pathname.startsWith(`${base}/dr`);
 
   const flagProps = { featureFlags, isMaster, base };
@@ -458,10 +465,11 @@ export default function ContextPanel({ workspaceSlug, workspaceName, isMaster, u
             </CollapsibleGroup>
 
             {/* ── Gruppe 4: Durchführung & Auswertung ── */}
-            <GroupLabel label="Auswertung" />
-            <FilteredNavLink routeSegment="analytics"  href={`${base}/analytics`}  label="Analytics & Berichte"  icon={<IcoBarChart />}   {...flagProps} />
-            <FilteredNavLink routeSegment="reports"    href={`${base}/reports`}    label="Berichte (Export)"     icon={<IcoDownload />}   {...flagProps} />
-            <FilteredNavLink routeSegment="gutachten"  href={`${base}/gutachten`}  label="Gutachten-Generator"   icon={<IcoFeather />}    {...flagProps} />
+            <CollapsibleGroup label="Auswertung" defaultOpen={auswertungActive} forceOpen={auswertungActive}>
+              <FilteredNavLink routeSegment="analytics"  href={`${base}/analytics`}  label="Analytics & Berichte"  icon={<IcoBarChart />}   {...flagProps} />
+              <FilteredNavLink routeSegment="reports"    href={`${base}/reports`}    label="Berichte (Export)"     icon={<IcoDownload />}   {...flagProps} />
+              <FilteredNavLink routeSegment="gutachten"  href={`${base}/gutachten`}  label="Gutachten-Generator"   icon={<IcoFeather />}    {...flagProps} />
+            </CollapsibleGroup>
 
             {/* ── Gruppe 5: Verwaltung (einklappbar) ── */}
             <CollapsibleGroup label="Verwaltung" defaultOpen={verwaltungActive} forceOpen={verwaltungActive}>
