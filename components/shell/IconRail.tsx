@@ -76,12 +76,13 @@ function GearIcon() {
   );
 }
 
-/** Link-Ketten-Icon für Datenraum-Tracking (Sonderfunktionen, nur Master) */
-function LinkIcon() {
+/** Datenbank/Speicher-Icon für externe Dokumentenfreigabe (Sonderfunktionen, nur Master) */
+function DatabaseIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+      <ellipse cx="12" cy="5" rx="9" ry="3" />
+      <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
+      <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3" />
     </svg>
   );
 }
@@ -140,11 +141,11 @@ export default function IconRail({ workspaceSlug, userRoles, isMaster }: IconRai
           } as RailItem,
           {
             id: "dataroom",
-            label: "Externe Freigabe",
+            label: "Externe Dokumentenfreigabe",
             href: `${base}/document-sharing`,
             matchPrefix: `${base}/document-sharing`,
             roles: ["MASTER_ADMIN"],
-            icon: <LinkIcon />,
+            icon: <DatabaseIcon />,
           } as RailItem,
         ]
       : []),

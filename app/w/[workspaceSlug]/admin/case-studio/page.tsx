@@ -1,5 +1,7 @@
 "use client";
 
+import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
+import { resolveOriginForCaseStudy } from "@/lib/document-origin";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -503,6 +505,7 @@ export default function CaseStudyBuilderPage() {
                                 KI
                               </span>
                             )}
+                            <DocumentOriginBadge origin={resolveOriginForCaseStudy({ sourceType: cs.sourceType, aiGenerated: cs.aiGenerated })} />
                             {cs._count && cs._count.derivedExercises > 0 && (
                               <span
                                 className="text-[10px] font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5 cursor-pointer hover:bg-purple-100 transition-colors"

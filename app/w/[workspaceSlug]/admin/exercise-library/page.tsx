@@ -1,5 +1,7 @@
 "use client";
 
+import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
+import { resolveOriginForExerciseLibraryItem } from "@/lib/document-origin";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";

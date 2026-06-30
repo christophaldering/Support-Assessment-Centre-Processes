@@ -34,6 +34,7 @@ export const NAV_MODULE_MAP: Record<string, string> = {
   "exercise-library": "exercise_library",
   modules: "modules",
   "case-studio": "case_studio",
+  "data-room": "case_studio",       // /admin/data-room leitet auf case-studio weiter → gleicher Flag
   "document-sharing": "document_sharing",
   "observation-sheets": "observation_sheets",
   analytics: "analytics",

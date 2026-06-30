@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
+import { resolveOriginForReportTemplate } from "@/lib/document-origin";
 
 
 interface ReportTemplate {
@@ -523,6 +525,7 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${analysisBadge.bg} ${analysisBadge.text}`} data-testid={`badge-analysis-${template.id}`}>
               {analysisBadge.label}
             </span>
+            <DocumentOriginBadge origin={resolveOriginForReportTemplate(template)} />
           </div>
           <div className="flex gap-4 text-xs text-slate-400">
             {template.sourceFileName && (

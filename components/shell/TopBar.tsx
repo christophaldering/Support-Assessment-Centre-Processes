@@ -23,9 +23,7 @@ function breadcrumbFromPath(pathname: string, workspaceName: string, slug: strin
     modules: "Modul-Designer",
     "exercise-library": "Baustein-Bibliothek",
     "case-studio": "Fallstudien-Werkstatt",
-    "case-study-builder": "Fallstudien-Werkstatt",
-    "case-study-dataroom": "Fallstudie-Verwaltung",
-    "data-room": "Fallstudien-Werkstatt",
+    "data-room": "Fallstudie",          // /admin/data-room → Fallstudie (leitet auf case-studio weiter)
     "document-sharing": "Externe Dokumentenfreigabe",
     "case-study": "Fallstudie",
     analytics: "Insights",

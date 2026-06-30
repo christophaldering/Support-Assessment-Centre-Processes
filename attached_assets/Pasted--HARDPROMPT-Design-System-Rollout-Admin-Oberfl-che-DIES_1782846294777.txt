@@ -1,0 +1,287 @@
+# HARDPROMPT — Design-System-Rollout Admin-Oberfläche
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden Phasen exakt in der angegebenen Reihenfolge aus.
+Du triffst KEINE eigenen Architektur- oder Stil-Entscheidungen, wo dieser
+Prompt eine Vorgabe macht. Bei Unklarheit: STOPP, fragen — NICHT
+improvisieren. Nach jeder Phase erstellst du exakt den angegebenen Commit,
+mit exakt dem angegebenen Commit-Message-Text. Formulierungen wie
+„könnte", „ggf.", „optional", „nach Ermessen" kommen in diesem Dokument
+NICHT vor — jeder Punkt ist Pflicht.
+
+---
+
+## Zielbild (bindend)
+
+KEIN neues Designsystem von Grund auf. Das bestehende Token-System in
+`styles/tokens.css` (Farben, Spacing, Radius, Schatten, Typografie) ist
+bereits hochwertig und vollständig — es wird aber in 31 von 35 geprüften
+Admin-Seiten IGNORIERT zugunsten roher Tailwind-Klassen (`slate-*`,
+`gray-*`, `blue-600` statt `var(--eds-*)`). Ziel ist:
+
+1. Konsequente Durchsetzung des bestehenden Token-Systems in ALLEN
+   Admin-Seiten (keine rohen Tailwind-Farbklassen mehr außerhalb der
+   semantischen Status-Farben, die bereits in `tokens.css` definiert sind).
+2. EINE neue, gemeinsame Schicht ergänzen, die heute fehlt: ein
+   Icon-/Illustrations-System pro Modultyp, eine `EmptyState`-Komponente,
+   eine `PageHeader`-Komponente, ein Karten-Hierarchie-System
+   (Primär-/Sekundär-Karte).
+3. Die `ContextPanel`-Navigation (heute reine Textliste mit 20+
+   gleichrangigen Einträgen) erhält Icons pro Eintrag zur visuellen
+   Wiedererkennung.
+4. Rollout über ALLE 31 identifizierten Admin-Dateien, in nachvollziehbaren
+   Batches mit je eigenem Commit — nicht ein einzelner unüberprüfbarer
+   Mega-Commit.
+
+## Bindende Tatsachenbasis (geprüft, nicht zu hinterfragen)
+
+- `styles/tokens.css` definiert bereits: Marken-/Status-/Surface-/Text-/
+  Border-Farben als CSS-Variablen (`--eds-*`), Spacing-Skala (4px-Basis),
+  Radius-Skala, Schatten-Skala, Typografie-Skala (Satoshi/Inter/Georgia/
+  Mono), Shell-Dimensionen. NICHTS davon wird in dieser Direktive
+  umbenannt oder strukturell verändert — nur ERGÄNZT (siehe Phase 1) und
+  KONSEQUENT ANGEWENDET (Phase 3).
+- `components/shell/IconRail.tsx` hat nur 4–6 Top-Level-Einträge
+  (assessments/people/content/insights + master-only Einträge) — DIESE
+  Ebene ist NICHT das Überforderungs-Problem. Das Problem liegt in
+  `components/shell/ContextPanel.tsx`, wo unter Gruppen wie
+  „Übungsentwicklung" und „Verwaltung" 15+ reine Text-Links ohne jede
+  visuelle Differenzierung stehen.
+- `components/candidate/DataRoomSidebar.tsx` nutzt bereits ein
+  funktionierendes Muster: Kategorien mit `color`- und `icon`-Feld aus der
+  DB, dynamisch gerendert. Dieses Muster wird NICHT kopiert (andere
+  Datenquelle), dient aber als Stil-Referenz für „wie sieht farbige
+  Kategorisierung in dieser Codebase bereits aus".
+- Folgende 31 Dateien nutzen NACHWEISLICH rohe Tailwind-Farbklassen statt
+  Tokens (per `grep -rl "slate-\|gray-\|blue-600\|blue-50"` ermittelt) —
+  dies ist die VOLLSTÄNDIGE, VERBINDLICHE Rollout-Liste für Phase 3, in
+  keiner Datei darf ausgelassen werden, was unten in den Batches steht:
+
+  **Batch A — Übungsentwicklung (höchste Sichtbarkeit, täglich genutzt):**
+  `exercise-library/page.tsx`, `modules/page.tsx`,
+  `modules/case-study-builder/page.tsx`,
+  `modules/case-study-dataroom/page.tsx`,
+  `modules/case-study-dataroom/varexia/page.tsx`,
+  `modules/case-study/[caseId]/CaseStudyClient.tsx`,
+  `data-room/page.tsx`, `data-room/categories/page.tsx`,
+  `observation-sheets/page.tsx`
+
+  **Batch B — Diagnostik-Aufbau & Durchführung:**
+  `requirements/page.tsx`, `requirements/page-original.tsx`,
+  `competencies/page.tsx`, `analytics/page.tsx`, `reports/page.tsx`,
+  `gutachten/page.tsx`, `audio/page.tsx`, `intelligence/page.tsx`,
+  `prompt-library/page.tsx`
+
+  **Batch C — Verwaltung:**
+  `users/page.tsx`, `consents/page.tsx`, `access-requests/page.tsx`,
+  `theme/page.tsx`, `brand-rules/page.tsx`, `ai-governance/page.tsx`
+
+  **Batch D — Assessment-Detail & Projekte:**
+  `assessments/page.tsx`, `assessments/[assessmentId]/page.tsx`,
+  `assessments/[assessmentId]/CollaborationPanel.tsx`,
+  `assessments/[assessmentId]/PortalManagementSection.tsx`,
+  `projects/[projectId]/page.tsx`
+
+  **Batch E — Shell/Sonstiges:**
+  `DashboardClient.tsx`, `ModuleGuard.tsx`
+
+  `requirements/page-original.tsx`: vor Bearbeitung prüfen, ob diese Datei
+  noch aktiv importiert/genutzt wird. Falls NICHT (toter Code aus
+  früherer Iteration): löschen statt migrieren, im Abschluss-Statement
+  vermerken. Falls doch genutzt: wie alle anderen behandeln.
+
+## Nicht anfassen (absolutes Verbot, keine Ausnahmen)
+
+Strukturelle Logik/State-Management/API-Calls in JEDER der 31 Dateien —
+diese Direktive ändert AUSSCHLIESSLICH Klassen/Styles/Markup für
+visuelle Darstellung, NIEMALS Funktionalität · Kandidatenportal
+(`app/candidate/`, `components/candidate/`) — bleibt unverändert, dient
+nur als Stil-Referenz · `app/master/` · Auth/RBAC · alle in vorherigen
+Hardprompts beschriebenen Funktionsänderungen (Übungsentwicklung-Umbau,
+Stilreferenz-Pipeline, Dokument-Herkunfts-Kennzeichnung) — diese Direktive
+baut NUR visuelle Konsistenz, keine neue Geschäftslogik.
+
+Wenn eine Änderung in diesem Prompt mit einer Regel hier kollidiert: STOPP.
+Konflikt melden, nicht ausführen.
+
+---
+
+## PHASE 1 — Token-Ergänzung (additiv, keine Umbenennung)
+
+In `styles/tokens.css`, NACH dem bestehenden Inhalt ergänzen, GENAU diese
+neuen Variablen, keine zusätzlichen, keine ausgelassen:
+
+```
+/* ── Modultyp-Akzentfarben (für Icon-System Phase 2) ── */
+--eds-type-interview:    var(--eds-lagune);
+--eds-type-presentation: var(--eds-terracotta);
+--eds-type-roleplay:     #7C3AED;
+--eds-type-factfinding:  #D97706;
+--eds-type-casestudy:    var(--eds-terracotta-dk);
+--eds-type-other:        var(--eds-status-gray);
+
+/* ── Karten-Hierarchie ── */
+--eds-card-primary-shadow:   var(--eds-shadow-lg);
+--eds-card-primary-border:   var(--eds-terracotta-ghost);
+--eds-card-secondary-shadow: var(--eds-shadow-xs);
+--eds-card-secondary-border: var(--eds-border);
+```
+
+Keine bestehende Variable wird umbenannt, gelöscht oder in ihrer Bedeutung
+verändert.
+
+**COMMIT (exakter Wortlaut):**
+`Tokens: Modultyp-Akzentfarben und Karten-Hierarchie-Variablen ergänzt`
+
+---
+
+## PHASE 2 — Neue gemeinsame Komponenten
+
+Alle neuen Komponenten in `components/shared/` (Ordner anlegen, falls
+nicht vorhanden). Jede Komponente nutzt AUSSCHLIESSLICH `var(--eds-*)`-
+Tokens, KEINE rohen Tailwind-Farbklassen.
+
+1. **`components/shared/ModuleIcon.tsx`** — Props
+   `{ type: "interview" | "presentation" | "roleplay" | "fact_finding" | "case_study" | "other"; size?: "sm" | "md" | "lg" }`.
+   Rendert ein konsistentes, farbcodiertes SVG-Icon-Set (ein Icon pro Typ,
+   Farbe aus `--eds-type-*`-Token aus Phase 1). Ersetzt JEDE bisherige
+   Ad-hoc-Icon-/Emoji-Logik für Modultypen (insbesondere `typeIcon()` in
+   `modules/page.tsx`).
+2. **`components/shared/EmptyState.tsx`** — Props
+   `{ icon: ReactNode; title: string; description: string; action?: { label: string; onClick: () => void } }`.
+   Layout: zentriertes Icon (40px, `--eds-text-tertiary`-Farbton),
+   Titel (`--eds-text-md`, `--eds-text-primary`), Beschreibung
+   (`--eds-text-sm`, `--eds-text-secondary`), optionaler Button im
+   bestehenden Primary-Button-Stil der Plattform.
+3. **`components/shared/PageHeader.tsx`** — Props
+   `{ title: string; description: string; icon?: ReactNode; actions?: ReactNode }`.
+   Einheitlicher Seitenkopf: Titel in `--eds-text-3xl`, Terrakotta-Akzent
+   (konsistent mit bestehendem Muster aus `gutachten/page.tsx`,
+   `<h1 className="text-brand-navy">`-artige Stellen vereinheitlichen),
+   Beschreibung darunter, optionale Aktions-Buttons rechtsbündig.
+4. **`components/shared/Card.tsx`** — Props
+   `{ variant: "primary" | "secondary"; children: ReactNode }`. `primary`
+   nutzt `--eds-card-primary-shadow`/`-border`, `secondary` nutzt
+   `--eds-card-secondary-shadow`/`-border`. Ersetzt verstreute,
+   uneinheitliche `bg-white border border-slate-200 rounded-xl`-Stellen.
+
+**COMMIT (exakter Wortlaut):**
+`components/shared/: ModuleIcon, EmptyState, PageHeader, Card als gemeinsame Bausteine`
+
+---
+
+## PHASE 3 — ContextPanel-Navigation: Icons pro Eintrag
+
+1. In `components/shell/ContextPanel.tsx`: JEDER `FilteredNavLink`- und
+   `NavLink`-Aufruf innerhalb der Gruppen „Diagnostik-Aufbau",
+   „Übungsentwicklung", „Durchführung & Auswertung", „Verwaltung" erhält
+   ein zusätzliches `icon`-Prop (kleines 14px-SVG, `--eds-text-tertiary`,
+   bei aktivem Zustand `--eds-text-brand`).
+2. Icon-Zuordnung GENAU so, kein eigenes Mapping erfinden:
+   Anforderungsanalyse → Dokument-Icon, Kompetenzmanagement → Zielscheibe/
+   Sterne-Icon, Beobachtungsbögen → Checkliste-Icon, Modul-Designer →
+   Baustein/Würfel-Icon, Baustein-Bibliothek → Bücherregal-Icon,
+   Fallstudie/Case-Studio → Aktenordner-Icon, Analytics & Berichte →
+   Balkendiagramm-Icon, Berichte (Export) → Download-Icon,
+   Gutachten-Generator → Feder/Dokument-Icon, People → Personen-Icon,
+   Consent-Management → Schild-Icon, Zugriffsanfragen → Schlüssel-Icon,
+   Corporate Design → Pinsel-Icon, Theming → Farbpalette-Icon.
+3. `NavLink`/`FilteredNavLink`-Komponenten-Interface entsprechend um
+   optionalen `icon`-Prop erweitern, Rendering vor dem Label, Abstand
+   `--eds-space-2`.
+4. KEINE Funktionalität der Navigation ändern — nur Icon-Ergänzung.
+
+**COMMIT (exakter Wortlaut):**
+`ContextPanel: Icons pro Navigationseintrag für visuelle Wiedererkennung`
+
+---
+
+## PHASE 4 — Rollout Batch A bis E
+
+Für JEDE Datei in JEDEM Batch (Reihenfolge A → B → C → D → E), GENAU diese
+Schritte:
+
+1. Alle rohen Tailwind-Farbklassen (`slate-*`, `gray-*`, `blue-*`,
+   `red-*`, `green-*`, `amber-*` AUSSER wenn Teil eines bereits
+   bestehenden, unverändert bleibenden Status-Badge-Patterns) durch
+   entsprechende `var(--eds-*)`-Tokens via Inline-Style oder
+   Tailwind-Arbitrary-Value (`text-[var(--eds-text-secondary)]`) ersetzen.
+2. Seitenkopf (falls `<h1>`/`<h2>` + Beschreibungstext vorhanden) durch
+   `<PageHeader>` aus Phase 2 ersetzen.
+3. Jeden „Keine X vorhanden"/„Noch keine X erstellt"-Leerzustand durch
+   `<EmptyState>` aus Phase 2 ersetzen, mit passendem Icon, Titel,
+   Beschreibung UND — wo eine naheliegende primäre Aktion existiert
+   (z. B. „Neu erstellen") — `action`-Prop setzen.
+4. Wo Modultypen (`interview`/`presentation`/`roleplay`/`fact_finding`/
+   `case_study`/`other`) dargestellt werden: `<ModuleIcon>` aus Phase 2
+   statt bisheriger Ad-hoc-Lösung.
+5. Karten/Listen-Container: `<Card variant="primary">` für die
+   hervorgehobene Haupt-Aktion der Seite (z. B. Upload-Formular, Neu-
+   Erstellen-Bereich), `<Card variant="secondary">` für nachgeordnete
+   Listen/Übersichten.
+6. KEINE Änderung an State, Props, API-Calls, Event-Handlern — NUR
+   Markup/Klassen für Darstellung.
+7. Nach JEDEM Batch (nicht nach jeder einzelnen Datei): `npm run lint`
+   für die geänderten Dateien ausführen. Bei Fehlern: STOPP, beheben,
+   bevor der nächste Batch beginnt.
+
+**COMMIT nach Batch A (exakter Wortlaut):**
+`Design-Rollout Batch A: Übungsentwicklung auf Token-System und neue Komponenten umgestellt`
+
+**COMMIT nach Batch B (exakter Wortlaut):**
+`Design-Rollout Batch B: Diagnostik-Aufbau & Durchführung auf Token-System und neue Komponenten umgestellt`
+
+**COMMIT nach Batch C (exakter Wortlaut):**
+`Design-Rollout Batch C: Verwaltung auf Token-System und neue Komponenten umgestellt`
+
+**COMMIT nach Batch D (exakter Wortlaut):**
+`Design-Rollout Batch D: Assessment-Detail & Projekte auf Token-System und neue Komponenten umgestellt`
+
+**COMMIT nach Batch E (exakter Wortlaut):**
+`Design-Rollout Batch E: Shell-Komponenten auf Token-System umgestellt`
+
+---
+
+## PHASE 5 — Validierung (alle Punkte MÜSSEN PASS sein)
+
+Führe JEDEN Check aus, bestätige PASS/FAIL einzeln. Bei FAIL: STOPP,
+beheben, erneut prüfen.
+
+1. Volltextsuche `grep -rl "slate-\|gray-\|blue-600\|blue-50"` über
+   `app/w/[workspaceSlug]/admin` liefert NUR noch Treffer in
+   ausdrücklich erlaubten Status-Badge-Mustern (Liste der erlaubten
+   Ausnahmen im Abschluss-Statement explizit nennen) — KEINE Treffer in
+   den 31 ursprünglich identifizierten Dateien außerhalb dieser
+   Ausnahmen. PASS/FAIL.
+2. Alle 31 Dateien aus der Rollout-Liste wurden tatsächlich bearbeitet —
+   einzeln gegenprüfen, keine ausgelassen. PASS/FAIL, Liste im
+   Abschluss-Statement.
+3. `ContextPanel.tsx`: jeder Nav-Eintrag aus Phase 3 Punkt 2 hat
+   sichtbar ein Icon. PASS/FAIL.
+4. Jeder bisherige Leerzustand-Text wurde durch `<EmptyState>` ersetzt —
+   Stichprobe an mindestens 5 verschiedenen Seiten aus unterschiedlichen
+   Batches. PASS/FAIL.
+5. KEINE funktionale Regression: alle Formulare, Buttons, API-Aufrufe der
+   migrierten Seiten funktionieren identisch zum Vorher-Zustand
+   (Stichprobe: je 1 vollständiger Workflow-Durchlauf pro Batch). PASS/FAIL.
+6. Kandidatenportal (`app/candidate/`) unverändert — Diff-Check zeigt
+   KEINE Änderungen dort. PASS/FAIL.
+7. `npm run lint` über das GESAMTE Repository — null Fehler. PASS/FAIL.
+8. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE Punkte PASS):**
+`Design-System-Rollout Admin-Oberfläche abgeschlossen und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Nach finalem Commit: Zusammenfassung mit (a) Liste aller 31 bearbeiteten
+Dateien mit Bearbeitungs-Status, (b) Liste der vier neuen
+`components/shared/`-Komponenten, (c) explizite Liste erlaubter
+verbliebener Tailwind-Farbklassen-Ausnahmen mit Begründung, (d) alle 8
+Validierungspunkte mit PASS/FAIL. Keine Selbsteinschätzung wie „sollte gut
+aussehen" — nur verifizierte Ergebnisse aus tatsächlich ausgeführten
+Checks. Screenshots von mindestens je einer Seite pro Batch vor/nach der
+Änderung anhängen, sofern die Umgebung das unterstützt.

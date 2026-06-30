@@ -1,5 +1,7 @@
 "use client";
 
+import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
+import { resolveOriginForObservationSheetTemplate } from "@/lib/document-origin";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -721,6 +723,7 @@ export default function ObservationSheetsPage() {
                                 KI
                               </span>
                             )}
+                            <DocumentOriginBadge origin={resolveOriginForObservationSheetTemplate({ originalFileKey: item.fileName ?? null, aiGenerated: item.aiGenerated })} />
                             <span
                               className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${
                                 item.status === "active"

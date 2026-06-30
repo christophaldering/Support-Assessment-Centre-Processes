@@ -1,5 +1,6 @@
 "use client";
 
+import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 
@@ -308,6 +309,7 @@ export default function ReportsPage() {
                         KI-generiert
                       </span>
                     )}
+                    <DocumentOriginBadge origin="GENERATED" />
                   </div>
                   <div className="flex gap-4 text-xs text-slate-400">
                     <span>Version {report.version}</span>
