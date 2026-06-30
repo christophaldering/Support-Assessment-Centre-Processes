@@ -757,7 +757,7 @@ function HypothesesTab({ hypotheses, summary }: { hypotheses: DiagnosticHypothes
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[var(--eds-border)]">
               <div className="p-3">
                 <h5 className="text-xs font-medium text-[var(--eds-status-green)] mb-2">Unterstützende Evidenz</h5>
                 {(h.supportingEvidence || []).map((e: EvidenceRef, j: number) => (

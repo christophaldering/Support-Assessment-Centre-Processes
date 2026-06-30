@@ -83,7 +83,7 @@ export default function RosterView({
                 return (
                   <tr
                     key={c.candidateId}
-                    className="border-b border-slate-50 hover:bg-[var(--eds-bg-sunken)]"
+                    className="border-b border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)]"
                     data-testid={`row-roster-${c.candidateId}`}
                   >
                     <td className="px-4 py-3 font-medium text-[var(--eds-text-primary)]">{c.candidateName}</td>

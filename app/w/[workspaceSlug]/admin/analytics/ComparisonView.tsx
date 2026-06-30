@@ -380,7 +380,7 @@ export default function ComparisonView({
                 {sortedStats.map((s) => (
                   <tr
                     key={s.candidateId}
-                    className="border-b border-slate-50 hover:bg-[var(--eds-bg-sunken)]"
+                    className="border-b border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)]"
                     data-testid={`row-rank-${s.candidateId}`}
                   >
                     <td className="px-4 py-3">

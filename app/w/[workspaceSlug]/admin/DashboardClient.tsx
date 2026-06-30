@@ -450,7 +450,7 @@ export default function DashboardClient({
                 name="deleteAction"
                 checked={deleteAction === "archive"}
                 onChange={() => setDeleteAction("archive")}
-                className="mt-0.5 accent-blue-600"
+                className="mt-0.5 accent-[var(--eds-status-blue)]"
               />
               <div>
                 <span className="text-sm font-medium text-[var(--eds-text-primary)]">Archivieren</span>
@@ -627,7 +627,7 @@ export default function DashboardClient({
             </button>
           </div>
         ) : clientGroups.length === 1 ? (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-[var(--eds-border)]">
             {clientGroups[0][1].map((a) => renderAssessmentRow(a))}
           </div>
         ) : (
@@ -660,7 +660,7 @@ export default function DashboardClient({
                     </span>
                   </button>
                   {!isCollapsed && (
-                    <div className="divide-y divide-slate-50">
+                    <div className="divide-y divide-[var(--eds-border)]">
                       {items.map((a) => renderAssessmentRow(a))}
                     </div>
                   )}
@@ -718,7 +718,7 @@ export default function DashboardClient({
                   </span>
                 </button>
                 {!isCollapsed && (
-                  <div className="divide-y divide-slate-50">
+                  <div className="divide-y divide-[var(--eds-border)]">
                     {members.map((u) => (
                       <div key={u.id} className="px-5 py-2 flex items-center gap-3 pl-10" data-testid={`user-${u.id}`}>
                         <div className="w-6 h-6 rounded-full bg-[var(--eds-bg-sunken)] flex items-center justify-center shrink-0">
@@ -872,7 +872,7 @@ export default function DashboardClient({
                       ...(a.ratingCount > 0 ? [{ icon: "⭐", text: `${a.ratingCount} Bewertung${a.ratingCount > 1 ? "en" : ""} erfasst`, time: formatDate(a.createdAt), accent: "#5F1A11" }] : []),
                     ];
                     return actions.map((act, j) => (
-                      <div key={`${i}-${j}`} className="flex items-start gap-3 py-2 border-b border-slate-50 last:border-0">
+                      <div key={`${i}-${j}`} className="flex items-start gap-3 py-2 border-b border-[var(--eds-border)] last:border-0">
                         <span className="text-sm mt-0.5">{act.icon}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-[var(--eds-text-primary)] truncate">{act.text}</p>
@@ -910,7 +910,7 @@ export default function DashboardClient({
                 </p>
               </div>
 
-              <div className="bg-white border border-[var(--eds-border)] rounded-xl divide-y divide-slate-100">
+              <div className="bg-white border border-[var(--eds-border)] rounded-xl divide-y divide-[var(--eds-border)]">
                 {modules.map((mod) => {
                   const isOn = localFlags[mod.moduleKey] ?? false;
                   return (
@@ -926,7 +926,7 @@ export default function DashboardClient({
                       </div>
                       <button
                         onClick={() => setLocalFlags(prev => ({ ...prev, [mod.moduleKey]: !prev[mod.moduleKey] }))}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isOn ? "bg-[var(--eds-status-blue)]" : "bg-slate-300"}`}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isOn ? "bg-[var(--eds-status-blue)]" : "bg-[#cbd5e1]"}`}
                         data-testid={`toggle-${mod.moduleKey}`}
                       >
                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${isOn ? "translate-x-6" : "translate-x-1"}`} />

@@ -670,7 +670,7 @@ function RequirementsContent() {
               <div>
                 <label className="text-xs font-medium text-[var(--eds-text-secondary)] mb-1 block">Kunde</label>
                 <input
-                  className="w-full border border-[var(--eds-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                  className="w-full border border-[var(--eds-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   placeholder="z.B. DER Touristik, Siemens AG..."
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
@@ -680,7 +680,7 @@ function RequirementsContent() {
               <div>
                 <label className="text-xs font-medium text-[var(--eds-text-secondary)] mb-1 block">Projekt</label>
                 <input
-                  className="w-full border border-[var(--eds-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                  className="w-full border border-[var(--eds-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                   placeholder="z.B. CEO-Nachfolge, Vorstandsbesetzung..."
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
@@ -753,7 +753,7 @@ function RequirementsContent() {
 
             <p className="text-xs font-medium text-[var(--eds-text-secondary)] mb-1.5">Transkript / Freitext eingeben</p>
             <textarea
-              className="w-full h-40 border border-[var(--eds-border-strong)] rounded-xl p-4 text-sm text-[var(--eds-text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue resize-y"
+              className="w-full h-40 border border-[var(--eds-border-strong)] rounded-xl p-4 text-sm text-[var(--eds-text-primary)] placeholder-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue resize-y"
               placeholder="Fügen Sie hier die Ergebnisse, den Mitschrieb oder das Transkript einer Anforderungsanalyse ein..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -774,7 +774,7 @@ function RequirementsContent() {
                         setResearchUrls(updated);
                       }}
                       placeholder="https://..."
-                      className="flex-1 border border-[var(--eds-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+                      className="flex-1 border border-[var(--eds-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
                       data-testid={`input-research-url-${i}`}
                     />
                     <button

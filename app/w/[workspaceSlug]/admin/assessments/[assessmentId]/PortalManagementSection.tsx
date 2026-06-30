@@ -347,7 +347,7 @@ export default function PortalManagementSection({
           </div>
           <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">Schalten Sie die einzelnen Phasen frei, um Inhalte für Kandidaten schrittweise sichtbar zu machen.</p>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-[var(--eds-border)]">
           {phases.map((phase, idx) => (
             <div key={phase.id} className="px-5 py-4 flex items-center gap-4" data-testid={`phase-control-${phase.id}`}>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${phase.unlocked ? "bg-[var(--eds-status-green-bg)]" : "bg-[var(--eds-bg-sunken)]"}`}>
@@ -362,7 +362,7 @@ export default function PortalManagementSection({
                 disabled={togglingPhase === phase.id}
                 data-testid={`toggle-phase-${phase.id}`}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-blue/30 ${
-                  phase.unlocked ? "bg-[var(--eds-status-green-bg)]0" : "bg-slate-300"
+                  phase.unlocked ? "bg-[var(--eds-status-green-bg)]0" : "bg-[#cbd5e1]"
                 } ${togglingPhase === phase.id ? "opacity-50" : ""}`}
               >
                 <span
@@ -523,7 +523,7 @@ export default function PortalManagementSection({
           <div className="px-5 py-3 bg-gradient-to-r from-brand-navy/5 to-brand-blue/5 border-b border-[var(--eds-border)]">
             <h3 className="text-sm font-semibold text-brand-navy">{group.label}</h3>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-[var(--eds-border)]">
             {group.docs.map(doc => {
               const label = getScheduleLabel(doc);
               return (

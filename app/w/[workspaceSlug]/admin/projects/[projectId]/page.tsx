@@ -180,7 +180,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           {st.de}
         </span>
         <span
-          className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600"
+          className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-[var(--eds-bg-sunken)] text-[var(--eds-text-secondary)]"
           data-testid="badge-design-mode"
         >
           {dm.icon} {dm.de}

@@ -431,7 +431,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-8" data-testid="section-organigramm">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-teal-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#0d9488]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="absolute bottom-0 left-0 w-40 h-40 bg-[var(--eds-status-green)]/10 rounded-full translate-y-1/2 -translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-teal-100 border border-white/20 text-xs font-medium mb-3">
@@ -551,7 +551,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
 
             {activeTab === "overview" && (
               <div className="space-y-8" data-testid="section-overview">
-                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 p-8 text-white">
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#334155] p-8 text-white">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-200 border border-yellow-500/30 text-xs font-medium mb-4">
                     Strategic Review Required
                   </div>
@@ -602,7 +602,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                     <div className="space-y-3">
                       {localData.boardImpressions.map((bi, i) => (
                         <div key={i} className="rounded-xl border border-[var(--eds-border)] p-4 flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold">{bi.topic}</div>
+                          <div className="w-8 h-8 rounded-full bg-[#1e293b] text-white flex items-center justify-center text-xs font-bold">{bi.topic}</div>
                           <div className="text-sm font-medium text-[var(--eds-text-primary)]">{bi.title}</div>
                         </div>
                       ))}
@@ -616,7 +616,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-8" data-testid="section-strategy">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-amber-900 via-amber-800 to-amber-700 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--eds-status-amber)]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="absolute bottom-0 left-0 w-40 h-40 bg-[var(--eds-status-amber-bg)]0/10 rounded-full translate-y-1/2 -translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-100 border border-white/20 text-xs font-medium mb-3">
@@ -699,7 +699,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-8" data-testid="section-products">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--eds-status-blue)]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-blue-100 border border-white/20 text-xs font-medium mb-3">
                       Business Units
@@ -769,7 +769,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                       </thead>
                       <tbody>
                         {localData.businessUnits.map((bu) => (
-                          <tr key={bu.id} className="border-b border-slate-50 hover:bg-[var(--eds-bg-sunken)]/50">
+                          <tr key={bu.id} className="border-b border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)]/50">
                             <td className="px-6 py-3 font-medium text-[var(--eds-text-primary)]">{bu.name}</td>
                             <td className="text-right px-4 py-3 font-mono text-[var(--eds-text-disabled)]">{bu.yoy.revenue}</td>
                             <td className="text-right px-4 py-3 font-mono font-semibold text-[var(--eds-text-primary)]">{bu.financials.revenue}</td>
@@ -794,7 +794,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-8" data-testid="section-financials">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#059669]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-emerald-100 border border-white/20 text-xs font-medium mb-3">
                       Financial Analysis
@@ -817,8 +817,8 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                             <span className="font-mono text-[var(--eds-text-tertiary)]">€{bu.revenue}bn / €{bu.ebitda}bn</span>
                           </div>
                           <div className="relative h-6 bg-[var(--eds-bg-sunken)] rounded-full overflow-hidden">
-                            <div className="absolute inset-y-0 left-0 bg-slate-300 rounded-full" style={{ width: `${(bu.revenue / maxRevenue) * 100}%` }} />
-                            <div className="absolute inset-y-0 left-0 bg-slate-800 rounded-full" style={{ width: `${(bu.ebitda / maxRevenue) * 100}%` }} />
+                            <div className="absolute inset-y-0 left-0 bg-[#cbd5e1] rounded-full" style={{ width: `${(bu.revenue / maxRevenue) * 100}%` }} />
+                            <div className="absolute inset-y-0 left-0 bg-[#1e293b] rounded-full" style={{ width: `${(bu.ebitda / maxRevenue) * 100}%` }} />
                           </div>
                           <div className="flex gap-4 text-[10px] text-[var(--eds-text-disabled)]">
                             <span>Margin: {bu.margin}%</span>
@@ -828,8 +828,8 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                       );
                     })}
                     <div className="flex items-center gap-4 text-[10px] text-[var(--eds-text-disabled)] mt-4 pt-4 border-t border-[var(--eds-border)]">
-                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-slate-800" /> EBITDA</div>
-                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-slate-300" /> Revenue</div>
+                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#1e293b]" /> EBITDA</div>
+                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#cbd5e1]" /> Revenue</div>
                     </div>
                   </div>
                 </div>
@@ -850,7 +850,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                       <tbody>
                         <tr className="bg-[var(--eds-bg-sunken)]/50"><td className="px-6 py-2 font-bold text-[var(--eds-text-primary)] text-xs uppercase" colSpan={2}>Non-Current Assets</td></tr>
                         {localData.detailedBalanceSheet.assets.nonCurrent.map((item) => (
-                          <tr key={item.item} className="border-b border-slate-50">
+                          <tr key={item.item} className="border-b border-[var(--eds-border)]">
                             <td className="px-6 pl-10 py-1.5 text-xs text-[var(--eds-text-secondary)]">{item.item}</td>
                             <td className="text-right px-6 py-1.5 text-xs font-mono text-[var(--eds-text-primary)]">{formatCurrency(item.value)}</td>
                           </tr>
@@ -861,7 +861,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                         </tr>
                         <tr className="bg-[var(--eds-bg-sunken)]/50"><td className="px-6 py-2 font-bold text-[var(--eds-text-primary)] text-xs uppercase" colSpan={2}>Current Assets</td></tr>
                         {localData.detailedBalanceSheet.assets.current.map((item) => (
-                          <tr key={item.item} className="border-b border-slate-50">
+                          <tr key={item.item} className="border-b border-[var(--eds-border)]">
                             <td className="px-6 pl-10 py-1.5 text-xs text-[var(--eds-text-secondary)]">{item.item}</td>
                             <td className="text-right px-6 py-1.5 text-xs font-mono text-[var(--eds-text-primary)]">{formatCurrency(item.value)}</td>
                           </tr>
@@ -870,7 +870,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                           <td className="px-6 py-2 font-bold text-xs text-[var(--eds-text-primary)]">Total Current Assets</td>
                           <td className="text-right px-6 py-2 font-bold text-xs font-mono text-[var(--eds-text-primary)]">{formatCurrency(localData.detailedBalanceSheet.assets.current.reduce((s, i) => s + i.value, 0))}</td>
                         </tr>
-                        <tr className="bg-slate-800 text-white">
+                        <tr className="bg-[#1e293b] text-white">
                           <td className="px-6 py-2 font-bold text-xs">TOTAL ASSETS</td>
                           <td className="text-right px-6 py-2 font-bold text-xs font-mono">{formatCurrency([...localData.detailedBalanceSheet.assets.nonCurrent, ...localData.detailedBalanceSheet.assets.current].reduce((s, i) => s + i.value, 0))}</td>
                         </tr>
@@ -893,7 +893,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                       <tbody>
                         <tr className="bg-[var(--eds-bg-sunken)]/50"><td className="px-6 py-2 font-bold text-[var(--eds-text-primary)] text-xs uppercase" colSpan={2}>Equity</td></tr>
                         {localData.detailedBalanceSheet.equityLiabilities.equity.map((item) => (
-                          <tr key={item.item} className="border-b border-slate-50">
+                          <tr key={item.item} className="border-b border-[var(--eds-border)]">
                             <td className="px-6 pl-10 py-1.5 text-xs text-[var(--eds-text-secondary)]">{item.item}</td>
                             <td className="text-right px-6 py-1.5 text-xs font-mono text-[var(--eds-text-primary)]">{formatCurrency(item.value)}</td>
                           </tr>
@@ -904,7 +904,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                         </tr>
                         <tr className="bg-[var(--eds-bg-sunken)]/50"><td className="px-6 py-2 font-bold text-[var(--eds-text-primary)] text-xs uppercase" colSpan={2}>Non-Current Liabilities</td></tr>
                         {localData.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities.map((item) => (
-                          <tr key={item.item} className="border-b border-slate-50">
+                          <tr key={item.item} className="border-b border-[var(--eds-border)]">
                             <td className="px-6 pl-10 py-1.5 text-xs text-[var(--eds-text-secondary)]">{item.item}</td>
                             <td className="text-right px-6 py-1.5 text-xs font-mono text-[var(--eds-text-primary)]">{formatCurrency(item.value)}</td>
                           </tr>
@@ -915,7 +915,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                         </tr>
                         <tr className="bg-[var(--eds-bg-sunken)]/50"><td className="px-6 py-2 font-bold text-[var(--eds-text-primary)] text-xs uppercase" colSpan={2}>Current Liabilities</td></tr>
                         {localData.detailedBalanceSheet.equityLiabilities.currentLiabilities.map((item) => (
-                          <tr key={item.item} className="border-b border-slate-50">
+                          <tr key={item.item} className="border-b border-[var(--eds-border)]">
                             <td className="px-6 pl-10 py-1.5 text-xs text-[var(--eds-text-secondary)]">{item.item}</td>
                             <td className="text-right px-6 py-1.5 text-xs font-mono text-[var(--eds-text-primary)]">{formatCurrency(item.value)}</td>
                           </tr>
@@ -924,7 +924,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                           <td className="px-6 py-2 font-bold text-xs text-[var(--eds-text-primary)]">Total Current Liab.</td>
                           <td className="text-right px-6 py-2 font-bold text-xs font-mono text-[var(--eds-text-primary)]">{formatCurrency(localData.detailedBalanceSheet.equityLiabilities.currentLiabilities.reduce((s, i) => s + i.value, 0))}</td>
                         </tr>
-                        <tr className="bg-slate-800 text-white">
+                        <tr className="bg-[#1e293b] text-white">
                           <td className="px-6 py-2 font-bold text-xs">TOTAL EQUITY & LIAB.</td>
                           <td className="text-right px-6 py-2 font-bold text-xs font-mono">{formatCurrency([...localData.detailedBalanceSheet.equityLiabilities.equity, ...localData.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities, ...localData.detailedBalanceSheet.equityLiabilities.currentLiabilities].reduce((s, i) => s + i.value, 0))}</td>
                         </tr>
@@ -961,8 +961,8 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                             }
                             const isSubtotal = cf.item.startsWith("Net cash") || cf.item === "NET CHANGE IN CASH" || cf.item === "Closing cash balance" || cf.item === "Opening cash balance";
                             rows.push(
-                              <tr key={i} className={`border-b border-slate-50 ${isSubtotal ? "bg-[var(--eds-bg-sunken)] font-semibold" : ""}`}>
-                                <td className={`px-6 ${isSubtotal ? "" : "pl-10"} py-1.5 text-xs text-slate-${isSubtotal ? "900" : "600"}`}>{cf.item}</td>
+                              <tr key={i} className={`border-b border-[var(--eds-border)] ${isSubtotal ? "bg-[var(--eds-bg-sunken)] font-semibold" : ""}`}>
+                                <td className={`px-6 ${isSubtotal ? "" : "pl-10"} py-1.5 text-xs ${isSubtotal ? "text-[#0f172a]" : "text-[#475569]"}`}>{cf.item}</td>
                                 <td className={`text-right px-6 py-1.5 text-xs font-mono ${cf.value < 0 ? "text-[var(--eds-status-red)]" : "text-[var(--eds-text-primary)]"}`}>
                                   {cf.value >= 0 ? cf.value.toFixed(3) : cf.value.toFixed(3)}
                                 </td>
@@ -1049,7 +1049,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-6" data-testid="section-protocols">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-violet-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#9333ea]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-purple-100 border border-white/20 text-xs font-medium mb-3">
                       Meeting Protocols
@@ -1071,7 +1071,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                             key={p.id}
                             onClick={() => setSelectedProtocolId(p.id)}
                             className={`flex flex-col w-full text-left p-4 border-b border-[var(--eds-border)] transition-colors hover:bg-[var(--eds-bg-sunken)] ${
-                              selectedProtocolId === p.id ? "bg-[var(--eds-bg-sunken)] border-l-4 border-l-slate-800" : "border-l-4 border-l-transparent"
+                              selectedProtocolId === p.id ? "bg-[var(--eds-bg-sunken)] border-l-4 border-l-[#1e293b]" : "border-l-4 border-l-transparent"
                             }`}
                             data-testid={`button-protocol-${p.id}`}
                           >
@@ -1093,7 +1093,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                                   type="text"
                                   value={editForm.title || ""}
                                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                                  className="w-full text-lg font-serif font-bold text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                  className="w-full text-lg font-serif font-bold text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--eds-border-strong)]"
                                   data-testid="input-edit-protocol-title"
                                 />
                               </div>
@@ -1103,7 +1103,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                               <textarea
                                 value={editForm.content || ""}
                                 onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                                className="w-full h-full min-h-[300px] text-sm text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-4 py-3 resize-none leading-relaxed focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                className="w-full h-full min-h-[300px] text-sm text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-4 py-3 resize-none leading-relaxed focus:outline-none focus:ring-2 focus:ring-[var(--eds-border-strong)]"
                                 data-testid="input-edit-protocol-content"
                               />
                             </div>
@@ -1174,7 +1174,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-6" data-testid="section-news">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-rose-900 via-rose-800 to-pink-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-rose-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#e11d48]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-rose-100 border border-white/20 text-xs font-medium mb-3">
                       News & Media
@@ -1223,7 +1223,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                                   type="text"
                                   value={editForm.headline || ""}
                                   onChange={(e) => setEditForm({ ...editForm, headline: e.target.value })}
-                                  className="w-full text-lg font-serif font-bold text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                  className="w-full text-lg font-serif font-bold text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--eds-border-strong)]"
                                   data-testid="input-edit-news-headline"
                                 />
                               </div>
@@ -1233,7 +1233,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                                   type="text"
                                   value={editForm.subtitle || ""}
                                   onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
-                                  className="w-full text-sm text-[var(--eds-text-tertiary)] italic bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                  className="w-full text-sm text-[var(--eds-text-tertiary)] italic bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--eds-border-strong)]"
                                   data-testid="input-edit-news-subtitle"
                                 />
                               </div>
@@ -1243,7 +1243,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                               <textarea
                                 value={editForm.content || ""}
                                 onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                                className="w-full h-full min-h-[300px] text-sm text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-4 py-3 resize-none leading-relaxed focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                className="w-full h-full min-h-[300px] text-sm text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-4 py-3 resize-none leading-relaxed focus:outline-none focus:ring-2 focus:ring-[var(--eds-border-strong)]"
                                 data-testid="input-edit-news-content"
                               />
                             </div>
@@ -1309,7 +1309,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-6" data-testid="section-internal-comms">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-cyan-900 via-cyan-800 to-teal-700 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#0891b2]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-cyan-100 border border-white/20 text-xs font-medium mb-3">
                       Internal Communications
@@ -1340,7 +1340,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-6" data-testid="section-external-comms">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-900 via-indigo-800 to-blue-900 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#4f46e5]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-indigo-100 border border-white/20 text-xs font-medium mb-3">
                       External Communications
@@ -1371,7 +1371,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-8" data-testid="section-strategic-analysis">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-violet-900 via-violet-800 to-purple-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#7c3aed]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-violet-100 border border-white/20 text-xs font-medium mb-3">
                       Strategic Assessment
@@ -1419,7 +1419,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                     </div>
                     <div className="rounded-lg bg-[var(--eds-status-blue-bg)] border border-[var(--eds-status-blue-bg)] p-4">
                       <h3 className="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center text-xs font-bold">O</span>
+                        <span className="w-6 h-6 rounded bg-[var(--eds-status-blue)] text-white flex items-center justify-center text-xs font-bold">O</span>
                         Chancen
                       </h3>
                       <ul className="space-y-1.5">
@@ -1548,7 +1548,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
               <div className="space-y-8" data-testid="section-hr-dashboard">
                 {/* no-eds-token: dekorativer Demo-Gradient ohne EDS-Äquivalent */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-orange-900 via-orange-800 to-amber-800 p-8 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-orange-600/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#ea580c]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-orange-100 border border-white/20 text-xs font-medium mb-3">
                       HR Analytics
@@ -1609,7 +1609,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                         <h3 className="text-sm font-bold text-[var(--eds-text-primary)] mb-4 uppercase tracking-wider">Selected Anonymous Comments</h3>
                         <div className="space-y-3">
                           {localData.hrSurvey.comments.map((comment, i) => (
-                            <div key={i} className="bg-[var(--eds-bg-sunken)] rounded-lg p-4 border-l-4 border-l-slate-400 text-sm italic text-[var(--eds-text-secondary)]">
+                            <div key={i} className="bg-[var(--eds-bg-sunken)] rounded-lg p-4 border-l-4 border-l-[#94a3b8] text-sm italic text-[var(--eds-text-secondary)]">
                               &ldquo;{comment}&rdquo;
                             </div>
                           ))}
@@ -1701,7 +1701,7 @@ function EmailListPanel({
               key={email.id}
               onClick={() => onSelect(email.id)}
               className={`flex flex-col w-full text-left p-4 border-b border-[var(--eds-border)] transition-colors hover:bg-[var(--eds-bg-sunken)] ${
-                selectedEmailId === email.id ? "bg-[var(--eds-bg-sunken)] border-l-4 border-l-slate-800" : "border-l-4 border-l-transparent"
+                selectedEmailId === email.id ? "bg-[var(--eds-bg-sunken)] border-l-4 border-l-[#1e293b]" : "border-l-4 border-l-transparent"
               }`}
               data-testid={`button-email-${email.id}`}
             >
@@ -1737,7 +1737,7 @@ function EmailListPanel({
                   <textarea
                     value={editForm.subject || ""}
                     onChange={(e) => onEditFormChange({ ...editForm, subject: e.target.value })}
-                    className="w-full text-lg font-serif font-bold text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-slate-300"
+                    className="w-full text-lg font-serif font-bold text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[var(--eds-border-strong)]"
                     rows={2}
                     data-testid="input-edit-email-subject"
                   />
@@ -1748,7 +1748,7 @@ function EmailListPanel({
                     type="text"
                     value={editForm.from || ""}
                     onChange={(e) => onEditFormChange({ ...editForm, from: e.target.value })}
-                    className="w-full text-sm text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                    className="w-full text-sm text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--eds-border-strong)]"
                     data-testid="input-edit-email-from"
                   />
                 </div>
@@ -1758,7 +1758,7 @@ function EmailListPanel({
                 <textarea
                   value={editForm.content || ""}
                   onChange={(e) => onEditFormChange({ ...editForm, content: e.target.value })}
-                  className="w-full h-full min-h-[300px] text-sm text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-4 py-3 resize-none leading-relaxed focus:outline-none focus:ring-2 focus:ring-slate-300"
+                  className="w-full h-full min-h-[300px] text-sm text-[var(--eds-text-primary)] bg-white border border-[var(--eds-border)] rounded-lg px-4 py-3 resize-none leading-relaxed focus:outline-none focus:ring-2 focus:ring-[var(--eds-border-strong)]"
                   data-testid="input-edit-email-content"
                 />
               </div>
@@ -1877,7 +1877,7 @@ function EmailListPanel({
                           </thead>
                           <tbody>
                             {catDocs.map((doc) => (
-                              <tr key={doc.id} className="border-b border-slate-50 hover:bg-[var(--eds-bg-sunken)] transition-colors">
+                              <tr key={doc.id} className="border-b border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)] transition-colors">
                                 <td className="px-5 py-3 font-medium text-[var(--eds-text-primary)]">{doc.title}</td>
                                 <td className="px-5 py-3 text-[var(--eds-text-tertiary)]">
                                   <span className="inline-block bg-[var(--eds-bg-sunken)] rounded px-2 py-0.5 text-xs">{doc.documentType}</span>
@@ -1898,14 +1898,14 @@ function EmailListPanel({
                 {/* Docs without category */}
                 {drDocuments.filter((d) => !d.categoryId).length > 0 && (
                   <div className="rounded-xl border border-[var(--eds-border)] overflow-hidden">
-                    <div className="bg-slate-700 text-white px-5 py-3 flex items-center gap-3">
+                    <div className="bg-[#334155] text-white px-5 py-3 flex items-center gap-3">
                       <span className="text-lg">📄</span>
                       <span className="font-semibold text-sm">Ohne Kategorie</span>
                     </div>
                     <table className="w-full text-sm">
                       <tbody>
                         {drDocuments.filter((d) => !d.categoryId).map((doc) => (
-                          <tr key={doc.id} className="border-b border-slate-50 hover:bg-[var(--eds-bg-sunken)] transition-colors">
+                          <tr key={doc.id} className="border-b border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)] transition-colors">
                             <td className="px-5 py-3 font-medium text-[var(--eds-text-primary)]">{doc.title}</td>
                             <td className="px-5 py-3 text-[var(--eds-text-tertiary)]">
                               <span className="inline-block bg-[var(--eds-bg-sunken)] rounded px-2 py-0.5 text-xs">{doc.documentType}</span>

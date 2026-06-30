@@ -90,7 +90,7 @@ export default function AiGovernancePage() {
     return (
       <div className="py-8 px-6 lg:px-10 space-y-6" data-testid="ai-governance-loading">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-64" />
+          <div className="h-8 bg-[var(--eds-border-strong)] rounded w-64" />
           <div className="h-64 bg-[var(--eds-bg-sunken)] rounded" />
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function AiGovernancePage() {
                       <span className="absolute top-2 right-2 bg-[#A6473B] text-white text-xs px-2 py-0.5 rounded-full">Aktiv</span>
                     )}
                     {!isAvailable && (
-                      <span className="absolute top-2 right-2 bg-slate-400 text-white text-xs px-2 py-0.5 rounded-full">Kommt bald</span>
+                      <span className="absolute top-2 right-2 bg-[#94a3b8] text-white text-xs px-2 py-0.5 rounded-full">Kommt bald</span>
                     )}
                     <h3 className="font-semibold text-[var(--eds-text-primary)]">{info.name}</h3>
                     <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">{info.region}</p>
@@ -266,7 +266,7 @@ export default function AiGovernancePage() {
               Noch keine Einträge vorhanden.
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
+            <div className="divide-y divide-[var(--eds-border)] max-h-[600px] overflow-y-auto">
               {audit.map((entry) => (
                 <div key={entry.id} className="p-4 hover:bg-[var(--eds-bg-sunken)] transition-colors" data-testid={`audit-entry-${entry.id}`}>
                   <div className="flex items-start justify-between gap-4">

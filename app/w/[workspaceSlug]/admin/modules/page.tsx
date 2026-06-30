@@ -544,7 +544,7 @@ function ModulesHubContent() {
                   />
                 </div>
               ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-[var(--eds-border)]">
                   {exercises.map((ex) => (
                     <div
                       key={ex.id}
@@ -603,7 +603,7 @@ function ModulesHubContent() {
                     <Link href={`${base}/exercise-library`} className="text-xs text-brand-blue hover:underline mt-2 inline-block">Zur Baustein-Bibliothek →</Link>
                   </div>
                 ) : (
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-[var(--eds-border)]">
                     {libraryItems.map((item) => {
                       const alreadyAdopted = exercises.some((e) => e.libraryItemId === item.id);
                       return (

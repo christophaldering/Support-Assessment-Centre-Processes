@@ -339,9 +339,9 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
               {Object.keys(typingUsers).length > 0 && (
                 <div className="flex items-center gap-2 text-xs text-[var(--eds-text-disabled)] italic py-1">
                   <span className="flex gap-0.5">
-                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <span className="w-1.5 h-1.5 bg-[#94a3b8] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 bg-[#94a3b8] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 bg-[#94a3b8] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                   </span>
                   Jemand tippt...
                 </div>

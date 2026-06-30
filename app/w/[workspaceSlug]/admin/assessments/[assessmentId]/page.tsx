@@ -3450,7 +3450,7 @@ export default function AssessmentDetailPage() {
                                       {weight.toFixed(1)}
                                     </span>
                                   ) : (
-                                    <span className="text-slate-200">–</span>
+                                    <span className="text-[#e2e8f0]">–</span>
                                   )}
                                 </td>
                               );
@@ -3568,7 +3568,7 @@ export default function AssessmentDetailPage() {
                   <div className="space-y-1">
                     {observationSheets.map((sheet) => (
                       <div key={sheet.id} className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#94a3b8]"></span>
                         <span>{sheet.name}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           sheet.type === "ai" ? "bg-purple-50 text-purple-600" :
@@ -3589,7 +3589,7 @@ export default function AssessmentDetailPage() {
                   <div className="space-y-1">
                     {documents.map((doc) => (
                       <div key={doc.id} className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#94a3b8]"></span>
                         <span>{doc.name}</span>
                         <span className="text-xs text-[var(--eds-text-disabled)]">{formatFileSize(doc.fileSize)}</span>
                       </div>
@@ -3840,7 +3840,7 @@ export default function AssessmentDetailPage() {
                       Hinzufügen
                     </button>
                   </div>
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-[var(--eds-border)]">
                     {generalPortal.map(d => renderDocRow(d, true))}
                     {generalLegacy.map(d => renderDocRow(d, false))}
                     {generalLegacy.length === 0 && generalPortal.length === 0 && (
@@ -3885,7 +3885,7 @@ export default function AssessmentDetailPage() {
                           Hinzufügen
                         </button>
                       </div>
-                      <div className="divide-y divide-slate-100">
+                      <div className="divide-y divide-[var(--eds-border)]">
                         {exPortalDocs.map(d => renderDocRow(d, true))}
                         {exLegacyDocs.map(d => renderDocRow(d, false))}
                         {total === 0 && (
@@ -3908,7 +3908,7 @@ export default function AssessmentDetailPage() {
                         <span className="text-xs text-[var(--eds-text-disabled)] ml-1">{prepPortal.length}</span>
                       </div>
                     </div>
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-[var(--eds-border)]">
                       {prepPortal.map(d => renderDocRow(d, true))}
                     </div>
                   </div>
@@ -3925,7 +3925,7 @@ export default function AssessmentDetailPage() {
                         <span className="text-xs text-[var(--eds-text-disabled)] ml-1">{infoPortal.length}</span>
                       </div>
                     </div>
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-[var(--eds-border)]">
                       {infoPortal.map(d => renderDocRow(d, true))}
                     </div>
                   </div>
