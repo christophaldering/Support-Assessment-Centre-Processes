@@ -941,7 +941,10 @@ export default function ExerciseLibraryPage() {
   const [clients, setClients] = useState<{id: string; name: string; _count?: {exerciseLibraryItems: number}}[]>([]);
   const [activeClientFilter, setActiveClientFilter] = useState<string | null>(null);
   const [activeScopeFilter, setActiveScopeFilter] = useState<string | null>(null);
+  const [activeSzenarioFilter, setActiveSzenarioFilter] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [requirementsAnalyses, setRequirementsAnalyses] = useState<{id: string; title: string; clientName?: string | null}[]>([]);
+  const [selectedRequirementsAnalysisId, setSelectedRequirementsAnalysisId] = useState("");
 
   const fetchItems = useCallback(async () => {
     try {
@@ -989,6 +992,17 @@ export default function ExerciseLibraryPage() {
     fetchClients();
   }, [fetchItems, fetchClients]);
 
+  useEffect(() => {
+    fetch(`/api/w/${slug}/requirements-analysis`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) =>
+        setRequirementsAnalyses(
+          Array.isArray(data) ? data.filter((a: any) => a.status === "completed") : []
+        )
+      )
+      .catch(() => {});
+  }, [slug]);
+
   const categoryCounts = useCallback(() => {
     const counts: Record<string, number> = {};
     for (const cat of EXERCISE_CATEGORIES) {
@@ -997,9 +1011,9 @@ export default function ExerciseLibraryPage() {
     return counts;
   }, [allItems]);
 
-  const filteredItems = activeCategory
-    ? allItems.filter((i) => i.exerciseType === activeCategory)
-    : allItems;
+  const filteredItems = allItems
+    .filter((i) => !activeCategory || i.exerciseType === activeCategory)
+    .filter((i) => !activeSzenarioFilter || !!i.scenarioId);
 
   const handleFilesSelected = useCallback((files: FileList | File[]) => {
     const newPending: PendingFile[] = [];
@@ -1261,10 +1275,21 @@ export default function ExerciseLibraryPage() {
 
   return (
     <div className="py-8 px-6 lg:px-10 space-y-6">
-      <PageHeader
-        title="Übungsbibliothek"
-        description="Verwalten Sie wiederverwendbare Übungen für Assessment-Center"
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          title="Übungsbibliothek"
+          description="Verwalten Sie wiederverwendbare Übungen für Assessment-Center"
+        />
+        <Link
+          href={`/w/${slug}/admin/case-studio`}
+          className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg transition hover:opacity-90"
+          style={{ backgroundColor: "var(--eds-lagune)" }}
+          data-testid="button-new-case-study"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Neue Fallstudie erstellen
+        </Link>
+      </div>
         {error && (
           <div
             className="mb-4 p-3 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-lg text-[var(--eds-status-red)] text-sm flex items-center justify-between"
@@ -1359,6 +1384,27 @@ export default function ExerciseLibraryPage() {
                   onRemove={removePendingFile}
                 />
               ))}
+
+              {analysisResults.length === 0 && requirementsAnalyses.length > 0 && (
+                <div className="mt-3 p-3 bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-lg" data-testid="section-req-analysis-context">
+                  <label className="block text-xs font-medium text-[var(--eds-text-secondary)] mb-1">
+                    Anforderungsanalyse als KI-Kontext (optional)
+                  </label>
+                  <select
+                    value={selectedRequirementsAnalysisId}
+                    onChange={(e) => setSelectedRequirementsAnalysisId(e.target.value)}
+                    className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--eds-terracotta)]/20 focus:border-[var(--eds-terracotta)]"
+                    data-testid="select-req-analysis"
+                  >
+                    <option value="">— Keine Analyse verwenden —</option>
+                    {requirementsAnalyses.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.title}{a.clientName ? ` · ${a.clientName}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {analysisResults.length === 0 && (
                 <div className="flex items-center gap-3 pt-2">
@@ -1617,16 +1663,16 @@ export default function ExerciseLibraryPage() {
           )}
         </section>
 
-        <div className="flex items-center gap-2 mb-6" data-testid="scope-filter-bar">
+        <div className="flex items-center gap-2 mb-6 flex-wrap" data-testid="scope-filter-bar">
           <span className="text-xs font-medium text-[var(--eds-text-tertiary)] mr-1">Bereich:</span>
           <button
-            onClick={() => setActiveScopeFilter(null)}
+            onClick={() => { setActiveScopeFilter(null); setActiveSzenarioFilter(false); }}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              activeScopeFilter === null
+              activeScopeFilter === null && !activeSzenarioFilter
                 ? "text-white"
                 : "text-[var(--eds-text-secondary)] bg-[var(--eds-bg-sunken)] hover:bg-[var(--eds-border)]"
             }`}
-            style={activeScopeFilter === null ? { backgroundColor: ACCENT } : undefined}
+            style={activeScopeFilter === null && !activeSzenarioFilter ? { backgroundColor: ACCENT } : undefined}
             data-testid="button-scope-all"
           >
             Alle
@@ -1636,9 +1682,9 @@ export default function ExerciseLibraryPage() {
             return (
               <button
                 key={scope.key}
-                onClick={() => setActiveScopeFilter(scope.key)}
+                onClick={() => { setActiveScopeFilter(scope.key); setActiveSzenarioFilter(false); }}
                 className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-                style={activeScopeFilter === scope.key
+                style={activeScopeFilter === scope.key && !activeSzenarioFilter
                   ? { background: ACCENT, color: "var(--eds-text-inverse)" }
                   : colors}
                 data-testid={`button-scope-${scope.key}`}
@@ -1647,6 +1693,16 @@ export default function ExerciseLibraryPage() {
               </button>
             );
           })}
+          <button
+            onClick={() => { setActiveSzenarioFilter((v) => !v); setActiveScopeFilter(null); }}
+            className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+            style={activeSzenarioFilter
+              ? { background: "#297587", color: "#fff" }
+              : { background: "#297587]/10", backgroundColor: "#EFF9FB", color: "#297587", border: "1px solid #B5D6DE" }}
+            data-testid="button-scope-szenario"
+          >
+            Szenario-Baustein
+          </button>
         </div>
 
         {loading ? (
@@ -1843,12 +1899,12 @@ export default function ExerciseLibraryPage() {
                             })()}
                             {item.scenarioId && (
                               <Link
-                                href={`/w/${slug}/admin/modules/case-study/${item.scenarioId}`}
+                                href={`/w/${slug}/admin/case-studio/${item.scenarioId}`}
                                 onClick={(e) => e.stopPropagation()}
                                 className="text-[10px] font-medium text-[#297587] bg-[#297587]/10 border border-[#297587]/20 px-1.5 py-0.5 rounded hover:bg-[#297587]/20 transition-colors"
                                 data-testid={`badge-scenario-${item.id}`}
                               >
-                                Szenario-verknüpft
+                                Szenario-Baustein
                               </Link>
                             )}
                             {item.archived && (

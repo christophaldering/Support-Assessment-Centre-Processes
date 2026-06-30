@@ -166,6 +166,14 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Übungstyp ist erforderlich" }, { status: 400 });
     }
 
+    if (!scope || scope.trim() === "") {
+      return NextResponse.json({ error: "scope ist erforderlich (general | client | project | candidate)" }, { status: 400 });
+    }
+
+    if (scope !== "general" && !clientName?.trim()) {
+      return NextResponse.json({ error: "clientName ist erforderlich wenn scope nicht general" }, { status: 400 });
+    }
+
     const workspace = await prisma.workspace.findUnique({
       where: { slug: params.workspaceSlug },
     });
@@ -205,7 +213,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         clientId,
         clientName: clientName?.trim() || null,
         projectName: projectName?.trim() || null,
-        scope: scope || "general",
+        scope: scope,
         scenarioId: scenarioId || null,
       },
       include: {

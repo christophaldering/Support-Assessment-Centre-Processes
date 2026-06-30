@@ -1,12 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Card } from "@/components/shared/Card";
 import { ModuleIcon } from "@/components/shared/ModuleIcon";
+
+interface AssessmentSummary {
+  id: string;
+  name: string;
+  status: string;
+}
 
 interface AssessmentModuleData {
   name: string;
@@ -36,31 +41,18 @@ interface LibraryItem {
   clientName: string | null;
 }
 
-interface CaseStudySummary {
-  id: string;
-  title: string;
-  companyName: string;
-  type: string;
-  status: string;
-}
-
-interface ModuleBlueprint {
+interface Exercise {
   id: string;
   name: string;
   type: string;
-  description: string;
-  instructions: string;
-  duration: number;
-  targetLevel: string;
-  scenarioContext: string;
-  adaptationNotes: string;
-  sourceType: "manual" | "library" | "ai" | "requirement";
-  sourceId?: string;
-  aiGenerated: boolean;
-  status: "draft" | "ready" | "active";
+  instructions: string | null;
+  duration: number | null;
+  status: string;
+  libraryItemId: string | null;
+  sortOrder: number;
 }
 
-type ViewMode = "hub" | "manual" | "library" | "ai" | "detail";
+type ViewMode = "hub" | "library" | "detail";
 
 const exerciseTypes = [
   { value: "interview", label: "Interview-Leitfaden" },
@@ -110,45 +102,24 @@ export default function ModulesHubPage() {
 
 function ModulesHubContent() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const workspaceSlug = params.workspaceSlug as string;
   const base = `/w/${workspaceSlug}/admin`;
 
   const [view, setView] = useState<ViewMode>("hub");
-  const [blueprints, setBlueprints] = useState<ModuleBlueprint[]>([]);
   const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
-  const [caseStudies, setCaseStudies] = useState<CaseStudySummary[]>([]);
+  const [assessments, setAssessments] = useState<AssessmentSummary[]>([]);
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState("");
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loadingExercises, setLoadingExercises] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const [selectedAnalysis, setSelectedAnalysis] = useState<SavedAnalysis | null>(null);
   const [requirementModules, setRequirementModules] = useState<AssessmentModuleData[]>([]);
-
-  const [editBlueprint, setEditBlueprint] = useState<ModuleBlueprint | null>(null);
-
-  const [manualForm, setManualForm] = useState({
-    name: "",
-    type: "interview",
-    description: "",
-    instructions: "",
-    duration: 45,
-    targetLevel: "Manager",
-    scenarioContext: "",
-  });
-
-  const [aiForm, setAiForm] = useState({
-    type: "interview",
-    targetLevel: "Manager",
-    context: "",
-    duration: 45,
-    embedInScenario: false,
-    scenarioCaseStudyId: "",
-    requirementModuleIndex: -1,
-  });
 
   const [selectedLibraryItem, setSelectedLibraryItem] = useState<LibraryItem | null>(null);
   const [libraryAdaptForm, setLibraryAdaptForm] = useState({
@@ -157,30 +128,13 @@ function ModulesHubContent() {
     instructions: "",
     duration: 45,
     targetLevel: "Manager",
-    scenarioContext: "",
+    adaptationNotes: "",
   });
 
   const [confirmDeleteLibItem, setConfirmDeleteLibItem] = useState<LibraryItem | null>(null);
   const [deletingLibItem, setDeletingLibItem] = useState(false);
 
-  const savedBlueprints = useCallback(() => {
-    try {
-      const key = `baustein_blueprints_${workspaceSlug}`;
-      const stored = localStorage.getItem(key);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  }, [workspaceSlug]);
-
-  const persistBlueprints = useCallback(
-    (bps: ModuleBlueprint[]) => {
-      const key = `baustein_blueprints_${workspaceSlug}`;
-      localStorage.setItem(key, JSON.stringify(bps));
-      setBlueprints(bps);
-    },
-    [workspaceSlug]
-  );
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
   useEffect(() => {
     loadData();
@@ -189,10 +143,10 @@ function ModulesHubContent() {
   async function loadData() {
     setLoading(true);
     try {
-      const [analysisRes, libraryRes, caseStudyRes] = await Promise.all([
+      const [analysisRes, libraryRes, assessmentRes] = await Promise.all([
         fetch(`/api/w/${workspaceSlug}/requirements-analysis`),
         fetch(`/api/w/${workspaceSlug}/exercise-library`),
-        fetch(`/api/w/${workspaceSlug}/case-studies`),
+        fetch(`/api/w/${workspaceSlug}/assessments`),
       ]);
 
       if (analysisRes.ok) {
@@ -202,17 +156,41 @@ function ModulesHubContent() {
       if (libraryRes.ok) {
         setLibraryItems(await libraryRes.json());
       }
-      if (caseStudyRes.ok) {
-        const cs = await caseStudyRes.json();
-        setCaseStudies(Array.isArray(cs) ? cs : []);
+      if (assessmentRes.ok) {
+        const data = await assessmentRes.json();
+        const list: AssessmentSummary[] = Array.isArray(data) ? data : (data.assessments ?? []);
+        setAssessments(list);
       }
-
-      setBlueprints(savedBlueprints());
     } catch {
       setError("Fehler beim Laden der Daten.");
     } finally {
       setLoading(false);
     }
+  }
+
+  const loadExercises = useCallback(async (assessmentId: string) => {
+    if (!assessmentId) {
+      setExercises([]);
+      return;
+    }
+    setLoadingExercises(true);
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${assessmentId}/exercises`);
+      if (res.ok) {
+        setExercises(await res.json());
+      } else {
+        setExercises([]);
+      }
+    } catch {
+      setExercises([]);
+    } finally {
+      setLoadingExercises(false);
+    }
+  }, [workspaceSlug]);
+
+  function handleAssessmentChange(id: string) {
+    setSelectedAssessmentId(id);
+    loadExercises(id);
   }
 
   function loadRequirementModules(analysis: SavedAnalysis) {
@@ -226,87 +204,85 @@ function ModulesHubContent() {
     }
   }
 
-  function adoptRequirementModule(mod: AssessmentModuleData) {
-    const typeMap: Record<string, string> = {
-      "Interview-Leitfaden": "interview",
-      "Fallstudie": "case_study",
-      "Fact-Finding-Simulation": "fact_finding",
-      "Präsentation": "presentation",
-      "Verhaltenssimulation": "role_play",
-      "Rollenspiel": "role_play",
-      "Gruppendiskussion": "group_discussion",
-      "Postkorb-Übung": "inbox",
-      "Psychometrischer Test": "psychometric",
-    };
-    const bp: ModuleBlueprint = {
-      id: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      name: mod.name,
-      type: typeMap[mod.type] || "other",
-      description: mod.description,
-      instructions: "",
-      duration: 45,
-      targetLevel: "Manager",
-      scenarioContext: "",
-      adaptationNotes: mod.adaptationNotes || "",
-      sourceType: "requirement",
-      sourceId: selectedAnalysis?.id,
-      aiGenerated: false,
-      status: "draft",
-    };
-    const updated = [...blueprints, bp];
-    persistBlueprints(updated);
-    setSuccess(`"${mod.name}" als Baustein übernommen.`);
-    setTimeout(() => setSuccess(""), 3000);
-  }
-
-  function saveManualBlueprint() {
-    if (!manualForm.name.trim()) {
-      setError("Bitte geben Sie einen Namen ein.");
+  async function adoptRequirementModule(mod: AssessmentModuleData) {
+    if (!selectedAssessmentId) {
+      setError("Wählen Sie zuerst ein Assessment, um Bausteine zu übernehmen.");
+      setTimeout(() => setError(""), 4000);
       return;
     }
-    const bp: ModuleBlueprint = {
-      id: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      name: manualForm.name,
-      type: manualForm.type,
-      description: manualForm.description,
-      instructions: manualForm.instructions,
-      duration: manualForm.duration,
-      targetLevel: manualForm.targetLevel,
-      scenarioContext: manualForm.scenarioContext,
-      adaptationNotes: "",
-      sourceType: "manual",
-      aiGenerated: false,
-      status: "draft",
-    };
-    persistBlueprints([...blueprints, bp]);
-    setManualForm({ name: "", type: "interview", description: "", instructions: "", duration: 45, targetLevel: "Manager", scenarioContext: "" });
-    setSuccess("Baustein manuell erstellt.");
-    setView("hub");
-    setTimeout(() => setSuccess(""), 3000);
+    setSaving(true);
+    setError("");
+    try {
+      const typeMap: Record<string, string> = {
+        "Interview-Leitfaden": "interview",
+        "Fallstudie": "case_study",
+        "Fact-Finding-Simulation": "fact_finding",
+        "Präsentation": "presentation",
+        "Verhaltenssimulation": "role_play",
+        "Rollenspiel": "role_play",
+        "Gruppendiskussion": "group_discussion",
+        "Postkorb-Übung": "inbox",
+        "Psychometrischer Test": "psychometric",
+      };
+      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}/exercises`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: mod.name,
+          type: typeMap[mod.type] || "other",
+          instructions: mod.adaptationNotes || null,
+          duration: 45,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Übernehmen fehlgeschlagen");
+      }
+      await loadExercises(selectedAssessmentId);
+      setSuccess(`"${mod.name}" ins Assessment übernommen.`);
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError(err.message || "Fehler beim Übernehmen.");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function adoptLibraryItem() {
+  async function adoptLibraryItem() {
     if (!selectedLibraryItem) return;
-    const bp: ModuleBlueprint = {
-      id: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      name: libraryAdaptForm.name || selectedLibraryItem.title,
-      type: selectedLibraryItem.exerciseType || "other",
-      description: libraryAdaptForm.description || selectedLibraryItem.description || "",
-      instructions: libraryAdaptForm.instructions,
-      duration: libraryAdaptForm.duration,
-      targetLevel: libraryAdaptForm.targetLevel,
-      scenarioContext: libraryAdaptForm.scenarioContext,
-      adaptationNotes: "",
-      sourceType: "library",
-      sourceId: selectedLibraryItem.id,
-      aiGenerated: false,
-      status: "draft",
-    };
-    persistBlueprints([...blueprints, bp]);
-    setSelectedLibraryItem(null);
-    setSuccess(`"${bp.name}" aus Bibliothek übernommen.`);
-    setView("hub");
-    setTimeout(() => setSuccess(""), 3000);
+    if (!selectedAssessmentId) {
+      setError("Wählen Sie zuerst ein Assessment, um Bausteine zu übernehmen.");
+      setTimeout(() => setError(""), 4000);
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}/exercises`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: libraryAdaptForm.name || selectedLibraryItem.title,
+          type: selectedLibraryItem.exerciseType || "other",
+          instructions: libraryAdaptForm.instructions || null,
+          duration: libraryAdaptForm.duration,
+          libraryItemId: selectedLibraryItem.id,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Übernehmen fehlgeschlagen");
+      }
+      await loadExercises(selectedAssessmentId);
+      setSelectedLibraryItem(null);
+      setSuccess(`"${libraryAdaptForm.name || selectedLibraryItem.title}" aus Bibliothek übernommen.`);
+      setView("hub");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError(err.message || "Fehler beim Übernehmen.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function deleteLibraryItem(item: LibraryItem) {
@@ -329,127 +305,47 @@ function ModulesHubContent() {
     }
   }
 
-  async function generateWithAI() {
-    setGenerating(true);
+  async function saveEditedExercise() {
+    if (!selectedExercise || !selectedAssessmentId) return;
+    setSaving(true);
     setError("");
     try {
-      let scenarioInfo = "";
-      if (aiForm.embedInScenario && aiForm.scenarioCaseStudyId) {
-        const cs = caseStudies.find((c) => c.id === aiForm.scenarioCaseStudyId);
-        if (cs) scenarioInfo = `Eingebettet in das Overarching-Szenario der Fallstudie "${cs.title}" (Firma: ${cs.companyName}). Alle Rollen, Kontexte und Dokumente sollen in diesem Szenario spielen.`;
-      }
-
-      let reqContext = "";
-      if (aiForm.requirementModuleIndex >= 0 && requirementModules[aiForm.requirementModuleIndex]) {
-        const rm = requirementModules[aiForm.requirementModuleIndex];
-        reqContext = `Basierend auf der Anforderungsanalyse-Empfehlung: "${rm.name}" (${rm.type}). Beschreibung: ${rm.description}. Anpassungshinweise: ${rm.adaptationNotes}. Generierungsprompt: ${rm.generationPrompt}.`;
-      }
-
-      const prompt = `Erstelle einen vollständigen Assessment-Baustein mit folgendem Profil:
-Typ: ${typeLabel(aiForm.type)}
-Ziel-Level: ${aiForm.targetLevel}
-Dauer: ${aiForm.duration} Minuten
-Kontext: ${aiForm.context || "Allgemein"}
-${reqContext ? `\nAnforderungsanalyse-Kontext:\n${reqContext}` : ""}
-${scenarioInfo ? `\nOverarching-Szenario:\n${scenarioInfo}` : ""}
-
-Antworte in folgendem JSON-Format:
-{
-  "name": "Titel des Bausteins",
-  "description": "Kurzbeschreibung (2-3 Sätze)",
-  "instructions": "Detaillierte Durchführungsanweisungen für den Moderator/Beobachter",
-  "duration": ${aiForm.duration},
-  "scenarioContext": "Wie der Baustein ins Gesamtszenario passt (falls zutreffend)"
-}`;
-
-      const res = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "generate_module",
-          workspaceSlug,
-          prompt,
-          systemPrompt:
-            "Du bist ein Experte für Executive Assessment Center Design. Erstelle professionelle, praxistaugliche Assessment-Bausteine auf Deutsch. Antworte ausschließlich in gültigem JSON.",
-        }),
-      });
-
+      const res = await fetch(
+        `/api/w/${workspaceSlug}/assessments/${selectedAssessmentId}/exercises/${selectedExercise.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: selectedExercise.name,
+            type: selectedExercise.type,
+            instructions: selectedExercise.instructions,
+            duration: selectedExercise.duration,
+          }),
+        }
+      );
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "KI-Generierung fehlgeschlagen");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Speichern fehlgeschlagen");
       }
-      const data = await res.json();
-      const parsed = data.result || {};
-
-      const bp: ModuleBlueprint = {
-        id: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-        name: parsed.name || `KI-Baustein ${aiForm.type}`,
-        type: aiForm.type,
-        description: parsed.description || "",
-        instructions: parsed.instructions || "",
-        duration: parsed.duration || aiForm.duration,
-        targetLevel: aiForm.targetLevel,
-        scenarioContext: parsed.scenarioContext || scenarioInfo || "",
-        adaptationNotes: reqContext || "",
-        sourceType: "ai",
-        sourceId: aiForm.requirementModuleIndex >= 0 ? selectedAnalysis?.id : undefined,
-        aiGenerated: true,
-        status: "draft",
-      };
-
-      persistBlueprints([...blueprints, bp]);
-      setSuccess(`KI-Baustein "${bp.name}" erstellt.`);
+      await loadExercises(selectedAssessmentId);
+      setSelectedExercise(null);
       setView("hub");
+      setSuccess("Baustein aktualisiert.");
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err: any) {
-      setError(err.message || "KI-Generierung fehlgeschlagen.");
+      setError(err.message || "Fehler beim Speichern.");
     } finally {
-      setGenerating(false);
-      setTimeout(() => setSuccess(""), 4000);
+      setSaving(false);
     }
   }
 
-  function deleteBlueprint(id: string) {
-    persistBlueprints(blueprints.filter((b) => b.id !== id));
-  }
-
-  function updateBlueprintStatus(id: string, status: "draft" | "ready" | "active") {
-    persistBlueprints(blueprints.map((b) => (b.id === id ? { ...b, status } : b)));
-  }
-
-  function saveEditedBlueprint() {
-    if (!editBlueprint) return;
-    persistBlueprints(blueprints.map((b) => (b.id === editBlueprint.id ? editBlueprint : b)));
-    setEditBlueprint(null);
-    setSuccess("Baustein aktualisiert.");
-    setTimeout(() => setSuccess(""), 3000);
-  }
-
-  const statusBadge = (s: string) => {
+  const sourceBadge = (src: string) => {
     const map: Record<string, { color: string; bg: string; label: string }> = {
-      draft: { color: "#64748b", bg: "#f1f5f9", label: "Entwurf" },
-      ready: { color: "#16a34a", bg: "#f0fdf4", label: "Bereit" },
-      active: { color: "#2563eb", bg: "#eff6ff", label: "Aktiv" },
-    };
-    const d = map[s] || map.draft;
-    return <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: d.bg, color: d.color }}>{d.label}</span>;
-  };
-
-  const sourceBadge = (s: string) => {
-    const map: Record<string, { color: string; bg: string; label: string }> = {
-      manual: { color: "#64748b", bg: "#f1f5f9", label: "Manuell" },
-      library: { color: "#7c3aed", bg: "#f5f3ff", label: "Bibliothek" },
-      ai: { color: "#d97706", bg: "#fffbeb", label: "KI-generiert" },
+      library:     { color: "#7c3aed", bg: "#f5f3ff", label: "Bibliothek" },
       requirement: { color: "#0d9488", bg: "#f0fdfa", label: "Anforderung" },
     };
-    const d = map[s] || map.manual;
+    const d = map[src] || { color: "#64748b", bg: "#f1f5f9", label: src };
     return <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: d.bg, color: d.color }}>{d.label}</span>;
-  };
-
-  const viewLabels: Record<string, string> = {
-    manual: "Manuell erstellen",
-    library: "Aus Bibliothek",
-    ai: "KI-Generierung",
-    detail: "Baustein bearbeiten",
   };
 
   if (loading) {
@@ -478,23 +374,10 @@ Antworte in folgendem JSON-Format:
           <>
             <PageHeader
               title="Modul-Designer"
-              description="Assessment-Bausteine erstellen, aus der Bibliothek übernehmen oder per KI generieren."
+              description="Assessment-Bausteine aus der Bibliothek übernehmen und ins Assessment einfügen."
             />
 
-            <div className="grid sm:grid-cols-3 gap-4">
-              <button
-                onClick={() => setView("manual")}
-                className="rounded-xl p-5 text-left transition hover:shadow-md"
-                style={{ background: "var(--eds-bg-surface)", border: "1px solid var(--eds-border)" }}
-                data-testid="button-create-manual"
-              >
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: "var(--eds-terracotta-ghost)", color: "var(--eds-terracotta)" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </div>
-                <h3 className="text-sm font-semibold" style={{ color: "var(--eds-text-primary)" }}>Manuell erstellen</h3>
-                <p className="text-xs mt-1" style={{ color: "var(--eds-text-secondary)" }}>Baustein von Grund auf erstellen mit Typ, Beschreibung und Anweisungen</p>
-              </button>
-
+            <div className="grid sm:grid-cols-1 gap-4 max-w-sm">
               <button
                 onClick={() => setView("library")}
                 className="rounded-xl p-5 text-left transition hover:shadow-md"
@@ -504,32 +387,36 @@ Antworte in folgendem JSON-Format:
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: "var(--eds-lagune-light)", color: "var(--eds-lagune)" }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                 </div>
-                <h3 className="text-sm font-semibold" style={{ color: "var(--eds-text-primary)" }}>Aus Bibliothek</h3>
-                <p className="text-xs mt-1" style={{ color: "var(--eds-text-secondary)" }}>Bestehende Übung übernehmen, anpassen und als Baustein verwenden</p>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--eds-text-primary)" }}>Aus Bibliothek übernehmen</h3>
+                <p className="text-xs mt-1" style={{ color: "var(--eds-text-secondary)" }}>Bestehende Übung aus der Bibliothek ins Assessment übernehmen</p>
                 {libraryItems.length > 0 && (
                   <span className="inline-block mt-2 text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full" style={{ background: "var(--eds-lagune-light)", color: "var(--eds-lagune)" }}>
                     {libraryItems.length} verfügbar
                   </span>
                 )}
               </button>
+            </div>
 
-              <button
-                onClick={() => setView("ai")}
-                className="rounded-xl p-5 text-left transition hover:shadow-md"
-                style={{ background: "var(--eds-bg-surface)", border: "1px solid var(--eds-border)" }}
-                data-testid="button-create-ai"
-              >
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: "var(--eds-status-amber-bg)", color: "var(--eds-status-amber)" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.44-3.16A2.5 2.5 0 0 1 9.5 2z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.44-3.16A2.5 2.5 0 0 0 14.5 2z"/></svg>
-                </div>
-                <h3 className="text-sm font-semibold" style={{ color: "var(--eds-text-primary)" }}>KI-gestützt generieren</h3>
-                <p className="text-xs mt-1" style={{ color: "var(--eds-text-secondary)" }}>KI erstellt den Baustein — optional basierend auf Anforderungsanalyse und Szenario</p>
-                {analyses.length > 0 && (
-                  <span className="inline-block mt-2 text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full" style={{ background: "var(--eds-status-amber-bg)", color: "var(--eds-status-amber)" }}>
-                    {analyses.length} Analyse{analyses.length !== 1 ? "n" : ""} verfügbar
-                  </span>
+            <div className="bg-white border border-[var(--eds-border)] rounded-xl" data-testid="section-assessment-selector">
+              <div className="px-6 py-5">
+                <label className="text-sm font-semibold text-brand-navy block mb-2">Assessment auswählen</label>
+                <p className="text-xs text-[var(--eds-text-tertiary)] mb-3">Wählen Sie ein Assessment, um dessen Bausteine zu sehen und neue zu übernehmen.</p>
+                {assessments.length === 0 ? (
+                  <p className="text-xs text-[var(--eds-text-disabled)]">Keine Assessments vorhanden.</p>
+                ) : (
+                  <select
+                    className={inputClass + " max-w-md"}
+                    value={selectedAssessmentId}
+                    onChange={(e) => handleAssessmentChange(e.target.value)}
+                    data-testid="select-assessment"
+                  >
+                    <option value="">— Assessment wählen —</option>
+                    {assessments.map((a) => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
                 )}
-              </button>
+              </div>
             </div>
 
             {analyses.length > 0 && (
@@ -538,7 +425,7 @@ Antworte in folgendem JSON-Format:
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-base font-semibold text-brand-navy">Vorschläge aus der Anforderungsanalyse</h3>
-                      <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">Empfohlene Bausteine direkt übernehmen oder per KI ausarbeiten</p>
+                      <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">Empfohlene Bausteine direkt übernehmen oder in der Bibliothek per KI ausarbeiten</p>
                     </div>
                     {analyses.length > 1 && !selectedAnalysis && (
                       <span className="text-[10px] text-[var(--eds-text-disabled)]">{analyses.length} Analysen</span>
@@ -575,13 +462,12 @@ Antworte in folgendem JSON-Format:
                       ) : (
                         <div className="grid sm:grid-cols-2 gap-3">
                           {requirementModules.map((mod, idx) => {
-                            const alreadyAdopted = blueprints.some((b) => b.name.toLowerCase() === mod.name.toLowerCase());
+                            const alreadyAdopted = exercises.some((e) => e.name.toLowerCase() === mod.name.toLowerCase());
                             return (
                               <div key={idx} className={`bg-[var(--eds-bg-sunken)] border rounded-lg p-3 ${alreadyAdopted ? "border-[var(--eds-status-green-bg)] opacity-60" : "border-[var(--eds-border)]"}`} data-testid={`card-req-module-${idx}`}>
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-[var(--eds-text-primary)]">{mod.name}</p>
-                                    {/* no-eds-token: kein äquivalentes Token für Modultyp-Badge (teal) */}
                                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-600 font-medium">{mod.type}</span>
                                     <p className="text-xs text-[var(--eds-text-tertiary)] mt-1 line-clamp-2">{mod.description}</p>
                                   </div>
@@ -591,26 +477,19 @@ Antworte in folgendem JSON-Format:
                                     <div className="flex flex-col gap-1 shrink-0">
                                       <button
                                         onClick={() => adoptRequirementModule(mod)}
-                                        className="text-[10px] font-medium text-brand-navy bg-[var(--eds-bg-sunken)] hover:bg-[var(--eds-border)] border border-[var(--eds-border)] rounded px-2 py-1 transition"
+                                        disabled={saving}
+                                        className="text-[10px] font-medium text-brand-navy bg-[var(--eds-bg-sunken)] hover:bg-[var(--eds-border)] border border-[var(--eds-border)] rounded px-2 py-1 transition disabled:opacity-50"
                                         data-testid={`button-adopt-req-${idx}`}
                                       >
                                         Übernehmen
                                       </button>
-                                      <button
-                                        onClick={() => {
-                                          setAiForm((f) => ({
-                                            ...f,
-                                            type: Object.entries({ "Interview-Leitfaden": "interview", "Fallstudie": "case_study", "Fact-Finding-Simulation": "fact_finding", "Präsentation": "presentation", "Verhaltenssimulation": "role_play", "Rollenspiel": "role_play" }).find(([k]) => k === mod.type)?.[1] || "other",
-                                            context: mod.description,
-                                            requirementModuleIndex: idx,
-                                          }));
-                                          setView("ai");
-                                        }}
-                                        className="text-[10px] font-medium text-[var(--eds-status-amber)] bg-[var(--eds-status-amber-bg)] hover:bg-[var(--eds-status-amber-bg)] border border-[var(--eds-status-amber-bg)] rounded px-2 py-1 transition"
+                                      <Link
+                                        href={`${base}/exercise-library?createFrom=requirement&reqId=${selectedAnalysis.id}&modIdx=${idx}`}
+                                        className="text-[10px] font-medium text-[var(--eds-status-amber)] bg-[var(--eds-status-amber-bg)] border border-[var(--eds-status-amber-bg)] rounded px-2 py-1 transition text-center"
                                         data-testid={`button-ai-req-${idx}`}
                                       >
                                         KI ausarbeiten
-                                      </button>
+                                      </Link>
                                     </div>
                                   )}
                                 </div>
@@ -628,66 +507,70 @@ Antworte in folgendem JSON-Format:
             <div className="bg-white border border-[var(--eds-border)] rounded-xl" data-testid="section-blueprints">
               <div className="px-6 py-5 border-b border-[var(--eds-border)] flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-brand-navy" data-testid="text-blueprints-title">Erstellte Bausteine</h3>
-                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">{blueprints.length} Baustein{blueprints.length !== 1 ? "e" : ""}</p>
+                  <h3 className="text-base font-semibold text-brand-navy" data-testid="text-blueprints-title">Übernommene Bausteine</h3>
+                  {selectedAssessmentId && (
+                    <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">
+                      {loadingExercises ? "Laden..." : `${exercises.length} Baustein${exercises.length !== 1 ? "e" : ""}`}
+                    </p>
+                  )}
                 </div>
                 <Link
-                  href={`${base}/modules/case-study-builder`}
+                  href={`${base}/case-studio`}
                   className="text-[11px] font-medium text-brand-blue hover:underline"
-                  data-testid="link-case-study-builder"
+                  data-testid="link-case-studio"
                 >
                   Case-Studio →
                 </Link>
               </div>
 
-              {blueprints.length === 0 ? (
-                <div className="p-12 text-center">
-                  <p className="text-sm text-[var(--eds-text-disabled)]">Noch keine Bausteine erstellt.</p>
-                  <p className="text-xs text-[var(--eds-text-disabled)] mt-1">Nutzen Sie die Optionen oben, um Ihren ersten Baustein zu erstellen.</p>
+              {!selectedAssessmentId ? (
+                <div className="p-8">
+                  <EmptyState
+                    icon={<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>}
+                    title="Kein Assessment ausgewählt"
+                    description="Wählen Sie ein Assessment, um dessen Bausteine zu sehen."
+                  />
+                </div>
+              ) : loadingExercises ? (
+                <div className="p-8 text-center">
+                  <p className="text-sm text-[var(--eds-text-disabled)]">Laden...</p>
+                </div>
+              ) : exercises.length === 0 ? (
+                <div className="p-8">
+                  <EmptyState
+                    icon={<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>}
+                    title="Noch keine Bausteine übernommen"
+                    description="Wählen Sie Bausteine aus der Bibliothek und übernehmen Sie diese ins Assessment."
+                  />
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {blueprints.map((bp) => (
+                  {exercises.map((ex) => (
                     <div
-                      key={bp.id}
+                      key={ex.id}
                       className="px-6 py-4 flex items-center gap-4 hover:bg-[var(--eds-bg-sunken)]/80 transition-colors group"
-                      data-testid={`card-blueprint-${bp.id}`}
+                      data-testid={`card-exercise-${ex.id}`}
                     >
                       <div className="w-9 h-9 rounded-lg bg-[var(--eds-bg-sunken)] flex items-center justify-center text-lg shrink-0">
-                        {typeIconEl(bp.type)}
+                        {typeIconEl(ex.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className="text-sm font-semibold text-[var(--eds-text-primary)] truncate">{bp.name}</h4>
-                          {statusBadge(bp.status)}
-                          {sourceBadge(bp.sourceType)}
+                          <h4 className="text-sm font-semibold text-[var(--eds-text-primary)] truncate">{ex.name}</h4>
+                          {ex.libraryItemId && sourceBadge("library")}
                         </div>
                         <div className="flex items-center gap-3 text-[11px] text-[var(--eds-text-disabled)]">
-                          <span>{typeLabel(bp.type)}</span>
-                          <span>{bp.duration} Min.</span>
-                          <span>{bp.targetLevel}</span>
+                          <span>{typeLabel(ex.type)}</span>
+                          {ex.duration && <span>{ex.duration} Min.</span>}
                         </div>
-                        {bp.description && (
-                          <p className="text-xs text-[var(--eds-text-tertiary)] mt-1 line-clamp-1">{bp.description}</p>
-                        )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <button
-                          onClick={() => { setEditBlueprint({ ...bp }); setView("detail"); }}
+                          onClick={() => { setSelectedExercise({ ...ex }); setView("detail"); }}
                           className="text-xs font-medium text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity"
-                          data-testid={`button-edit-${bp.id}`}
+                          data-testid={`button-edit-${ex.id}`}
                         >
                           Bearbeiten
-                        </button>
-                        <button
-                          onClick={() => deleteBlueprint(bp.id)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity hover:bg-[var(--eds-status-red-bg)] text-[var(--eds-status-red)]"
-                          data-testid={`button-delete-${bp.id}`}
-                          title="Löschen"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                          </svg>
                         </button>
                       </div>
                     </div>
@@ -698,140 +581,19 @@ Antworte in folgendem JSON-Format:
           </>
         )}
 
-        {view === "manual" && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6 mb-6">
-              <h2 className="text-lg font-semibold text-brand-navy" data-testid="text-manual-title">Baustein manuell erstellen</h2>
-              <p className="text-sm text-[var(--eds-text-secondary)] mt-1">Definieren Sie alle Details für einen neuen Assessment-Baustein.</p>
-            </div>
-
-            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 space-y-4">
-              <div>
-                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Name *</label>
-                <input
-                  className={inputClass}
-                  value={manualForm.name}
-                  onChange={(e) => setManualForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="z.B. Strategische Präsentation"
-                  data-testid="input-manual-name"
-                />
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Typ</label>
-                  <select
-                    className={inputClass}
-                    value={manualForm.type}
-                    onChange={(e) => setManualForm((f) => ({ ...f, type: e.target.value }))}
-                    data-testid="select-manual-type"
-                  >
-                    {exerciseTypes.map((t) => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Ziel-Level</label>
-                  <select
-                    className={inputClass}
-                    value={manualForm.targetLevel}
-                    onChange={(e) => setManualForm((f) => ({ ...f, targetLevel: e.target.value }))}
-                    data-testid="select-manual-level"
-                  >
-                    {targetLevels.map((l) => (
-                      <option key={l} value={l}>{l}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Dauer (Minuten)</label>
-                <input
-                  type="number"
-                  className={inputClass + " !w-32"}
-                  value={manualForm.duration}
-                  onChange={(e) => setManualForm((f) => ({ ...f, duration: parseInt(e.target.value) || 0 }))}
-                  data-testid="input-manual-duration"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Beschreibung</label>
-                <textarea
-                  className={inputClass + " min-h-[70px] resize-y"}
-                  rows={3}
-                  value={manualForm.description}
-                  onChange={(e) => setManualForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="Was wird in diesem Baustein gemacht?"
-                  data-testid="input-manual-description"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Durchführungsanweisungen</label>
-                <textarea
-                  className={inputClass + " min-h-[100px] resize-y"}
-                  rows={5}
-                  value={manualForm.instructions}
-                  onChange={(e) => setManualForm((f) => ({ ...f, instructions: e.target.value }))}
-                  placeholder="Detaillierte Anweisungen für Moderator/Beobachter..."
-                  data-testid="input-manual-instructions"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Szenario-Kontext (optional)</label>
-                <textarea
-                  className={inputClass + " min-h-[50px] resize-y"}
-                  rows={2}
-                  value={manualForm.scenarioContext}
-                  onChange={(e) => setManualForm((f) => ({ ...f, scenarioContext: e.target.value }))}
-                  placeholder="In welches übergeordnete Szenario ist der Baustein eingebettet?"
-                  data-testid="input-manual-scenario"
-                />
-              </div>
-
-              {manualForm.type === "case_study" && (
-                <div className="bg-[var(--eds-status-blue-bg)]/60 border border-[var(--eds-status-blue-bg)] rounded-lg p-3">
-                  <p className="text-xs text-[var(--eds-status-blue)] mb-2">Für umfangreiche Fallstudien mit Datenraum nutzen Sie das spezialisierte Case-Studio:</p>
-                  <Link
-                    href={`${base}/modules/case-study-builder`}
-                    className="text-xs font-medium text-brand-blue hover:underline"
-                    data-testid="link-case-study-builder-redirect"
-                  >
-                    Zum Case-Studio →
-                  </Link>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  onClick={() => setView("hub")}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] transition-colors hover:bg-[var(--eds-bg-sunken)]"
-                  data-testid="button-cancel-manual"
-                >
-                  Abbrechen
-                </button>
-                <button
-                  onClick={saveManualBlueprint}
-                  className="px-5 py-2 text-sm font-medium text-white rounded-lg bg-brand-navy transition-colors hover:opacity-90"
-                  data-testid="button-save-manual"
-                >
-                  Baustein erstellen
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {view === "library" && (
           <div className="max-w-3xl mx-auto">
             <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6 mb-6">
               <h2 className="text-lg font-semibold text-brand-navy" data-testid="text-library-title">Aus Bibliothek übernehmen</h2>
-              <p className="text-sm text-[var(--eds-text-secondary)] mt-1">Wählen Sie eine bestehende Übung und passen Sie sie als Assessment-Baustein an.</p>
+              <p className="text-sm text-[var(--eds-text-secondary)] mt-1">Wählen Sie eine bestehende Übung und übernehmen Sie sie als Assessment-Baustein.</p>
             </div>
+
+            {!selectedAssessmentId && (
+              <div className="mb-4 p-4 bg-[var(--eds-status-amber-bg)] border border-[var(--eds-status-amber-bg)] rounded-xl">
+                <p className="text-sm text-[var(--eds-status-amber)] font-medium">Bitte wählen Sie zuerst ein Assessment auf der Übersichtsseite aus.</p>
+                <button onClick={() => setView("hub")} className="text-xs text-brand-blue hover:underline mt-1">← Zurück zur Übersicht</button>
+              </div>
+            )}
 
             {!selectedLibraryItem ? (
               <div className="bg-white border border-[var(--eds-border)] rounded-xl">
@@ -843,7 +605,7 @@ Antworte in folgendem JSON-Format:
                 ) : (
                   <div className="divide-y divide-slate-100">
                     {libraryItems.map((item) => {
-                      const alreadyAdopted = blueprints.some((b) => b.sourceId === item.id && b.sourceType === "library");
+                      const alreadyAdopted = exercises.some((e) => e.libraryItemId === item.id);
                       return (
                         <div key={item.id} className="px-6 py-4 flex items-center justify-between hover:bg-[var(--eds-bg-sunken)]/80 transition-colors group" data-testid={`card-lib-item-${item.id}`}>
                           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -875,7 +637,7 @@ Antworte in folgendem JSON-Format:
                                     instructions: "",
                                     duration: 45,
                                     targetLevel: item.targetLevels?.[0] || "Manager",
-                                    scenarioContext: "",
+                                    adaptationNotes: "",
                                   });
                                 }}
                                 className="text-xs font-medium text-brand-blue hover:underline"
@@ -951,17 +713,6 @@ Antworte in folgendem JSON-Format:
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Beschreibung</label>
-                  <textarea
-                    className={inputClass + " min-h-[70px] resize-y"}
-                    rows={3}
-                    value={libraryAdaptForm.description}
-                    onChange={(e) => setLibraryAdaptForm((f) => ({ ...f, description: e.target.value }))}
-                    data-testid="input-lib-description"
-                  />
-                </div>
-
-                <div>
                   <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Durchführungsanweisungen</label>
                   <textarea
                     className={inputClass + " min-h-[80px] resize-y"}
@@ -974,14 +725,14 @@ Antworte in folgendem JSON-Format:
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Szenario-Kontext (optional)</label>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Anpassungshinweise (nur für dieses Assessment)</label>
                   <textarea
                     className={inputClass + " min-h-[50px] resize-y"}
                     rows={2}
-                    value={libraryAdaptForm.scenarioContext}
-                    onChange={(e) => setLibraryAdaptForm((f) => ({ ...f, scenarioContext: e.target.value }))}
-                    placeholder="In welches übergeordnete Szenario ist der Baustein eingebettet?"
-                    data-testid="input-lib-scenario"
+                    value={libraryAdaptForm.adaptationNotes}
+                    onChange={(e) => setLibraryAdaptForm((f) => ({ ...f, adaptationNotes: e.target.value }))}
+                    placeholder="Hinweise zur Anpassung an dieses Assessment..."
+                    data-testid="input-lib-adaptation"
                   />
                 </div>
 
@@ -995,177 +746,34 @@ Antworte in folgendem JSON-Format:
                   </button>
                   <button
                     onClick={adoptLibraryItem}
-                    className="px-5 py-2 text-sm font-medium text-white rounded-lg bg-brand-navy transition-colors hover:opacity-90"
+                    disabled={saving || !selectedAssessmentId}
+                    className="px-5 py-2 text-sm font-medium text-white rounded-lg bg-brand-navy transition-colors hover:opacity-90 disabled:opacity-50"
                     data-testid="button-save-library"
                   >
-                    Als Baustein übernehmen
+                    {saving ? "Übernehmen..." : "Als Baustein übernehmen"}
                   </button>
                 </div>
               </div>
             )}
-          </div>
-        )}
 
-        {view === "ai" && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6 mb-6">
-              <h2 className="text-lg font-semibold text-brand-navy" data-testid="text-ai-title">KI-gestützte Generierung</h2>
-              <p className="text-sm text-[var(--eds-text-secondary)] mt-1">Die KI erstellt einen vollständigen Baustein basierend auf Ihren Vorgaben.</p>
-            </div>
-
-            <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 space-y-4">
-              {requirementModules.length > 0 && (
-                <div className="bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-lg p-4">
-                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Anforderungsanalyse-Empfehlung als Grundlage</label>
-                  <select
-                    className={inputClass}
-                    value={aiForm.requirementModuleIndex}
-                    onChange={(e) => {
-                      const idx = parseInt(e.target.value);
-                      setAiForm((f) => ({ ...f, requirementModuleIndex: idx }));
-                      if (idx >= 0 && requirementModules[idx]) {
-                        const rm = requirementModules[idx];
-                        const typeMap: Record<string, string> = { "Interview-Leitfaden": "interview", "Fallstudie": "case_study", "Fact-Finding-Simulation": "fact_finding", "Präsentation": "presentation", "Verhaltenssimulation": "role_play", "Rollenspiel": "role_play" };
-                        setAiForm((f) => ({
-                          ...f,
-                          type: typeMap[rm.type] || "other",
-                          context: rm.description,
-                          requirementModuleIndex: idx,
-                        }));
-                      }
-                    }}
-                    data-testid="select-ai-requirement"
-                  >
-                    <option value={-1}>— Keine Empfehlung verwenden —</option>
-                    {requirementModules.map((rm, i) => (
-                      <option key={i} value={i}>{rm.name} ({rm.type})</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Baustein-Typ</label>
-                  <select
-                    className={inputClass}
-                    value={aiForm.type}
-                    onChange={(e) => setAiForm((f) => ({ ...f, type: e.target.value }))}
-                    data-testid="select-ai-type"
-                  >
-                    {exerciseTypes.map((t) => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Ziel-Level</label>
-                  <select
-                    className={inputClass}
-                    value={aiForm.targetLevel}
-                    onChange={(e) => setAiForm((f) => ({ ...f, targetLevel: e.target.value }))}
-                    data-testid="select-ai-level"
-                  >
-                    {targetLevels.map((l) => (
-                      <option key={l} value={l}>{l}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Dauer (Minuten)</label>
-                <input
-                  type="number"
-                  className={inputClass + " !w-32"}
-                  value={aiForm.duration}
-                  onChange={(e) => setAiForm((f) => ({ ...f, duration: parseInt(e.target.value) || 0 }))}
-                  data-testid="input-ai-duration"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Kontext / Anforderungen</label>
-                <textarea
-                  className={inputClass + " min-h-[70px] resize-y"}
-                  rows={3}
-                  value={aiForm.context}
-                  onChange={(e) => setAiForm((f) => ({ ...f, context: e.target.value }))}
-                  placeholder="Was soll der Baustein testen? Welche Kompetenzen stehen im Fokus?"
-                  data-testid="input-ai-context"
-                />
-              </div>
-
-              <div className="bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-lg p-4 space-y-3">
-                <h3 className="text-sm font-medium text-[var(--eds-text-primary)]">Overarching-Szenario</h3>
-                <p className="text-xs text-[var(--eds-text-tertiary)]">Optional: Baustein in ein übergeordnetes Fallstudien-Szenario einbetten, sodass alle Übungen in der gleichen Firma / Situation spielen.</p>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={aiForm.embedInScenario}
-                    onChange={(e) => setAiForm((f) => ({ ...f, embedInScenario: e.target.checked }))}
-                    className="w-4 h-4 rounded border-[var(--eds-border-strong)] text-brand-navy focus:ring-[var(--eds-status-blue)]/20"
-                    data-testid="checkbox-embed-scenario"
-                  />
-                  <span className="text-sm text-[var(--eds-text-primary)]">In bestehendes Szenario einbetten</span>
-                </label>
-
-                {aiForm.embedInScenario && (
-                  <div>
-                    <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Fallstudie als Szenario-Rahmen</label>
-                    {caseStudies.length === 0 ? (
-                      <div className="text-xs text-[var(--eds-text-disabled)]">
-                        Keine Fallstudien vorhanden.{" "}
-                        <Link href={`${base}/modules/case-study-builder`} className="text-brand-blue hover:underline">
-                          Fallstudie erstellen →
-                        </Link>
-                      </div>
-                    ) : (
-                      <select
-                        className={inputClass}
-                        value={aiForm.scenarioCaseStudyId}
-                        onChange={(e) => setAiForm((f) => ({ ...f, scenarioCaseStudyId: e.target.value }))}
-                        data-testid="select-ai-scenario"
-                      >
-                        <option value="">— Fallstudie wählen —</option>
-                        {caseStudies.map((cs) => (
-                          <option key={cs.id} value={cs.id}>{cs.title} ({cs.companyName})</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  onClick={() => setView("hub")}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] transition-colors hover:bg-[var(--eds-bg-sunken)]"
-                  data-testid="button-cancel-ai"
-                >
-                  Abbrechen
-                </button>
-                <button
-                  onClick={generateWithAI}
-                  disabled={generating}
-                  className="px-5 py-2 text-sm font-medium text-white rounded-lg bg-brand-navy transition-colors hover:opacity-90 disabled:opacity-50"
-                  data-testid="button-generate-ai"
-                >
-                  {generating ? "Generiere..." : "Baustein generieren"}
-                </button>
-              </div>
+            <div className="flex justify-start mt-4">
+              <button
+                onClick={() => { setSelectedLibraryItem(null); setView("hub"); }}
+                className="text-sm text-[var(--eds-text-secondary)] hover:text-[var(--eds-text-primary)] transition-colors"
+                data-testid="button-back-library"
+              >
+                ← Zurück zur Übersicht
+              </button>
             </div>
           </div>
         )}
 
-        {view === "detail" && editBlueprint && (
+        {view === "detail" && selectedExercise && (
           <div className="max-w-2xl mx-auto">
             <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6 mb-6">
               <h2 className="text-lg font-semibold text-brand-navy" data-testid="text-detail-title">Baustein bearbeiten</h2>
               <div className="flex gap-2 mt-2">
-                {statusBadge(editBlueprint.status)}
-                {sourceBadge(editBlueprint.sourceType)}
-                {editBlueprint.aiGenerated && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: "#fffbeb", color: "#d97706" }}>KI-generiert</span>}
+                {selectedExercise.libraryItemId && sourceBadge("library")}
               </div>
             </div>
 
@@ -1174,19 +782,19 @@ Antworte in folgendem JSON-Format:
                 <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Name</label>
                 <input
                   className={inputClass}
-                  value={editBlueprint.name}
-                  onChange={(e) => setEditBlueprint({ ...editBlueprint, name: e.target.value })}
+                  value={selectedExercise.name}
+                  onChange={(e) => setSelectedExercise({ ...selectedExercise, name: e.target.value })}
                   data-testid="input-edit-name"
                 />
               </div>
 
-              <div className="grid sm:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Typ</label>
                   <select
                     className={inputClass}
-                    value={editBlueprint.type}
-                    onChange={(e) => setEditBlueprint({ ...editBlueprint, type: e.target.value })}
+                    value={selectedExercise.type}
+                    onChange={(e) => setSelectedExercise({ ...selectedExercise, type: e.target.value })}
                     data-testid="select-edit-type"
                   >
                     {exerciseTypes.map((t) => (
@@ -1195,53 +803,15 @@ Antworte in folgendem JSON-Format:
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Ziel-Level</label>
-                  <select
-                    className={inputClass}
-                    value={editBlueprint.targetLevel}
-                    onChange={(e) => setEditBlueprint({ ...editBlueprint, targetLevel: e.target.value })}
-                    data-testid="select-edit-level"
-                  >
-                    {targetLevels.map((l) => (
-                      <option key={l} value={l}>{l}</option>
-                    ))}
-                  </select>
+                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Dauer (Minuten)</label>
+                  <input
+                    type="number"
+                    className={inputClass + " !w-32"}
+                    value={selectedExercise.duration ?? ""}
+                    onChange={(e) => setSelectedExercise({ ...selectedExercise, duration: parseInt(e.target.value) || null })}
+                    data-testid="input-edit-duration"
+                  />
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Status</label>
-                  <select
-                    className={inputClass}
-                    value={editBlueprint.status}
-                    onChange={(e) => setEditBlueprint({ ...editBlueprint, status: e.target.value as any })}
-                    data-testid="select-edit-status"
-                  >
-                    <option value="draft">Entwurf</option>
-                    <option value="ready">Bereit</option>
-                    <option value="active">Aktiv</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Dauer (Minuten)</label>
-                <input
-                  type="number"
-                  className={inputClass + " !w-32"}
-                  value={editBlueprint.duration}
-                  onChange={(e) => setEditBlueprint({ ...editBlueprint, duration: parseInt(e.target.value) || 0 })}
-                  data-testid="input-edit-duration"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Beschreibung</label>
-                <textarea
-                  className={inputClass + " min-h-[70px] resize-y"}
-                  rows={3}
-                  value={editBlueprint.description}
-                  onChange={(e) => setEditBlueprint({ ...editBlueprint, description: e.target.value })}
-                  data-testid="input-edit-description"
-                />
               </div>
 
               <div>
@@ -1249,50 +819,27 @@ Antworte in folgendem JSON-Format:
                 <textarea
                   className={inputClass + " min-h-[120px] resize-y"}
                   rows={6}
-                  value={editBlueprint.instructions}
-                  onChange={(e) => setEditBlueprint({ ...editBlueprint, instructions: e.target.value })}
+                  value={selectedExercise.instructions ?? ""}
+                  onChange={(e) => setSelectedExercise({ ...selectedExercise, instructions: e.target.value })}
                   data-testid="input-edit-instructions"
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Szenario-Kontext</label>
-                <textarea
-                  className={inputClass + " min-h-[50px] resize-y"}
-                  rows={2}
-                  value={editBlueprint.scenarioContext}
-                  onChange={(e) => setEditBlueprint({ ...editBlueprint, scenarioContext: e.target.value })}
-                  data-testid="input-edit-scenario"
-                />
-              </div>
-
-              {editBlueprint.adaptationNotes && (
-                <div>
-                  <label className="text-sm font-medium text-[var(--eds-text-primary)] block mb-1">Anpassungshinweise</label>
-                  <textarea
-                    className={inputClass + " min-h-[50px] resize-y bg-[var(--eds-bg-sunken)]"}
-                    rows={2}
-                    value={editBlueprint.adaptationNotes}
-                    onChange={(e) => setEditBlueprint({ ...editBlueprint, adaptationNotes: e.target.value })}
-                    data-testid="input-edit-notes"
-                  />
-                </div>
-              )}
-
               <div className="flex justify-end gap-3 pt-2">
                 <button
-                  onClick={() => { setEditBlueprint(null); setView("hub"); }}
+                  onClick={() => { setSelectedExercise(null); setView("hub"); }}
                   className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-secondary)] transition-colors hover:bg-[var(--eds-bg-sunken)]"
                   data-testid="button-cancel-edit"
                 >
                   Abbrechen
                 </button>
                 <button
-                  onClick={saveEditedBlueprint}
-                  className="px-5 py-2 text-sm font-medium text-white rounded-lg bg-brand-navy transition-colors hover:opacity-90"
+                  onClick={saveEditedExercise}
+                  disabled={saving}
+                  className="px-5 py-2 text-sm font-medium text-white rounded-lg bg-brand-navy transition-colors hover:opacity-90 disabled:opacity-50"
                   data-testid="button-save-edit"
                 >
-                  Speichern
+                  {saving ? "Speichern..." : "Speichern"}
                 </button>
               </div>
             </div>

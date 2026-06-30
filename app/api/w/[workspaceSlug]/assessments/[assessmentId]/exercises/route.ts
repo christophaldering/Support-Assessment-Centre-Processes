@@ -107,7 +107,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Assessment nicht gefunden" }, { status: 404 });
     }
 
-    const { name, type: rawType, instructions, duration, sortOrder, status } = await req.json();
+    const { name, type: rawType, instructions, duration, sortOrder, status, libraryItemId } = await req.json();
 
     if (!name || !rawType) {
       return NextResponse.json({ error: "Name und Typ sind erforderlich" }, { status: 400 });
@@ -128,6 +128,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         duration: duration ?? null,
         sortOrder: sortOrder ?? 0,
         status: status ?? "active",
+        ...(libraryItemId ? { libraryItemId } : {}),
       },
     });
 
