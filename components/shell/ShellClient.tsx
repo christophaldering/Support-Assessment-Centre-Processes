@@ -25,9 +25,13 @@ export default function ShellClient({
   children,
 }: ShellClientProps) {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [aiPanelOpen, setAiPanelOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem("eds_ai_panel_open") !== "false"; } catch { return true; }
+  });
 
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
+  const toggleAiPanel = useCallback(() => setAiPanelOpen((v) => !v), []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -40,6 +44,14 @@ export default function ShellClient({
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  useEffect(() => {
+    try { localStorage.setItem("eds_ai_panel_open", String(aiPanelOpen)); } catch {}
+  }, [aiPanelOpen]);
+
+  const gridTemplateColumns = aiPanelOpen
+    ? "var(--eds-rail-width) var(--eds-context-width) 1fr var(--eds-ai-panel-width)"
+    : "var(--eds-rail-width) var(--eds-context-width) 1fr 0px";
+
   return (
     <>
       <div
@@ -47,7 +59,8 @@ export default function ShellClient({
         style={{
           display: "grid",
           gridTemplateRows: "var(--eds-topbar-height) 1fr",
-          gridTemplateColumns: "var(--eds-rail-width) var(--eds-context-width) 1fr var(--eds-ai-panel-width)",
+          gridTemplateColumns,
+          transition: "grid-template-columns var(--eds-transition-slow, 300ms ease)",
           height: "100dvh",
           overflow: "hidden",
           fontFamily: "var(--eds-font-sans)",
@@ -62,6 +75,8 @@ export default function ShellClient({
           userRoles={userRoles}
           isMaster={isMaster}
           onCommandPalette={openPalette}
+          aiPanelOpen={aiPanelOpen}
+          onToggleAiPanel={toggleAiPanel}
         />
 
         <IconRail
@@ -89,7 +104,7 @@ export default function ShellClient({
           {children}
         </main>
 
-        <AIPanel workspaceSlug={workspaceSlug} />
+        {aiPanelOpen && <AIPanel workspaceSlug={workspaceSlug} />}
       </div>
 
       <CommandPalette

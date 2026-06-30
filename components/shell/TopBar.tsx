@@ -9,6 +9,8 @@ interface TopBarProps {
   userRoles: string[];
   isMaster: boolean;
   onCommandPalette?: () => void;
+  aiPanelOpen?: boolean;
+  onToggleAiPanel?: () => void;
 }
 
 function breadcrumbFromPath(pathname: string, workspaceName: string, slug: string): string[] {
@@ -23,7 +25,7 @@ function breadcrumbFromPath(pathname: string, workspaceName: string, slug: strin
     modules: "Modul-Designer",
     "exercise-library": "Baustein-Bibliothek",
     "case-studio": "Fallstudien-Werkstatt",
-    "data-room": "Fallstudie",          // /admin/data-room → Fallstudie (leitet auf case-studio weiter)
+    "data-room": "Fallstudie",
     "document-sharing": "Externe Dokumentenfreigabe",
     "case-study": "Fallstudie",
     analytics: "Insights",
@@ -86,6 +88,24 @@ function UserAvatar({ name }: { name: string }) {
   );
 }
 
+function IcoChevronRight2() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 17l5-5-5-5" />
+      <path d="M6 17l5-5-5-5" />
+    </svg>
+  );
+}
+
+function IcoChevronLeft2() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 17l-5-5 5-5" />
+      <path d="M18 17l-5-5 5-5" />
+    </svg>
+  );
+}
+
 export default function TopBar({
   workspaceSlug,
   workspaceName,
@@ -93,6 +113,8 @@ export default function TopBar({
   userRoles,
   isMaster,
   onCommandPalette,
+  aiPanelOpen,
+  onToggleAiPanel,
 }: TopBarProps) {
   const pathname = usePathname() ?? "";
   const crumbs = breadcrumbFromPath(pathname, workspaceName, workspaceSlug);
@@ -186,6 +208,32 @@ export default function TopBar({
             ⌘K
           </kbd>
         </button>
+
+        {onToggleAiPanel && (
+          <button
+            onClick={onToggleAiPanel}
+            data-testid="topbar-toggle-ai-panel"
+            title={aiPanelOpen ? "Diagnostik-Assistent ausblenden" : "Diagnostik-Assistent einblenden"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "28px",
+              height: "28px",
+              background: "none",
+              border: "none",
+              borderRadius: "var(--eds-radius-sm)",
+              cursor: "pointer",
+              color: "var(--eds-text-tertiary)",
+              flexShrink: 0,
+              transition: "color var(--eds-transition-fast, 150ms ease)",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--eds-text-primary)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--eds-text-tertiary)"; }}
+          >
+            {aiPanelOpen ? <IcoChevronRight2 /> : <IcoChevronLeft2 />}
+          </button>
+        )}
 
         <div
           style={{
