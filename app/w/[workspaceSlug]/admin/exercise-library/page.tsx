@@ -2,6 +2,9 @@
 
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { resolveOriginForExerciseLibraryItem } from "@/lib/document-origin";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Card } from "@/components/shared/Card";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -58,7 +61,7 @@ interface AnalysisResult {
   projectName: string;
 }
 
-const ACCENT = "hsl(14, 48%, 44%)";
+const ACCENT = "var(--eds-terracotta)";
 
 const SCOPE_OPTIONS: { key: string; label: string; filterLabel: string }[] = [
   { key: "general", label: "Allgemein", filterLabel: "Allgemein" },
@@ -71,11 +74,11 @@ const SCOPE_LABELS: Record<string, string> = Object.fromEntries(
   SCOPE_OPTIONS.map((s) => [s.key, s.label])
 );
 
-const SCOPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  general: { bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200" },
-  client: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
-  project: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
-  candidate: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+const SCOPE_COLORS: Record<string, { background: string; color: string; border: string }> = {
+  general:   { background: "var(--eds-bg-sunken)",        color: "var(--eds-text-secondary)",  border: "1px solid var(--eds-border)" },
+  client:    { background: "var(--eds-status-blue-bg)",   color: "var(--eds-status-blue)",      border: "1px solid var(--eds-border-strong)" },
+  project:   { background: "#F5F3FF",                     color: "#7C3AED",                     border: "1px solid #DDD6FE" },
+  candidate: { background: "var(--eds-status-amber-bg)",  color: "var(--eds-status-amber)",     border: "1px solid #FDE68A" },
 };
 
 const EXERCISE_CATEGORIES: { key: string; label: string }[] = [
@@ -644,7 +647,7 @@ function DetailModal({
                     const scopeKey = item.scope || "general";
                     const colors = SCOPE_COLORS[scopeKey] || SCOPE_COLORS.general;
                     return (
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded border ${colors.bg} ${colors.text} ${colors.border}`}>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded" style={colors}>
                         {SCOPE_LABELS[scopeKey] || scopeKey}
                       </span>
                     );
@@ -1630,12 +1633,10 @@ export default function ExerciseLibraryPage() {
               <button
                 key={scope.key}
                 onClick={() => setActiveScopeFilter(scope.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  activeScopeFilter === scope.key
-                    ? "text-white"
-                    : `${colors.bg} ${colors.text} hover:opacity-80`
-                }`}
-                style={activeScopeFilter === scope.key ? { backgroundColor: ACCENT } : undefined}
+                className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+                style={activeScopeFilter === scope.key
+                  ? { background: ACCENT, color: "var(--eds-text-inverse)" }
+                  : colors}
                 data-testid={`button-scope-${scope.key}`}
               >
                 {scope.filterLabel}
@@ -1789,17 +1790,13 @@ export default function ExerciseLibraryPage() {
 
               {filteredItems.length === 0 ? (
                 <div
-                  className="text-center py-16 border border-dashed border-slate-200 rounded-xl"
                   data-testid="text-empty-state"
                 >
-                  <FileIcon className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-                  <p className="text-slate-400 text-sm">
-                    {showArchived
-                      ? "Keine archivierten Übungen vorhanden."
-                      : activeCategory
-                        ? "Keine Übungen in dieser Kategorie vorhanden."
-                        : "Noch keine Übungen vorhanden. Laden Sie Dateien hoch, um zu starten."}
-                  </p>
+                  <EmptyState
+                    icon={<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>}
+                    title={showArchived ? "Keine archivierten Übungen" : activeCategory ? "Keine Übungen in dieser Kategorie" : "Noch keine Übungen vorhanden"}
+                    description={showArchived ? "Keine archivierten Übungen vorhanden." : activeCategory ? "Keine Übungen in dieser Kategorie vorhanden." : "Laden Sie Dateien hoch, um zu starten."}
+                  />
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1832,7 +1829,8 @@ export default function ExerciseLibraryPage() {
                               const colors = SCOPE_COLORS[scopeKey] || SCOPE_COLORS.general;
                               return (
                                 <span
-                                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${colors.bg} ${colors.text} ${colors.border}`}
+                                  className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                                  style={colors}
                                   data-testid={`badge-scope-${item.id}`}
                                 >
                                   {SCOPE_LABELS[scopeKey] || scopeKey}

@@ -2,6 +2,9 @@
 
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { resolveOriginForObservationSheetTemplate } from "@/lib/document-origin";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Card } from "@/components/shared/Card";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -79,10 +82,10 @@ const TEMPLATE_TYPE_LABELS: Record<string, string> = {
   manual: "Manuell",
 };
 
-const ACCENT = "hsl(14, 48%, 44%)";
+const ACCENT = "var(--eds-terracotta)";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(14,48%,44%)]/30 focus:border-[hsl(14,48%,44%)]";
+  "w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--eds-terracotta)]/20 focus:border-[var(--eds-terracotta)] bg-[var(--eds-bg-surface)]";
 
 const SpinnerIcon = () => (
   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -612,30 +615,20 @@ export default function ObservationSheetsPage() {
 
         {mode === "list" && (
           <>
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1
-                  className="text-2xl font-bold tracking-tight"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
-                  data-testid="text-page-title"
-                >
-                  Beobachtungsbögen
-                </h1>
-                <p className="text-sm mt-1 text-slate-400">
-                  Observation Sheet Toolbox — Beobachtungsbögen erstellen, verwalten und filtern
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
+            <PageHeader
+              title="Beobachtungsbögen"
+              description="Observation Sheet Toolbox — Beobachtungsbögen erstellen, verwalten und filtern"
+              actions={
                 <button
                   onClick={() => { setMode("choose"); setError(""); setSuccess(""); }}
-                  className="px-5 py-2.5 rounded-lg text-white text-sm font-medium transition-colors hover:opacity-90"
-                  style={{ backgroundColor: ACCENT }}
+                  className="px-5 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: ACCENT, color: "var(--eds-text-inverse)" }}
                   data-testid="button-new-template"
                 >
                   + Neuer Beobachtungsbogen
                 </button>
-              </div>
-            </div>
+              }
+            />
 
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <div className="flex-1">
@@ -664,31 +657,15 @@ export default function ObservationSheetsPage() {
             </div>
 
             {loading ? (
-              <div className="text-center py-20 text-slate-400">Laden...</div>
+              <div className="text-center py-20" style={{ color: "var(--eds-text-tertiary)" }}>Laden...</div>
             ) : filteredItems.length === 0 ? (
-              <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl" data-testid="text-empty">
-                <div className="text-4xl mb-4">📋</div>
-                <h3 className="text-lg font-semibold text-slate-600 mb-2">Noch keine Beobachtungsbögen</h3>
-                <p className="text-sm text-slate-400 mb-6 max-w-md mx-auto">
-                  Erstellen Sie Ihren ersten Beobachtungsbogen — per Upload oder KI-Generierung.
-                </p>
-                <div className="flex justify-center gap-3">
-                  <button
-                    onClick={() => { setMode("upload"); setUploadStep("select"); setUploadFile(null); setError(""); }}
-                    className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                    data-testid="button-mode-upload"
-                  >
-                    Bestehenden Bogen hochladen
-                  </button>
-                  <button
-                    onClick={() => { setMode("generate"); setError(""); }}
-                    className="px-4 py-2 rounded-lg text-white text-sm font-medium hover:opacity-90"
-                    style={{ backgroundColor: ACCENT }}
-                    data-testid="button-mode-generate"
-                  >
-                    Neuen Bogen per KI erstellen
-                  </button>
-                </div>
+              <div data-testid="text-empty">
+                <EmptyState
+                  icon={<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><polyline points="3 6 4 7 6 5"/><polyline points="3 12 4 13 6 11"/><polyline points="3 18 4 19 6 17"/></svg>}
+                  title="Noch keine Beobachtungsbögen"
+                  description="Erstellen Sie Ihren ersten Beobachtungsbogen — per Upload oder KI-Generierung."
+                  action={{ label: "Neuen Bogen erstellen", onClick: () => { setMode("choose"); setError(""); setSuccess(""); } }}
+                />
               </div>
             ) : (
               <div className="grid gap-4" data-testid="template-list">

@@ -3,6 +3,10 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Card } from "@/components/shared/Card";
+import { ModuleIcon } from "@/components/shared/ModuleIcon";
 
 interface AssessmentModuleData {
   name: string;
@@ -79,22 +83,22 @@ const targetLevels = [
 
 const typeLabel = (t: string) => exerciseTypes.find((e) => e.value === t)?.label || t;
 
-const typeIcon = (t: string) => {
-  const map: Record<string, string> = {
-    interview: "🎙️",
-    case_study: "📋",
-    fact_finding: "🔍",
-    presentation: "📊",
-    role_play: "🎭",
-    group_discussion: "💬",
-    inbox: "📬",
-    psychometric: "📝",
-    other: "⚙️",
+const typeIconEl = (t: string) => {
+  const typeMap: Record<string, "interview" | "presentation" | "roleplay" | "fact_finding" | "case_study" | "other"> = {
+    interview:        "interview",
+    case_study:       "case_study",
+    fact_finding:     "fact_finding",
+    presentation:     "presentation",
+    role_play:        "roleplay",
+    group_discussion: "other",
+    inbox:            "other",
+    psychometric:     "other",
+    other:            "other",
   };
-  return map[t] || "📄";
+  return <ModuleIcon type={typeMap[t] ?? "other"} size="sm" />;
 };
 
-const inputClass = "w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors";
+const inputClass = "w-full rounded-lg border border-[var(--eds-border)] px-3 py-2.5 text-sm text-[var(--eds-text-primary)] bg-[var(--eds-bg-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--eds-terracotta)]/20 focus:border-[var(--eds-terracotta)] transition-colors";
 
 export default function ModulesHubPage() {
   return (
@@ -472,36 +476,38 @@ Antworte in folgendem JSON-Format:
 
         {view === "hub" && (
           <>
-            <div className="bg-gradient-to-br from-brand-navy/5 to-brand-blue/5 border border-brand-blue/20 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-brand-navy mb-2" data-testid="text-page-title">
-                Modul-Designer
-              </h2>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Assessment-Bausteine erstellen, aus der Bibliothek übernehmen oder per KI generieren.
-              </p>
-            </div>
+            <PageHeader
+              title="Modul-Designer"
+              description="Assessment-Bausteine erstellen, aus der Bibliothek übernehmen oder per KI generieren."
+            />
 
             <div className="grid sm:grid-cols-3 gap-4">
               <button
                 onClick={() => setView("manual")}
-                className="bg-white border border-slate-200 rounded-xl p-5 text-left hover:border-blue-300 hover:shadow-sm transition group"
+                className="rounded-xl p-5 text-left transition hover:shadow-md"
+                style={{ background: "var(--eds-bg-surface)", border: "1px solid var(--eds-border)" }}
                 data-testid="button-create-manual"
               >
-                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-lg mb-3 group-hover:bg-blue-100 transition">✏️</div>
-                <h3 className="text-sm font-semibold text-brand-navy">Manuell erstellen</h3>
-                <p className="text-xs text-slate-500 mt-1">Baustein von Grund auf erstellen mit Typ, Beschreibung und Anweisungen</p>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: "var(--eds-terracotta-ghost)", color: "var(--eds-terracotta)" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </div>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--eds-text-primary)" }}>Manuell erstellen</h3>
+                <p className="text-xs mt-1" style={{ color: "var(--eds-text-secondary)" }}>Baustein von Grund auf erstellen mit Typ, Beschreibung und Anweisungen</p>
               </button>
 
               <button
                 onClick={() => setView("library")}
-                className="bg-white border border-slate-200 rounded-xl p-5 text-left hover:border-purple-300 hover:shadow-sm transition group"
+                className="rounded-xl p-5 text-left transition hover:shadow-md"
+                style={{ background: "var(--eds-bg-surface)", border: "1px solid var(--eds-border)" }}
                 data-testid="button-create-library"
               >
-                <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-lg mb-3 group-hover:bg-purple-100 transition">📚</div>
-                <h3 className="text-sm font-semibold text-brand-navy">Aus Bibliothek</h3>
-                <p className="text-xs text-slate-500 mt-1">Bestehende Übung übernehmen, anpassen und als Baustein verwenden</p>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: "var(--eds-lagune-light)", color: "var(--eds-lagune)" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </div>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--eds-text-primary)" }}>Aus Bibliothek</h3>
+                <p className="text-xs mt-1" style={{ color: "var(--eds-text-secondary)" }}>Bestehende Übung übernehmen, anpassen und als Baustein verwenden</p>
                 {libraryItems.length > 0 && (
-                  <span className="inline-block mt-2 text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600">
+                  <span className="inline-block mt-2 text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full" style={{ background: "var(--eds-lagune-light)", color: "var(--eds-lagune)" }}>
                     {libraryItems.length} verfügbar
                   </span>
                 )}
@@ -509,14 +515,17 @@ Antworte in folgendem JSON-Format:
 
               <button
                 onClick={() => setView("ai")}
-                className="bg-white border border-slate-200 rounded-xl p-5 text-left hover:border-amber-300 hover:shadow-sm transition group"
+                className="rounded-xl p-5 text-left transition hover:shadow-md"
+                style={{ background: "var(--eds-bg-surface)", border: "1px solid var(--eds-border)" }}
                 data-testid="button-create-ai"
               >
-                <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-lg mb-3 group-hover:bg-amber-100 transition">🤖</div>
-                <h3 className="text-sm font-semibold text-brand-navy">KI-gestützt generieren</h3>
-                <p className="text-xs text-slate-500 mt-1">KI erstellt den Baustein — optional basierend auf Anforderungsanalyse und Szenario</p>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: "var(--eds-status-amber-bg)", color: "var(--eds-status-amber)" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.44-3.16A2.5 2.5 0 0 1 9.5 2z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.44-3.16A2.5 2.5 0 0 0 14.5 2z"/></svg>
+                </div>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--eds-text-primary)" }}>KI-gestützt generieren</h3>
+                <p className="text-xs mt-1" style={{ color: "var(--eds-text-secondary)" }}>KI erstellt den Baustein — optional basierend auf Anforderungsanalyse und Szenario</p>
                 {analyses.length > 0 && (
-                  <span className="inline-block mt-2 text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                  <span className="inline-block mt-2 text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full" style={{ background: "var(--eds-status-amber-bg)", color: "var(--eds-status-amber)" }}>
                     {analyses.length} Analyse{analyses.length !== 1 ? "n" : ""} verfügbar
                   </span>
                 )}
@@ -644,7 +653,7 @@ Antworte in folgendem JSON-Format:
                       data-testid={`card-blueprint-${bp.id}`}
                     >
                       <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-lg shrink-0">
-                        {typeIcon(bp.type)}
+                        {typeIconEl(bp.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
@@ -838,7 +847,7 @@ Antworte in folgendem JSON-Format:
                         <div key={item.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors group" data-testid={`card-lib-item-${item.id}`}>
                           <div className="flex items-center gap-3 flex-1 min-w-0">
                             <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-lg shrink-0">
-                              {typeIcon(item.exerciseType)}
+                              {typeIconEl(item.exerciseType)}
                             </div>
                             <div className="min-w-0">
                               <h3 className="text-sm font-semibold text-slate-800">{item.title}</h3>
@@ -895,7 +904,7 @@ Antworte in folgendem JSON-Format:
               <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
                 <div className="flex items-center gap-3 pb-4 border-b border-slate-200">
                   <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-lg shrink-0">
-                    {typeIcon(selectedLibraryItem.exerciseType)}
+                    {typeIconEl(selectedLibraryItem.exerciseType)}
                   </div>
                   <div>
                     <p className="text-[11px] text-slate-400">Basierend auf</p>

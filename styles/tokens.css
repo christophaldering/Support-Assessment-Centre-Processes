@@ -115,4 +115,18 @@
   --ae-accent-dark:   var(--eds-lagune-dk);
   --ae-accent-medium: var(--eds-lagune-md);
   --ae-accent-light:  var(--eds-lagune-light);
+
+  /* ── Modultyp-Akzentfarben (für Icon-System Phase 2) ── */
+  --eds-type-interview:    var(--eds-lagune);
+  --eds-type-presentation: var(--eds-terracotta);
+  --eds-type-roleplay:     #7C3AED;
+  --eds-type-factfinding:  #D97706;
+  --eds-type-casestudy:    var(--eds-terracotta-dk);
+  --eds-type-other:        var(--eds-status-gray);
+
+  /* ── Karten-Hierarchie ── */
+  --eds-card-primary-shadow:   var(--eds-shadow-lg);
+  --eds-card-primary-border:   var(--eds-terracotta-ghost);
+  --eds-card-secondary-shadow: var(--eds-shadow-xs);
+  --eds-card-secondary-border: var(--eds-border);
 }

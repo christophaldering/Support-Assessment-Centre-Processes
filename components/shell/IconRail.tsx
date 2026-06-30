@@ -142,7 +142,7 @@ export default function IconRail({ workspaceSlug, userRoles, isMaster }: IconRai
           {
             id: "dataroom",
             label: "Externe Dokumentenfreigabe",
-            href: `${base}/document-sharing`,
+            href: `${base}/dr`,
             matchPrefix: `${base}/document-sharing`,
             roles: ["MASTER_ADMIN"],
             icon: <DatabaseIcon />,
