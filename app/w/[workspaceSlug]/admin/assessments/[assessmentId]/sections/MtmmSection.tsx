@@ -1,20 +1,20 @@
 "use client";
 
-import { ExerciseRecord, MtmmMapping, AssessmentRecord, SectionKey } from "./types";
+import { ExerciseRecord, MtmmMapping, AssessmentRecord, SectionKey, CompetencyNodeLike, MtmmCompetencyModel, MtmmRationale, MtmmGrid } from "./types";
 
 interface MtmmSectionProps {
   hasExercises: boolean;
   assessment: AssessmentRecord | null;
   exercises: ExerciseRecord[];
   setActiveSection: (section: SectionKey) => void;
-  mtmmCompetencyModel: any;
+  mtmmCompetencyModel: MtmmCompetencyModel | null;
   mtmmMappings: MtmmMapping[];
   mtmmLoading: boolean;
   showInlineMtmm: boolean;
   setShowInlineMtmm: (val: boolean) => void;
   initInlineMtmmGrid: () => void;
-  mtmmAiRationale: any[];
-  setMtmmAiRationale: (val: any[]) => void;
+  mtmmAiRationale: MtmmRationale[];
+  setMtmmAiRationale: (val: MtmmRationale[]) => void;
   mtmmAiSummary: string;
   setMtmmAiSummary: (val: string) => void;
   mtmmAiLoading: boolean;
@@ -22,8 +22,8 @@ interface MtmmSectionProps {
   mtmmSaveMsg: string;
   mtmmSaving: boolean;
   handleSaveInlineMtmm: () => void;
-  mtmmInlineGrid: Record<string, Record<string, { mapped: boolean; weight: number }>>;
-  setMtmmInlineGrid: (fn: (prev: any) => any) => void;
+  mtmmInlineGrid: MtmmGrid;
+  setMtmmInlineGrid: (fn: (prev: MtmmGrid) => MtmmGrid) => void;
 }
 
 export default function MtmmSection({
@@ -104,7 +104,7 @@ export default function MtmmSection({
               <p className="text-xs text-[var(--eds-text-disabled)] mt-1">
                 Kompetenzmodell: <span className="font-medium text-[var(--eds-text-secondary)]">{mtmmCompetencyModel.name}</span>
                 <span className="text-[var(--eds-text-disabled)] mx-1">·</span>
-                {mtmmCompetencyModel.nodes.filter((n: any) => n.nodeType === "competency" || n.nodeType === "domain").length} Kompetenzen × {exercises.length} Übungen
+                {mtmmCompetencyModel.nodes.filter((n: CompetencyNodeLike) => n.nodeType === "competency" || n.nodeType === "domain").length} Kompetenzen × {exercises.length} Übungen
               </p>
             )}
           </div>
@@ -216,9 +216,9 @@ export default function MtmmSection({
                 </summary>
                 <div className="mt-2 bg-purple-50/50 border border-purple-100 rounded-lg p-4 max-h-64 overflow-y-auto" data-testid="mtmm-ai-rationale-list">
                   <div className="space-y-2">
-                    {mtmmAiRationale.map((r: any, i: number) => {
-                      const exName = exercises.find((e: any) => e.id === r.exerciseId)?.name || r.exerciseId;
-                      const nodeName = mtmmCompetencyModel.nodes.find((n: any) => n.id === r.nodeId)?.name || r.nodeId;
+                    {mtmmAiRationale.map((r: MtmmRationale, i: number) => {
+                      const exName = exercises.find((e) => e.id === r.exerciseId)?.name || r.exerciseId;
+                      const nodeName = mtmmCompetencyModel.nodes.find((n: CompetencyNodeLike) => n.id === r.nodeId)?.name || r.nodeId;
                       return (
                         <div key={i} className="flex items-start gap-2 text-xs">
                           <div className="flex-shrink-0 mt-0.5">
@@ -247,9 +247,9 @@ export default function MtmmSection({
                   <tr className="border-b border-[var(--eds-border)]">
                     <th className="text-left py-2 px-3 font-medium text-[var(--eds-text-secondary)] bg-[var(--eds-bg-sunken)] sticky left-0 z-10 min-w-[150px]">Übung</th>
                     {mtmmCompetencyModel.nodes
-                      .filter((n: any) => n.nodeType === "competency" || n.nodeType === "domain")
-                      .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
-                      .map((node: any) => (
+                      .filter((n: CompetencyNodeLike) => n.nodeType === "competency" || n.nodeType === "domain")
+                      .sort((a: CompetencyNodeLike, b: CompetencyNodeLike) => a.sortOrder - b.sortOrder)
+                      .map((node: CompetencyNodeLike) => (
                         <th key={node.id} className="text-center py-2 px-1 font-medium text-[var(--eds-text-secondary)] bg-[var(--eds-bg-sunken)] min-w-[80px]" title={node.description || node.name}>
                           <span className="text-[10px] leading-tight block whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px]">{node.name}</span>
                         </th>
@@ -261,9 +261,9 @@ export default function MtmmSection({
                     <tr key={ex.id} className="border-b border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)]/50">
                       <td className="py-2 px-3 font-medium text-[var(--eds-text-primary)] sticky left-0 bg-white z-10 text-xs">{ex.name}</td>
                       {mtmmCompetencyModel.nodes
-                        .filter((n: any) => n.nodeType === "competency" || n.nodeType === "domain")
-                        .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
-                        .map((node: any) => {
+                        .filter((n: CompetencyNodeLike) => n.nodeType === "competency" || n.nodeType === "domain")
+                        .sort((a: CompetencyNodeLike, b: CompetencyNodeLike) => a.sortOrder - b.sortOrder)
+                        .map((node: CompetencyNodeLike) => {
                           const cell = mtmmInlineGrid[ex.id]?.[node.id];
                           return (
                             <td key={node.id} className="text-center py-1 px-1">
@@ -272,7 +272,7 @@ export default function MtmmSection({
                                   type="checkbox"
                                   checked={cell?.mapped || false}
                                   onChange={() => {
-                                    setMtmmInlineGrid((prev: any) => ({
+                                    setMtmmInlineGrid((prev: MtmmGrid) => ({
                                       ...prev,
                                       [ex.id]: {
                                         ...prev[ex.id],
@@ -292,11 +292,11 @@ export default function MtmmSection({
                                     value={cell.weight}
                                     onChange={(e) => {
                                       const w = parseFloat(e.target.value) || 1.0;
-                                      setMtmmInlineGrid((prev: any) => ({
+                                      setMtmmInlineGrid((prev: MtmmGrid) => ({
                                         ...prev,
                                         [ex.id]: {
                                           ...prev[ex.id],
-                                          [node.id]: { ...prev[ex.id]?.[node.id], weight: w },
+                                          [node.id]: { mapped: prev[ex.id]?.[node.id]?.mapped ?? false, weight: w },
                                         },
                                       }));
                                     }}
@@ -350,7 +350,7 @@ export default function MtmmSection({
         ) : (() => {
           const uniqueExercisesTable = Array.from(new Map(mtmmMappings.map(m => [m.exercise.id, m.exercise])).values());
           const uniqueNodes = Array.from(new Map(mtmmMappings.map(m => [m.competencyNode.id, m.competencyNode])).values())
-            .sort((a: any, b: any) => a.sortOrder - b.sortOrder);
+            .sort((a, b) => a.sortOrder - b.sortOrder);
           const mappingLookup = new Map(mtmmMappings.map(m => [`${m.exerciseId}:${m.competencyNodeId}`, m.weight]));
 
           return (
@@ -359,7 +359,7 @@ export default function MtmmSection({
                 <thead>
                   <tr className="border-b border-[var(--eds-border)]">
                     <th className="text-left py-2 px-3 font-medium text-[var(--eds-text-secondary)] bg-[var(--eds-bg-sunken)] rounded-tl-lg sticky left-0 z-10 min-w-[160px]">Übung (Methode)</th>
-                    {uniqueNodes.map((node: any) => (
+                    {uniqueNodes.map((node) => (
                       <th key={node.id} className="text-center py-2 px-2 font-medium text-[var(--eds-text-secondary)] bg-[var(--eds-bg-sunken)] min-w-[100px]" title={node.description || node.name}>
                         <span className="text-xs leading-tight block">{node.name}</span>
                       </th>
@@ -367,10 +367,10 @@ export default function MtmmSection({
                   </tr>
                 </thead>
                 <tbody>
-                  {uniqueExercisesTable.map((ex: any) => (
+                  {uniqueExercisesTable.map((ex) => (
                     <tr key={ex.id} className="border-b border-[var(--eds-border)] hover:bg-[var(--eds-bg-sunken)]/50">
                       <td className="py-2 px-3 font-medium text-[var(--eds-text-primary)] sticky left-0 bg-white z-10">{ex.name}</td>
-                      {uniqueNodes.map((node: any) => {
+                      {uniqueNodes.map((node) => {
                         const weight = mappingLookup.get(`${ex.id}:${node.id}`);
                         return (
                           <td key={node.id} className="text-center py-2 px-2">

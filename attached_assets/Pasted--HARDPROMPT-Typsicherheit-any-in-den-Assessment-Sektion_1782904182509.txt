@@ -1,0 +1,171 @@
+# HARDPROMPT — Typsicherheit: `any` in den Assessment-Sektions-Komponenten beseitigen
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden Schritte exakt in der angegebenen Reihenfolge aus.
+Bei Unklarheit: STOPP, fragen — NICHT improvisieren. Nach jedem Schritt
+erstellst du exakt den angegebenen Commit. Keine Optionalität.
+
+DIES IST EINE REINE TYPISIERUNGS-AUFGABE. ES DARF SICH KEIN LAUFZEIT-
+VERHALTEN ÄNDERN — nur Typen werden präzisiert. Wenn eine Typisierung
+einen bestehenden Fehler aufdeckt, der vorher durch `any` verdeckt war:
+STOPP, den Fehler melden, NICHT eigenmächtig die Logik ändern.
+
+## Ausgangslage (geprüft)
+
+Beim Refactoring der Assessment-Detail-Seite wurden in den neuen
+Sektions-Komponenten ~50 `any`-Verwendungen eingeführt, überwiegend bei
+Props-Typisierung und `.map()`/`.filter()`-Callbacks. Betroffen:
+- `sections/ExercisesSection.tsx` (17)
+- `sections/MtmmSection.tsx` (20)
+- `sections/RequirementsSection.tsx` (12)
+- `sections/ObservationSheetsSection.tsx` (1)
+
+Alle in
+`app/w/[workspaceSlug]/admin/assessments/[assessmentId]/sections/`.
+
+Die `any` zerfallen in zwei Kategorien:
+- **(A) Prisma-Entitäten**: `CompetencyNode` (Felder `id`, `name`,
+  `nodeType`, `sortOrder`), `ExerciseLibraryItem`, Exercise-Objekte —
+  hierfür existieren generierte Prisma-Typen bzw. lassen sich lokale
+  Interfaces ableiten.
+- **(B) `proposal`-JSON der Anforderungsanalyse**: dynamisches JSON-Feld
+  (`RequirementsAnalysis.proposal`) mit Struktur `competencies[]`,
+  `assessmentModules[]`, `participants[]`, `exercises[]`, `timeline[]`,
+  `adaptationNotes`, `generationPrompt`, Personen-Objekte mit
+  `firstName`/`lastName`/`selected`. Hierfür werden explizite Interfaces
+  definiert.
+
+## Nicht anfassen
+
+Laufzeit-Logik, JSX-Struktur, Handler-Implementierungen, State ·
+Elternfile `page.tsx` (nur falls eine Prop-Typ-Änderung dort einen
+korrespondierenden Cast erfordert — dann minimal und im Commit vermerkt) ·
+andere Dateien außerhalb des `sections/`-Ordners und `sections/types.ts`.
+
+---
+
+## SCHRITT 1 — Gemeinsame Interfaces in `sections/types.ts`
+
+In der bestehenden `sections/types.ts` folgende Interfaces ergänzen
+(Feldnamen exakt aus der tatsächlichen Datennutzung im Code ableiten —
+NICHT raten; wenn ein Feld im Code verwendet wird, das hier fehlt,
+ergänzen; wenn unklar, ob ein Feld optional ist, als optional `?`
+markieren):
+
+1. `CompetencyNodeLike` — `{ id: string; name: string; nodeType: string; sortOrder: number }` plus alle weiteren im Code tatsächlich zugegriffenen Felder.
+2. `ProposalPerson` — `{ firstName?: string; lastName?: string; selected?: boolean }` plus tatsächlich genutzte Felder.
+3. `ProposalCompetency`, `ProposalModule`, `ProposalExercise`,
+   `ProposalTimelineItem` — jeweils mit den im Code zugegriffenen Feldern,
+   inkl. `selected?: boolean`, `adaptationNotes?: string`,
+   `generationPrompt?: string` wo verwendet.
+4. `AnalysisProposal` — Container-Interface mit
+   `competencies?: ProposalCompetency[]`, `assessmentModules?: ProposalModule[]`,
+   `participants?: ProposalPerson[]`, `exercises?: ProposalExercise[]`,
+   `timeline?: ProposalTimelineItem[]`, plus weitere genutzte Arrays.
+5. `LinkedAnalysis` — `{ proposal?: AnalysisProposal; ... }` mit den im
+   Code zugegriffenen Feldern.
+6. `ObservationSheetSection` — `{ items?: unknown[]; ... }` für die
+   `sheet.content.sections`-Nutzung in `ObservationSheetsSection.tsx`.
+
+**COMMIT (exakter Wortlaut):**
+`Typen: Interfaces für Proposal-JSON und Competency-Nodes in sections/types.ts`
+
+---
+
+## SCHRITT 2 — `ObservationSheetsSection.tsx` (kleinste, 1 Treffer)
+
+1. Das eine `any` (`.reduce((acc: number, s: any) => ...)`) durch den
+   `ObservationSheetSection`-Typ ersetzen.
+2. `npm run lint` für die Datei. Bei Fehler: STOPP, beheben.
+
+**COMMIT (exakter Wortlaut):**
+`Typsicherheit: ObservationSheetsSection ohne any`
+
+---
+
+## SCHRITT 3 — `RequirementsSection.tsx` (12 Treffer)
+
+1. Alle `(c: any)`, `(m: any)`, `(person: any)`, `(part: any)`,
+   `(obs: any)`, `(cand: any)`, `(ex: any)`, `(t: any)` durch die
+   entsprechenden Proposal-Interfaces aus Schritt 1 ersetzen.
+2. Props-`any` (falls vorhanden) durch `LinkedAnalysis`/`AnalysisProposal`
+   ersetzen.
+3. `npm run lint` für die Datei. Bei Fehler: STOPP, beheben.
+
+**COMMIT (exakter Wortlaut):**
+`Typsicherheit: RequirementsSection ohne any`
+
+---
+
+## SCHRITT 4 — `MtmmSection.tsx` (20 Treffer)
+
+1. `mtmmCompetencyModel: any` → Interface mit `nodes: CompetencyNodeLike[]`.
+2. Alle `(n: any)`, `(a: any)`, `(b: any)`, `(node: any)`, `(e: any)`,
+   `(r: any)` durch `CompetencyNodeLike` bzw. passende Interfaces ersetzen.
+3. `mtmmAiRationale: any[]` → Interface `MtmmRationale`
+   (`{ exerciseId: string; nodeId: string; ... }` nach tatsächlicher
+   Nutzung).
+4. `setMtmmInlineGrid: (fn: (prev: any) => any)` → konkreter Grid-Typ
+   (Record-Struktur nach tatsächlicher Nutzung; falls die Struktur zu
+   dynamisch ist, `Record<string, Record<string, number>>` oder
+   präziser — KEIN `any`, notfalls `unknown` mit lokalem Cast an der
+   Nutzungsstelle und Kommentar).
+5. `npm run lint` für die Datei. Bei Fehler: STOPP, beheben.
+
+**COMMIT (exakter Wortlaut):**
+`Typsicherheit: MtmmSection ohne any`
+
+---
+
+## SCHRITT 5 — `ExercisesSection.tsx` (17 Treffer, größte)
+
+1. Props-`any` (`linkedAnalysis`, `libraryItems`, `specForLibrarySearch`,
+   `basisExercise`, `activeModuleSpec` und deren Setter) durch konkrete
+   Interfaces ersetzen — `linkedAnalysis` → `LinkedAnalysis`,
+   `libraryItems` → `ExerciseLibraryItemLike[]` (Interface bei Bedarf in
+   types.ts ergänzen).
+2. Handler-`any` (`handleImportFromLibrary: (item: any)`,
+   `handleAIVariantImport: (item: any)`) → `ExerciseLibraryItemLike`.
+3. `.map`/`.filter`-Callbacks (`(m: any)`, `(ex: any)`, `(mod: any)`) →
+   passende Proposal-Interfaces.
+4. `(rec as any).adaptationNotes` / `.generationPrompt` → die Felder
+   sind bereits in den Proposal-Interfaces (Schritt 1) definiert, daher
+   kann der `as any`-Cast entfallen.
+5. Für Setter, deren genaue Struktur im Elternfile liegt: falls eine
+   präzise Typisierung einen korrespondierenden Typ im Elternfile
+   `page.tsx` erfordert, diesen dort minimal ergänzen und im
+   Commit-Text vermerken.
+6. `npm run lint` für die Datei. Bei Fehler: STOPP, beheben.
+
+**COMMIT (exakter Wortlaut):**
+`Typsicherheit: ExercisesSection ohne any`
+
+---
+
+## SCHRITT 6 — Validierung (alle PASS erforderlich)
+
+1. `grep -rn ": any\|as any" app/w/[workspaceSlug]/admin/assessments/[assessmentId]/sections/`
+   → NULL Treffer, ODER jeder verbliebene Treffer hat einen Kommentar
+   `// unavoidable-any: [technische Begründung]` direkt dahinter/darüber.
+   Anzahl der verbliebenen begründeten `any` explizit nennen. PASS/FAIL.
+2. `npm run build` — null Fehler, insbesondere KEINE neuen Typfehler, die
+   vorher durch `any` verdeckt waren. Falls ein solcher Fehler auftaucht:
+   NICHT die Logik ändern, sondern STOPP und melden. PASS/FAIL.
+3. `npm run lint` gesamt — null Fehler. PASS/FAIL.
+4. Funktions-Stichprobe: Assessment öffnen, Sektionen Exercises, Mtmm,
+   Requirements, ObservationSheets öffnen und je eine Aktion ausführen —
+   Verhalten identisch zum Vorher-Zustand. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`Typsicherheit: Assessment-Sektionen vollständig typisiert und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Zusammenfassung: (a) `any`-Anzahl vorher/nachher pro Datei, (b) Liste
+etwaiger verbliebener, begründeter `any` mit technischer Begründung,
+(c) ob Typisierungen verdeckte Fehler aufgedeckt haben (und wenn ja,
+welche — zur separaten Behandlung), (d) alle 4 Validierungspunkte mit
+PASS/FAIL. Keine Selbsteinschätzung — nur verifizierte Ergebnisse.

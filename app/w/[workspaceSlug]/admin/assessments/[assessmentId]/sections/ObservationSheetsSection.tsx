@@ -1,6 +1,6 @@
 "use client";
 
-import { ExerciseRecord, ObservationSheetRecord, MtmmMapping } from "./types";
+import { ExerciseRecord, ObservationSheetRecord, MtmmMapping, ObservationSheetSection } from "./types";
 
 interface ObservationSheetsSectionProps {
   exercises: ExerciseRecord[];
@@ -343,7 +343,7 @@ export default function ObservationSheetsSection({
                   <p className="text-xs text-[var(--eds-text-tertiary)] line-clamp-2">{sheet.description}</p>
                 )}
                 {sheet.content?.sections && (
-                  <p className="text-xs text-[var(--eds-text-disabled)]">{sheet.content.sections.length} Abschnitte · {sheet.content.sections.reduce((acc: number, s: any) => acc + (s.items?.length || 0), 0)} Kriterien</p>
+                  <p className="text-xs text-[var(--eds-text-disabled)]">{sheet.content.sections.length} Abschnitte · {sheet.content.sections.reduce((acc: number, s: ObservationSheetSection) => acc + (s.items?.length || 0), 0)} Kriterien</p>
                 )}
               </div>
               <div className="flex items-center gap-2 ml-3 shrink-0">

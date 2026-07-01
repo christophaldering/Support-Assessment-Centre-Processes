@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AssessmentRecord, LinkedAnalysis } from "./types";
+import { AssessmentRecord, LinkedAnalysis, ProposalCompetency, ProposalModule, ProposalExercise, ProposalPerson, ProposalCandidate, ProposalTimelineItem } from "./types";
 
 interface RequirementsSectionProps {
   workspaceSlug: string;
@@ -60,8 +60,8 @@ export default function RequirementsSection({
       )}
 
       {!linkedAnalysisLoading && linkedAnalysis && linkedAnalysis.proposal && (() => {
-        const p = linkedAnalysis.proposal;
-        const competencies = Array.isArray(p.competencies) ? p.competencies.filter((c: any) => c && c.selected !== false) : [];
+        const p = linkedAnalysis.proposal!;
+        const competencies = Array.isArray(p.competencies) ? p.competencies.filter((c: ProposalCompetency) => c && c.selected !== false) : [];
         const exercises = Array.isArray(p.exercises) ? p.exercises : [];
         const observers = Array.isArray(p.observers) ? p.observers : [];
         const timeline = Array.isArray(p.timeline) ? p.timeline : [];
@@ -70,9 +70,9 @@ export default function RequirementsSection({
         const candidates = Array.isArray(p.candidates) ? p.candidates : [];
         const specificQuestions = Array.isArray(p.specificQuestions) ? p.specificQuestions.filter(Boolean) : [];
         const successCriteria = Array.isArray(p.successCriteria) ? p.successCriteria.filter(Boolean) : [];
-        const assessmentModules = Array.isArray(p.assessmentModules) ? p.assessmentModules.filter((m: any) => m && m.selected !== false) : [];
-        const formatPerson = (person: any) => person ? [person.firstName, person.lastName].filter(Boolean).join(" ") || null : null;
-        const formatPersonDetail = (person: any) => {
+        const assessmentModules = Array.isArray(p.assessmentModules) ? p.assessmentModules.filter((m: ProposalModule) => m && m.selected !== false) : [];
+        const formatPerson = (person: ProposalPerson | undefined | null) => person ? [person.firstName, person.lastName].filter(Boolean).join(" ") || null : null;
+        const formatPersonDetail = (person: ProposalPerson | undefined | null) => {
           if (!person) return null;
           const name = [person.firstName, person.lastName].filter(Boolean).join(" ");
           const parts = [name, person.role].filter(Boolean);
@@ -143,7 +143,7 @@ export default function RequirementsSection({
               <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-analysis-participants">
                 <p className="text-[10px] font-bold tracking-widest text-[var(--eds-text-disabled)] uppercase mb-3">Teilnehmer der Analyse ({participants.length})</p>
                 <div className="flex flex-wrap gap-2">
-                  {participants.map((part: any, i: number) => (
+                  {participants.map((part: ProposalPerson | string, i: number) => (
                     <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--eds-text-primary)] bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)] rounded-full px-3 py-1.5" data-testid={`text-participant-${i}`}>
                       <svg className="w-3.5 h-3.5 text-[var(--eds-text-disabled)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
                       {typeof part === "string" ? part : (part.name || JSON.stringify(part))}
@@ -180,7 +180,7 @@ export default function RequirementsSection({
                       </div>
                     </div>
                   )}
-                  {additionalObservers.map((obs: any, i: number) => {
+                  {additionalObservers.map((obs: ProposalPerson, i: number) => {
                     const detail = formatPersonDetail(obs);
                     if (!detail) return null;
                     return (
@@ -204,7 +204,7 @@ export default function RequirementsSection({
               <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-analysis-candidates">
                 <p className="text-[10px] font-bold tracking-widest text-[var(--eds-text-disabled)] uppercase mb-3">Kandidaten ({candidates.length})</p>
                 <div className="space-y-2">
-                  {candidates.map((cand: any, i: number) => {
+                  {candidates.map((cand: ProposalCandidate, i: number) => {
                     const name = [cand.firstName, cand.lastName].filter(Boolean).join(" ");
                     return (
                       <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)]" data-testid={`card-candidate-${i}`}>
@@ -236,7 +236,7 @@ export default function RequirementsSection({
               <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-analysis-competencies">
                 <p className="text-[10px] font-bold tracking-widest text-[var(--eds-text-disabled)] uppercase mb-3">Kompetenzen ({competencies.length})</p>
                 <div className="space-y-2.5">
-                  {competencies.map((c: any, i: number) => (
+                  {competencies.map((c: ProposalCompetency, i: number) => (
                     <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)]">
                       <div className="w-7 h-7 rounded-lg bg-brand-blue/10 flex items-center justify-center shrink-0 mt-0.5">
                         <span className="text-xs font-bold text-brand-blue">{i + 1}</span>
@@ -283,7 +283,7 @@ export default function RequirementsSection({
               <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-analysis-modules">
                 <p className="text-[10px] font-bold tracking-widest text-[var(--eds-text-disabled)] uppercase mb-3">Assessment-Module ({assessmentModules.length})</p>
                 <div className="space-y-2">
-                  {assessmentModules.map((mod: any, i: number) => (
+                  {assessmentModules.map((mod: ProposalModule, i: number) => (
                     <div key={i} className="p-3 rounded-lg bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)]" data-testid={`card-module-${i}`}>
                       <div className="flex items-start gap-3">
                         <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center shrink-0 mt-0.5">
@@ -308,11 +308,11 @@ export default function RequirementsSection({
               <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-analysis-exercises">
                 <p className="text-[10px] font-bold tracking-widest text-[var(--eds-text-disabled)] uppercase mb-3">Empfohlene Übungen ({exercises.length})</p>
                 <div className="space-y-2">
-                  {exercises.map((ex: any, i: number) => (
+                  {exercises.map((ex: ProposalExercise, i: number) => (
                     <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[var(--eds-bg-sunken)] border border-[var(--eds-border)]">
                       <svg className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[var(--eds-text-primary)]">{ex.name || ex.title || ex}</p>
+                        <p className="text-sm font-medium text-[var(--eds-text-primary)]">{ex.name || ex.title || ""}</p>
                         {ex.type && <span className="inline-block text-[10px] font-medium text-brand-blue bg-brand-blue/10 rounded px-1.5 py-0.5 mt-1">{ex.type}</span>}
                         {ex.description && <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">{ex.description}</p>}
                       </div>
@@ -327,7 +327,7 @@ export default function RequirementsSection({
               <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-analysis-observers">
                 <p className="text-[10px] font-bold tracking-widest text-[var(--eds-text-disabled)] uppercase mb-3">Beobachter-Empfehlungen</p>
                 <div className="space-y-1.5">
-                  {observers.map((obs: any, i: number) => (
+                  {observers.map((obs: ProposalPerson | string, i: number) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)] p-2 rounded-lg bg-[var(--eds-bg-sunken)]">
                       <svg className="w-4 h-4 text-[var(--eds-text-disabled)] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
                       <span>{typeof obs === "string" ? obs : (obs.role || obs.name || JSON.stringify(obs))}</span>
@@ -341,7 +341,7 @@ export default function RequirementsSection({
               <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-analysis-timeline">
                 <p className="text-[10px] font-bold tracking-widest text-[var(--eds-text-disabled)] uppercase mb-3">Zeitplan-Empfehlung</p>
                 <div className="space-y-2">
-                  {timeline.map((t: any, i: number) => (
+                  {timeline.map((t: ProposalTimelineItem, i: number) => (
                     <div key={i} className="flex items-center gap-3 text-sm p-2 rounded-lg bg-[var(--eds-bg-sunken)]">
                       <span className="w-16 shrink-0 text-xs font-medium text-brand-navy">{t.time || t.start || ""}</span>
                       <span className="text-[var(--eds-text-primary)]">{t.activity || t.label || t.description || (typeof t === "string" ? t : "")}</span>

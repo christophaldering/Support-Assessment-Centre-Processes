@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ExerciseRecord } from "./types";
+import { ExerciseRecord, LinkedAnalysis, LibraryItem, ModuleSpec, ProposalModule, ProposalExercise } from "./types";
 
 interface ExercisesSectionProps {
-  linkedAnalysis: any;
+  linkedAnalysis: LinkedAnalysis | null;
   exercises: ExerciseRecord[];
   apiBase: string;
   fetchExercises: () => void;
@@ -16,23 +16,23 @@ interface ExercisesSectionProps {
   showLibrary: boolean;
   setShowLibrary: (val: boolean) => void;
   handleToggleLibrary: () => void;
-  libraryItems: any[];
+  libraryItems: LibraryItem[];
   libraryLoading: boolean;
-  specForLibrarySearch: any;
-  setSpecForLibrarySearch: (val: any) => void;
+  specForLibrarySearch: ModuleSpec | null;
+  setSpecForLibrarySearch: (val: ModuleSpec | null) => void;
   showCreateExercise: boolean;
   setShowCreateExercise: (val: boolean) => void;
   handleSeedVarexia: () => void;
   seedingVarexia: boolean;
   varexiaSeeded: boolean;
-  basisExercise: any;
-  setBasisExercise: (val: any) => void;
+  basisExercise: LibraryItem | null;
+  setBasisExercise: (val: LibraryItem | null) => void;
   basisChanges: string;
   setBasisChanges: (val: string) => void;
   showBasisPicker: boolean;
   setShowBasisPicker: (val: boolean) => void;
-  activeModuleSpec: any;
-  setActiveModuleSpec: (val: any) => void;
+  activeModuleSpec: ModuleSpec | null;
+  setActiveModuleSpec: (val: ModuleSpec | null) => void;
   exName: string;
   setExName: (val: string) => void;
   exType: string;
@@ -51,8 +51,8 @@ interface ExercisesSectionProps {
   exCreating: boolean;
   handleCreateExercise: (e: React.FormEvent) => void;
   handleAIGenerateExercise: () => void;
-  handleImportFromLibrary: (item: any) => void;
-  handleAIVariantImport: (item: any) => void;
+  handleImportFromLibrary: (item: LibraryItem) => void;
+  handleAIVariantImport: (item: LibraryItem) => void;
   editingExId: string | null;
   setEditingExId: (val: string | null) => void;
   editExName: string;
@@ -163,19 +163,21 @@ export default function ExercisesSection({
   return (
     <>
       {linkedAnalysis?.proposal && (() => {
-        const recExercises = Array.isArray(linkedAnalysis.proposal.exercises) ? linkedAnalysis.proposal.exercises : [];
-        const recModules = Array.isArray(linkedAnalysis.proposal.assessmentModules)
-          ? linkedAnalysis.proposal.assessmentModules.filter((m: any) => m && m.selected !== false)
+        const recExercises = Array.isArray(linkedAnalysis!.proposal!.exercises) ? linkedAnalysis!.proposal!.exercises : [];
+        const recModules = Array.isArray(linkedAnalysis!.proposal!.assessmentModules)
+          ? linkedAnalysis!.proposal!.assessmentModules.filter((m: ProposalModule) => m && m.selected !== false)
           : [];
         const allRecs = [
-          ...recExercises.map((ex: any) => ({
-            name: ex.name || ex.title || (typeof ex === "string" ? ex : ""),
+          ...recExercises.map((ex: ProposalExercise) => ({
+            name: ex.name || ex.title || "",
             type: ex.type || "",
             duration: ex.duration || null,
             description: ex.description || "",
+            adaptationNotes: "",
+            generationPrompt: "",
             source: "exercise" as const,
           })),
-          ...recModules.map((mod: any) => ({
+          ...recModules.map((mod: ProposalModule) => ({
             name: mod.name || "",
             type: mod.type || "",
             duration: null,
@@ -262,8 +264,8 @@ export default function ExercisesSection({
                           name: rec.name,
                           type: rec.type,
                           description: rec.description || "",
-                          adaptationNotes: (rec as any).adaptationNotes || "",
-                          generationPrompt: (rec as any).generationPrompt || "",
+                          adaptationNotes: rec.adaptationNotes || "",
+                          generationPrompt: rec.generationPrompt || "",
                         };
                         setSpecForLibrarySearch(spec);
                         if (!showLibrary) {
@@ -286,8 +288,8 @@ export default function ExercisesSection({
                           name: rec.name,
                           type: rec.type,
                           description: rec.description || "",
-                          adaptationNotes: (rec as any).adaptationNotes || "",
-                          generationPrompt: (rec as any).generationPrompt || "",
+                          adaptationNotes: rec.adaptationNotes || "",
+                          generationPrompt: rec.generationPrompt || "",
                         });
                         setShowCreateExercise(true);
                       }}
