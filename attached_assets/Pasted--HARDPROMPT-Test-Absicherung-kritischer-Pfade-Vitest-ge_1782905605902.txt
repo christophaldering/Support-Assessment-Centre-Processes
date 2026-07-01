@@ -1,0 +1,178 @@
+# HARDPROMPT — Test-Absicherung kritischer Pfade (Vitest + gezielte Unit-Tests)
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden Phasen exakt in der angegebenen Reihenfolge aus.
+Bei Unklarheit: STOPP, fragen — NICHT improvisieren. Nach jeder Phase
+erstellst du exakt den angegebenen Commit. Keine Optionalität.
+
+## Zielbild (bindend)
+
+Das Projekt hat AKTUELL KEINE Tests und KEIN Test-Framework. Ziel ist
+NICHT hohe Abdeckung, sondern gezielte Absicherung der Pfade, deren stiller
+Bruch am gefährlichsten wäre: RBAC-Berechtigungslogik, Consolidation-
+Mathematik, Input-Sanitisierung. Es werden bewusst REINE LOGIK-Funktionen
+getestet (kein DB-Mocking, kein HTTP, kein E2E) — das gibt das beste
+Verhältnis von Absicherung zu Aufwand und bleibt wartbar.
+
+## Bindende Tatsachenbasis (geprüft)
+
+- Kein Test-Framework in `package.json`. Next.js 14, React 18,
+  TypeScript 5.7.
+- `lib/rbac.ts` enthält reine, testbare Funktionen: `getPermissionsForRoles`,
+  `hasPermission`, `hasAnyPermission`, `hasAllPermissions`, `isCandidate`,
+  `isAdmin`, `isInternalUser`. Plus Legacy-Alias-Handling (`ADMIN`,
+  `PROJECT_ASSISTANT`, `HR_CLIENT` als Aliase). Diese Funktionen sind das
+  wertvollste Testziel — an ihnen hängt die gesamte Zugriffssicherheit.
+- `lib/sanitize.ts` enthält `sanitizeRichText(html)` — reine Funktion,
+  sicherheitskritisch (XSS-Schutz), gut testbar.
+- Die Consolidation-Mathematik (mean/median/trimmed_mean) liegt AKTUELL
+  INLINE in
+  `app/api/w/[workspaceSlug]/assessments/[assessmentId]/consolidation/route.ts`
+  (z. B. `sorted.slice(1, -1)` für trimmed_mean). Sie ist mit HTTP/DB
+  verwoben und daher NICHT direkt testbar. Phase 2 extrahiert die reine
+  Rechenlogik in eine eigene Funktion, DANN wird sie getestet.
+
+## Nicht anfassen
+
+Bestehende Geschäftslogik in `lib/rbac.ts` und `lib/sanitize.ts` (nur
+TESTEN, nicht verändern) · jegliche Datenladelogik · andere API-Routen als
+die eine Consolidation-Route (und dort NUR Extraktion der Rechenfunktion,
+kein Verhaltenswechsel) · Auth-Cookies · Kandidatenportal.
+
+Wenn ein Test einen ECHTEN BUG in bestehender Logik aufdeckt: den Test
+trotzdem schreiben (er dokumentiert das korrekte Soll-Verhalten), den Bug
+im Abschluss-Statement melden, aber die Produktivlogik NICHT eigenmächtig
+ändern — das ist eine separate Entscheidung.
+
+---
+
+## PHASE 1 — Vitest-Infrastruktur
+
+1. Installieren (devDependencies): `vitest`, `@vitest/coverage-v8`.
+   KEIN jsdom, KEIN testing-library, KEIN Playwright — es werden
+   ausschließlich reine TS-Logik-Funktionen getestet, keine Komponenten.
+2. `package.json` scripts ergänzen:
+   `"test": "vitest run"`, `"test:watch": "vitest"`,
+   `"test:coverage": "vitest run --coverage"`.
+3. `vitest.config.ts` im Projektroot anlegen: Test-Umgebung `node`,
+   Include-Pattern `["**/*.test.ts"]`, Exclude `node_modules`, `.next`,
+   `.next-build`. Pfad-Alias `@/` auf Projektroot mappen (konsistent mit
+   `tsconfig.json`-Paths), damit `import ... from "@/lib/..."` funktioniert.
+4. Verifizieren: `npm run test` läuft durch (0 Tests, kein Fehler).
+
+**COMMIT (exakter Wortlaut):**
+`Test-Infrastruktur: Vitest konfiguriert (node-Umgebung, reine Logik-Tests)`
+
+---
+
+## PHASE 2 — Consolidation-Mathematik extrahieren
+
+1. Neue Datei `lib/consolidation.ts`. Extrahiere die reine Rechenlogik aus
+   `app/api/w/[workspaceSlug]/assessments/[assessmentId]/consolidation/route.ts`
+   in exportierte, pure Funktionen:
+   - `computeMean(values: number[]): number`
+   - `computeMedian(values: number[]): number`
+   - `computeTrimmedMean(values: number[]): number` (entfernt höchsten und
+     niedrigsten Wert vor Mittelung — exakt die bestehende Logik
+     `sorted.slice(1, -1)` übernehmen, NICHT neu erfinden)
+   - `consolidate(values: number[], method: "mean" | "median" | "trimmed_mean"): number`
+     (Dispatcher)
+   Randfälle EXAKT so behandeln wie die bestehende Route es tut (leeres
+   Array, ein einzelner Wert, zwei Werte bei trimmed_mean) — VOR der
+   Extraktion das bestehende Verhalten im Code prüfen und 1:1 übernehmen.
+2. Die Route so umbauen, dass sie diese neuen Funktionen AUFRUFT statt
+   der Inline-Berechnung. KEIN Verhaltenswechsel — dieselben Eingaben
+   ergeben dieselben Ausgaben.
+3. `npm run build` — null Fehler. Bei Fehler: STOPP.
+
+**COMMIT (exakter Wortlaut):**
+`Refactoring: Consolidation-Mathematik in testbare lib/consolidation.ts extrahiert`
+
+---
+
+## PHASE 3 — Tests: RBAC
+
+1. Neue Datei `lib/rbac.test.ts`. Teste MINDESTENS:
+   - `hasPermission`: ein MASTER_ADMIN hat eine hoch privilegierte
+     Permission; ein CANDIDATE hat sie NICHT.
+   - Legacy-Alias: `ADMIN` verhält sich identisch zu `WORKSPACE_ADMIN`
+     bei mindestens einer Permission.
+   - `hasAnyPermission` / `hasAllPermissions`: je ein True- und ein
+     False-Fall.
+   - `isCandidate` / `isAdmin` / `isInternalUser`: je True- und False-Fall,
+     inkl. der Kombination mehrerer Rollen.
+   - Leeres Rollen-Array: führt zu KEINEN Permissions (fail-safe).
+2. Alle Tests grün.
+
+**COMMIT (exakter Wortlaut):**
+`Tests: RBAC-Berechtigungslogik inkl. Legacy-Aliase`
+
+---
+
+## PHASE 4 — Tests: Consolidation
+
+1. Neue Datei `lib/consolidation.test.ts`. Teste MINDESTENS:
+   - `computeMean`: bekannte Eingabe → bekanntes Ergebnis.
+   - `computeMedian`: ungerade Anzahl (mittlerer Wert), gerade Anzahl
+     (Durchschnitt der beiden mittleren).
+   - `computeTrimmedMean`: höchster und niedrigster Wert werden entfernt,
+     Rest gemittelt.
+   - `consolidate`: dispatcht korrekt auf alle drei Methoden.
+   - Randfälle: leeres Array, ein einzelner Wert, zwei Werte bei
+     trimmed_mean — exakt das dokumentierte Ist-Verhalten aus Phase 2
+     Punkt 1.
+2. Alle Tests grün.
+
+**COMMIT (exakter Wortlaut):**
+`Tests: Consolidation-Mathematik inkl. Randfälle`
+
+---
+
+## PHASE 5 — Tests: Sanitize
+
+1. Neue Datei `lib/sanitize.test.ts`. Teste MINDESTENS:
+   - Harmloser Rich-Text bleibt erhalten (fett, Listen, Absätze).
+   - `<script>`-Tag wird entfernt/neutralisiert.
+   - Ein `on*`-Event-Attribut (z. B. `onclick`) wird entfernt.
+   - Ein `javascript:`-URL-Schema wird entfernt/neutralisiert.
+2. Alle Tests grün. Falls ein Test zeigt, dass `sanitizeRichText` eine
+   dieser Gefahren NICHT abfängt: Test trotzdem als Soll-Verhalten
+   schreiben, Ergebnis (FAIL = potenzielle XSS-Lücke) im Abschluss-
+   Statement PROMINENT melden — das ist ein sicherheitsrelevanter Befund.
+
+**COMMIT (exakter Wortlaut):**
+`Tests: Rich-Text-Sanitisierung (XSS-Schutz)`
+
+---
+
+## PHASE 6 — Validierung (alle PASS erforderlich)
+
+1. `npm run test` — alle Tests laufen, Anzahl grüner Tests explizit
+   nennen. PASS/FAIL.
+2. `npm run build` — null Fehler. PASS/FAIL.
+3. `npm run lint` — null Fehler. PASS/FAIL.
+4. Consolidation-Route funktioniert unverändert (Stichprobe: eine
+   Konsolidierung über die UI durchführen, Ergebnis plausibel). PASS/FAIL.
+5. Falls Phase 5 eine XSS-Lücke aufgedeckt hat: explizit dokumentiert.
+   PASS/FAIL (PASS = dokumentiert, unabhängig vom Befund).
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`Test-Absicherung kritischer Pfade abgeschlossen und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Zusammenfassung: (a) Anzahl Tests pro Datei, (b) alle etwaigen durch Tests
+aufgedeckten Bugs oder Sicherheitslücken — PROMINENT und separat, (c) ob
+die Consolidation-Extraktion verhaltensgleich ist, (d) alle 5
+Validierungspunkte mit PASS/FAIL. Keine Selbsteinschätzung — nur
+verifizierte Ergebnisse.
+
+## Hinweis (nicht Teil dieser Ausführung)
+
+Weitere Testziele für später (separate Hardprompts): Consent-
+Versionierung/Verifikation, Feature-Flag-Auflösung, Prompt-Slot-
+Resolution. Bewusst NICHT in diesem ersten Durchlauf, um den Umfang
+beherrschbar zu halten.

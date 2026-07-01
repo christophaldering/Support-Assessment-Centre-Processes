@@ -3,28 +3,10 @@ import { prisma } from "@/lib/db";
 import { getUserSession, hasMasterAuth } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { computeMean, computeMedian, computeTrimmedMean } from "@/lib/consolidation";
 
 interface RouteContext {
   params: { workspaceSlug: string; assessmentId: string };
-}
-
-function computeMean(values: number[]): number {
-  return values.reduce((a, b) => a + b, 0) / values.length;
-}
-
-function computeMedian(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 !== 0
-    ? sorted[mid]
-    : (sorted[mid - 1] + sorted[mid]) / 2;
-}
-
-function computeTrimmedMean(values: number[]): number {
-  if (values.length <= 2) return computeMean(values);
-  const sorted = [...values].sort((a, b) => a - b);
-  const trimmed = sorted.slice(1, -1);
-  return computeMean(trimmed);
 }
 
 function computeVariance(values: number[], mean: number): number {
