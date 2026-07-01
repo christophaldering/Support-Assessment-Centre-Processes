@@ -1,5 +1,6 @@
 "use client";
 
+import { PageShell } from "@/components/shared/PageShell";
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
@@ -164,18 +165,17 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-        <div className="mb-6">
-          <h1
-            className="text-2xl font-bold"
-            style={{ fontFamily: "'Playfair Display', serif", color: accentColor }}
-          >
-            Berichte
-          </h1>
-          <p className="text-sm text-[var(--eds-text-tertiary)]">
-            Assessment-Berichte erstellen, herunterladen und verwalten
-          </p>
-        </div>
+    <PageShell
+      zone="assessment"
+      zoneLabel="Assessment · Berichte"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Auswertung" },
+        { label: "Berichte" },
+      ]}
+      title="Berichte"
+      description="Assessment-Berichte erstellen, herunterladen und verwalten"
+    >
 
         <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 mb-8">
           <h2
@@ -380,7 +380,7 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 

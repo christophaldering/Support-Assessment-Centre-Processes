@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -66,11 +66,17 @@ export default function BrandRulesPage() {
   ];
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-        <PageHeader
-          title="Brand & Style"
-          description="Markenregelwerke verwalten und auf das Workspace-Theme anwenden"
-        />
+    <PageShell
+      zone="admin"
+      zoneLabel="Verwaltung · Brand & Style"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Verwaltung" },
+        { label: "Brand & Style" },
+      ]}
+      title="Brand & Style"
+      description="Markenregelwerke verwalten und auf das Workspace-Theme anwenden"
+    >
 
         <div className="flex gap-1 mb-6 border-b border-[var(--eds-border)]">
           {tabs.map((tab) => (
@@ -92,7 +98,7 @@ export default function BrandRulesPage() {
         {activeTab === "rulesets" && <RuleSetsTab workspaceSlug={workspaceSlug} router={router} />}
         {activeTab === "preview" && <PreviewTab workspaceSlug={workspaceSlug} />}
         {activeTab === "ai-analysis" && <AIAnalysisTab workspaceSlug={workspaceSlug} onSwitchToEdit={() => setActiveTab("rulesets")} />}
-    </div>
+    </PageShell>
   );
 }
 

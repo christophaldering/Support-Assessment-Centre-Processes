@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { PageShell } from "@/components/shared/PageShell";
 import type { CaseStudyData, AssessmentQuestions, Email, StrategicAnalysis } from "@/lib/case-studies/varexia";
 
 const RichTextEditor = dynamic(() => import("@/app/components/RichTextEditor"), { ssr: false });
@@ -235,29 +236,20 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
   const base = `/w/${workspaceSlug}/admin`;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[var(--eds-text-primary)]">
-      <header className="bg-[var(--eds-text-primary)] text-white sticky top-0 z-50">
-        <div className="max-w-[1600px] mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href={`${base}/case-studio`}
-              className="text-xs font-medium text-white/70 hover:text-white border border-white/20 hover:border-white/40 rounded-full px-3 py-1 transition-colors"
-              data-testid="link-back-case-studio"
-            >
-              ← Fallstudien-Werkstatt
-            </Link>
-            {currentLogoUrl && (
-              <img src={currentLogoUrl} alt={`${localData.name} Logo`} className="h-7 w-auto object-contain" data-testid="img-case-logo" />
-            )}
-            <span className="text-sm font-bold tracking-tight font-serif">{localData.name}</span>
-            <span className="text-[10px] text-white/40 uppercase tracking-widest">Case Study</span>
-          </div>
-          <span className="text-[10px] text-white/40">{localData.id.toUpperCase()}-2026</span>
-        </div>
-      </header>
-
-      <div className="flex flex-1">
-        <nav className="w-64 shrink-0 bg-[var(--eds-bg-sunken)] border-r border-[var(--eds-border)] sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
+    <PageShell
+      zone="resource"
+      zoneLabel={`Ressource · Fallstudie · ${localData.name}`}
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Case-Studio", href: `${base}/case-studio` },
+        { label: localData.name },
+      ]}
+      title={localData.name}
+      description="Case Study"
+      maxWidth="wide"
+    >
+      <div className="flex" style={{ minHeight: "calc(100vh - 12rem)" }}>
+        <nav className="w-64 shrink-0 bg-[var(--eds-bg-sunken)] border-r border-[var(--eds-border)] sticky top-0 h-screen overflow-y-auto">
           <div className="py-4 px-3 space-y-1">
             {visibleTabs.map((tab) => (
               <button
@@ -1655,7 +1647,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
           &copy; Christoph Aldering &middot; Private initiative &ndash; for training reasons only &ndash; no data from reality so far!
         </p>
       </footer>
-    </div>
+    </PageShell>
   );
 }
 
@@ -1925,6 +1917,7 @@ function EmailListPanel({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -115,34 +116,30 @@ export default function AnalyticsDashboardPage() {
   ];
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-      {/* Header + Assessment selector */}
-      <div className="flex items-start justify-between flex-wrap gap-4 mb-2">
-        <div>
-          <h1
-            className="text-2xl font-bold"
-            style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}
-            data-testid="heading-analytics"
-          >
-            Analyse-Dashboard
-          </h1>
-          <p className="text-sm text-[var(--eds-text-tertiary)] mt-0.5">
-            Übersicht über Assessments, Bewertungen und Kompetenzwerte
-          </p>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <select
-            value={selectedAssessment}
-            onChange={(e) => { setSelectedAssessment(e.target.value); setActiveTab("uebersicht"); }}
-            className="rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--eds-lagune)]/30"
-            data-testid="select-assessment-filter"
-          >
-            <option value="">Alle Assessments</option>
-            {assessments.map((a) => (
-              <option key={a.id} value={a.id}>{a.name}</option>
-            ))}
-          </select>
-        </div>
+    <PageShell
+      zone="assessment"
+      zoneLabel="Assessment · Analyse"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Auswertung" },
+        { label: "Analyse-Dashboard" },
+      ]}
+      title="Analyse-Dashboard"
+      description="Übersicht über Assessments, Bewertungen und Kompetenzwerte"
+    >
+      <div className="flex items-center gap-3 flex-wrap mb-6">
+        <label className="text-xs font-medium text-[var(--eds-text-secondary)]">Assessment:</label>
+        <select
+          value={selectedAssessment}
+          onChange={(e) => { setSelectedAssessment(e.target.value); setActiveTab("uebersicht"); }}
+          className="rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--eds-lagune)]/30"
+          data-testid="select-assessment-filter"
+        >
+          <option value="">Alle Assessments</option>
+          {assessments.map((a) => (
+            <option key={a.id} value={a.id}>{a.name}</option>
+          ))}
+        </select>
       </div>
 
       {/* Tab bar */}
@@ -322,7 +319,7 @@ export default function AnalyticsDashboardPage() {
           selectedAssessment={selectedAssessment}
         />
       )}
-    </div>
+    </PageShell>
   );
 }
 

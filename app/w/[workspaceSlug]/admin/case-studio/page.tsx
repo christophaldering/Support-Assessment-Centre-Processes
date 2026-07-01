@@ -2,7 +2,7 @@
 
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { resolveOriginForCaseStudy } from "@/lib/document-origin";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
@@ -394,42 +394,46 @@ export default function CaseStudyBuilderPage() {
   };
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-      <PageHeader
-        title="Case-Studio"
-        description="Erstellen und verwalten Sie Fallstudien für Assessment-Übungen"
-        actions={
-          <div className="flex items-center gap-3">
-            <a
-              href={`/w/${workspaceSlug}/admin/prompt-library`}
-              className="inline-flex items-center gap-1 text-xs text-[var(--eds-text-disabled)] hover:text-[var(--eds-lagune)] transition-colors"
-              data-testid="link-prompt-library-case-studio"
-            >
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-              KI-Prompts anpassen
-            </a>
-            {mode !== "list" && (
-              <button
-                onClick={() => { setMode("list"); setError(""); setSuccess(""); }}
-                className="text-xs text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)] transition-colors"
-                data-testid="button-back-list"
-              >
-                ← Zur Übersicht
-              </button>
-            )}
-            {mode === "list" && (
-              <button
-                onClick={() => setMode("choose")}
-                className="px-5 py-2.5 rounded-lg text-white text-sm font-medium transition-colors hover:opacity-90"
-                style={{ backgroundColor: "hsl(14, 48%, 44%)" }}
-                data-testid="button-new-case-study"
-              >
-                + Neue Fallstudie
-              </button>
-            )}
-          </div>
-        }
-      />
+    <PageShell
+      zone="resource"
+      zoneLabel="Ressource · Fallstudien"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Ressourcen" },
+        { label: "Case-Studio" },
+      ]}
+      title="Case-Studio"
+      description="Erstellen und verwalten Sie Fallstudien für Assessment-Übungen"
+      primaryAction={mode === "list" ? (
+        <button
+          onClick={() => setMode("choose")}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "8px 16px", borderRadius: "var(--eds-radius-lg)",
+            backgroundColor: "var(--eds-z)", color: "white",
+            fontSize: "var(--eds-text-md)", fontWeight: 500,
+            border: "none", cursor: "pointer", fontFamily: "var(--eds-font-sans)",
+          }}
+          data-testid="button-new-case-study"
+        >
+          + Neue Fallstudie
+        </button>
+      ) : (
+        <button
+          onClick={() => { setMode("list"); setError(""); setSuccess(""); }}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "8px 16px", borderRadius: "var(--eds-radius-lg)",
+            background: "var(--eds-bg-sunken)", color: "var(--eds-text-secondary)",
+            fontSize: "var(--eds-text-md)", fontWeight: 500,
+            border: "1px solid var(--eds-border)", cursor: "pointer",
+          }}
+          data-testid="button-back-list"
+        >
+          ← Zur Übersicht
+        </button>
+      )}
+    >
         {error && (
           <div className="bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] text-sm rounded-lg p-4 mb-6" data-testid="text-error">
             {error}
@@ -1260,6 +1264,6 @@ export default function CaseStudyBuilderPage() {
             })()}
           </div>
         )}
-    </div>
+    </PageShell>
   );
 }

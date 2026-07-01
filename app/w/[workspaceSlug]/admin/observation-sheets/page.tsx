@@ -2,7 +2,7 @@
 
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { resolveOriginForObservationSheetTemplate } from "@/lib/document-origin";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Card } from "@/components/shared/Card";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -601,7 +601,32 @@ export default function ObservationSheetsPage() {
   );
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
+    <PageShell
+      zone="resource"
+      zoneLabel="Ressource · Beobachtungsbögen"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Ressourcen" },
+        { label: "Beobachtungsbögen" },
+      ]}
+      title="Beobachtungsbögen"
+      description="Observation Sheet Toolbox — Beobachtungsbögen erstellen, verwalten und filtern"
+      primaryAction={mode === "list" ? (
+        <button
+          onClick={() => { setMode("choose"); setError(""); setSuccess(""); }}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "8px 16px", borderRadius: "var(--eds-radius-lg)",
+            backgroundColor: "var(--eds-z)", color: "white",
+            fontSize: "var(--eds-text-md)", fontWeight: 500,
+            border: "none", cursor: "pointer", fontFamily: "var(--eds-font-sans)",
+          }}
+          data-testid="button-new-template"
+        >
+          + Neuer Beobachtungsbogen
+        </button>
+      ) : undefined}
+    >
         {error && (
           <div className="bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] text-sm rounded-lg p-4 mb-6" data-testid="text-error">
             {error}
@@ -615,20 +640,6 @@ export default function ObservationSheetsPage() {
 
         {mode === "list" && (
           <>
-            <PageHeader
-              title="Beobachtungsbögen"
-              description="Observation Sheet Toolbox — Beobachtungsbögen erstellen, verwalten und filtern"
-              actions={
-                <button
-                  onClick={() => { setMode("choose"); setError(""); setSuccess(""); }}
-                  className="px-5 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: ACCENT, color: "var(--eds-text-inverse)" }}
-                  data-testid="button-new-template"
-                >
-                  + Neuer Beobachtungsbogen
-                </button>
-              }
-            />
 
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <div className="flex-1">
@@ -1497,6 +1508,6 @@ export default function ObservationSheetsPage() {
             </div>
           </div>
         )}
-    </div>
+    </PageShell>
   );
 }

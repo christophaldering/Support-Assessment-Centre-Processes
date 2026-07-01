@@ -1,5 +1,6 @@
 "use client";
 
+import { PageShell } from "@/components/shared/PageShell";
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 
@@ -278,7 +279,17 @@ function IntelligenceContent() {
   const latestBlueprint = blueprints[0];
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
+    <PageShell
+      zone="assessment"
+      zoneLabel="Assessment · Intelligence"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Auswertung" },
+        { label: "Intelligence-Module" },
+      ]}
+      title="Intelligence-Module"
+      description="KI-gestützte Diagnostik: Predictive Success, Development Path und Hypothesis Engine"
+    >
         {error && (
           <div className="mb-4 p-3 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-lg text-sm text-[var(--eds-status-red)]" data-testid="text-error">
             {error}
@@ -407,7 +418,7 @@ function IntelligenceContent() {
         {tab === "hypotheses" && (
           <HypothesesTab hypotheses={hypotheses} summary={hypothesesSummary} />
         )}
-    </div>
+    </PageShell>
   );
 }
 

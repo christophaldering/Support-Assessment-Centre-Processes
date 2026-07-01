@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -111,30 +111,17 @@ export default function AccessRequestsPage() {
   };
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-        <PageHeader
-          title="Zugangsanfragen"
-          description={`${requests.length} ${statusFilter === "pending" ? "ausstehende" : statusFilter === "approved" ? "genehmigte" : "abgelehnte"} Anfragen`}
-          actions={
-            <div className="flex rounded-lg border border-[var(--eds-border)] overflow-hidden">
-              {(["pending", "approved", "rejected"] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setStatusFilter(s)}
-                  data-testid={`button-filter-${s}`}
-                  className={`px-4 py-2 text-xs font-medium transition-colors ${
-                    statusFilter === s
-                      ? "bg-brand-navy text-white"
-                      : "bg-white text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"
-                  }`}
-                >
-                  {s === "pending" ? "Ausstehend" : s === "approved" ? "Genehmigt" : "Abgelehnt"}
-                </button>
-              ))}
-            </div>
-          }
-        />
+    <PageShell
+      zone="admin"
+      zoneLabel="Verwaltung · Zugangsanfragen"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Verwaltung" },
+        { label: "Zugangsanfragen" },
+      ]}
+      title="Zugangsanfragen"
+      description={`${requests.length} ${statusFilter === "pending" ? "ausstehende" : statusFilter === "approved" ? "genehmigte" : "abgelehnte"} Anfragen`}
+    >
 
         {successMessage && (
           <div className="mb-4 p-4 bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] rounded-lg" data-testid="text-success">
@@ -233,6 +220,6 @@ export default function AccessRequestsPage() {
             </div>
           )}
         </div>
-    </div>
+    </PageShell>
   );
 }

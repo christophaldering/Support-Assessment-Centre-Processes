@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -224,30 +224,33 @@ export default function UserManagementPage() {
   };
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-        <PageHeader
-          title="Benutzer"
-          description={`${users.length} Benutzer in diesem Workspace`}
-          actions={
-            <div className="flex gap-2">
-              <button
-                disabled
-                className="rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-disabled)] text-sm font-medium px-4 py-2 cursor-not-allowed"
-                title="CSV-Import kommt in einer zukünftigen Version"
-                data-testid="button-csv-import"
-              >
-                CSV Import
-              </button>
-              <button
-                onClick={() => setShowCreate(!showCreate)}
-                data-testid="button-create-user"
-                className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
-              >
-                {showCreate ? "Abbrechen" : "Neuer Benutzer"}
-              </button>
-            </div>
-          }
-        />
+    <PageShell
+      zone="admin"
+      zoneLabel="Verwaltung · Benutzer"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Verwaltung" },
+        { label: "Benutzer" },
+      ]}
+      title="Benutzer"
+      description={`${users.length} Benutzer in diesem Workspace`}
+      primaryAction={
+        <button
+          onClick={() => setShowCreate(!showCreate)}
+          data-testid="button-create-user"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "8px 16px", borderRadius: "var(--eds-radius-lg)",
+            backgroundColor: showCreate ? "var(--eds-bg-sunken)" : "var(--eds-z)",
+            color: showCreate ? "var(--eds-text-secondary)" : "white",
+            border: showCreate ? "1px solid var(--eds-border)" : "none",
+            fontSize: "var(--eds-text-md)", fontWeight: 500, cursor: "pointer",
+          }}
+        >
+          {showCreate ? "Abbrechen" : "+ Neuer Benutzer"}
+        </button>
+      }
+    >
 
         {error && <p className="text-sm text-[var(--eds-status-red)] mb-4" data-testid="text-error">{error}</p>}
 
@@ -496,6 +499,6 @@ export default function UserManagementPage() {
             </div>
           )}
         </div>
-    </div>
+    </PageShell>
   );
 }

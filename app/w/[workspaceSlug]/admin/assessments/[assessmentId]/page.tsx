@@ -1,5 +1,6 @@
 "use client";
 
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -1263,7 +1264,18 @@ export default function AssessmentDetailPage() {
   ];
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
+    <PageShell
+      zone="assessment"
+      zoneLabel="Assessment · Konfiguration"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Assessments", href: `..` },
+        { label: assessment?.name || "Assessment" },
+      ]}
+      title={assessment?.name || "Assessment"}
+      description="Assessment einrichten, Phasen, Übungen und Kandidaten verwalten"
+      maxWidth="wide"
+    >
       <div className="flex flex-1">
         {sidebarOpen && (
           <div
@@ -1274,7 +1286,7 @@ export default function AssessmentDetailPage() {
         )}
 
         <aside
-          className={`fixed md:sticky top-16 left-0 z-30 md:z-10 h-[calc(100vh-4rem)] w-64 bg-white border-r border-[var(--eds-border)] overflow-y-auto transition-transform duration-200 ${
+          className={`fixed md:sticky top-0 left-0 z-30 md:z-10 h-screen w-64 bg-white border-r border-[var(--eds-border)] overflow-y-auto transition-transform duration-200 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
           }`}
           data-testid="sidebar-navigation"
@@ -1749,6 +1761,6 @@ export default function AssessmentDetailPage() {
         </div>
       )}
 
-    </div>
+    </PageShell>
   );
 }

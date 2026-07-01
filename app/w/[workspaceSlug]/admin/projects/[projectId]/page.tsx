@@ -1,3 +1,4 @@
+import { PageShell } from "@/components/shared/PageShell";
 import { prisma } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { getWorkspaceAuth, hasMasterAuth, getUserSession } from "@/lib/session";
@@ -168,27 +169,17 @@ export default async function ProjectDetailPage({ params }: Props) {
   ];
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6" style={{ color: textColor }}>
-      <div className="flex items-center gap-4 mb-4">
-        <span
-          className="text-lg font-bold tracking-tight"
-          style={{ fontFamily: `'${headingFont}', serif` }}
-        >
-          {assessment.name}
-        </span>
-        <span
-          className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
-          style={{ backgroundColor: `${st.color}40`, color: st.color }}
-        >
-          {st.de}
-        </span>
-        <span
-          className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-[var(--eds-bg-sunken)] text-[var(--eds-text-secondary)]"
-          data-testid="badge-design-mode"
-        >
-          {dm.icon} {dm.de}
-        </span>
-      </div>
+    <PageShell
+      zone="assessment"
+      zoneLabel="Assessment · Projektdetails"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Assessments", href: `/w/${assessment.workspace?.slug || ""}/admin/assessments` },
+        { label: assessment.name },
+      ]}
+      title={assessment.name}
+      description={`${st.de} · ${dm.icon} ${dm.de}`}
+    >
 
         {assessment.description && (
           <p className="text-sm opacity-50 mb-6 max-w-3xl">{assessment.description}</p>
@@ -315,6 +306,6 @@ export default async function ProjectDetailPage({ params }: Props) {
             </div>
           </section>
         ))}
-    </div>
+    </PageShell>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 
@@ -53,19 +54,17 @@ export default function ConsentManagementPage() {
   ];
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-        <div className="mb-6">
-          <h1
-            className="text-2xl font-bold"
-            style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}
-            data-testid="heading-consents"
-          >
-            Einwilligungsverwaltung
-          </h1>
-          <p className="text-sm text-[var(--eds-text-tertiary)]">
-            Einwilligungsvorlagen und -aufzeichnungen verwalten
-          </p>
-        </div>
+    <PageShell
+      zone="admin"
+      zoneLabel="Verwaltung · Einwilligungen"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Verwaltung" },
+        { label: "Einwilligungsverwaltung" },
+      ]}
+      title="Einwilligungsverwaltung"
+      description="Einwilligungsvorlagen und -aufzeichnungen verwalten"
+    >
 
         <div className="flex gap-1 mb-6 border-b border-[var(--eds-border)]">
           {tabs.map((tab) => (
@@ -87,7 +86,7 @@ export default function ConsentManagementPage() {
 
         {activeTab === "templates" && <TemplatesTab workspaceSlug={workspaceSlug} />}
         {activeTab === "records" && <RecordsTab workspaceSlug={workspaceSlug} />}
-    </div>
+    </PageShell>
   );
 }
 

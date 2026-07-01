@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
@@ -119,11 +119,17 @@ export default function GutachtenGeneratorPage() {
   const filteredTemplates = templates.filter((t) => t.reportType === activeTab);
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-        <PageHeader
-          title="Gutachten-Generator"
-          description="Gutachten erstellen: One-Pager, Ergebnisberichte und Gesamtauswertungen für Kandidatenvergleiche"
-        />
+    <PageShell
+      zone="assessment"
+      zoneLabel="Assessment · Gutachten"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Auswertung" },
+        { label: "Gutachten-Generator" },
+      ]}
+      title="Gutachten-Generator"
+      description="Gutachten erstellen: One-Pager, Ergebnisberichte und Gesamtauswertungen für Kandidatenvergleiche"
+    >
         <div className="mb-8">
           <a
             href={`/w/${workspaceSlug}/admin/prompt-library`}
@@ -166,7 +172,7 @@ export default function GutachtenGeneratorPage() {
           loading={loading}
           onRefresh={fetchTemplates}
         />
-    </div>
+    </PageShell>
   );
 }
 

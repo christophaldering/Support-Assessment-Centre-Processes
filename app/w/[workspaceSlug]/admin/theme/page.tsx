@@ -1,5 +1,6 @@
 "use client";
 
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 
@@ -111,19 +112,17 @@ export default function ThemeEditorPage() {
   }
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-        <div className="mb-6">
-          <h1
-            className="text-2xl font-bold"
-            style={{ fontFamily: "'Playfair Display', serif", color: ACCENT }}
-            data-testid="heading-theme-editor"
-          >
-            Theme Editor
-          </h1>
-          <p className="text-sm text-[var(--eds-text-tertiary)]">
-            Workspace-Branding und visuelle Identität anpassen
-          </p>
-        </div>
+    <PageShell
+      zone="admin"
+      zoneLabel="Verwaltung · Theme"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Verwaltung" },
+        { label: "Theme Editor" },
+      ]}
+      title="Theme Editor"
+      description="Workspace-Branding und visuelle Identität anpassen"
+    >
 
         {message && (
           <div className="mb-4 bg-[var(--eds-status-green-bg)] border border-[var(--eds-status-green-bg)] rounded-xl p-4 text-sm text-emerald-800" data-testid="text-success">
@@ -311,7 +310,7 @@ export default function ThemeEditorPage() {
             </div>
           </div>
         </div>
-    </div>
+    </PageShell>
   );
 }
 

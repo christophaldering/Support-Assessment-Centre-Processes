@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { AI_FEATURES, PROVIDER_INFO } from "@/lib/llm/types";
@@ -106,12 +106,18 @@ export default function AiGovernancePage() {
   }
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6" data-testid="ai-governance-page">
-      <PageHeader
-        title="AI Governance & Provider Management"
-        description="KI-Provider konfigurieren, Compliance-Modus wählen und Funktionen steuern"
-        actions={saving ? <span className="text-sm text-[var(--eds-status-amber)] animate-pulse">Speichern...</span> : undefined}
-      />
+    <PageShell
+      zone="admin"
+      zoneLabel="Verwaltung · AI Governance"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Verwaltung" },
+        { label: "AI Governance" },
+      ]}
+      title="AI Governance & Provider Management"
+      description="KI-Provider konfigurieren, Compliance-Modus wählen und Funktionen steuern"
+      data-testid="ai-governance-page"
+    >
 
       <div className="flex gap-2 border-b border-[var(--eds-border)]">
         <button
@@ -311,6 +317,6 @@ export default function AiGovernancePage() {
           )}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

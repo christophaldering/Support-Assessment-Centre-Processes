@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -267,38 +267,32 @@ export default function AssessmentManagementPage() {
   };
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-        <PageHeader
-          title="Assessments"
-          description={`${assessments.length} Assessments in diesem Workspace`}
-          actions={
-            <div className="flex items-center gap-3">
-              <div className="flex items-center bg-white border border-[var(--eds-border)] rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setViewMode("grouped")}
-                  data-testid="button-view-grouped"
-                  className={`text-xs font-medium px-3 py-1.5 transition-colors ${viewMode === "grouped" ? "bg-brand-navy text-white" : "text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)]"}`}
-                >
-                  Nach Kunde
-                </button>
-                <button
-                  onClick={() => setViewMode("flat")}
-                  data-testid="button-view-flat"
-                  className={`text-xs font-medium px-3 py-1.5 transition-colors ${viewMode === "flat" ? "bg-brand-navy text-white" : "text-[var(--eds-text-secondary)] hover:bg-[var(--eds-bg-sunken)]"}`}
-                >
-                  Liste
-                </button>
-              </div>
-              <button
-                onClick={() => setShowCreate(!showCreate)}
-                data-testid="button-create-assessment"
-                className="rounded-lg bg-brand-blue text-white text-sm font-medium px-4 py-2 hover:bg-brand-blue-dark transition-colors"
-              >
-                {showCreate ? "Abbrechen" : "Neues Assessment"}
-              </button>
-            </div>
-          }
-        />
+    <PageShell
+      zone="assessment"
+      zoneLabel="Assessment · Übersicht"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Assessments" },
+      ]}
+      title="Assessments"
+      description={`${assessments.length} Assessments in diesem Workspace`}
+      primaryAction={
+        <button
+          onClick={() => setShowCreate(!showCreate)}
+          data-testid="button-create-assessment"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "8px 16px", borderRadius: "var(--eds-radius-lg)",
+            backgroundColor: showCreate ? "var(--eds-bg-sunken)" : "var(--eds-z)",
+            color: showCreate ? "var(--eds-text-secondary)" : "white",
+            border: showCreate ? "1px solid var(--eds-border)" : "none",
+            fontSize: "var(--eds-text-md)", fontWeight: 500, cursor: "pointer",
+          }}
+        >
+          {showCreate ? "Abbrechen" : "+ Neues Assessment"}
+        </button>
+      }
+    >
 
         {clients.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
@@ -590,6 +584,6 @@ export default function AssessmentManagementPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -192,11 +192,17 @@ export default function DataRoomLinksPage() {
   const activeLinkIds = new Set(liveSessions.map((s) => s.linkId));
 
   return (
-    <div style={S.wrap}>
-      <PageHeader
-        title="Externe Freigabe-Links"
-        description="Tokenisierte Einladungslinks für Kandidaten erstellen — kein Passwort nötig."
-      />
+    <PageShell
+      zone="admin"
+      zoneLabel="Verwaltung · Freigabe-Links"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Verwaltung" },
+        { label: "Externe Freigabe-Links" },
+      ]}
+      title="Externe Freigabe-Links"
+      description="Tokenisierte Einladungslinks für Kandidaten erstellen — kein Passwort nötig."
+    >
 
       {/* ── Live-Sitzungen ───────────────────────────────────────────────── */}
       <section style={{ ...S.card, marginBottom: 20, borderColor: liveSessions.length > 0 ? "var(--eds-status-green-bg)" : "var(--eds-border,var(--eds-border))" }}>
@@ -467,7 +473,7 @@ export default function DataRoomLinksPage() {
           </div>
         )}
       </section>
-    </div>
+    </PageShell>
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -120,18 +121,19 @@ export default function DataRoomEvaluationPage() {
   }
 
   return (
-    <div style={S.wrap}>
-      <nav style={S.breadcrumb}>
-        <button onClick={() => router.push(`/w/${params.workspaceSlug}/admin/document-sharing`)} style={S.backBtn}>
-          ← Alle Links
-        </button>
-      </nav>
-
+    <PageShell
+      zone="admin"
+      zoneLabel="Verwaltung · Freigabe-Links · Auswertung"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Verwaltung" },
+        { label: "Externe Freigabe-Links", href: `/w/${params.workspaceSlug}/admin/document-sharing` },
+        { label: meta?.label || "Kandidat:in" },
+      ]}
+      title={meta?.label || "Kandidat:in"}
+      description={meta?.email || "Datenraum-Auswertung"}
+    >
       <header style={S.header}>
-        <div>
-          <div style={S.eyebrow}>ConVia · Datenraum-Auswertung</div>
-          <h1 style={S.h1}>{meta?.label || "Kandidat:in"}</h1>
-          {meta?.email && <div style={S.sub}>{meta.email}</div>}
           {meta && (
             <div style={S.metaRow}>
               <span style={S.metaBadge}>{meta.dataRoomSlug}</span>
@@ -143,7 +145,6 @@ export default function DataRoomEvaluationPage() {
               {meta.firstUsedAt && <span style={S.metaText}>Erstmalig: {fmtDate(meta.firstUsedAt)}</span>}
             </div>
           )}
-        </div>
         <div style={S.kpis}>
           <Kpi n={docStats.length} l="Dokumente" />
           <Kpi n={searches.length} l="Suchanfragen" />
@@ -221,7 +222,7 @@ export default function DataRoomEvaluationPage() {
           </div>
         </section>
       </div>
-    </div>
+    </PageShell>
   );
 }
 

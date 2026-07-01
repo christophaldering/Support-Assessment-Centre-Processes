@@ -1,0 +1,173 @@
+# HARDPROMPT — Design-Sprache Welle 1b (Breiten-Rollout auf alle übrigen Seiten)
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die Batches exakt in der angegebenen Reihenfolge aus. Bei
+Unklarheit: STOPP, fragen — NICHT improvisieren. Nach jedem Batch erstellst
+du exakt den angegebenen Commit. Keine Optionalität.
+
+DIES IST FUNKTIONS-ERHALTEND. Kein bestehendes Verhalten, kein API-Call,
+kein State darf sich ändern — nur Darstellung und Seitenstruktur. Wenn eine
+Umstellung Verhalten ändern würde: STOPP, melden.
+
+## Zielbild (bindend)
+
+Die neue Design-Sprache (aus Welle 1) wird auf ALLE übrigen Admin-Seiten
+ausgerollt, damit die gesamte Oberfläche einheitlich wirkt. Jede Seite wird
+in `<PageShell>` mit korrekter Zone gesetzt und nutzt die vorhandenen
+Block-Komponenten.
+
+## Bindende Tatsachenbasis (geprüft)
+
+- Die Bausteine existieren BEREITS und werden GENUTZT, NICHT neu gebaut:
+  `PageShell`, `Breadcrumb`, `Segments`, `Metrics`, `ListRows`, `Facets`,
+  `Whisper`, `ActionMenu`, `Card`, `EmptyState`, `ModuleIcon`,
+  `DataTable`, `CollectionGrid`, `MasterDetailLayout`, `FormSection`,
+  `Toolbar`. Alle in `components/shared/`.
+- `PageShell`-Props: `zone`, `breadcrumb`, `zoneLabel`, `title`,
+  `description?`, `primaryAction?`, `segments?`, `toolbar?`, `children`,
+  `maxWidth?`. `zone` setzt die Zonenfarbe.
+- Zonen-Zuordnung ist VERBINDLICH nach der Tabelle unten (leitet sich aus
+  der geplanten 4-Zonen-Struktur ab; die Navigations-Umstrukturierung
+  selbst ist NICHT Teil dieser Welle, nur die Zonenfarbe pro Seite).
+- Die fünf Pilotseiten aus Welle 1 (Dashboard, Bibliothek,
+  Kompetenzmanagement, Anforderungsanalyse, Audio) sind bereits umgestellt
+  und werden NICHT erneut angefasst.
+- `admin/dr/page.tsx` ist ein reiner Redirect — NICHT anfassen.
+
+## Verbindliche Zonen- und Typ-Zuordnung
+
+| Seite | Zone | zoneLabel | Seitentyp |
+|---|---|---|---|
+| `assessments/page.tsx` | assessment | Assessments | Collection (Liste) |
+| `assessments/[assessmentId]/page.tsx` | assessment | Assessment · {Name} | Tabs/Detail (dicht) |
+| `projects/[projectId]/page.tsx` | assessment | Projekt · {Name} | Detail |
+| `analytics/page.tsx` | assessment | Auswertung · Analytics | Charts/Tabs |
+| `reports/page.tsx` | assessment | Auswertung · Berichte | Collection |
+| `gutachten/page.tsx` | assessment | Auswertung · Gutachten | Tabs/Collection |
+| `intelligence/page.tsx` | assessment | Auswertung · Intelligence | Collection/Detail |
+| `observation-sheets/page.tsx` | resource | Ressource · Beobachtungsbögen | Collection |
+| `modules/page.tsx` | resource | Ressource · Modul-Designer | Master-Detail |
+| `case-studio/page.tsx` | resource | Ressource · Fallstudien | Collection |
+| `case-studio/[caseId]/page.tsx` + `CaseStudyClient.tsx` | resource | Ressource · Fallstudie · {Name} | Tabs/Detail (dicht) |
+| `prompt-library/page.tsx` | resource | Ressource · Prompts | Collection |
+| `brand-rules/page.tsx` | admin | Verwaltung · Brand Rules | Collection/Form |
+| `theme/page.tsx` | admin | Verwaltung · Corporate Design | Form |
+| `users/page.tsx` | admin | Verwaltung · Team | Tabelle |
+| `access-requests/page.tsx` | admin | Verwaltung · Zugriffsanfragen | Tabelle |
+| `consents/page.tsx` | admin | Verwaltung · Consents | Tabs/Collection |
+| `ai-governance/page.tsx` | admin | Verwaltung · KI-Governance | Tabs/Form |
+| `document-sharing/page.tsx` | admin | Verwaltung · Dokumentenfreigabe | Collection |
+| `document-sharing/setup/page.tsx` | admin | Verwaltung · Freigabe einrichten | Form |
+| `document-sharing/[linkId]/page.tsx` | admin | Verwaltung · Freigabe · {Name} | Detail |
+| `admin/page.tsx` | start | (nach Inhalt) | wie bestehend |
+
+Bei `{Name}`/`{...}`: den tatsächlichen dynamischen Wert einsetzen. Wenn
+für eine Seite unklar ist, welcher Seitentyp/welche Blöcke passen: STOPP,
+melden — NICHT raten.
+
+## Nicht anfassen
+
+Geschäftslogik, State, API-Calls, Event-Handler jeder Seite ·
+`components/shell/` (Navigations-Umstrukturierung = spätere Welle) ·
+Kandidatenportal · `app/master/` · die fünf bereits umgestellten
+Pilotseiten · `admin/dr/page.tsx` (Redirect).
+
+Wenn eine Änderung mit einer Regel hier kollidiert: STOPP. Melden.
+
+---
+
+## Regel für JEDE Seite in JEDEM Batch (ohne Ausnahme)
+
+1. Seite in `<PageShell zone="…" zoneLabel="…" …>` einwickeln, Breadcrumb
+   und Titel setzen. Bestehendes `<h1>`/Ad-hoc-Kopf durch `PageShell`
+   ersetzen.
+2. GENAU EINE Primäraktion (`primaryAction`-Slot). Weitere Aktionen in
+   `ActionMenu`. Konkurrierende gleichrangige bunte Buttons auflösen.
+3. Tabs → `Segments`. Filter → `Facets` oder `Toolbar`. Sammlungen →
+   `ListRows`/`CollectionGrid`. Reine Datentabellen → `DataTable`.
+   Editor-Seiten → `MasterDetailLayout` + `FormSection`. Kennzahlen →
+   `Metrics` (NUR bei echten Werten, NIEMALS Nullen-Leiste).
+   Leerzustände → `EmptyState`. Sekundär-Uploads/-Aktionen → `Whisper`.
+4. KEINE Änderung an State, Props, API-Calls, Event-Handlern.
+5. Sichtbares Roh-HTML (`<p>…`, `&lt;…`) korrekt rendern bzw. auf Text
+   strippen — nirgends sichtbare Tags.
+6. Nach JEDEM Batch: `npm run lint` für die geänderten Dateien. Bei
+   Fehlern: STOPP, beheben, bevor der nächste Batch beginnt.
+
+---
+
+## BATCH A — Ressourcen (resource-Zone)
+
+`observation-sheets/page.tsx`, `modules/page.tsx`,
+`case-studio/page.tsx`, `case-studio/[caseId]/page.tsx` +
+`case-studio/[caseId]/CaseStudyClient.tsx`, `prompt-library/page.tsx`.
+
+**COMMIT:** `Design-Rollout Batch A: Ressourcen-Seiten auf neue Design-Sprache`
+
+## BATCH B — Auswertung (assessment-Zone, ohne Assessment-Detail)
+
+`assessments/page.tsx`, `analytics/page.tsx`, `reports/page.tsx`,
+`gutachten/page.tsx`, `intelligence/page.tsx`,
+`projects/[projectId]/page.tsx`.
+
+**COMMIT:** `Design-Rollout Batch B: Auswertungs- und Assessment-Listen auf neue Design-Sprache`
+
+## BATCH C — Assessment-Detail (assessment-Zone, dicht)
+
+`assessments/[assessmentId]/page.tsx` — die dichteste Seite. Segments für
+die Sektionen, `Metrics` für echte Kennzahlen, `ListRows` für Phasen/
+Listen. Besondere Sorgfalt: KEINE funktionale Regression in den vielen
+Sektionen.
+
+**COMMIT:** `Design-Rollout Batch C: Assessment-Detail auf neue Design-Sprache`
+
+## BATCH D — Verwaltung (admin-Zone)
+
+`users/page.tsx`, `access-requests/page.tsx`, `consents/page.tsx`,
+`ai-governance/page.tsx`, `brand-rules/page.tsx`, `theme/page.tsx`,
+`document-sharing/page.tsx`, `document-sharing/setup/page.tsx`,
+`document-sharing/[linkId]/page.tsx`, `admin/page.tsx`.
+
+**COMMIT:** `Design-Rollout Batch D: Verwaltungs-Seiten auf neue Design-Sprache`
+
+---
+
+## VALIDIERUNG (alle PASS erforderlich)
+
+Führe JEDEN Check aus, PASS/FAIL einzeln. Bei FAIL: STOPP, beheben.
+
+1. Jede Seite aus der Zuordnungstabelle nutzt `PageShell` mit der
+   VORGEGEBENEN Zone. Kein eigenes `<h1>`/Ad-hoc-Kopf mehr. PASS/FAIL,
+   Liste aller Seiten mit ihrer Zone.
+2. Jede umgestellte Seite hat GENAU EINE visuell dominante Primäraktion;
+   konkurrierende bunte Buttons sind aufgelöst. PASS/FAIL.
+3. Zonenfarben korrekt: Auswertung/Assessment=Türkis, Ressourcen=Bronze,
+   Verwaltung=Graphit. PASS/FAIL.
+4. Keine `Metrics`-Leiste voller Nullen irgendwo. PASS/FAIL.
+5. Kein sichtbares Roh-HTML irgendwo. PASS/FAIL.
+6. KEINE funktionale Regression: je ein vollständiger Workflow-Durchlauf
+   pro Batch (Batch C besonders gründlich: Assessment-Detail alle
+   Sektionen durchklicken + je eine Aktion). PASS/FAIL pro Batch.
+7. Kandidatenportal unverändert. PASS/FAIL.
+8. `npm run lint` — null Fehler. PASS/FAIL.
+9. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (nur wenn ALLE PASS):**
+`Design-Sprache Breiten-Rollout abgeschlossen und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Zusammenfassung: (a) vollständige Liste aller umgestellten Seiten mit Zone,
+(b) welche Seiten — falls überhaupt — nicht sauber in einen Seitentyp
+passten und wie gelöst, (c) alle 9 Validierungspunkte mit PASS/FAIL. Keine
+Selbsteinschätzung — nur verifizierte Ergebnisse.
+
+## Hinweis (NICHT Teil dieser Ausführung)
+
+Nach diesem Breiten-Rollout ist die gesamte Oberfläche einheitlich. Die
+tiefe Informationsarchitektur-Umstrukturierung (4-Zonen-Navigation,
+Assessment-zentrierter Arbeitsplatz) folgt als Welle 2 (separater
+Hardprompt) auf dieser einheitlichen Basis.

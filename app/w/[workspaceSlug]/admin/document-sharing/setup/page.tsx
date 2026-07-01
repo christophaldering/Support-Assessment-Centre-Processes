@@ -1,5 +1,6 @@
 "use client";
 
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -93,21 +94,18 @@ export default function DataRoomSetupPage() {
   useEffect(() => { loadStatus(); }, [params.workspaceSlug]);
 
   return (
-    <div style={S.wrap}>
-      <nav style={S.breadcrumb}>
-        <button onClick={() => router.push(`/w/${params.workspaceSlug}/admin/document-sharing`)} style={S.backBtn}>
-          ← Externe Freigabe-Links
-        </button>
-      </nav>
-
-      <header style={S.header}>
-        <div style={S.eyebrow}>ConVia · Integrations-Anleitung</div>
-        <h1 style={S.h1}>Echte HTML-Datei einrichten</h1>
-        <p style={S.sub}>
-          Schritt-für-Schritt-Anleitung, um die echte <code style={S.inlineCode}>ConVia_Datenraum.html</code>{" "}
-          mit dem Tracking-System zu verbinden.
-        </p>
-      </header>
+    <PageShell
+      zone="admin"
+      zoneLabel="Verwaltung · Freigabe-Links · Setup"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Verwaltung" },
+        { label: "Externe Freigabe-Links", href: `/w/${params.workspaceSlug}/admin/document-sharing` },
+        { label: "Setup" },
+      ]}
+      title="Echte HTML-Datei einrichten"
+      description="Schritt-für-Schritt-Anleitung, um die ConVia_Datenraum.html mit dem Tracking-System zu verbinden."
+    >
 
       {/* ── Datei-Status ──────────────────────────────────────────────── */}
       <section style={S.card}>
@@ -366,7 +364,7 @@ export default function DataRoomSetupPage() {
           Zum Live-Dashboard →
         </button>
       </section>
-    </div>
+    </PageShell>
   );
 }
 

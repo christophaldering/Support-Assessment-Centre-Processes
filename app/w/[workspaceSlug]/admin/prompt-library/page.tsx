@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -244,20 +244,17 @@ export default function PromptLibraryPage() {
   const customizedCount = slots.filter((s) => s.isCustomized).length;
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-      <PageHeader
-        title="KI-Prompt-Bibliothek"
-        description="System-Prompts für KI-Funktionen anpassen — workspace-weit. Nicht bearbeitete Slots nutzen automatisch die Plattform-Standards."
-        // no-eds-token: teal badge uses Lagune-Türkis brand color, no EDS token equivalent
-        actions={customizedCount > 0 ? (
-          <div
-            className="text-xs font-medium px-3 py-1.5 rounded-full border border-teal-200 bg-teal-50 text-teal-700"
-            data-testid="badge-customized-count"
-          >
-            {customizedCount} von {slots.length} Slots angepasst
-          </div>
-        ) : undefined}
-      />
+    <PageShell
+      zone="resource"
+      zoneLabel="Ressource · Prompts"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Ressourcen" },
+        { label: "KI-Prompt-Bibliothek" },
+      ]}
+      title="KI-Prompt-Bibliothek"
+      description="System-Prompts für KI-Funktionen anpassen — workspace-weit. Nicht bearbeitete Slots nutzen automatisch die Plattform-Standards."
+    >
 
       {/* Info banner */}
       <div className="p-3 bg-[var(--eds-status-blue-bg)] border border-[var(--eds-border)] rounded-lg text-xs text-[var(--eds-status-blue)]">
@@ -292,6 +289,6 @@ export default function PromptLibraryPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ModuleIcon } from "@/components/shared/ModuleIcon";
 
@@ -358,7 +358,17 @@ function ModulesHubContent() {
   }
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
+    <PageShell
+      zone="resource"
+      zoneLabel="Ressource · Modul-Designer"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Ressourcen" },
+        { label: "Modul-Designer" },
+      ]}
+      title="Modul-Designer"
+      description="Assessment-Bausteine aus der Bibliothek übernehmen und ins Assessment einfügen."
+    >
         {error && (
           <div className="bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] text-[var(--eds-status-red)] text-sm px-4 py-3 rounded-xl flex items-center justify-between" data-testid="text-error">
             <span>{error}</span>
@@ -373,10 +383,6 @@ function ModulesHubContent() {
 
         {view === "hub" && (
           <>
-            <PageHeader
-              title="Modul-Designer"
-              description="Assessment-Bausteine aus der Bibliothek übernehmen und ins Assessment einfügen."
-            />
 
             <div className="grid sm:grid-cols-1 gap-4 max-w-sm">
               <button
@@ -877,6 +883,6 @@ function ModulesHubContent() {
             </div>
           </div>
         )}
-    </div>
+    </PageShell>
   );
 }
