@@ -10,9 +10,10 @@ interface ActionItem {
 
 interface ActionMenuProps {
   actions: ActionItem[];
+  label?: string;
 }
 
-export function ActionMenu({ actions }: ActionMenuProps) {
+export function ActionMenu({ actions, label }: ActionMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -31,18 +32,22 @@ export function ActionMenu({ actions }: ActionMenuProps) {
       <button
         onClick={() => setOpen((v) => !v)}
         data-testid="button-action-menu"
-        aria-label="Weitere Aktionen"
+        aria-label={label ?? "Weitere Aktionen"}
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          width: "36px",
+          gap: "6px",
           height: "36px",
+          padding: label ? "0 12px" : "0",
+          width: label ? "auto" : "36px",
           borderRadius: "var(--eds-radius-md)",
           border: "1px solid var(--eds-border)",
           background: "var(--eds-bg-surface)",
           color: "var(--eds-text-secondary)",
           cursor: "pointer",
+          fontSize: "var(--eds-text-md)",
+          fontFamily: "var(--eds-font-sans)",
           transition: "background var(--eds-transition-fast)",
         }}
         onMouseEnter={(e) => {
@@ -52,6 +57,7 @@ export function ActionMenu({ actions }: ActionMenuProps) {
           (e.currentTarget as HTMLElement).style.background = "var(--eds-bg-surface)";
         }}
       >
+        {label && <span>{label}</span>}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="5" r="1.5" />
           <circle cx="12" cy="12" r="1.5" />
@@ -64,13 +70,13 @@ export function ActionMenu({ actions }: ActionMenuProps) {
           style={{
             position: "absolute",
             right: 0,
-            top: "calc(100% + var(--eds-space-1))",
+            top: "calc(100% + 4px)",
             background: "var(--eds-bg-surface)",
             border: "1px solid var(--eds-border)",
             borderRadius: "var(--eds-radius-lg)",
             boxShadow: "var(--eds-shadow-md)",
-            minWidth: "180px",
-            zIndex: 50,
+            minWidth: "190px",
+            zIndex: 100,
             overflow: "hidden",
           }}
         >

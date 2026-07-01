@@ -1,0 +1,279 @@
+# HARDPROMPT — Neue Design-Sprache Welle 1 (Serif-Signatur · Zonenfarben · Block-System)
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden Phasen exakt in der angegebenen Reihenfolge aus.
+Bei Unklarheit: STOPP, fragen — NICHT improvisieren. Nach jeder Phase
+erstellst du exakt den angegebenen Commit. Keine Optionalität, keine
+weichen Formulierungen.
+
+DIES IST FUNKTIONS-ERHALTEND. Kein bestehendes Verhalten, kein API-Call,
+kein State darf sich ändern — nur Darstellung und Seitenstruktur. Wenn eine
+Umstellung Verhalten ändern würde: STOPP, melden.
+
+## Zielbild (bindend)
+
+Einführung einer neuen, unverwechselbaren Design-Sprache mit drei Säulen,
+zunächst auf Dashboard + vier Pilotseiten als Referenz-Standard:
+1. **Editoriale Serifen-Signatur** — große Seitentitel und große Kennzahlen
+   in einer charaktervollen Serif (Fraunces). Alles Funktionale bleibt
+   Satoshi.
+2. **Zonenfarben zur Orientierung** — genau EIN Akzent pro Bildschirm, aber
+   dessen Farbe hängt von der Zone ab (Start=Terrakotta,
+   Assessment=Tiefsee-Türkis, Ressource=Bronze, Verwaltung=Graphit). Der
+   Akzent treibt Kopf-Marker, aktive Navigation, Primäraktion.
+3. **Block-Baukasten** — ein kleiner Satz komponierbarer Blöcke, die sich
+   immer im selben Rhythmus/Typo/Akzent stapeln, sodass karge und dichte
+   Seiten wie dieselbe App wirken.
+
+Die maßgebliche visuelle Referenz ist der abgestimmte Prototyp (v4). Farben,
+Abstände, Schriftgrößen unten sind daraus exakt übernommen.
+
+## Bindende Tatsachenbasis (geprüft)
+
+- `components/shared/` enthält BEREITS `PageHeader`, `Card`, `EmptyState`,
+  `ModuleIcon`, `DocumentOriginBadge`. Diese werden erweitert/umschlossen,
+  NICHT verworfen.
+- `styles/tokens.css` enthält alle `--eds-*`-Tokens inkl. Spacing-Skala.
+- Satoshi ist bereits als Schrift eingebunden. Fraunces ist NEU
+  hinzuzufügen, auf demselben Weg wie Satoshi geladen wird (falls
+  `next/font` genutzt wird: `next/font/google` für Fraunces, als CSS-
+  Variable exponiert; falls per Link-Tag: analoges Link-Tag).
+- Die Pilotseiten existieren:
+  `DashboardClient.tsx`, `exercise-library/page.tsx`,
+  `requirements/page.tsx`, `competencies/page.tsx`, `audio/page.tsx`.
+- Falls aus einem früheren, NICHT ausgeführten Layout-Prompt bereits
+  Komponenten-Stubs (`PageShell`, `Toolbar`, `DataTable` etc.) existieren:
+  diese werden durch die HIER spezifizierte Version ERSETZT, nicht
+  zusätzlich angelegt.
+
+## Nicht anfassen
+
+Geschäftslogik, State, API-Calls, Event-Handler in allen Dateien ·
+`components/shell/` (linke Rahmen-Navigation — die 4-Zonen-Umstrukturierung
+ist eine SPÄTERE Welle und NICHT Teil dieser Direktive) · Kandidatenportal ·
+`app/master/` · alle Seiten AUSSER Dashboard + den vier Pilotseiten.
+
+Wenn eine Änderung mit einer Regel hier kollidiert: STOPP. Melden.
+
+---
+
+## PHASE 1 — Fundament: Fraunces, Zonenfarben-Tokens
+
+1. Fraunces einbinden (Gewichte 400/500/600, `font-optical-sizing: auto`),
+   als CSS-Variable `--eds-serif` verfügbar machen. `--eds-serif`-Fallback:
+   `Georgia, serif`.
+2. In `styles/tokens.css` ergänzen (additiv, keine bestehende Variable
+   ändern), GENAU diese Werte:
+   ```
+   /* Zonenfarben — genau ein Akzent pro Bildschirm, Farbe je Zone */
+   --eds-zone-start:        #A6473B;
+   --eds-zone-start-ghost:  rgba(166,71,59,.06);
+   --eds-zone-assessment:       #115560;
+   --eds-zone-assessment-ghost: rgba(17,85,96,.07);
+   --eds-zone-resource:         #7A5E2E;
+   --eds-zone-resource-ghost:   rgba(122,94,46,.07);
+   --eds-zone-admin:            #46403B;
+   --eds-zone-admin-ghost:      rgba(70,64,59,.07);
+   /* Laufzeit-Akzent, wird pro Seite von PageShell gesetzt */
+   --eds-z:        var(--eds-zone-start);
+   --eds-z-ghost:  var(--eds-zone-start-ghost);
+   ```
+3. `--eds-serif`-Variable ebenfalls in tokens.css referenzierbar machen.
+
+**COMMIT (exakter Wortlaut):**
+`Design-Sprache Fundament: Fraunces-Serif und Zonenfarben-Tokens`
+
+---
+
+## PHASE 2 — Block-Komponenten (components/shared/)
+
+Alle rein präsentational (Daten/Handler via Props), alle nutzen
+ausschließlich `--eds-*`-Tokens, Akzent immer über `--eds-z`. Alle neuen
+Titel in `--eds-serif`.
+
+1. **`PageShell.tsx`** — Props:
+   `{ zone: "start"|"assessment"|"resource"|"admin"; breadcrumb: {label,href?}[]; zoneLabel: string; title: string; description?: string; primaryAction?: ReactNode; segments?: ReactNode; toolbar?: ReactNode; children: ReactNode; maxWidth?: "standard"|"wide"|"narrow" }`.
+   - Setzt anhand `zone` die Variablen `--eds-z` und `--eds-z-ghost` auf den
+     jeweiligen Zonenwert (per inline-style am Wurzel-Element der Seite).
+   - Rendert von oben nach unten, GENAU diese Reihenfolge:
+     Breadcrumb → **Zonen-Marker** (kurzer 34×3px-Balken in `--eds-z` +
+     `zoneLabel` in `--eds-z`, uppercase, `letter-spacing:.11em`,
+     `font-size:11.5px`, `font-weight:700`) → **Titel** (`--eds-serif`,
+     `font-size:45px`, `font-weight:500`, `letter-spacing:-.015em`,
+     `line-height:1.03`) → optional `description` (Satoshi, 16px,
+     `--eds-text-secondary`, `max-width:46ch`) mit Primäraktion rechts
+     daneben (Header-Zeile: Titelblock links, `primaryAction` rechts oben)
+     → optional `segments` → optional `toolbar` → `children`.
+   - `maxWidth`: `narrow`=max-w-3xl, `standard`=max-w-5xl (Default),
+     `wide`=voll.
+   - `primaryAction` ist SINGULAR (Ein-Aktion-Regel strukturell erzwungen).
+2. **`Breadcrumb.tsx`** — `{ items:{label,href?}[] }`. `Suite › Bereich ›
+   aktuell`, letztes Item ohne Link, Trenner `›` in `--eds-text-tertiary`.
+3. **`Segments.tsx`** — `{ items:{key,label}[]; active; onChange }`.
+   Unterstrich-Tabs; aktiver Tab `--eds-ink`-Text + Unterstrich in
+   `--eds-z`.
+4. **`Metrics.tsx`** — `{ items:{value,label}[] }`. Ruhige Kennzahlen-Leiste
+   (oben/unten Hairline, gleichmäßige Zellen). Zahlen in `--eds-serif`,
+   30px. NUR verwenden, wenn echte Werte vorliegen — NIEMALS eine Leiste
+   voller Nullen rendern.
+5. **`ListRows.tsx`** + **`ListRow.tsx`** — Standard-Zeilenliste (Name fett
+   15.5px, Meta 13.5px `--eds-text-secondary`, optionaler Status/Zeit
+   rechts, Hover rückt 12px ein + Chevron erscheint). Statusfarbe `now`
+   nutzt `--eds-z`. Die Workhorse-Komponente für Sammlungen/Phasen/Listen.
+6. **`Facets.tsx`** — `{ groups:{label, options:{key,label,count}[], active}[] }`.
+   Leise Facetten-Filterzeilen (Achsen wie „Art", „Für"). Aktiver Wert
+   `--eds-ink`. Nur Optionen mit Inhalt anzeigen (Zähler 0 → ausblenden).
+7. **`Whisper.tsx`** — `{ icon, children }`. Leise Sekundäraktion (z. B.
+   Upload) als einzelne dezente Zeile, NICHT als dominante Fläche.
+8. **`ActionMenu.tsx`** — `{ actions:{label,onClick}[] }`. Overflow-Menü
+   (Drei-Punkte) für Sekundäraktionen, damit nur EINE Primäraktion sichtbar
+   bleibt.
+
+Bestehende `Card`, `EmptyState`, `ModuleIcon` werden wiederverwendet
+(EmptyState-Aktion nutzt künftig `--eds-z`).
+
+**COMMIT (exakter Wortlaut):**
+`Design-Sprache Blöcke: PageShell, Breadcrumb, Segments, Metrics, ListRows, Facets, Whisper, ActionMenu`
+
+---
+
+## PHASE 3 — Pilot: Dashboard (Zone „start")
+
+`DashboardClient.tsx` in `<PageShell zone="start" zoneLabel="Start">`:
+1. Breadcrumb `[Executive Diagnostics Suite]`. Titel als Begrüßung
+   (Serif). EINE Primäraktion „Neues Assessment" (kein zweiter identischer
+   Button irgendwo auf der Seite).
+2. Die bisherige Kennzahlen-Kachel-Reihe: wenn alle relevanten Werte 0
+   sind, GAR NICHT rendern (kein Nullen-Lärm). Sind echte Werte vorhanden,
+   `Metrics` verwenden.
+3. Inhalt als `ListRows`: „Ihre Assessments" (mit Status/Fortschritt) und
+   „Zuletzt bearbeitet". Leerzustände über `EmptyState`.
+4. Doppelte/redundante Call-to-Actions und mehrfach wiederholte
+   Erklärtexte entfernen — jede Aussage genau einmal.
+
+**COMMIT (exakter Wortlaut):**
+`Pilot Dashboard: neue Design-Sprache, Zone start, Nullen-Ledger entfernt`
+
+---
+
+## PHASE 4 — Pilot: Baustein-Bibliothek (Zone „resource")
+
+`exercise-library/page.tsx` in
+`<PageShell zone="resource" zoneLabel="Ressource · Bausteine">`:
+1. Breadcrumb `[Suite, Ressourcen, Bausteine]`, `maxWidth="standard"`.
+   EINE Primäraktion „Neu erstellen".
+2. Facetten-Filter über `Facets` (Achsen „Art" und „Für"), nur nicht-leere
+   Optionen.
+3. Übungsliste über `ListRows` — pro Zeile Name + Meta (Kunde · Level +
+   Datum). KEINE identischen Wiederhol-Icons, KEINE redundanten
+   Typ-Tags, wenn der Filter den Typ bereits ausdrückt.
+4. Upload über `Whisper` (eine dezente Zeile unten), NICHT als dominante
+   gestrichelte Fläche.
+5. Rohes HTML beheben: Beschreibungen, die als `<p>...</p>` im Klartext
+   erschienen (z. B. „Testbeschreibung"), korrekt rendern bzw. auf reinen
+   Text strippen — KEINE sichtbaren Tags mehr.
+
+**COMMIT (exakter Wortlaut):**
+`Pilot Bibliothek: neue Design-Sprache, Zone resource, Facetten, Roh-HTML behoben`
+
+---
+
+## PHASE 5 — Pilot: Kompetenzmanagement (Zone „resource", Tabs)
+
+`competencies/page.tsx` in
+`<PageShell zone="resource" zoneLabel="Ressource · Kompetenzmodelle">`:
+1. Breadcrumb `[Suite, Ressourcen, Kompetenzmodelle]`, `maxWidth="wide"`.
+2. Die vier Tabs (Kompetenzmodelle/Skalen/Gewichtungsprofile/MTMM-Matrix)
+   über `Segments`.
+3. **Ein-Aktion-Regel:** die heute drei konkurrierenden bunten Buttons
+   („Modell hochladen" grün, „KI-Assistent" lila, „Neues Modell" blau) →
+   EINE Primäraktion „Neues Modell" (in `--eds-z`) + „Modell hochladen"
+   und „KI-Assistent" als Einträge im `ActionMenu`. Funktionen identisch.
+4. Modell-Liste über `ListRows`/`Card`, Leerzustände über `EmptyState`.
+
+**COMMIT (exakter Wortlaut):**
+`Pilot Kompetenzmanagement: neue Design-Sprache, Segments, Ein-Aktion-Regel`
+
+---
+
+## PHASE 6 — Pilot: Anforderungsanalyse (Zone „assessment", Master-Detail)
+
+`requirements/page.tsx` in
+`<PageShell zone="assessment" zoneLabel="Assessment · Anforderungen">`:
+1. Breadcrumb `[Suite, Diagnostik-Aufbau, Anforderungsanalyse]`,
+   `maxWidth="wide"`.
+2. Master-Detail-Anordnung: links die gespeicherten Analysen als schmale
+   `ListRows`-Spalte mit „+ Neue Anforderungsanalyse" oben; rechts der
+   Editor. (Falls keine `MasterDetailLayout`-Komponente existiert, das
+   Zwei-Spalten-Gerüst inline mit denselben Tokens umsetzen.)
+3. Editor-Sektionen (Kunde/Projekt, Datei-Upload, Transkript, URLs) klar
+   gruppiert, EINE Primäraktion.
+
+**COMMIT (exakter Wortlaut):**
+`Pilot Anforderungsanalyse: neue Design-Sprache, Zone assessment, Master-Detail`
+
+---
+
+## PHASE 7 — Pilot: Audio & Transkription (Zone „assessment", Fokus)
+
+`audio/page.tsx` in
+`<PageShell zone="assessment" zoneLabel="Assessment · Audio" maxWidth="narrow">`:
+1. Breadcrumb `[Suite, Auswertung, Audio & Transkription]`.
+2. Upload-Formular klar gruppiert, EINE Primäraktion „Hochladen".
+3. Aufnahmen-Liste über `ListRows`, Leerzustand über `EmptyState`.
+
+**COMMIT (exakter Wortlaut):**
+`Pilot Audio: neue Design-Sprache, Zone assessment, Fokus-Formular`
+
+---
+
+## PHASE 8 — Validierung (alle PASS erforderlich)
+
+Führe JEDEN Check aus, PASS/FAIL einzeln. Bei FAIL: STOPP, beheben.
+
+1. Fraunces lädt; alle Seitentitel und großen Kennzahlen erscheinen in der
+   Serif; alle UI/Fließtexte bleiben Satoshi. PASS/FAIL.
+2. Jede Pilotseite trägt IHRE Zonenfarbe konsistent (Kopf-Marker, aktive
+   Navigation soweit sichtbar, Primäraktion): Dashboard Terrakotta,
+   Bibliothek + Kompetenz Bronze, Anforderungsanalyse + Audio Türkis.
+   PASS/FAIL pro Seite.
+3. Jede Pilotseite hat GENAU EINE visuell dominante Primäraktion. Bei
+   Kompetenzmanagement sind die früheren drei bunten Buttons korrekt in
+   Primär + ActionMenu aufgeteilt. PASS/FAIL.
+4. Dashboard rendert KEINE Kennzahlen-Leiste voller Nullen. PASS/FAIL.
+5. Rohes HTML (`<p>...`) auf der Bibliothek erscheint NICHT mehr als
+   sichtbarer Text. PASS/FAIL.
+6. KEINE funktionale Regression: je ein vollständiger Workflow pro
+   Pilotseite (Bibliothek filtern; Anforderungsanalyse Eintrag öffnen;
+   Kompetenz Tab wechseln + eine Aktion; Audio Upload-Dialog; Dashboard
+   Navigation). PASS/FAIL pro Seite.
+7. Die neuen `components/shared/`-Dateien nutzen ausschließlich
+   `--eds-*`-Tokens/`--eds-z` — keine rohen Hex/Tailwind-Farben ohne
+   `// no-eds-token`-Begründung. PASS/FAIL.
+8. `npm run lint` — null Fehler. PASS/FAIL.
+9. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`Neue Design-Sprache Welle 1 abgeschlossen und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Zusammenfassung: (a) neue Bausteine, (b) fünf Pilotseiten mit ihrer Zone
+und Zonenfarbe, (c) Bestätigung Ein-Aktion-Regel je Seite, (d) alle 9
+Validierungspunkte mit PASS/FAIL. Keine Selbsteinschätzung wie „sieht
+besser aus" — nur verifizierte Ergebnisse. Screenshots je Pilotseite
+anhängen, sofern die Umgebung das unterstützt.
+
+## Hinweis (NICHT Teil dieser Ausführung)
+
+Die tiefere Informationsarchitektur-Umstrukturierung (4-Zonen-Navigation
+`Start · Assessments · Ressourcen · Verwaltung`, Assessment-zentrierter
+Arbeitsplatz mit Lebenszyklus-Phasen als Unter-Navigation, Umhängen der
+bestehenden Seiten unter die neuen Zonen) ist die geplante Welle 2 und
+folgt als SEPARATER Hardprompt, nachdem diese Design-Sprache an den
+Pilotseiten abgenommen ist. Sie ist bewusst NICHT Teil dieser Welle, weil
+sie Routing/Navigation tiefgreifend verändert und getrennt validiert
+werden muss.

@@ -19,18 +19,9 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
         display: "flex",
         alignItems: "center",
         gap: "var(--eds-space-1)",
-        marginBottom: "var(--eds-space-4)",
         flexWrap: "wrap",
       }}
     >
-      <span
-        style={{
-          fontSize: "var(--eds-text-sm)",
-          color: "var(--eds-text-tertiary)",
-        }}
-      >
-        Executive Diagnostics Suite
-      </span>
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
         return (
@@ -38,21 +29,24 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
             key={index}
             style={{ display: "flex", alignItems: "center", gap: "var(--eds-space-1)" }}
           >
-            <span
-              style={{
-                fontSize: "var(--eds-text-sm)",
-                color: "var(--eds-text-tertiary)",
-                userSelect: "none",
-              }}
-            >
-              ›
-            </span>
+            {index > 0 && (
+              <span
+                style={{
+                  fontSize: "var(--eds-text-sm)",
+                  color: "var(--eds-text-tertiary)",
+                  userSelect: "none",
+                }}
+              >
+                ›
+              </span>
+            )}
             {isLast || !item.href ? (
               <span
                 style={{
                   fontSize: "var(--eds-text-sm)",
                   color: isLast ? "var(--eds-text-secondary)" : "var(--eds-text-tertiary)",
                   fontWeight: isLast ? 500 : 400,
+                  fontFamily: "var(--eds-font-sans)",
                 }}
               >
                 {item.label}
@@ -64,10 +58,11 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
                   fontSize: "var(--eds-text-sm)",
                   color: "var(--eds-text-tertiary)",
                   textDecoration: "none",
+                  fontFamily: "var(--eds-font-sans)",
                   transition: "color var(--eds-transition-fast)",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.color = "var(--eds-text-brand)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--eds-z)";
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.color = "var(--eds-text-tertiary)";

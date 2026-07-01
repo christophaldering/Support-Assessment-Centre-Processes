@@ -3,7 +3,9 @@
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { resolveOriginForExerciseLibraryItem } from "@/lib/document-origin";
 import { PageShell } from "@/components/shared/PageShell";
-import { Toolbar } from "@/components/shared/Toolbar";
+import { Facets } from "@/components/shared/Facets";
+import { ListRows, ListRow } from "@/components/shared/ListRows";
+import { Whisper } from "@/components/shared/Whisper";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Card } from "@/components/shared/Card";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -1277,66 +1279,59 @@ export default function ExerciseLibraryPage() {
 
   return (
     <PageShell
-      breadcrumb={[{ label: "Übungsentwicklung" }, { label: "Baustein-Bibliothek" }]}
+      zone="resource"
+      zoneLabel="Ressource · Bausteine"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Ressourcen" },
+        { label: "Bausteine" },
+      ]}
       title="Übungsbibliothek"
-      description="Verwalten Sie wiederverwendbare Übungen für Assessment-Center"
-      maxWidth="wide"
+      description="Wiederverwendbare Übungen für Assessment-Center"
+      maxWidth="standard"
       primaryAction={
-        <Link
-          href={`/w/${slug}/admin/case-studio`}
-          className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg transition hover:opacity-90"
-          style={{ backgroundColor: "var(--eds-lagune)" }}
-          data-testid="button-new-case-study"
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          data-testid="button-neu-erstellen"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "8px 16px",
+            borderRadius: "var(--eds-radius-lg)",
+            backgroundColor: "var(--eds-z)",
+            color: "white",
+            fontSize: "var(--eds-text-md)",
+            fontWeight: 500,
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "var(--eds-font-sans)",
+          }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Neue Fallstudie erstellen
-        </Link>
+          Neu erstellen
+        </button>
       }
       toolbar={
-        <Toolbar
-          filters={
-            <>
-              <span className="text-xs font-medium text-[var(--eds-text-tertiary)] mr-1">Bereich:</span>
-              <button
-                onClick={() => { setActiveScopeFilter(null); setActiveSzenarioFilter(false); }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  activeScopeFilter === null && !activeSzenarioFilter
-                    ? "text-white"
-                    : "text-[var(--eds-text-secondary)] bg-[var(--eds-bg-sunken)] hover:bg-[var(--eds-border)]"
-                }`}
-                style={activeScopeFilter === null && !activeSzenarioFilter ? { backgroundColor: ACCENT } : undefined}
-                data-testid="button-scope-all"
-              >
-                Alle
-              </button>
-              {SCOPE_OPTIONS.map((scope) => {
-                const colors = SCOPE_COLORS[scope.key];
-                return (
-                  <button
-                    key={scope.key}
-                    onClick={() => { setActiveScopeFilter(scope.key); setActiveSzenarioFilter(false); }}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-                    style={activeScopeFilter === scope.key && !activeSzenarioFilter
-                      ? { background: ACCENT, color: "var(--eds-text-inverse)" }
-                      : colors}
-                    data-testid={`button-scope-${scope.key}`}
-                  >
-                    {scope.filterLabel}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => { setActiveSzenarioFilter((v) => !v); setActiveScopeFilter(null); }}
-                className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-                style={activeSzenarioFilter
-                  ? { background: "var(--eds-lagune)", color: "var(--eds-bg-surface)" }
-                  : { backgroundColor: "var(--eds-lagune-light)", color: "var(--eds-lagune)", border: "1px solid var(--eds-lagune-md)" }}
-                data-testid="button-scope-szenario"
-              >
-                Szenario-Baustein
-              </button>
-            </>
-          }
+        <Facets
+          groups={[
+            {
+              label: "Art",
+              options: [
+                ...SCOPE_OPTIONS.map((scope) => ({
+                  key: scope.key,
+                  label: scope.filterLabel,
+                  count: allItems.filter((i) => (i.scope || "general") === scope.key).length,
+                })),
+                { key: "__szenario__", label: "Szenario-Baustein", count: allItems.filter((i) => i.scenarioId).length },
+              ],
+              active: activeSzenarioFilter ? "__szenario__" : activeScopeFilter,
+              onSelect: (k) => {
+                if (k === "__szenario__") { setActiveSzenarioFilter(true); setActiveScopeFilter(null); }
+                else { setActiveSzenarioFilter(false); setActiveScopeFilter(k); }
+              },
+            },
+          ]}
         />
       }
     >
@@ -1356,47 +1351,41 @@ export default function ExerciseLibraryPage() {
           </div>
         )}
 
-        <section className="mb-8" data-testid="section-upload">
+        <section className="mb-6" data-testid="section-upload">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".docx,.xlsx,.pptx,.pdf"
+            multiple
+            className="hidden"
+            data-testid="input-upload-file"
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                handleFilesSelected(e.target.files);
+              }
+              e.target.value = "";
+            }}
+          />
           <div
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
-              isDragOver
-                ? "border-[hsl(14,48%,44%)] bg-[hsl(14,48%,44%)]/5"
-                : "border-[var(--eds-border-strong)] hover:border-[hsl(14,48%,44%)]/50 bg-white"
-            }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
             data-testid="upload-dropzone"
+            style={{
+              border: `1.5px dashed ${isDragOver ? "var(--eds-z)" : "var(--eds-border-strong)"}`,
+              borderRadius: "var(--eds-radius-lg)",
+              padding: "var(--eds-space-4)",
+              background: isDragOver ? "var(--eds-z-ghost)" : "transparent",
+              transition: "all var(--eds-transition-fast)",
+            }}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".docx,.xlsx,.pptx,.pdf"
-              multiple
-              className="hidden"
-              data-testid="input-upload-file"
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  handleFilesSelected(e.target.files);
-                }
-                e.target.value = "";
-              }}
-            />
-            <div className="flex flex-col items-center gap-2">
-              <UploadIcon />
-              <h3
-                className="text-sm font-semibold"
-                style={{ fontFamily: "Playfair Display, serif", color: ACCENT }}
-                data-testid="text-upload-label"
-              >
-                Übungen hochladen
-              </h3>
-              <p className="text-xs text-[var(--eds-text-tertiary)] max-w-md">
-                Ziehen Sie Dateien hierher oder klicken Sie zum Auswählen.
-                Unterstützt: Word (.docx), Excel (.xlsx), PowerPoint (.pptx), PDF (.pdf)
-              </p>
-            </div>
+            <Whisper
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>}
+              onClick={() => fileInputRef.current?.click()}
+              data-testid="whisper-upload"
+            >
+              Dateien hierher ziehen oder klicken zum Hochladen (DOCX, XLSX, PPTX, PDF)
+            </Whisper>
           </div>
 
           {uploadError && (
@@ -1868,118 +1857,35 @@ export default function ExerciseLibraryPage() {
                   />
                 </div>
               ) : (
-                <div className="space-y-3">
+                <ListRows>
                   {filteredItems.map((item) => {
                     const author = item.metadataJson?.author || "";
                     const sourceCtx =
                       item.sourceContext || item.metadataJson?.sourceContext || "";
-
+                    const metaParts = [
+                      item.clientName,
+                      item.targetLevels.length > 0 ? item.targetLevels.map((l: string) => LEVEL_SHORT[l] || l).join("/") : null,
+                      author ? `Autor: ${author}` : null,
+                      new Date(item.createdAt).toLocaleDateString("de-DE"),
+                    ].filter(Boolean);
+                    const scopeKey = item.scope || "general";
                     return (
-                      <div
+                      <ListRow
                         key={item.id}
+                        title={item.title}
+                        meta={metaParts.join(" · ")}
+                        statusColor={item.archived ? "var(--eds-status-amber)" : undefined}
+                        right={
+                          <span style={{ fontSize: 11, fontWeight: 500, color: SCOPE_COLORS[scopeKey]?.color || "var(--eds-text-tertiary)", background: SCOPE_COLORS[scopeKey]?.background || "var(--eds-bg-sunken)", padding: "2px 6px", borderRadius: 4, whiteSpace: "nowrap" }}>
+                            {SCOPE_LABELS[scopeKey] || scopeKey}
+                          </span>
+                        }
                         onClick={() => setSelectedItem(item)}
-                        className={`border rounded-xl p-4 hover:shadow-md transition cursor-pointer ${
-                          item.archived
-                            ? "border-[var(--eds-status-amber-bg)] bg-[var(--eds-status-amber-bg)]/30 opacity-70"
-                            : "border-[var(--eds-border)] bg-white hover:border-[var(--eds-border-strong)]"
-                        }`}
                         data-testid={`card-item-${item.id}`}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h4
-                            className={`text-sm font-semibold ${item.archived ? "text-[var(--eds-text-tertiary)] line-through" : "text-[var(--eds-text-primary)]"}`}
-                            data-testid={`text-item-title-${item.id}`}
-                          >
-                            {item.title}
-                          </h4>
-                          <div className="flex items-center gap-2 shrink-0 ml-2">
-                            {(() => {
-                              const scopeKey = item.scope || "general";
-                              const colors = SCOPE_COLORS[scopeKey] || SCOPE_COLORS.general;
-                              return (
-                                <span
-                                  className="text-[10px] font-medium px-1.5 py-0.5 rounded"
-                                  style={colors}
-                                  data-testid={`badge-scope-${item.id}`}
-                                >
-                                  {SCOPE_LABELS[scopeKey] || scopeKey}
-                                </span>
-                              );
-                            })()}
-                            {item.scenarioId && (
-                              <Link
-                                href={`/w/${slug}/admin/case-studio/${item.scenarioId}`}
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-[10px] font-medium text-[var(--eds-lagune)] bg-[var(--eds-lagune)]/10 border border-[var(--eds-lagune)]/20 px-1.5 py-0.5 rounded hover:bg-[var(--eds-lagune)]/20 transition-colors"
-                                data-testid={`badge-scenario-${item.id}`}
-                              >
-                                Szenario-Baustein
-                              </Link>
-                            )}
-                            {item.archived && (
-                              <span className="text-[10px] font-medium text-[var(--eds-status-amber)] bg-[var(--eds-status-amber-bg)] px-1.5 py-0.5 rounded" data-testid={`badge-archived-${item.id}`}>
-                                Archiviert
-                              </span>
-                            )}
-                            <span className="text-xs text-[var(--eds-text-disabled)]">
-                              {new Date(item.createdAt).toLocaleDateString("de-DE")}
-                            </span>
-                          </div>
-                        </div>
-
-                        {item.targetLevels.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {item.targetLevels.map((level) => (
-                              <span
-                                key={level}
-                                className="px-1.5 py-0.5 rounded text-[10px] font-medium border"
-                                style={{
-                                  borderColor: ACCENT,
-                                  color: ACCENT,
-                                  backgroundColor: "hsl(14, 48%, 44%, 0.06)",
-                                }}
-                                data-testid={`badge-level-${item.id}-${level.replace(/\s/g, "-")}`}
-                              >
-                                {LEVEL_SHORT[level] || level}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        <div className="text-xs text-[var(--eds-text-tertiary)] space-y-0.5">
-                          {author && (
-                            <p data-testid={`text-item-author-${item.id}`}>
-                              <span className="font-medium text-[var(--eds-text-secondary)]">Autor:</span> {author}
-                            </p>
-                          )}
-                          {sourceCtx && (
-                            <p data-testid={`text-item-source-${item.id}`}>
-                              <span className="font-medium text-[var(--eds-text-secondary)]">
-                                Ursprünglich konzipiert für:
-                              </span>{" "}
-                              {sourceCtx}
-                            </p>
-                          )}
-                          {(item.clientName || item.projectName) && (
-                            <p data-testid={`text-item-client-${item.id}`}>
-                              {item.clientName && <><span className="text-[var(--eds-text-disabled)]">Kunde:</span> {item.clientName}</>}
-                              {item.clientName && item.projectName && " · "}
-                              {item.projectName && <><span className="text-[var(--eds-text-disabled)]">Projekt:</span> {item.projectName}</>}
-                            </p>
-                          )}
-                          {item.description && (
-                            <p
-                              className="line-clamp-2 text-[var(--eds-text-tertiary)]"
-                              data-testid={`text-item-desc-${item.id}`}
-                            >
-                              {item.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                      />
                     );
                   })}
-                </div>
+                </ListRows>
               )}
             </div>
           </div>

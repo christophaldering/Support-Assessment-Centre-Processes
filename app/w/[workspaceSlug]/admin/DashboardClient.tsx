@@ -4,6 +4,9 @@ import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PasswordInput from "@/app/components/PasswordInput";
+import { PageShell } from "@/components/shared/PageShell";
+import { Metrics } from "@/components/shared/Metrics";
+import { ListRows, ListRow } from "@/components/shared/ListRows";
 
 interface AssessmentItem {
   id: string;
@@ -588,31 +591,19 @@ export default function DashboardClient({
   function renderAssessmentList() {
     return (
       <div className="bg-white border border-[var(--eds-border)] rounded-xl" data-testid="section-assessments">
-        <div className="px-6 py-5 border-b border-[var(--eds-border)] flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-semibold text-brand-navy">Assessments</h3>
-            <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">
-              {clientGroups.length > 1
-                ? `${clientGroups.filter(([k]) => k !== "__none__").length} Kunden · `
-                : ""}
-              {activeCount > 0 && <span className="font-medium text-[var(--eds-status-green)]">{activeCount} aktiv</span>}
-              {activeCount > 0 && draftCount > 0 && " · "}
-              {draftCount > 0 && <span>{draftCount} Entwurf</span>}
-              {(activeCount > 0 || draftCount > 0) && completedCount > 0 && " · "}
-              {completedCount > 0 && <span>{completedCount} abgeschlossen</span>}
-              {activeCount === 0 && draftCount === 0 && completedCount === 0 && <span>Noch keine Assessments</span>}
-            </p>
-          </div>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white rounded-lg bg-brand-navy transition-all hover:opacity-90"
-            data-testid="button-create-project"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Neues Assessment
-          </button>
+        <div className="px-6 py-5 border-b border-[var(--eds-border)]">
+          <h3 className="text-base font-semibold text-brand-navy">Ihre Assessments</h3>
+          <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">
+            {clientGroups.length > 1
+              ? `${clientGroups.filter(([k]) => k !== "__none__").length} Kunden · `
+              : ""}
+            {activeCount > 0 && <span className="font-medium text-[var(--eds-status-green)]">{activeCount} aktiv</span>}
+            {activeCount > 0 && draftCount > 0 && " · "}
+            {draftCount > 0 && <span>{draftCount} Entwurf</span>}
+            {(activeCount > 0 || draftCount > 0) && completedCount > 0 && " · "}
+            {completedCount > 0 && <span>{completedCount} abgeschlossen</span>}
+            {activeCount === 0 && draftCount === 0 && completedCount === 0 && <span>Noch keine Assessments</span>}
+          </p>
         </div>
 
         {localAssessments.length === 0 ? (
@@ -792,72 +783,53 @@ export default function DashboardClient({
   }
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-8 min-w-0">
+    <>
       {renderCreateModal()}
       {renderDeleteConfirmation()}
-
+      <PageShell
+        zone="start"
+        zoneLabel="Start"
+        breadcrumb={[{ label: "Executive Diagnostics Suite" }]}
+        title="Cockpit"
+        primaryAction={
+          <button
+            onClick={() => setShowCreate(true)}
+            data-testid="button-create-project"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 16px",
+              borderRadius: "var(--eds-radius-lg)",
+              backgroundColor: "var(--eds-z)",
+              color: "white",
+              fontSize: "var(--eds-text-md)",
+              fontWeight: 500,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "var(--eds-font-sans)",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Neues Assessment
+          </button>
+        }
+      >
       {activeSection === "dashboard" && (
         <>
-          <div className="grid md:grid-cols-5 gap-4" data-testid="kpi-grid">
-                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-assessments">
-                  <p className="text-2xl font-bold" style={{ color: "var(--eds-terracotta)" }}>{localAssessments.length}</p>
-                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Assessments</p>
-                </div>
-                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-active">
-                  <p className="text-2xl font-bold" style={{ color: "var(--eds-lagune)" }}>{activeCount}</p>
-                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Aktiv</p>
-                </div>
-                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-teilnehmer">
-                  <p className="text-2xl font-bold" style={{ color: "var(--eds-terracotta-dk)" }}>{totalCandidates}</p>
-                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Teilnehmer</p>
-                </div>
-                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-übungen">
-                  <p className="text-2xl font-bold" style={{ color: "var(--eds-lagune-dk)" }}>{totalExercises}</p>
-                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Übungen</p>
-                </div>
-                <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-team">
-                  <p className="text-2xl font-bold" style={{ color: "var(--eds-lagune)" }}>{teamUsers.length}</p>
-                  <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Team</p>
-                </div>
-              </div>
-
-              <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-schnellzugriff">
-                <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--eds-terracotta)" }}>Schnellzugriff</h3>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => setShowCreate(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-all"
-                    style={{ backgroundColor: "var(--eds-terracotta)" }}
-                    data-testid="quick-action-new-assessment"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Neues Assessment
-                  </button>
-                  <Link
-                    href={`${base}/users`}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium rounded-lg border border-[var(--eds-border)] text-[var(--eds-text-primary)] hover:bg-[var(--eds-bg-sunken)] transition-all"
-                    data-testid="quick-action-new-user"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-                    </svg>
-                    Benutzer anlegen
-                  </Link>
-                  <Link
-                    href={`${base}/gutachten`}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-all"
-                    style={{ backgroundColor: "var(--eds-lagune)" }}
-                    data-testid="quick-action-gutachten"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                    Gutachten erstellen
-                  </Link>
-                </div>
-              </div>
+          {(localAssessments.length > 0 || activeCount > 0 || totalCandidates > 0 || totalExercises > 0 || teamUsers.length > 0) && (
+            <Metrics
+              items={[
+                { value: localAssessments.length, label: "Assessments" },
+                { value: activeCount, label: "Aktiv" },
+                { value: totalCandidates, label: "Teilnehmer" },
+                { value: totalExercises, label: "Übungen" },
+                { value: teamUsers.length, label: "Team" },
+              ]}
+            />
+          )}
 
               {renderAssessmentList()}
 
@@ -901,7 +873,7 @@ export default function DashboardClient({
           )}
 
           {activeSection === "module-settings" && canSeeAll && (
-            <div className="space-y-6">
+            <div className="space-y-6" style={{ paddingBottom: "var(--eds-space-8)" }}>
               <div>
                 <h2 className="text-xl font-bold" style={{ color: "var(--eds-terracotta)" }}>Modul-Freigabe</h2>
                 <p className="text-sm text-[var(--eds-text-tertiary)] mt-1">
@@ -973,6 +945,7 @@ export default function DashboardClient({
               </div>
             </div>
           )}
-    </div>
+      </PageShell>
+    </>
   );
 }

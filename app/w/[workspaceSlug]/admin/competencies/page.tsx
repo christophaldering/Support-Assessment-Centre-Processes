@@ -3,7 +3,7 @@
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { resolveOriginForCompetencyModel } from "@/lib/document-origin";
 import { PageShell } from "@/components/shared/PageShell";
-import { Toolbar } from "@/components/shared/Toolbar";
+import { Segments } from "@/components/shared/Segments";
 import { ActionMenu } from "@/components/shared/ActionMenu";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -138,15 +138,21 @@ export default function CompetencyManagementPage() {
 
   return (
     <PageShell
-      breadcrumb={[{ label: "Kompetenzen" }]}
+      zone="resource"
+      zoneLabel="Ressource · Kompetenzmodelle"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Ressourcen" },
+        { label: "Kompetenzmodelle" },
+      ]}
       title="Kompetenzmodelle"
       description="Kompetenzrahmen, Dimensionen, Skalen und MTMM-Matrix verwalten"
       maxWidth="wide"
-      toolbar={
-        <Toolbar
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={(k) => setActiveTab(k as TabKey)}
+      segments={
+        <Segments
+          items={tabs}
+          active={activeTab}
+          onChange={(k) => setActiveTab(k as TabKey)}
         />
       }
     >

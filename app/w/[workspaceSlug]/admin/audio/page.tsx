@@ -3,6 +3,8 @@
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { PageShell } from "@/components/shared/PageShell";
 import { FormSection } from "@/components/shared/FormSection";
+import { ListRows, ListRow } from "@/components/shared/ListRows";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 
@@ -191,10 +193,15 @@ export default function AudioRecordingsPage() {
 
   return (
     <PageShell
-      breadcrumb={[{ label: "Audio & Transkription" }]}
-      title="Audioaufnahmen"
-      description="Audioaufnahmen hochladen, transkribieren und zusammenfassen"
-      maxWidth="wide"
+      zone="assessment"
+      zoneLabel="Assessment · Audio"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Auswertung" },
+        { label: "Audio & Transkription" },
+      ]}
+      title="Audio & Transkription"
+      maxWidth="narrow"
     >
         <FormSection title="Audio hochladen" description="Audiodatei auswählen und Metadaten angeben">
 

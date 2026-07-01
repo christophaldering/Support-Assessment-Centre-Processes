@@ -108,6 +108,22 @@
   --eds-z-modal:      400;
   --eds-z-toast:      500;
 
+  /* ── Zonenfarben — genau ein Akzent pro Bildschirm, Farbe je Zone ── */
+  --eds-zone-start:            #A6473B;
+  --eds-zone-start-ghost:      rgba(166,71,59,.06);
+  --eds-zone-assessment:       #115560;
+  --eds-zone-assessment-ghost: rgba(17,85,96,.07);
+  --eds-zone-resource:         #7A5E2E;
+  --eds-zone-resource-ghost:   rgba(122,94,46,.07);
+  --eds-zone-admin:            #46403B;
+  --eds-zone-admin-ghost:      rgba(70,64,59,.07);
+  /* Laufzeit-Akzent, wird pro Seite von PageShell gesetzt */
+  --eds-z:        var(--eds-zone-start);
+  --eds-z-ghost:  var(--eds-zone-start-ghost);
+
+  /* ── Typografie-Erweiterung ── */
+  --eds-serif: 'Fraunces', Georgia, serif;
+
   /* ── Legacy aliases (keep existing --ae-* working) ── */
   --ae-primary:       var(--eds-terracotta);
   --ae-primary-dark:  var(--eds-terracotta-dk);

@@ -575,7 +575,13 @@ function RequirementsContent() {
 
   return (
     <PageShell
-      breadcrumb={[{ label: "Anforderungsanalyse" }]}
+      zone="assessment"
+      zoneLabel="Assessment · Anforderungen"
+      breadcrumb={[
+        { label: "Executive Diagnostics Suite" },
+        { label: "Diagnostik-Aufbau" },
+        { label: "Anforderungsanalyse" },
+      ]}
       title="Anforderungsanalyse"
       description="Stellenanforderungen per KI aus Dokumenten extrahieren"
       maxWidth="wide"
