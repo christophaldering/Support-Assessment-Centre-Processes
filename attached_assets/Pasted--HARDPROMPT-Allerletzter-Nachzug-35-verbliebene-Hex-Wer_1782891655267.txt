@@ -1,0 +1,78 @@
+# HARDPROMPT — Allerletzter Nachzug: 35 verbliebene Hex-Werte final bereinigen
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+DIES IST DER ABSCHLIESSENDE SCHRITT. DANACH IST DAS THEMA ZU 100% ERLEDIGT.
+
+Bei Unklarheit: STOPP, fragen — NICHT improvisieren.
+
+## Stand (geprüft)
+
+Die große Hex-Migration ist erfolgt. Es verbleiben 35 Hex-Werte in wenigen
+Dateien. Diese fallen in zwei Kategorien, die BEIDE final zu behandeln sind:
+(A) statische Klassen, die noch auf Token umgestellt werden, und
+(B) technisch bedingte Ausnahmen, die einen `// no-eds-token`-Kommentar
+erhalten MÜSSEN, damit die Validierung sauber ist.
+
+## Nicht anfassen
+
+Logik, State, API-Calls · nutzerdefinierte Theming-DB-Werte
+(`primaryColor`/`textColor`/`backgroundColor`/`secondaryColor`,
+`ensureHex`, `value.startsWith("#")`) — diese sind bereits korrekt und
+bleiben unverändert.
+
+---
+
+## SCHRITT 1 — `ComparisonView.tsx` statische Hover-Klassen auf Token
+
+In `app/w/[workspaceSlug]/admin/analytics/ComparisonView.tsx`:
+- `hover:text-[#A6473B]` → `hover:text-[var(--eds-terracotta)]` (alle Vorkommen)
+- `hover:border-[#297587]` → `hover:border-[var(--eds-lagune)]` (alle Vorkommen)
+- `hover:text-[#297587]` → `hover:text-[var(--eds-lagune)]` (alle Vorkommen)
+
+## SCHRITT 2 — `ComparisonView.tsx` technische Ausnahmen kommentieren
+
+Folgende Hex-Werte in `ComparisonView.tsx` sind technisch NICHT durch
+`var()` ersetzbar (dynamische RGB-Interpolation, SVG-Attribute, Chart-
+Farbarray). VOR jeder betroffenen Zeile/jedem Block den Kommentar
+`// no-eds-token: dynamische Chart-Farbberechnung` einfügen:
+- Das `ACCENT`/`TEAL`-Konstanten-Paar (Zeile ~5–6)
+- Das Farb-Array für Serien (Zeile ~9)
+- `scoreToColor`-Rückgabewerte (`#fff`, `#1e293b`, `#f8fafc`, `#94a3b8`)
+- SVG-`stroke`/`fill`-Attribute (`#e2e8f0`, `#cbd5e1`, `#64748b`)
+- Der `linear-gradient(...)`-Legendenbalken (Zeile ~215)
+
+## SCHRITT 3 — Übrige Custom-Farben kommentieren
+
+1. `document-sharing/[linkId]/page.tsx` und `document-sharing/page.tsx`:
+   `#5a7a52` und `#2f7a4a` → Kommentar davor
+   `// no-eds-token: custom activity-green (Sessions-Log)`.
+2. `brand-rules/page.tsx`: `#e94560` (Demo-Accent + ColorField-Default)
+   → Kommentar davor `// no-eds-token: nutzerdefinierter Demo-Accent`.
+3. `requirements/page.tsx` Zeile ~917: `text-brand-blue` mit `&#9733;`
+   ist KEIN Hex-Wert (HTML-Entity für Stern) — NICHT anfassen, kein
+   Handlungsbedarf.
+4. Falls `var(--eds-type-roleplay-bg, #F5F3FF)` als Fallback-Konstruktion
+   noch Treffer erzeugt: das ist gewollt (Fallback-Syntax) → Kommentar
+   `// no-eds-token: Fallback-Wert in var()` in derselben Zeile.
+
+---
+
+## Validierung (alle PASS erforderlich)
+
+1. `grep -rn "#[0-9a-fA-F]\{3,6\}" app/w/[workspaceSlug]/admin --include="*.tsx" | grep -v "no-eds-token" | grep -v "translate" | grep -v "primaryColor\|textColor\|backgroundColor\|secondaryColor\|ensureHex\|startsWith\|brand-blue\|var(--eds"`
+   → NULL Treffer. Jeder verbleibende Hex hat entweder einen
+   `no-eds-token`-Kommentar oder ist ein legitimer var()-Fallback/
+   Theming-DB-Wert. PASS/FAIL.
+2. Keine funktionale Regression (Analytics-Vergleichsansicht,
+   Document-Sharing, Brand-Rules visuell unverändert). PASS/FAIL.
+3. `npm run lint` — null Fehler. PASS/FAIL.
+4. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`Design-System: Hex-Migration final abgeschlossen — alle Werte tokenisiert oder dokumentiert`
+
+## Abschluss-Statement (Pflicht)
+
+Bestätige, dass Punkt 1 NULL unkommentierte Treffer liefert. Liste alle
+gesetzten `no-eds-token`-Ausnahmen. Alle 4 Validierungspunkte mit
+PASS/FAIL. Keine Selbsteinschätzung.

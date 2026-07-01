@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from "react";
 
-const ACCENT = "#A6473B";
-const TEAL = "#297587";
+const ACCENT = "#A6473B"; // no-eds-token: Chart-Konstante — dynamische Farbberechnung, var() nicht nutzbar
+const TEAL = "#297587"; // no-eds-token: Chart-Konstante — dynamische Farbberechnung, var() nicht nutzbar
 
 const CANDIDATE_COLORS = [
-  "#A6473B", "#297587", "#7C3AED", "#D97706", "#059669", "#2563EB", "#DB2777",
+  "#A6473B", "#297587", "#7C3AED", "#D97706", "#059669", "#2563EB", "#DB2777", // no-eds-token: Chart-Farbarray — dynamische Serienzuweisung, var() nicht nutzbar
 ];
 
 interface CandidateCompetency {
@@ -28,13 +28,13 @@ function scoreToColor(value: number): { bg: string; fg: string } {
     const r = Math.round(0xef * (1 - s) + 0x29 * s);
     const g = Math.round(0xf4 * (1 - s) + 0x75 * s);
     const b = Math.round(0xf5 * (1 - s) + 0x87 * s);
-    return { bg: `rgb(${r},${g},${b})`, fg: s > 0.55 ? "#fff" : "#1e293b" };
+    return { bg: `rgb(${r},${g},${b})`, fg: s > 0.55 ? "#fff" : "#1e293b" }; // no-eds-token: dynamische rgb()-Berechnung — var() in Gradient-Interpolation nicht nutzbar
   }
   const s = (t - 0.5) * 2;
   const r = Math.round(0x29 * (1 - s) + 0xa6 * s);
   const g = Math.round(0x75 * (1 - s) + 0x47 * s);
   const b = Math.round(0x87 * (1 - s) + 0x3b * s);
-  return { bg: `rgb(${r},${g},${b})`, fg: "#fff" };
+  return { bg: `rgb(${r},${g},${b})`, fg: "#fff" }; // no-eds-token: dynamische rgb()-Berechnung — var() in Gradient-Interpolation nicht nutzbar
 }
 
 function polar(angleDeg: number, r: number, cx: number, cy: number) {
@@ -150,7 +150,7 @@ export default function ComparisonView({
   const SortBtn = ({ col, label }: { col: typeof sortCol; label: string }) => (
     <button
       onClick={() => handleSort(col)}
-      className="flex items-center gap-1 font-medium hover:text-[#A6473B] transition-colors"
+      className="flex items-center gap-1 font-medium hover:text-[var(--eds-terracotta)] transition-colors"
       data-testid={`sort-${col}`}
     >
       {label}
@@ -191,7 +191,7 @@ export default function ComparisonView({
                 >
                   <span
                     className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: on ? color : "#cbd5e1" }}
+                    style={{ backgroundColor: on ? color : "var(--eds-border-strong)" }}
                   />
                   {cs.candidateName}
                 </button>
@@ -212,7 +212,7 @@ export default function ComparisonView({
               Heatmap-Matrix
             </h2>
             <div className="flex items-center gap-2 text-xs text-[var(--eds-text-disabled)] no-print">
-              <span className="w-16 h-3 rounded" style={{ background: "linear-gradient(to right, #EFF4F5, #297587, #A6473B)" }} />
+              <span className="w-16 h-3 rounded" style={{ background: "linear-gradient(to right, #EFF4F5, #297587, #A6473B)" }} /> {/* no-eds-token: Farbverlauf-Legende — statische Interpolation */}
               <span>0 → 100</span>
             </div>
           </div>
@@ -249,7 +249,7 @@ export default function ComparisonView({
                   </div>
                   {selected.map((cs) => {
                     const val = matrix.get(comp)?.get(cs.candidateId);
-                    const { bg, fg } = val !== undefined ? scoreToColor(val) : { bg: "#f8fafc", fg: "#94a3b8" };
+                    const { bg, fg } = val !== undefined ? scoreToColor(val) : { bg: "#f8fafc", fg: "#94a3b8" }; // no-eds-token: Chart-Fallback-Farben — scoreToColor-Rückgabe
                     return (
                       <div
                         key={`${comp}-${cs.candidateId}`}
@@ -287,7 +287,7 @@ export default function ComparisonView({
                       return `${x},${y}`;
                     }).join(" ")}
                     fill="none"
-                    stroke="#e2e8f0"
+                    stroke="var(--eds-border)"
                     strokeWidth={pct === 100 ? 1.5 : 1}
                   />
                 ))}
@@ -297,14 +297,14 @@ export default function ComparisonView({
                   const lp = polar((360 / N) * i, LABEL_R, CX, CY);
                   return (
                     <g key={comp}>
-                      <line x1={CX} y1={CY} x2={x} y2={y} stroke="#cbd5e1" strokeWidth={1} />
+                      <line x1={CX} y1={CY} x2={x} y2={y} stroke="var(--eds-border-strong)" strokeWidth={1} />
                       <text
                         x={lp.x}
                         y={lp.y}
                         textAnchor="middle"
                         dominantBaseline="middle"
                         fontSize={8}
-                        fill="#64748b"
+                        fill="var(--eds-text-secondary)"
                         style={{ userSelect: "none" }}
                       >
                         {comp.length > 12 ? comp.slice(0, 11) + "…" : comp}
@@ -348,7 +348,7 @@ export default function ComparisonView({
             <div className="flex items-center gap-3 no-print">
               <button
                 onClick={() => window.print()}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-[var(--eds-border)] hover:border-[#297587] hover:text-[#297587] transition-colors"
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-[var(--eds-border)] hover:border-[var(--eds-lagune)] hover:text-[var(--eds-lagune)] transition-colors"
                 data-testid="button-print"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -358,7 +358,7 @@ export default function ComparisonView({
               </button>
               <a
                 href={`/w/${workspaceSlug}/admin/gutachten`}
-                className="text-xs text-[var(--eds-text-disabled)] hover:text-[#297587] transition-colors"
+                className="text-xs text-[var(--eds-text-disabled)] hover:text-[var(--eds-lagune)] transition-colors"
                 data-testid="link-gutachten"
               >
                 Formale Berichte → Gutachten-Generator
@@ -386,7 +386,7 @@ export default function ComparisonView({
                     <td className="px-4 py-3">
                       <span
                         className="inline-flex w-7 h-7 items-center justify-center rounded-full text-xs font-bold text-white"
-                        style={{ backgroundColor: s.rank <= 3 ? ACCENT : "#94a3b8" }}
+                        style={{ backgroundColor: s.rank <= 3 ? ACCENT : "var(--eds-text-tertiary)" }}
                       >
                         {s.rank}
                       </span>

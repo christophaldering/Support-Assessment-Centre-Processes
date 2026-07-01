@@ -37,8 +37,7 @@ const btnPrimary = "rounded-lg bg-brand-blue text-white text-sm font-medium px-4
 const btnDanger = "text-xs text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] font-medium";
 
 const EMPTY_RULES: RulesJson = {
-// no-eds-token: demo-brand-accent
-  colors: { primary: "var(--eds-text-primary)", secondary: "var(--eds-text-primary)", accent: "#e94560", background: "var(--eds-bg-surface)" },
+  colors: { primary: "var(--eds-text-primary)", secondary: "var(--eds-text-primary)", accent: "#e94560", background: "var(--eds-bg-surface)" },  // no-eds-token: demo-brand-accent
   typography: { headingFont: "Playfair Display", bodyFont: "Inter", headingSize: "2rem", bodySize: "1rem" },
   spacing: { gridUnit: "8px", margins: "24px" },
   logo: { position: "top-left", maxHeight: "48px" },
@@ -565,8 +564,7 @@ function RulesFormFields({
         <div className="grid md:grid-cols-2 gap-4">
           <ColorField label="Primary" value={rules.colors?.primary || "var(--eds-text-primary)"} onChange={(v) => updateColors("primary", v)} testId="input-color-primary" />
           <ColorField label="Secondary" value={rules.colors?.secondary || "var(--eds-text-primary)"} onChange={(v) => updateColors("secondary", v)} testId="input-color-secondary" />
-// no-eds-token: demo-brand-accent
-          <ColorField label="Accent" value={rules.colors?.accent || "#e94560"} onChange={(v) => updateColors("accent", v)} testId="input-color-accent" />
+          <ColorField label="Accent" value={rules.colors?.accent || "#e94560"} onChange={(v) => updateColors("accent", v)} testId="input-color-accent" />  // no-eds-token: demo-brand-accent
           <ColorField label="Background" value={rules.colors?.background || "var(--eds-bg-surface)"} onChange={(v) => updateColors("background", v)} testId="input-color-background" />
         </div>
       </div>
@@ -926,8 +924,7 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
               { label: "Background", color: colors.background },
             ].map((c) => (
               <div key={c.label} className="flex items-center gap-3" data-testid={`preview-color-${c.label.toLowerCase()}`}>
-// no-eds-token: user-defined color fallback — dynamischer Farbwert, var() nicht möglich
-                <div className="w-10 h-10 rounded-lg border border-[var(--eds-border)] shrink-0" style={{ backgroundColor: c.color || "#ccc" }} />
+                <div className="w-10 h-10 rounded-lg border border-[var(--eds-border)] shrink-0" style={{ backgroundColor: c.color || "#ccc" }} />  // no-eds-token: user-defined color fallback — dynamischer Farbwert, var() nicht möglich
                 <div>
                   <p className="text-xs font-medium text-[var(--eds-text-primary)]">{c.label}</p>
                   <p className="text-xs text-[var(--eds-text-disabled)] font-mono">{c.color || "–"}</p>
@@ -1037,8 +1034,7 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
             <div className="flex gap-3">
               <span className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ backgroundColor: colors.primary || "var(--eds-text-primary)" }}>Primary</span>
               <span className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ backgroundColor: colors.secondary || "var(--eds-text-primary)" }}>Secondary</span>
-// no-eds-token: demo-brand-accent
-              <span className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ backgroundColor: colors.accent || "#e94560" }}>Accent</span>
+              <span className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ backgroundColor: colors.accent || "#e94560" }}>Accent</span>  // no-eds-token: demo-brand-accent
             </div>
           </div>
         </div>
@@ -1355,8 +1351,7 @@ function ColorField({ label, value, onChange, testId }: { label: string; value: 
       <div className="flex items-center gap-2">
         <input
           type="color"
-// no-eds-token: color-picker-default — value prop für <input type="color">, var() inkompatibel
-          value={value.startsWith("#") ? value : "#000000"}
+          value={value.startsWith("#") ? value : "#000000"}  // no-eds-token: color-picker-default — value prop für <input type="color">, var() inkompatibel
           onChange={(e) => onChange(e.target.value)}
           className="w-10 h-10 rounded-lg border border-[var(--eds-border)] cursor-pointer p-0.5"
           data-testid={`${testId}-picker`}

@@ -492,8 +492,7 @@ const S: Record<string, React.CSSProperties> = {
   liveName: { fontWeight: 700, fontSize: 14 },
   liveEmail: { fontSize: 11, color: "var(--eds-text-secondary)" },
   liveDocRow: { display: "flex", flexDirection: "column", gap: 2 },
-// no-eds-token: custom activity-green
-  liveDocLabel: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "#5a7a52" },
+  liveDocLabel: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "#5a7a52" },  // no-eds-token: custom activity-green
   liveDoc: { fontSize: 12, color: "var(--eds-text-primary)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
   liveMeta: { display: "flex", gap: 6, flexWrap: "wrap" },
   liveMetaChip: { fontSize: 11, background: "var(--eds-bg-surface)", border: "1px solid var(--eds-status-green-bg)", borderRadius: 999, padding: "2px 8px", color: "var(--eds-status-green)" },

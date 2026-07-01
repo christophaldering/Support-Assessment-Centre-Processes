@@ -44,12 +44,9 @@ const TYPE_COLOR: Record<string, string> = {
   search: "var(--eds-status-amber)",
   flag: "var(--eds-terracotta)",
   note_save: "var(--eds-status-blue)",
-// no-eds-token: custom activity-green
-  session_start: "#5a7a52",
-// no-eds-token: custom activity-green
-  session_end: "#5a7a52",
-// no-eds-token: custom dark-green
-  session_complete: "#2f7a4a",
+  session_start: "#5a7a52",  // no-eds-token: custom activity-green
+  session_end: "#5a7a52",  // no-eds-token: custom activity-green
+  session_complete: "#2f7a4a",  // no-eds-token: custom dark-green
   session_resume: "var(--eds-text-tertiary)",
   leave: "var(--eds-text-tertiary)",
 };
