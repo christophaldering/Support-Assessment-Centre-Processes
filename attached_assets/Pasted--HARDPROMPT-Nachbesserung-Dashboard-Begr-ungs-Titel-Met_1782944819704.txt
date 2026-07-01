@@ -1,0 +1,86 @@
+# HARDPROMPT — Nachbesserung Dashboard: Begrüßungs-Titel & Metrics-Sinnhaftigkeit
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Zwei präzise Korrekturen in einer Datei. Bei Unklarheit: STOPP, fragen.
+Funktions-erhaltend — nur die zwei benannten Punkte ändern.
+
+## Ausgangslage (geprüft)
+
+`app/w/[workspaceSlug]/admin/DashboardClient.tsx` nutzt bereits korrekt
+`<PageShell zone="start">`. Zwei Schwächen bleiben:
+1. Der Titel ist statisch `title="Cockpit"` — nutzt die editoriale
+   Serif-Signatur nicht und wirkt blass. Er soll eine tageszeit-abhängige
+   persönliche Begrüßung sein.
+2. Die `Metrics`-Leiste erscheint bereits, wenn IRGENDEIN Wert > 0 ist
+   (aktueller Filter: `localAssessments.length > 0 || activeCount > 0 ||
+   totalCandidates > 0 || totalExercises > 0 || teamUsers.length > 0`).
+   Dadurch wird sie auch bei 0·0·0·0·2 gerendert — vier Nullen als Lärm.
+
+## Nicht anfassen
+
+Alles außer `DashboardClient.tsx`. Keine Logik, keine anderen Blöcke,
+keine API-Calls, keine anderen Seiten.
+
+---
+
+## SCHRITT 1 — Persönlicher Begrüßungs-Titel
+
+1. Vor dem `return`/`PageShell`-Block eine tageszeit-abhängige Begrüßung
+   berechnen (deutsche Uhrzeit des Clients):
+   - 5–11 Uhr → „Guten Morgen"
+   - 11–18 Uhr → „Guten Tag"
+   - 18–22 Uhr → „Guten Abend"
+   - sonst → „Guten Abend"
+2. Den Vornamen des eingeloggten Nutzers verwenden, falls in den bereits
+   an die Komponente übergebenen Props/Daten verfügbar (z. B. aus dem
+   User-/Session-Objekt, das die Seite ohnehin lädt). Ist KEIN Vorname
+   verfügbar: nur die Begrüßung ohne Namen, KEINEN Platzhalter erfinden,
+   KEINEN zusätzlichen API-Call einführen.
+3. `title="Cockpit"` ersetzen durch den zusammengesetzten String, Format
+   mit Name: `Guten Morgen, {Vorname}.` — mit abschließendem Punkt. Ohne
+   Name: `Guten Morgen.`
+4. Falls die aktuell sichtbare Sektion NICHT das Dashboard ist
+   (`activeSection !== "dashboard"`), bleibt der jeweils passende
+   Sektionstitel wie bisher — die Begrüßung gilt nur für die
+   Dashboard-Sektion. Wenn der Titel bereits sektionsabhängig gesetzt
+   wird, nur den Dashboard-Fall auf die Begrüßung umstellen.
+
+## SCHRITT 2 — Metrics nur bei Aussagekraft
+
+1. Den Anzeige-Filter der `Metrics`-Leiste verschärfen: Die Leiste wird
+   NUR gerendert, wenn mindestens ein ASSESSMENT-BEZOGENER Wert echte
+   Substanz hat — konkret wenn `localAssessments.length > 0`
+   (es existiert mindestens ein Assessment).
+2. Der reine Umstand, dass Team-Mitglieder existieren (`teamUsers.length`),
+   löst die Leiste NICHT mehr aus — ein leeres Konto mit nur 2
+   Teammitgliedern soll KEINE 0·0·0·0·2-Leiste zeigen.
+3. Wird die Leiste angezeigt (also sobald Assessments existieren), bleiben
+   ALLE fünf Kennzahlen sichtbar (dann sind sie im Kontext sinnvoll).
+4. Wird die Leiste nicht angezeigt, erscheint an ihrer Stelle NICHTS
+   Zusätzliches — der darunterliegende Inhalt (Assessment-Liste mit
+   ihrem EmptyState) rückt auf.
+
+---
+
+## VALIDIERUNG (alle PASS erforderlich)
+
+1. Auf einem Konto OHNE Assessments erscheint KEINE Metrics-Leiste (keine
+   Nullen sichtbar). PASS/FAIL.
+2. Auf einem Konto MIT mindestens einem Assessment erscheint die
+   Metrics-Leiste mit allen fünf Werten. PASS/FAIL.
+3. Der Dashboard-Titel zeigt eine tageszeit-abhängige Begrüßung in der
+   Serif-Schrift, mit Vorname falls verfügbar. PASS/FAIL.
+4. KEINE funktionale Regression (Navigation, Assessment-Erstellung,
+   Modul-Freigabe funktionieren unverändert). PASS/FAIL.
+5. `npm run lint` — null Fehler. PASS/FAIL.
+6. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`Dashboard-Nachbesserung: Begrüßungs-Titel und Metrics nur bei Aussagekraft`
+
+## Abschluss-Statement (Pflicht)
+
+Alle 6 Validierungspunkte mit PASS/FAIL. Bestätigen, ob ein Vorname
+verfügbar war oder die Begrüßung ohne Namen erscheint. Keine
+Selbsteinschätzung — nur verifizierte Ergebnisse.

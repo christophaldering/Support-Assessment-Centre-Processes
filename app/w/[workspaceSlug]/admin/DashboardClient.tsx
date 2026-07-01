@@ -588,6 +588,13 @@ export default function DashboardClient({
     return localAssessments.filter((a) => a.status === "active" && a.startDate && a.endDate);
   }, [localAssessments]);
 
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 11) return "Guten Morgen";
+    if (h >= 11 && h < 18) return "Guten Tag";
+    return "Guten Abend";
+  }, []);
+
   function renderAssessmentList() {
     return (
       <div className="bg-white border border-[var(--eds-border)] rounded-xl" data-testid="section-assessments">
@@ -790,7 +797,7 @@ export default function DashboardClient({
         zone="start"
         zoneLabel="Start"
         breadcrumb={[{ label: "Executive Diagnostics Suite" }]}
-        title="Cockpit"
+        title={`${greeting}.`}
         primaryAction={
           <button
             onClick={() => setShowCreate(true)}
@@ -819,7 +826,7 @@ export default function DashboardClient({
       >
       {activeSection === "dashboard" && (
         <>
-          {(localAssessments.length > 0 || activeCount > 0 || totalCandidates > 0 || totalExercises > 0 || teamUsers.length > 0) && (
+          {localAssessments.length > 0 && (
             <Metrics
               items={[
                 { value: localAssessments.length, label: "Assessments" },
