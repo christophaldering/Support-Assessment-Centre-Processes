@@ -1,0 +1,175 @@
+# HARDPROMPT — Refactoring: Assessment-Detail-Seite in Sektions-Komponenten aufteilen
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden Schritte exakt in der angegebenen Reihenfolge aus.
+Bei Unklarheit: STOPP, fragen — NICHT improvisieren. Nach jedem Schritt
+erstellst du exakt den angegebenen Commit. Keine Optionalität.
+
+DIES IST EIN REINES REFACTORING. ES DARF SICH KEIN EINZIGES VERHALTEN
+ÄNDERN — keine Funktion, kein API-Call, kein State, kein Rendering-
+Ergebnis. Nur die Code-ORGANISATION ändert sich.
+
+## Ausgangslage (geprüft)
+
+`app/w/[workspaceSlug]/admin/assessments/[assessmentId]/page.tsx` ist
+4258 Zeilen lang. Der gesamte Inhalt steckt in EINER Funktion
+`AssessmentDetailPage()` mit 110 Hooks (useState/useEffect/useCallback)
+im Elternscope. Der JSX-Body ist über `activeSection`-Bedingungen in 10+
+klar abgegrenzte Sektionen unterteilt:
+
+- `overview`      (~Z. 1481)
+- `requirements`  (~Z. 1609)
+- `exercises`     (~Z. 2023, größte Sektion ~1096 Zeilen)
+- `mtmm`          (~Z. 3119)
+- `validation`    (~Z. 3474)
+- `participants`  (~Z. 3603)
+- `documents`     (~Z. 3673)
+- `portal`        (~Z. 3946)
+- `activation`    (~Z. 3954)
+
+`SectionKey`-Typ (Z. 173) enthält zusätzlich `target_position`,
+`observation_sheets`, `workflow` — diese verifizierst du im Code und
+behandelst sie GENAU GLEICH wie die anderen Sektionen, falls sie einen
+eigenen `activeSection === "..."`-Block haben.
+
+## Kern-Herausforderung (bindend zu beachten)
+
+Die Sektionen greifen auf gemeinsamen State und Handler des Elternscopes
+zu (110 Hooks). Die Extraktion erfolgt NICHT durch Verschieben von State
+in die Kindkomponenten, sondern durch PROPS-DURCHREICHUNG: der State
+bleibt vollständig im Eltern-`AssessmentDetailPage`, jede Sektions-
+Komponente erhält exakt die von ihr benötigten Werte und Setter/Handler
+als Props. KEIN neuer Context, KEIN State-Management-Library, KEINE
+Verlagerung von Datenladelogik in die Kinder.
+
+## Nicht anfassen
+
+Jegliche Geschäftslogik, API-Aufrufe, State-Initialisierung, useEffect-
+Abhängigkeiten · andere Dateien als die unten genannten · Routing ·
+Auth/RBAC · die `SectionKey`-Typdefinition (bleibt unverändert).
+
+Wenn eine Extraktion erzwingen würde, dass sich ein Verhalten ändert:
+STOPP. Melden. Diese Sektion NICHT extrahieren, sondern im Elternfile
+belassen und im Abschluss-Statement dokumentieren.
+
+---
+
+## SCHRITT 0 — Sicherungspunkt & Referenz-Snapshot
+
+1. Vor jeder Änderung: `npm run build` ausführen und bestätigen, dass der
+   aktuelle Stand fehlerfrei baut. Falls NICHT: STOPP, nicht mit dem
+   Refactoring beginnen (das Refactoring darf nicht auf einem kaputten
+   Build starten).
+2. Notiere die aktuelle Zeilenzahl der Datei als Referenz.
+
+**KEIN Commit in diesem Schritt.**
+
+---
+
+## SCHRITT 1 — Ordnerstruktur und gemeinsamer Typ
+
+1. Neuen Ordner anlegen:
+   `app/w/[workspaceSlug]/admin/assessments/[assessmentId]/sections/`.
+2. Neue Datei `sections/types.ts`: exportiere ein Interface
+   `SectionProps`, das die von Sektionen gemeinsam genutzten Grunddaten
+   beschreibt (z. B. `assessmentId`, `workspaceSlug`, das
+   Assessment-Objekt). Sektions-spezifische Props werden PRO Komponente
+   ergänzt, nicht hier global gesammelt.
+3. Hilfsfunktionen `formatDate`, `formatFileSize`, `toDateInputValue`
+   (aktuell Z. 157–168 im Elternfile) nach `sections/utils.ts`
+   verschieben und dort exportieren. Im Elternfile durch Import ersetzen.
+
+**COMMIT (exakter Wortlaut):**
+`Refactoring Vorbereitung: sections-Ordner, gemeinsame Typen und Utils extrahiert`
+
+---
+
+## SCHRITT 2 — Sektionen einzeln extrahieren (eine pro Commit)
+
+Für JEDE Sektion in dieser Reihenfolge (kleinste zuerst, größte zuletzt —
+reduziert Risiko):
+`participants` → `portal` → `activation` → `validation` → `overview` →
+`documents` → `mtmm` → `requirements` → `exercises`
+
+Pro Sektion GENAU diese Schritte:
+
+1. Neue Datei `sections/<SectionName>Section.tsx` anlegen (PascalCase,
+   z. B. `ParticipantsSection.tsx`).
+2. Den JSX-Block der Sektion (aus dem `activeSection === "..."`-Zweig)
+   1:1 in die neue Komponente verschieben.
+3. Jeden im Block verwendeten State-Wert, Setter, Handler und jede
+   abgeleitete Variable als PROP der neuen Komponente definieren
+   (typisiert, KEIN `any`). Im Elternfile wird die Sektion durch
+   `<XxxSection prop1={...} prop2={...} />` ersetzt, mit exakt denselben
+   Werten, die vorher inline verfügbar waren.
+4. KEINE Logik verändern. KEINE Hooks in die Kindkomponente verschieben
+   (die Kindkomponente ist rein präsentational und erhält alles via Props;
+   Ausnahme: rein lokaler UI-State, der AUSSCHLIESSLICH innerhalb dieser
+   einen Sektion verwendet wird und nirgends sonst — dieser darf mit
+   umziehen, muss aber im Commit-Text vermerkt werden).
+5. Nach JEDER Sektion: `npm run build` UND `npm run lint`. Bei Fehlern:
+   STOPP, beheben, bevor die nächste Sektion beginnt.
+6. Nach JEDER Sektion visuell verifizieren: die Sektion rendert und
+   funktioniert identisch zum Vorher-Zustand.
+
+**COMMIT pro Sektion (exakter Wortlaut, `<SectionName>` ersetzen):**
+`Refactoring: <SectionName>-Sektion in eigene Komponente extrahiert`
+
+---
+
+## SCHRITT 3 — Elternfile aufräumen
+
+1. Nach Extraktion aller Sektionen: das Elternfile
+   `page.tsx` enthält nur noch: Datenladelogik, State/Hooks, Section-
+   Navigation, und die `<XxxSection />`-Aufrufe. Prüfe, dass keine toten
+   Variablen/Imports übrig bleiben (ungenutzte Handler, die jetzt nur noch
+   als Props durchgereicht werden, bleiben — sie werden ja verwendet;
+   aber Variablen, die durch die Extraktion komplett ungenutzt wurden,
+   entfernen).
+2. Zeilenzahl des Elternfiles dokumentieren — Ziel: deutlich unter 1500
+   Zeilen. Falls über 1500: im Abschluss-Statement begründen, welche
+   Sektion(en) nicht extrahiert werden konnten und warum.
+
+**COMMIT (exakter Wortlaut):**
+`Refactoring: Assessment-Detail-Elternfile bereinigt`
+
+---
+
+## SCHRITT 4 — Validierung (alle PASS erforderlich)
+
+1. `npm run build` — null Fehler. PASS/FAIL.
+2. `npm run lint` — null Fehler. PASS/FAIL.
+3. Jede der extrahierten Sektionen wird beim Klick auf den jeweiligen
+   Navigations-Eintrag korrekt angezeigt — je Sektion einzeln PASS/FAIL.
+4. Vollständiger Funktions-Durchlauf ohne Regression: Assessment öffnen,
+   durch ALLE Sektionen navigieren, in mindestens 3 Sektionen eine
+   Aktion ausführen (z. B. Speichern, Hinzufügen) — Verhalten identisch
+   zum Vorher-Zustand. PASS/FAIL.
+5. Keine neue `any`-Verwendung durch die Extraktion eingeführt
+   (`grep -c ": any\|as any" sections/*.tsx` — bewusst niedrig halten,
+   jede Nutzung begründen). PASS/FAIL.
+6. Elternfile-Zeilenzahl signifikant reduziert gegenüber Referenz aus
+   Schritt 0. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`Refactoring: Assessment-Detail-Seite in Sektions-Komponenten abgeschlossen und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Zusammenfassung: (a) Liste aller neu erstellten Sektions-Dateien mit
+Zeilenzahl, (b) Elternfile-Zeilenzahl vorher/nachher, (c) welche
+Sektionen — falls überhaupt — NICHT extrahiert werden konnten und die
+genaue technische Begründung, (d) alle 6 Validierungspunkte mit PASS/FAIL.
+Keine Selbsteinschätzung wie „sollte funktionieren" — nur verifizierte
+Ergebnisse aus tatsächlich ausgeführten Checks.
+
+## Hinweis (nicht Teil dieser Ausführung)
+
+Nach erfolgreichem Abschluss dieses Refactorings folgt als SEPARATER
+Hardprompt die gezielte Test-Absicherung der kritischen Pfade
+(Auth/RBAC, Consolidation-Engine, Consent-Verifikation, Report-
+Generierung). Dieses Refactoring ist die Voraussetzung dafür, weil
+kleinere Komponenten testbarer sind.
