@@ -37,7 +37,8 @@ const btnPrimary = "rounded-lg bg-brand-blue text-white text-sm font-medium px-4
 const btnDanger = "text-xs text-[var(--eds-status-red)] hover:text-[var(--eds-status-red)] font-medium";
 
 const EMPTY_RULES: RulesJson = {
-  colors: { primary: "#1a1a2e", secondary: "#16213e", accent: "#e94560", background: "#ffffff" },
+// no-eds-token: demo-brand-accent
+  colors: { primary: "var(--eds-text-primary)", secondary: "var(--eds-text-primary)", accent: "#e94560", background: "var(--eds-bg-surface)" },
   typography: { headingFont: "Playfair Display", bodyFont: "Inter", headingSize: "2rem", bodySize: "1rem" },
   spacing: { gridUnit: "8px", margins: "24px" },
   logo: { position: "top-left", maxHeight: "48px" },
@@ -172,7 +173,7 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-[#1a1a2e]" style={{ fontFamily: "Satoshi, sans-serif" }} data-testid="heading-style-guides">
+          <h2 className="text-lg font-semibold text-[var(--eds-text-primary)]" style={{ fontFamily: "Satoshi, sans-serif" }} data-testid="heading-style-guides">
             Style Guides
           </h2>
           <p className="text-sm text-[var(--eds-text-tertiary)]">Hochgeladene Marken-Styleguides für diesen Workspace</p>
@@ -181,15 +182,15 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
           onClick={() => setShowUpload(!showUpload)}
           data-testid="button-toggle-upload"
           className="rounded-lg text-white text-sm font-medium px-4 py-2 transition-colors"
-          style={{ backgroundColor: showUpload ? "#94a3b8" : "#A6473B" }}
+          style={{ backgroundColor: showUpload ? "var(--eds-text-tertiary)" : "var(--eds-terracotta)" }}
         >
           {showUpload ? "Abbrechen" : "+ Style Guide hochladen"}
         </button>
       </div>
 
       {showUpload && (
-        <div className="bg-[#EFF4F5] border border-[var(--eds-border)] rounded-xl p-6 mb-4" data-testid="section-upload-form">
-          <h3 className="text-sm font-semibold text-[#1a1a2e] mb-4" style={{ fontFamily: "Satoshi, sans-serif" }}>
+        <div className="bg-[var(--eds-lagune-light)] border border-[var(--eds-border)] rounded-xl p-6 mb-4" data-testid="section-upload-form">
+          <h3 className="text-sm font-semibold text-[var(--eds-text-primary)] mb-4" style={{ fontFamily: "Satoshi, sans-serif" }}>
             Neuen Style Guide hochladen
           </h3>
           <div className="space-y-4">
@@ -211,7 +212,7 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
                 accept=".pdf"
                 onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
                 data-testid="input-upload-file"
-                className="block w-full text-sm text-[var(--eds-text-tertiary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#A6473B] file:text-white hover:file:opacity-90 file:cursor-pointer"
+                className="block w-full text-sm text-[var(--eds-text-tertiary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[var(--eds-terracotta)] file:text-white hover:file:opacity-90 file:cursor-pointer"
               />
             </div>
             {uploadError && <p className="text-sm text-[var(--eds-status-red)]" data-testid="text-upload-error">{uploadError}</p>}
@@ -220,7 +221,7 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
               disabled={!uploadFile || !uploadTitle.trim() || uploading}
               data-testid="button-upload-styleguide"
               className="rounded-lg text-white text-sm font-medium px-6 py-2.5 transition-colors disabled:opacity-50"
-              style={{ backgroundColor: "#A6473B" }}
+              style={{ backgroundColor: "var(--eds-terracotta)" }}
             >
               {uploading ? "Wird hochgeladen…" : "Hochladen"}
             </button>
@@ -249,7 +250,7 @@ function StyleGuidesSection({ workspaceSlug, router }: { workspaceSlug: string; 
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h4 className="font-semibold text-[#1a1a2e] text-sm" data-testid={`text-sg-title-${sg.id}`}>
+                    <h4 className="font-semibold text-[var(--eds-text-primary)] text-sm" data-testid={`text-sg-title-${sg.id}`}>
                       {sg.title}
                     </h4>
                     <p className="text-xs text-[var(--eds-text-disabled)] mt-0.5">
@@ -562,10 +563,11 @@ function RulesFormFields({
       <div>
         <h4 className="text-sm font-semibold text-brand-navy mb-3">Farben (Colors)</h4>
         <div className="grid md:grid-cols-2 gap-4">
-          <ColorField label="Primary" value={rules.colors?.primary || "#1a1a2e"} onChange={(v) => updateColors("primary", v)} testId="input-color-primary" />
-          <ColorField label="Secondary" value={rules.colors?.secondary || "#16213e"} onChange={(v) => updateColors("secondary", v)} testId="input-color-secondary" />
+          <ColorField label="Primary" value={rules.colors?.primary || "var(--eds-text-primary)"} onChange={(v) => updateColors("primary", v)} testId="input-color-primary" />
+          <ColorField label="Secondary" value={rules.colors?.secondary || "var(--eds-text-primary)"} onChange={(v) => updateColors("secondary", v)} testId="input-color-secondary" />
+// no-eds-token: demo-brand-accent
           <ColorField label="Accent" value={rules.colors?.accent || "#e94560"} onChange={(v) => updateColors("accent", v)} testId="input-color-accent" />
-          <ColorField label="Background" value={rules.colors?.background || "#ffffff"} onChange={(v) => updateColors("background", v)} testId="input-color-background" />
+          <ColorField label="Background" value={rules.colors?.background || "var(--eds-bg-surface)"} onChange={(v) => updateColors("background", v)} testId="input-color-background" />
         </div>
       </div>
 
@@ -924,6 +926,7 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
               { label: "Background", color: colors.background },
             ].map((c) => (
               <div key={c.label} className="flex items-center gap-3" data-testid={`preview-color-${c.label.toLowerCase()}`}>
+// no-eds-token: user-defined color fallback — dynamischer Farbwert, var() nicht möglich
                 <div className="w-10 h-10 rounded-lg border border-[var(--eds-border)] shrink-0" style={{ backgroundColor: c.color || "#ccc" }} />
                 <div>
                   <p className="text-xs font-medium text-[var(--eds-text-primary)]">{c.label}</p>
@@ -1015,7 +1018,7 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
       <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6">
         <h3 className="text-sm font-semibold text-brand-navy mb-4">Live-Vorschau</h3>
         <div className="border border-[var(--eds-border)] rounded-xl overflow-hidden" data-testid="preview-panel">
-          <div className="px-5 py-3 flex items-center justify-between" style={{ backgroundColor: colors.primary || "#1a1a2e" }}>
+          <div className="px-5 py-3 flex items-center justify-between" style={{ backgroundColor: colors.primary || "var(--eds-text-primary)" }}>
             <span className="text-sm font-bold text-white" style={{ fontFamily: `'${typography.headingFont || "sans-serif"}', serif` }}>
               Workspace Preview
             </span>
@@ -1024,16 +1027,17 @@ function PreviewTab({ workspaceSlug }: { workspaceSlug: string }) {
               <span>Menü</span>
             </div>
           </div>
-          <div className="p-6 space-y-4" style={{ backgroundColor: colors.background || "#ffffff" }}>
-            <h4 className="text-xl font-bold" style={{ fontFamily: `'${typography.headingFont || "sans-serif"}', serif`, color: colors.primary || "#1a1a2e" }}>
+          <div className="p-6 space-y-4" style={{ backgroundColor: colors.background || "var(--eds-bg-surface)" }}>
+            <h4 className="text-xl font-bold" style={{ fontFamily: `'${typography.headingFont || "sans-serif"}', serif`, color: colors.primary || "var(--eds-text-primary)" }}>
               Überschrift Beispiel
             </h4>
             <p className="text-sm leading-relaxed text-[var(--eds-text-primary)]" style={{ fontFamily: `'${typography.bodyFont || "sans-serif"}', sans-serif` }}>
               Dies ist ein Beispieltext, der zeigt, wie das Branding mit den definierten Farben und Schriftarten aussehen wird.
             </p>
             <div className="flex gap-3">
-              <span className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ backgroundColor: colors.primary || "#1a1a2e" }}>Primary</span>
-              <span className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ backgroundColor: colors.secondary || "#16213e" }}>Secondary</span>
+              <span className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ backgroundColor: colors.primary || "var(--eds-text-primary)" }}>Primary</span>
+              <span className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ backgroundColor: colors.secondary || "var(--eds-text-primary)" }}>Secondary</span>
+// no-eds-token: demo-brand-accent
               <span className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ backgroundColor: colors.accent || "#e94560" }}>Accent</span>
             </div>
           </div>
@@ -1212,7 +1216,7 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
             disabled={!file || analyzing}
             data-testid="button-analyze-styleguide"
             className="rounded-lg text-white text-sm font-medium px-6 py-2.5 transition-colors disabled:opacity-50"
-            style={{ backgroundColor: analyzing ? "#94a3b8" : "hsl(14, 48%, 44%)" }}
+            style={{ backgroundColor: analyzing ? "var(--eds-text-tertiary)" : "hsl(14, 48%, 44%)" }}
           >
             {analyzing ? (
               <span className="flex items-center gap-2">
@@ -1254,7 +1258,7 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
                     <div key={c.label} className="flex items-center gap-2">
                       <div
                         className="w-8 h-8 rounded-lg border border-[var(--eds-border)] shrink-0"
-                        style={{ backgroundColor: c.color || "#e2e8f0" }}
+                        style={{ backgroundColor: c.color || "var(--eds-border)" }}
                       />
                       <div>
                         <p className="text-xs font-medium text-[var(--eds-text-secondary)]">{c.label}</p>
@@ -1326,7 +1330,7 @@ function AIAnalysisTab({ workspaceSlug, onSwitchToEdit }: { workspaceSlug: strin
               onClick={() => setSaved(true)}
               data-testid="button-save-parsed"
               className="rounded-lg text-white text-sm font-medium px-6 py-2.5 transition-colors"
-              style={{ backgroundColor: saved ? "#059669" : "hsl(14, 48%, 44%)" }}
+              style={{ backgroundColor: saved ? "var(--eds-status-green)" : "hsl(14, 48%, 44%)" }}
             >
               {saved ? "✓ Gespeichert" : "Als Regelwerk speichern"}
             </button>
@@ -1351,6 +1355,7 @@ function ColorField({ label, value, onChange, testId }: { label: string; value: 
       <div className="flex items-center gap-2">
         <input
           type="color"
+// no-eds-token: color-picker-default — value prop für <input type="color">, var() inkompatibel
           value={value.startsWith("#") ? value : "#000000"}
           onChange={(e) => onChange(e.target.value)}
           className="w-10 h-10 rounded-lg border border-[var(--eds-border)] cursor-pointer p-0.5"

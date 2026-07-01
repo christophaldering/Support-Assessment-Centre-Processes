@@ -199,10 +199,10 @@ export default function DataRoomLinksPage() {
       />
 
       {/* ── Live-Sitzungen ───────────────────────────────────────────────── */}
-      <section style={{ ...S.card, marginBottom: 20, borderColor: liveSessions.length > 0 ? "#b6e8d0" : "var(--eds-border,#e2e8f0)" }}>
+      <section style={{ ...S.card, marginBottom: 20, borderColor: liveSessions.length > 0 ? "var(--eds-status-green-bg)" : "var(--eds-border,var(--eds-border))" }}>
         <div style={S.liveHeader}>
           <div style={S.liveTitleRow}>
-            <span style={{ ...S.liveDot, background: liveSessions.length > 0 ? "#16a34a" : "#94a3b8", boxShadow: liveSessions.length > 0 ? "0 0 0 3px #bbf7d040" : "none" }} />
+            <span style={{ ...S.liveDot, background: liveSessions.length > 0 ? "var(--eds-status-green)" : "var(--eds-text-tertiary)", boxShadow: liveSessions.length > 0 ? "0 0 0 3px var(--eds-status-green-bg)40" : "none" }} />
             <h2 style={{ ...S.h2, margin: 0 }}>
               Aktive Nutzer jetzt
               {liveSessions.length > 0 && (
@@ -334,8 +334,8 @@ export default function DataRoomLinksPage() {
                   onClick={() => handleSend(newLinkId, newLinkEmail)}
                   disabled={sendingId === newLinkId}
                   style={{
-                    background: sentId === newLinkId ? "#15803d" : sendError?.id === newLinkId ? "#991b1b" : "#A6473B",
-                    color: "#fff",
+                    background: sentId === newLinkId ? "var(--eds-status-green)" : sendError?.id === newLinkId ? "var(--eds-status-red)" : "var(--eds-terracotta)",
+                    color: "var(--eds-bg-surface)",
                     border: "none",
                     borderRadius: 6,
                     padding: "6px 14px",
@@ -352,7 +352,7 @@ export default function DataRoomLinksPage() {
               )}
             </div>
             {sendError?.id === newLinkId && (
-              <p style={{ fontSize: 12, color: "#991b1b", margin: "8px 0 0" }}>{sendError.msg}</p>
+              <p style={{ fontSize: 12, color: "var(--eds-status-red)", margin: "8px 0 0" }}>{sendError.msg}</p>
             )}
           </div>
         )}
@@ -379,31 +379,31 @@ export default function DataRoomLinksPage() {
               const expired = new Date(l.expiresAt) < new Date();
               const isLive = activeLinkIds.has(l.id);
               const status = l.revoked ? "Gesperrt" : expired ? "Abgelaufen" : "Aktiv";
-              const statusColor = l.revoked ? "#991b1b" : expired ? "#92400e" : "#15803d";
-              const statusBg = l.revoked ? "#fef2f2" : expired ? "#fffbeb" : "#f0fdf4";
+              const statusColor = l.revoked ? "var(--eds-status-red)" : expired ? "var(--eds-status-amber)" : "var(--eds-status-green)";
+              const statusBg = l.revoked ? "var(--eds-status-red-bg)" : expired ? "var(--eds-status-amber-bg)" : "var(--eds-status-green-bg)";
               return (
                 <div
                   key={l.id}
-                  style={{ ...S.tableRow, background: isLive ? "#f0fdf4" : undefined }}
+                  style={{ ...S.tableRow, background: isLive ? "var(--eds-status-green-bg)" : undefined }}
                   data-testid={`row-link-${l.id}`}
                 >
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
                       {isLive && (
                         <span
-                          style={{ width: 8, height: 8, borderRadius: "50%", background: "#16a34a", display: "inline-block", flexShrink: 0, boxShadow: "0 0 0 2px #bbf7d0" }}
+                          style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--eds-status-green)", display: "inline-block", flexShrink: 0, boxShadow: "0 0 0 2px var(--eds-status-green-bg)" }}
                           title="Gerade aktiv im Datenraum"
                           data-testid={`live-dot-${l.id}`}
                         />
                       )}
                       {l.label}
                     </div>
-                    {l.email && <div style={{ fontSize: 11, color: "#7f8da3" }}>{l.email}</div>}
+                    {l.email && <div style={{ fontSize: 11, color: "var(--eds-text-tertiary)" }}>{l.email}</div>}
                   </div>
                   <div style={{ fontSize: 13 }}>{l.dataRoomSlug}</div>
-                  <div style={{ fontSize: 12, color: "#5a6a82" }}>
+                  <div style={{ fontSize: 12, color: "var(--eds-text-secondary)" }}>
                     {fmtDate(l.expiresAt)}
-                    {l.lastUsedAt && <div style={{ fontSize: 11, color: "#94a3b8" }}>Zuletzt: {fmtDate(l.lastUsedAt)}</div>}
+                    {l.lastUsedAt && <div style={{ fontSize: 11, color: "var(--eds-text-tertiary)" }}>Zuletzt: {fmtDate(l.lastUsedAt)}</div>}
                   </div>
                   <div style={{ fontSize: 13 }}>
                     {l.useCount}× / {l._count.events} Events
@@ -422,7 +422,7 @@ export default function DataRoomLinksPage() {
                     {!l.revoked && !expired && (
                       <button
                         onClick={() => handleCopy(l.token, l.id)}
-                        style={{ ...S.btnSmall, background: copiedId === l.id ? "#f0fdf4" : undefined }}
+                        style={{ ...S.btnSmall, background: copiedId === l.id ? "var(--eds-status-green-bg)" : undefined }}
                         data-testid={`button-copy-${l.id}`}
                       >
                         {copiedId === l.id ? "✓ Kopiert" : "Link kopieren"}
@@ -434,9 +434,9 @@ export default function DataRoomLinksPage() {
                         disabled={sendingId === l.id}
                         style={{
                           ...S.btnSmall,
-                          background: sentId === l.id ? "#f0fdf4" : sendError?.id === l.id ? "#fef2f2" : "#fff8f7",
-                          color: sentId === l.id ? "#15803d" : sendError?.id === l.id ? "#991b1b" : "#A6473B",
-                          borderColor: sentId === l.id ? "#bbf7d0" : sendError?.id === l.id ? "#fecaca" : "#f5c2bb",
+                          background: sentId === l.id ? "var(--eds-status-green-bg)" : sendError?.id === l.id ? "var(--eds-status-red-bg)" : "var(--eds-terracotta-ghost)",
+                          color: sentId === l.id ? "var(--eds-status-green)" : sendError?.id === l.id ? "var(--eds-status-red)" : "var(--eds-terracotta)",
+                          borderColor: sentId === l.id ? "var(--eds-status-green-bg)" : sendError?.id === l.id ? "var(--eds-status-red-bg)" : "var(--eds-terracotta-ghost)",
                           fontWeight: 600,
                           opacity: sendingId === l.id ? 0.6 : 1,
                         }}
@@ -449,7 +449,7 @@ export default function DataRoomLinksPage() {
                     {!l.revoked && (
                       <button
                         onClick={() => handleRevoke(l.id)}
-                        style={{ ...S.btnSmall, color: "#991b1b", borderColor: "#fecaca" }}
+                        style={{ ...S.btnSmall, color: "var(--eds-status-red)", borderColor: "var(--eds-status-red-bg)" }}
                         data-testid={`button-revoke-${l.id}`}
                       >
                         Sperren
@@ -457,7 +457,7 @@ export default function DataRoomLinksPage() {
                     )}
                   </div>
                   {sendError?.id === l.id && (
-                    <div style={{ gridColumn: "1 / -1", fontSize: 12, color: "#991b1b", background: "#fef2f2", borderRadius: 6, padding: "6px 10px", marginTop: 4 }}>
+                    <div style={{ gridColumn: "1 / -1", fontSize: 12, color: "var(--eds-status-red)", background: "var(--eds-status-red-bg)", borderRadius: 6, padding: "6px 10px", marginTop: 4 }}>
                       {sendError.msg}
                     </div>
                   )}
@@ -472,48 +472,49 @@ export default function DataRoomLinksPage() {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  wrap: { maxWidth: 1100, margin: "0 auto", padding: "32px 24px", fontFamily: "var(--eds-font,'Satoshi',system-ui,sans-serif)", color: "var(--eds-text,#1a2332)" },
+  wrap: { maxWidth: 1100, margin: "0 auto", padding: "32px 24px", fontFamily: "var(--eds-font,'Satoshi',system-ui,sans-serif)", color: "var(--eds-text,var(--eds-text-primary))" },
   header: { marginBottom: 24 },
-  eyebrow: { fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--eds-accent,#A6473B)", fontWeight: 700 },
+  eyebrow: { fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--eds-accent,var(--eds-terracotta))", fontWeight: 700 },
   h1: { fontSize: 26, margin: "6px 0 0", fontWeight: 700 },
-  sub: { fontSize: 13, color: "var(--eds-text-muted,#7f8da3)", marginTop: 4 },
-  card: { background: "#fff", border: "1px solid var(--eds-border,#e2e8f0)", borderRadius: 16, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,.04)" },
+  sub: { fontSize: 13, color: "var(--eds-text-muted,var(--eds-text-tertiary))", marginTop: 4 },
+  card: { background: "var(--eds-bg-surface)", border: "1px solid var(--eds-border,var(--eds-border))", borderRadius: 16, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,.04)" },
   h2: { fontSize: 16, fontWeight: 700, margin: "0 0 18px" },
   // Live section
   liveHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   liveTitleRow: { display: "flex", alignItems: "center", gap: 10 },
   liveDot: { width: 10, height: 10, borderRadius: "50%", flexShrink: 0, transition: "background .3s, box-shadow .3s" },
-  liveCount: { display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#16a34a", color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 999, width: 20, height: 20, marginLeft: 8 },
-  liveChecked: { fontSize: 11, color: "var(--eds-text-muted,#94a3b8)" },
+  liveCount: { display: "inline-flex", alignItems: "center", justifyContent: "center", background: "var(--eds-status-green)", color: "var(--eds-bg-surface)", fontSize: 11, fontWeight: 700, borderRadius: 999, width: 20, height: 20, marginLeft: 8 },
+  liveChecked: { fontSize: 11, color: "var(--eds-text-muted,var(--eds-text-tertiary))" },
   liveGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 12 },
-  liveCard: { background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 },
+  liveCard: { background: "var(--eds-status-green-bg)", border: "1px solid var(--eds-status-green-bg)", borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 },
   liveCardTop: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" },
-  liveActiveDot: { width: 8, height: 8, borderRadius: "50%", background: "#16a34a", flexShrink: 0, boxShadow: "0 0 0 2px #bbf7d0", animation: "pulse 2s infinite" },
+  liveActiveDot: { width: 8, height: 8, borderRadius: "50%", background: "var(--eds-status-green)", flexShrink: 0, boxShadow: "0 0 0 2px var(--eds-status-green-bg)", animation: "pulse 2s infinite" },
   liveName: { fontWeight: 700, fontSize: 14 },
-  liveEmail: { fontSize: 11, color: "#5a6a82" },
+  liveEmail: { fontSize: 11, color: "var(--eds-text-secondary)" },
   liveDocRow: { display: "flex", flexDirection: "column", gap: 2 },
+// no-eds-token: custom activity-green
   liveDocLabel: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "#5a7a52" },
-  liveDoc: { fontSize: 12, color: "#1a2332", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
+  liveDoc: { fontSize: 12, color: "var(--eds-text-primary)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
   liveMeta: { display: "flex", gap: 6, flexWrap: "wrap" },
-  liveMetaChip: { fontSize: 11, background: "#fff", border: "1px solid #bbf7d0", borderRadius: 999, padding: "2px 8px", color: "#15803d" },
-  liveViewBtn: { alignSelf: "flex-start", marginTop: 2, background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "var(--eds-accent,#A6473B)", padding: 0 },
+  liveMetaChip: { fontSize: 11, background: "var(--eds-bg-surface)", border: "1px solid var(--eds-status-green-bg)", borderRadius: 999, padding: "2px 8px", color: "var(--eds-status-green)" },
+  liveViewBtn: { alignSelf: "flex-start", marginTop: 2, background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "var(--eds-accent,var(--eds-terracotta))", padding: 0 },
   // Form
   form: { display: "flex", flexDirection: "column", gap: 14 },
   formRow: { display: "flex", flexDirection: "column", gap: 4 },
-  label: { fontSize: 12, fontWeight: 600, color: "var(--eds-text-muted,#5a6a82)" },
-  input: { padding: "9px 12px", border: "1px solid var(--eds-border,#e2e8f0)", borderRadius: 8, fontSize: 14, outline: "none", width: "100%", maxWidth: 420, boxSizing: "border-box" as const },
+  label: { fontSize: 12, fontWeight: 600, color: "var(--eds-text-muted,var(--eds-text-secondary))" },
+  input: { padding: "9px 12px", border: "1px solid var(--eds-border,var(--eds-border))", borderRadius: 8, fontSize: 14, outline: "none", width: "100%", maxWidth: 420, boxSizing: "border-box" as const },
   checkLabel: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" },
-  errorMsg: { color: "#991b1b", fontSize: 13, background: "#fef2f2", borderRadius: 8, padding: "8px 12px" },
-  btnPrimary: { alignSelf: "flex-start", background: "var(--eds-accent,#A6473B)", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
-  successBox: { marginTop: 16, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: 16 },
-  successLabel: { fontSize: 13, fontWeight: 600, color: "#15803d", marginBottom: 8 },
+  errorMsg: { color: "var(--eds-status-red)", fontSize: 13, background: "var(--eds-status-red-bg)", borderRadius: 8, padding: "8px 12px" },
+  btnPrimary: { alignSelf: "flex-start", background: "var(--eds-accent,var(--eds-terracotta))", color: "var(--eds-bg-surface)", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  successBox: { marginTop: 16, background: "var(--eds-status-green-bg)", border: "1px solid var(--eds-status-green-bg)", borderRadius: 10, padding: 16 },
+  successLabel: { fontSize: 13, fontWeight: 600, color: "var(--eds-status-green)", marginBottom: 8 },
   urlRow: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" },
-  urlCode: { background: "#fff", border: "1px solid #bbf7d0", borderRadius: 6, padding: "6px 10px", fontSize: 12, wordBreak: "break-all" as const, flex: 1 },
-  btnCopy: { background: "#15803d", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const },
-  empty: { fontSize: 13, color: "var(--eds-text-muted,#7f8da3)" },
+  urlCode: { background: "var(--eds-bg-surface)", border: "1px solid var(--eds-status-green-bg)", borderRadius: 6, padding: "6px 10px", fontSize: 12, wordBreak: "break-all" as const, flex: 1 },
+  btnCopy: { background: "var(--eds-status-green)", color: "var(--eds-bg-surface)", border: "none", borderRadius: 6, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const },
+  empty: { fontSize: 13, color: "var(--eds-text-muted,var(--eds-text-tertiary))" },
   table: { display: "flex", flexDirection: "column", gap: 0 },
-  tableHead: { display: "grid", gridTemplateColumns: "2fr 1fr 1.5fr 1fr 1fr 1.5fr", gap: 12, padding: "8px 12px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", color: "var(--eds-text-muted,#7f8da3)", borderBottom: "1px solid var(--eds-border,#e2e8f0)" },
-  tableRow: { display: "grid", gridTemplateColumns: "2fr 1fr 1.5fr 1fr 1fr 1.5fr", gap: 12, padding: "12px", alignItems: "center", borderBottom: "1px solid var(--eds-border,#f1f5f9)", fontSize: 13 },
+  tableHead: { display: "grid", gridTemplateColumns: "2fr 1fr 1.5fr 1fr 1fr 1.5fr", gap: 12, padding: "8px 12px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", color: "var(--eds-text-muted,var(--eds-text-tertiary))", borderBottom: "1px solid var(--eds-border,var(--eds-border))" },
+  tableRow: { display: "grid", gridTemplateColumns: "2fr 1fr 1.5fr 1fr 1fr 1.5fr", gap: 12, padding: "12px", alignItems: "center", borderBottom: "1px solid var(--eds-border,var(--eds-bg-sunken))", fontSize: 13 },
   statusPill: { fontSize: 11, fontWeight: 600, borderRadius: 999, padding: "3px 10px" },
-  btnSmall: { fontSize: 12, padding: "5px 10px", border: "1px solid var(--eds-border,#e2e8f0)", borderRadius: 6, background: "#fff", cursor: "pointer", color: "var(--eds-text,#1a2332)", whiteSpace: "nowrap" as const },
+  btnSmall: { fontSize: 12, padding: "5px 10px", border: "1px solid var(--eds-border,var(--eds-border))", borderRadius: 6, background: "var(--eds-bg-surface)", cursor: "pointer", color: "var(--eds-text,var(--eds-text-primary))", whiteSpace: "nowrap" as const },
 };

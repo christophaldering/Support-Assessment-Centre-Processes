@@ -250,6 +250,7 @@ export default function ReportsPage() {
                 disabled={!selectedAssessmentId || !selectedCandidateId || generating !== null}
                 data-testid={`button-generate-${fmt}`}
                 className="rounded-lg text-white text-sm font-medium px-5 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+// no-eds-token: loading-disabled-gray — kein exaktes EDS-Token vorhanden
                 style={{ backgroundColor: generating === fmt ? "#999" : accentColor }}
               >
                 {generating === fmt

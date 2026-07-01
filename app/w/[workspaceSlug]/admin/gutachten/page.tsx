@@ -127,7 +127,7 @@ export default function GutachtenGeneratorPage() {
         <div className="mb-8">
           <a
             href={`/w/${workspaceSlug}/admin/prompt-library`}
-            className="inline-flex items-center gap-1 text-xs text-[var(--eds-text-disabled)] hover:text-[#297587] mt-2 transition-colors"
+            className="inline-flex items-center gap-1 text-xs text-[var(--eds-text-disabled)] hover:text-[var(--eds-lagune)] mt-2 transition-colors"
             data-testid="link-prompt-library-gutachten"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -152,7 +152,7 @@ export default function GutachtenGeneratorPage() {
                   ? "border-current"
                   : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"
               }`}
-              style={activeTab === tab.key ? { color: "#297587", borderColor: "#297587" } : {}}
+              style={activeTab === tab.key ? { color: "var(--eds-lagune)", borderColor: "var(--eds-lagune)" } : {}}
             >
               {tab.label}
             </button>
@@ -191,7 +191,7 @@ function ReportTypeSection({
       <div className="bg-white rounded-xl border border-[var(--eds-border)] p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold" style={{ color: "#297587" }} data-testid={`heading-${reportType}`}>
+            <h2 className="text-lg font-semibold" style={{ color: "var(--eds-lagune)" }} data-testid={`heading-${reportType}`}>
               {meta.label}
             </h2>
             <p className="text-sm text-[var(--eds-text-tertiary)]">{meta.description}</p>
@@ -200,7 +200,7 @@ function ReportTypeSection({
             onClick={() => setShowUpload(!showUpload)}
             data-testid={`button-upload-${reportType}`}
             className="rounded-lg text-white text-sm font-medium px-4 py-2 hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: "#297587" }}
+            style={{ backgroundColor: "var(--eds-lagune)" }}
           >
             {showUpload ? "Abbrechen" : "+ Vorlage hochladen"}
           </button>
@@ -305,7 +305,7 @@ function UploadForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 p-4 rounded-lg border border-[var(--eds-border)]" style={{ backgroundColor: "#EFF4F5" }}>
+    <form onSubmit={handleSubmit} className="mt-4 p-4 rounded-lg border border-[var(--eds-border)]" style={{ backgroundColor: "var(--eds-lagune-light)" }}>
       {error && (
         <div className="mb-3 p-2 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded text-sm text-[var(--eds-status-red)]" data-testid="text-upload-error">
           {error}
@@ -320,7 +320,7 @@ function UploadForm({
           onChange={(e) => setName(e.target.value)}
           data-testid="input-template-name"
           className="w-full rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] placeholder:text-[var(--eds-text-disabled)] focus:outline-none focus:ring-2 focus:border-transparent"
-          style={{ "--tw-ring-color": "#297587" } as React.CSSProperties}
+          style={{ "--tw-ring-color": "var(--eds-lagune)" } as React.CSSProperties}
           placeholder="z.B. Standard One-Pager 2026"
           required
         />
@@ -335,7 +335,7 @@ function UploadForm({
           onClick={() => fileInputRef.current?.click()}
           data-testid="dropzone-file"
           className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-            dragOver ? "border-[#297587] bg-[#297587]/5" : "border-[var(--eds-border-strong)] hover:border-[#297587]"
+            dragOver ? "border-[var(--eds-lagune)] bg-[var(--eds-lagune)]/5" : "border-[var(--eds-border-strong)] hover:border-[var(--eds-lagune)]"
           }`}
         >
           {file ? (
@@ -355,7 +355,7 @@ function UploadForm({
             <div>
               <div className="text-2xl mb-1">📎</div>
               <p className="text-sm text-[var(--eds-text-secondary)]">
-                PPTX-Datei hierher ziehen oder <span style={{ color: "#297587" }} className="font-medium">klicken</span>
+                PPTX-Datei hierher ziehen oder <span style={{ color: "var(--eds-lagune)" }} className="font-medium">klicken</span>
               </p>
               <p className="text-xs text-[var(--eds-text-disabled)] mt-1">PowerPoint-Vorlagen (.pptx)</p>
             </div>
@@ -385,7 +385,7 @@ function UploadForm({
           disabled={uploading}
           data-testid="button-submit-upload"
           className="rounded-lg text-white text-sm font-medium px-4 py-2 hover:opacity-90 transition-opacity disabled:opacity-50"
-          style={{ backgroundColor: "#A6473B" }}
+          style={{ backgroundColor: "var(--eds-terracotta)" }}
         >
           {uploading ? "Wird hochgeladen…" : "Vorlage speichern"}
         </button>
@@ -541,7 +541,7 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
               onClick={handleAnalyze}
               data-testid={`button-analyze-${template.id}`}
               className="rounded-lg text-white text-xs font-medium px-3 py-1.5 hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: "#297587" }}
+              style={{ backgroundColor: "var(--eds-lagune)" }}
             >
               Analysieren
             </button>
@@ -553,7 +553,7 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
             onClick={(e) => e.stopPropagation()}
             data-testid={`button-generate-report-${template.id}`}
             className="rounded-lg text-white text-xs font-medium px-3 py-1.5 hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: "#A6473B" }}
+            style={{ backgroundColor: "var(--eds-terracotta)" }}
           >
             Bericht generieren
           </button>
@@ -562,7 +562,7 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
       </div>
 
       {expanded && (
-        <div className="border-t border-[var(--eds-border)] p-6" style={{ backgroundColor: "#EFF4F5" }}>
+        <div className="border-t border-[var(--eds-border)] p-6" style={{ backgroundColor: "var(--eds-lagune-light)" }}>
           {actionError && (
             <div className="mb-4 p-3 rounded-lg bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] text-xs text-[var(--eds-status-red)]" data-testid={`error-action-${template.id}`}>
               {actionError}
@@ -631,7 +631,7 @@ function TemplateCard({ template, workspaceSlug, onRefresh }: { template: Report
                     disabled={activating || !anonConfirmed}
                     data-testid={`button-activate-style-${template.id}`}
                     className="w-full rounded-lg text-white text-xs font-medium px-3 py-2 hover:opacity-90 transition-opacity disabled:opacity-40"
-                    style={{ backgroundColor: "#297587" }}
+                    style={{ backgroundColor: "var(--eds-lagune)" }}
                   >
                     {activating ? "Wird aktiviert…" : "Als Stilreferenz aktivieren"}
                   </button>

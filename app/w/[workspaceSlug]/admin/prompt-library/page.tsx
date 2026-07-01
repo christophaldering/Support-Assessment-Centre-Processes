@@ -125,7 +125,7 @@ function PromptCard({ slot, workspaceSlug, onSaved, onReset }: {
           {!editing && (
             <button
               onClick={handleEdit}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] hover:border-[#A6473B] hover:text-[#A6473B] transition-colors"
+              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--eds-border)] hover:border-[var(--eds-terracotta)] hover:text-[var(--eds-terracotta)] transition-colors"
               data-testid={`button-edit-${slot.key}`}
             >
               Bearbeiten
@@ -160,7 +160,7 @@ function PromptCard({ slot, workspaceSlug, onSaved, onReset }: {
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 rows={16}
-                className="w-full font-mono text-xs border border-[var(--eds-border)] rounded-lg p-3 focus:outline-none focus:border-[#297587] resize-y leading-relaxed"
+                className="w-full font-mono text-xs border border-[var(--eds-border)] rounded-lg p-3 focus:outline-none focus:border-[var(--eds-lagune)] resize-y leading-relaxed"
                 data-testid={`textarea-prompt-${slot.key}`}
               />
               <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ function PromptCard({ slot, workspaceSlug, onSaved, onReset }: {
                   onClick={handleSave}
                   disabled={saving || value.trim().length < 10}
                   className="text-sm font-medium px-4 py-2 rounded-lg text-white transition-opacity disabled:opacity-50"
-                  style={{ backgroundColor: "#A6473B" }}
+                  style={{ backgroundColor: "var(--eds-terracotta)" }}
                   data-testid={`button-save-${slot.key}`}
                 >
                   {saving ? "Speichert…" : "Speichern"}

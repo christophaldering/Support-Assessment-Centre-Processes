@@ -341,10 +341,11 @@ function ModulesHubContent() {
 
   const sourceBadge = (src: string) => {
     const map: Record<string, { color: string; bg: string; label: string }> = {
-      library:     { color: "#7c3aed", bg: "#f5f3ff", label: "Bibliothek" },
-      requirement: { color: "#0d9488", bg: "#f0fdfa", label: "Anforderung" },
+// no-eds-token: --eds-type-roleplay-bg nicht in tokens.css definiert — CSS-Fallback-Wert
+      library:     { color: "var(--eds-type-roleplay)", bg: "var(--eds-type-roleplay-bg, #F5F3FF)", label: "Bibliothek" },
+      requirement: { color: "var(--eds-lagune)", bg: "var(--eds-lagune-light)", label: "Anforderung" },
     };
-    const d = map[src] || { color: "#64748b", bg: "#f1f5f9", label: src };
+    const d = map[src] || { color: "var(--eds-text-secondary)", bg: "var(--eds-bg-sunken)", label: src };
     return <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: d.bg, color: d.color }}>{d.label}</span>;
   };
 
@@ -615,7 +616,7 @@ function ModulesHubContent() {
                             <div className="min-w-0">
                               <h3 className="text-sm font-semibold text-[var(--eds-text-primary)]">{item.title}</h3>
                               <div className="flex flex-wrap gap-1 mt-0.5">
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>{typeLabel(item.exerciseType)}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: "var(--eds-status-blue-bg)", color: "var(--eds-status-blue)" }}>{typeLabel(item.exerciseType)}</span>
                                 {item.targetLevels?.slice(0, 2).map((l) => (
                                   <span key={l} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--eds-status-amber-bg)] text-[var(--eds-status-amber)] font-medium">{l}</span>
                                 ))}

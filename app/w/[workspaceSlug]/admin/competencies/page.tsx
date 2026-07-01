@@ -1983,7 +1983,7 @@ function MappingTab({ workspaceSlug, router }: { workspaceSlug: string; router: 
                                     {weight.toFixed(1)}
                                   </span>
                                 ) : (
-                                  <span className="text-[#e2e8f0]">–</span>
+                                  <span className="text-[var(--eds-border)]">–</span>
                                 )}
                               </td>
                             );

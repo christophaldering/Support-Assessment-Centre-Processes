@@ -362,7 +362,7 @@ export default function PortalManagementSection({
                 disabled={togglingPhase === phase.id}
                 data-testid={`toggle-phase-${phase.id}`}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-blue/30 ${
-                  phase.unlocked ? "bg-[var(--eds-status-green-bg)]0" : "bg-[#cbd5e1]"
+                  phase.unlocked ? "bg-[var(--eds-status-green-bg)]0" : "bg-[var(--eds-border-strong)]"
                 } ${togglingPhase === phase.id ? "opacity-50" : ""}`}
               >
                 <span

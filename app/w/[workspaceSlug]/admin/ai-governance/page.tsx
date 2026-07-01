@@ -116,14 +116,14 @@ export default function AiGovernancePage() {
       <div className="flex gap-2 border-b border-[var(--eds-border)]">
         <button
           onClick={() => setActiveTab("settings")}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === "settings" ? "border-[#A6473B] text-[#A6473B]" : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"}`}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === "settings" ? "border-[var(--eds-terracotta)] text-[var(--eds-terracotta)]" : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"}`}
           data-testid="tab-settings"
         >
           Einstellungen
         </button>
         <button
           onClick={() => setActiveTab("audit")}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === "audit" ? "border-[#A6473B] text-[#A6473B]" : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"}`}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === "audit" ? "border-[var(--eds-terracotta)] text-[var(--eds-terracotta)]" : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"}`}
           data-testid="tab-audit"
         >
           Audit Log ({audit.length})
@@ -168,17 +168,17 @@ export default function AiGovernancePage() {
                     onClick={() => isAvailable && updateSettings({ activeLlmProvider: key })}
                     disabled={!isAvailable}
                     className={`relative rounded-lg border-2 p-4 text-left transition-all ${
-                      isActive ? "border-[#A6473B] bg-[#A6473B]/5 ring-1 ring-[#A6473B]/20" :
+                      isActive ? "border-[var(--eds-terracotta)] bg-[var(--eds-terracotta)]/5 ring-1 ring-[var(--eds-terracotta)]/20" :
                       isAvailable ? "border-[var(--eds-border)] hover:border-[var(--eds-border-strong)] bg-white" :
                       "border-[var(--eds-border)] bg-[var(--eds-bg-sunken)] opacity-60 cursor-not-allowed"
                     }`}
                     data-testid={`provider-${key}`}
                   >
                     {isActive && (
-                      <span className="absolute top-2 right-2 bg-[#A6473B] text-white text-xs px-2 py-0.5 rounded-full">Aktiv</span>
+                      <span className="absolute top-2 right-2 bg-[var(--eds-terracotta)] text-white text-xs px-2 py-0.5 rounded-full">Aktiv</span>
                     )}
                     {!isAvailable && (
-                      <span className="absolute top-2 right-2 bg-[#94a3b8] text-white text-xs px-2 py-0.5 rounded-full">Kommt bald</span>
+                      <span className="absolute top-2 right-2 bg-[var(--eds-text-tertiary)] text-white text-xs px-2 py-0.5 rounded-full">Kommt bald</span>
                     )}
                     <h3 className="font-semibold text-[var(--eds-text-primary)]">{info.name}</h3>
                     <p className="text-xs text-[var(--eds-text-tertiary)] mt-0.5">{info.region}</p>
@@ -200,7 +200,7 @@ export default function AiGovernancePage() {
                     key={mode.key}
                     onClick={() => updateSettings({ complianceMode: mode.key })}
                     className={`rounded-lg border-2 p-4 text-left transition-all ${
-                      isActive ? "border-[#297587] bg-[#297587]/5 ring-1 ring-[#297587]/20" : "border-[var(--eds-border)] hover:border-[var(--eds-border-strong)]"
+                      isActive ? "border-[var(--eds-lagune)] bg-[var(--eds-lagune)]/5 ring-1 ring-[var(--eds-lagune)]/20" : "border-[var(--eds-border)] hover:border-[var(--eds-border-strong)]"
                     }`}
                     data-testid={`compliance-${mode.key}`}
                   >
@@ -209,7 +209,7 @@ export default function AiGovernancePage() {
                       <h3 className="font-semibold text-[var(--eds-text-primary)]">{mode.label}</h3>
                     </div>
                     <p className="text-sm text-[var(--eds-text-secondary)]">{mode.description}</p>
-                    {isActive && <p className="text-xs text-[#297587] font-medium mt-2">● Aktiv</p>}
+                    {isActive && <p className="text-xs text-[var(--eds-lagune)] font-medium mt-2">● Aktiv</p>}
                   </button>
                 );
               })}

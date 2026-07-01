@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 const ComparisonView = dynamic(() => import("./ComparisonView"), { ssr: false });
 const RosterView = dynamic(() => import("./RosterView"), { ssr: false });
 
-const ACCENT = "#A6473B";
+const ACCENT = "var(--eds-terracotta)";
 
 type Tab = "uebersicht" | "gegenueberstellung" | "teilnehmer";
 
@@ -134,7 +134,7 @@ export default function AnalyticsDashboardPage() {
           <select
             value={selectedAssessment}
             onChange={(e) => { setSelectedAssessment(e.target.value); setActiveTab("uebersicht"); }}
-            className="rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#297587]/30"
+            className="rounded-lg border border-[var(--eds-border)] px-3 py-2 text-sm text-[var(--eds-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--eds-lagune)]/30"
             data-testid="select-assessment-filter"
           >
             <option value="">Alle Assessments</option>
@@ -291,17 +291,17 @@ export default function AnalyticsDashboardPage() {
           {/* Nudge to comparison tab */}
           {scoredCandidates.length >= 2 && comparisonEnabled && (
             <div
-              className="flex items-center justify-between p-4 bg-[#EFF4F5] border border-[#B5D6DE] rounded-xl text-sm cursor-pointer hover:border-[#297587] transition-colors"
+              className="flex items-center justify-between p-4 bg-[var(--eds-lagune-light)] border border-[var(--eds-lagune-md)] rounded-xl text-sm cursor-pointer hover:border-[var(--eds-lagune)] transition-colors"
               onClick={() => setActiveTab("gegenueberstellung")}
               data-testid="nudge-comparison"
             >
               <div>
-                <p className="font-medium text-[#115560]">Gegenüberstellung verfügbar</p>
-                <p className="text-xs text-[#297587] mt-0.5">
+                <p className="font-medium text-[var(--eds-lagune-dk)]">Gegenüberstellung verfügbar</p>
+                <p className="text-xs text-[var(--eds-lagune)] mt-0.5">
                   {scoredCandidates.length} Kandidaten mit Scores — Heatmap, Netzdiagramm und Ranking anzeigen
                 </p>
               </div>
-              <span className="text-[#297587] text-lg">→</span>
+              <span className="text-[var(--eds-lagune)] text-lg">→</span>
             </div>
           )}
         </div>

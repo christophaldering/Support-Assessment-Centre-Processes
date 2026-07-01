@@ -52,21 +52,24 @@ export default async function ProjectDetailPage({ params }: Props) {
   }
 
   const t = workspace.theme;
+  // no-eds-token: DB-Theming-Fallback — ensureHex() benötigt echten Hex-Wert, var() nicht kompatibel
   const primary = ensureHex(t?.primaryColor ?? "#3b82f6");
+  // no-eds-token: DB-Theming-Fallback — ensureHex() benötigt echten Hex-Wert, var() nicht kompatibel
   const textColor = ensureHex(t?.textColor ?? "#1a1a1a");
+  // no-eds-token: DB-Theming-Fallback — ensureHex() benötigt echten Hex-Wert, var() nicht kompatibel
   const bgColor = ensureHex(t?.backgroundColor ?? "#ffffff");
   const headingFont = t?.fontFamilyHeading ?? "Playfair Display";
 
   const base = `/w/${params.workspaceSlug}/admin`;
 
   const statusLabels: Record<string, { de: string; color: string }> = {
-    draft: { de: "Entwurf", color: "#94a3b8" },
-    active: { de: "Aktiv", color: "#22c55e" },
-    completed: { de: "Abgeschlossen", color: "#3b82f6" },
-    archived: { de: "Archiviert", color: "#9ca3af" },
+    draft: { de: "Entwurf", color: "var(--eds-text-tertiary)" },
+    active: { de: "Aktiv", color: "var(--eds-status-green)" },
+    completed: { de: "Abgeschlossen", color: "var(--eds-status-blue)" },
+    archived: { de: "Archiviert", color: "var(--eds-text-tertiary)" },
   };
 
-  const st = statusLabels[assessment.status] ?? { de: assessment.status, color: "#94a3b8" };
+  const st = statusLabels[assessment.status] ?? { de: assessment.status, color: "var(--eds-text-tertiary)" };
 
   const designModeLabels: Record<string, { de: string; icon: string }> = {
     ai_full: { de: "KI-Vollautomatik", icon: "⚡" },

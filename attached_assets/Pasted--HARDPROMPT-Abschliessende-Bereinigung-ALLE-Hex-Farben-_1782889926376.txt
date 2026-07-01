@@ -1,0 +1,204 @@
+# HARDPROMPT — Abschliessende Bereinigung: ALLE Hex-Farben auf Token-System
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+DIESES THEMA WIRD MIT DIESEM PROMPT EIN FÜR ALLEMAL ABGESCHLOSSEN.
+
+Du führst die Änderungen exakt wie beschrieben aus. Bei Unklarheit:
+STOPP, fragen — NICHT improvisieren. Kein Ermessen, keine Ausnahmen
+außer den unten explizit erlaubten.
+
+---
+
+## Nicht anfassen (absolutes Verbot)
+
+Logik, State, API-Calls, Props, Event-Handler in allen Dateien ·
+Kandidatenportal · `app/master/` · `styles/tokens.css` (nur lesen, nicht
+verändern) · `app/comp-bdp/` · `app/abcd-bdp/`.
+
+## Erlaubte Ausnahmen — Hex-Werte die BLEIBEN DÜRFEN
+
+Diese Werte dürfen als Hex stehen bleiben — direkt darüber MUSS ein
+Kommentar `// no-eds-token: [Begründung]` stehen:
+
+- Hex-Werte in `projects/[projectId]/page.tsx` und `admin/page.tsx`
+  bei `primaryColor`, `textColor`, `backgroundColor` — das sind
+  NUTZERDEFINIERTE Theming-Werte aus der DB, KEINE fixen Design-Tokens.
+- `#000000` und `#ffffff` / `#fff` als absolute Schwarz/Weiß-Werte
+  in SVG-Masken oder Canvas-Kontexten wo `var()` nicht funktioniert.
+- Hex-Werte in `ComparisonView.tsx` im Array für dynamisch berechnete
+  Chart-Farben (RGB-Interpolation) — `var()` ist dort technisch nicht
+  verwendbar.
+- `#999` als Lade-/Disabled-Farbe in `reports/page.tsx` falls kein
+  exaktes Token passt — Kommentar setzen.
+
+---
+
+## VERBINDLICHES HEX → TOKEN MAPPING
+
+Dieses Mapping gilt für ALLE 20 Dateien. Jeden Treffer ersetzen.
+
+### Markenfarben
+| Hex | Token |
+|---|---|
+| `#A6473B` | `var(--eds-terracotta)` |
+| `#5F1A11` | `var(--eds-terracotta-dk)` |
+| `#297587` | `var(--eds-lagune)` |
+| `#115560` | `var(--eds-lagune-dk)` |
+| `#B5D6DE` | `var(--eds-lagune-md)` |
+| `#EFF4F5` | `var(--eds-lagune-light)` |
+| `#EFF9FB` | `var(--eds-lagune-light)` |
+
+### Texte
+| Hex | Token |
+|---|---|
+| `#0F172A` | `var(--eds-text-primary)` |
+| `#1e293b` | `var(--eds-text-primary)` |
+| `#334155` | `var(--eds-text-secondary)` |
+| `#475569` | `var(--eds-text-secondary)` |
+| `#64748B` | `var(--eds-text-secondary)` |
+| `#5a6a82` | `var(--eds-text-secondary)` |
+| `#7f8da3` | `var(--eds-text-tertiary)` |
+| `#94A3B8` | `var(--eds-text-tertiary)` |
+| `#9ca3af` | `var(--eds-text-tertiary)` |
+| `#CBD5E1` | `var(--eds-text-disabled)` |
+| `#6b7280` | `var(--eds-status-gray)` |
+| `#1a1a1a` | `var(--eds-text-primary)` |
+| `#1a2332` | `var(--eds-text-primary)` |
+
+### Hintergründe / Surfaces
+| Hex | Token |
+|---|---|
+| `#FFFFFF` / `#ffffff` / `#fff` | `var(--eds-bg-surface)` |
+| `#F8FAFC` / `#f8fafc` | `var(--eds-bg-app)` |
+| `#F9FAFB` / `#f9fafb` | `var(--eds-bg-app)` |
+| `#F1F5F9` / `#f1f5f9` | `var(--eds-bg-sunken)` |
+
+### Borders
+| Hex | Token |
+|---|---|
+| `#E2E8F0` / `#e2e8f0` | `var(--eds-border)` |
+| `#CBD5E1` / `#cbd5e1` | `var(--eds-border-strong)` |
+
+### Status-Farben
+| Hex | Token |
+|---|---|
+| `#16A34A` / `#16a34a` | `var(--eds-status-green)` |
+| `#15803d` | `var(--eds-status-green)` |
+| `#22c55e` | `var(--eds-status-green)` |
+| `#10b981` | `var(--eds-status-green)` |
+| `#059669` | `var(--eds-status-green)` |
+| `#DCFCE7` / `#dcfce7` | `var(--eds-status-green-bg)` |
+| `#bbf7d0` | `var(--eds-status-green-bg)` |
+| `#f0fdf4` | `var(--eds-status-green-bg)` |
+| `#b6e8d0` | `var(--eds-status-green-bg)` |
+| `#D97706` | `var(--eds-status-amber)` |
+| `#f59e0b` | `var(--eds-status-amber)` |
+| `#92400e` | `var(--eds-status-amber)` |
+| `#E0A458` | `var(--eds-status-amber)` |
+| `#FDE68A` / `#fde68a` | `var(--eds-status-amber-bg)` |
+| `#fffbeb` | `var(--eds-status-amber-bg)` |
+| `#fefce8` | `var(--eds-status-amber-bg)` |
+| `#DC2626` | `var(--eds-status-red)` |
+| `#ef4444` | `var(--eds-status-red)` |
+| `#e94560` | `var(--eds-status-red)` |
+| `#991b1b` | `var(--eds-status-red)` |
+| `#DB2777` | `var(--eds-status-red)` |
+| `#FEE2E2` | `var(--eds-status-red-bg)` |
+| `#fef2f2` | `var(--eds-status-red-bg)` |
+| `#fecaca` | `var(--eds-status-red-bg)` |
+| `#2563EB` / `#2563eb` | `var(--eds-status-blue)` |
+| `#3b82f6` | `var(--eds-status-blue)` |
+| `#6366f1` | `var(--eds-status-blue)` |
+| `#0369a1` | `var(--eds-status-blue)` |
+| `#6b8cce` | `var(--eds-status-blue)` |
+| `#DBEAFE` | `var(--eds-status-blue-bg)` |
+| `#eff6ff` | `var(--eds-status-blue-bg)` |
+| `#bae6fd` | `var(--eds-status-blue-bg)` |
+| `#f0f9ff` | `var(--eds-status-blue-bg)` |
+
+### Modultyp-Farben
+| Hex | Token |
+|---|---|
+| `#7C3AED` / `#7c3aed` | `var(--eds-type-roleplay)` |
+| `#8b5cf6` | `var(--eds-type-roleplay)` |
+| `#DDD6FE` | `var(--eds-type-roleplay)` (`/20`-Variante behalten) |
+| `#F5F3FF` / `#f5f3ff` | `var(--eds-type-roleplay-bg, #F5F3FF)` — als Fallback-Wert inline |
+| `#f5c2bb` | `var(--eds-terracotta-ghost)` |
+| `#fff8f7` | `var(--eds-terracotta-ghost)` |
+| `#0d9488` | `var(--eds-lagune)` |
+| `#3E8E8E` | `var(--eds-lagune)` |
+| `#f0fdfa` | `var(--eds-lagune-light)` |
+
+### Dark Mode / Dunkle Surfaces (Fallstudie Hero-Banner)
+| Hex | Token |
+|---|---|
+| `#0f172a` | `var(--eds-text-primary)` (als bg: `color-mix(in srgb, var(--eds-text-primary) 100%, transparent)`) |
+| `#1a1a2e` | `var(--eds-text-primary)` |
+| `#16213e` | `var(--eds-text-primary)` |
+| `#1e293b` | `var(--eds-text-primary)` |
+
+**Sonderfall Dark-Banner** in `CaseStudyClient.tsx` (Gradient-Hero):
+`from-[#0f172a] via-[#1e293b] to-[#334155]` →
+`from-[var(--eds-text-primary)] via-[#1e293b] to-[var(--eds-text-secondary)]`
+(Mittelwert kann als `// no-eds-token: gradient-midstop` bleiben falls
+kein Token passt).
+
+### Nicht zuordenbar → explizit kommentieren
+| Hex | Aktion |
+|---|---|
+| `#5a7a52` (Grün-Grau, Aktivitätslog) | `// no-eds-token: custom activity-green` |
+| `#2f7a4a` | `// no-eds-token: custom dark-green` |
+| `#e94560` (Brand-Rules Demo-Daten) | `// no-eds-token: demo-brand-accent` |
+
+---
+
+## Betroffene Dateien (VOLLSTÄNDIGE LISTE — alle 20 MÜSSEN bearbeitet werden)
+
+1. `app/w/[workspaceSlug]/admin/DashboardClient.tsx`
+2. `app/w/[workspaceSlug]/admin/page.tsx`
+3. `app/w/[workspaceSlug]/admin/modules/page.tsx`
+4. `app/w/[workspaceSlug]/admin/competencies/page.tsx`
+5. `app/w/[workspaceSlug]/admin/brand-rules/page.tsx`
+6. `app/w/[workspaceSlug]/admin/ai-governance/page.tsx`
+7. `app/w/[workspaceSlug]/admin/projects/[projectId]/page.tsx`
+8. `app/w/[workspaceSlug]/admin/intelligence/page.tsx`
+9. `app/w/[workspaceSlug]/admin/prompt-library/page.tsx`
+10. `app/w/[workspaceSlug]/admin/gutachten/page.tsx`
+11. `app/w/[workspaceSlug]/admin/theme/page.tsx`
+12. `app/w/[workspaceSlug]/admin/reports/page.tsx`
+13. `app/w/[workspaceSlug]/admin/requirements/page.tsx`
+14. `app/w/[workspaceSlug]/admin/assessments/[assessmentId]/page.tsx`
+15. `app/w/[workspaceSlug]/admin/assessments/[assessmentId]/CollaborationPanel.tsx`
+16. `app/w/[workspaceSlug]/admin/assessments/[assessmentId]/PortalManagementSection.tsx`
+17. `app/w/[workspaceSlug]/admin/analytics/page.tsx`
+18. `app/w/[workspaceSlug]/admin/case-studio/page.tsx`
+19. `app/w/[workspaceSlug]/admin/case-studio/[caseId]/CaseStudyClient.tsx`
+20. `app/w/[workspaceSlug]/admin/exercise-library/page.tsx`
+21. `app/w/[workspaceSlug]/admin/document-sharing/page.tsx`
+22. `app/w/[workspaceSlug]/admin/document-sharing/[linkId]/page.tsx`
+23. `app/w/[workspaceSlug]/admin/document-sharing/setup/page.tsx`
+
+---
+
+## Validierung (alle PASS erforderlich — KEIN FAIL akzeptiert)
+
+1. `grep -rn "#[0-9a-fA-F]\{3,6\}" app/w/[workspaceSlug]/admin --include="*.tsx"`
+   liefert NUR noch Treffer mit `// no-eds-token`-Kommentar direkt darüber
+   ODER in den explizit erlaubten Ausnahmen (Theming-DB-Werte, Chart-
+   Interpolation). JEDER Treffer ohne Kommentar ist ein FAIL. PASS/FAIL.
+2. Alle 23 Dateien einzeln bearbeitet und bestätigt. PASS/FAIL pro Datei.
+3. Keine funktionale Regression — je 1 Klick-Durchlauf pro Seite. PASS/FAIL.
+4. `npm run lint` — null Fehler. PASS/FAIL.
+5. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`Design-System: alle Hex-Farben auf Token-System migriert — abgeschlossen`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Alle 23 Dateien einzeln mit PASS/FAIL. Vollständige Liste der verbliebenen
+`// no-eds-token`-Kommentare mit Begründung. Alle 5 Validierungspunkte
+mit PASS/FAIL. Keine Selbsteinschätzung wie „sollte funktionieren" —
+nur verifizierte Ergebnisse.

@@ -26,11 +26,11 @@ interface ThemeData {
 }
 
 const defaultTheme: ThemeData = {
-  primaryColor: "#3b82f6",
-  secondaryColor: "#6366f1",
+  primaryColor: "var(--eds-status-blue)",
+  secondaryColor: "var(--eds-status-blue)",
   accentColor: "hsl(14, 48%, 44%)",
-  backgroundColor: "#ffffff",
-  textColor: "#1a1a1a",
+  backgroundColor: "var(--eds-bg-surface)",
+  textColor: "var(--eds-text-primary)",
   fontFamily: "Inter",
   fontFamilyHeading: "Playfair Display",
   logoUrl: "",
@@ -332,6 +332,7 @@ function ColorField({
       <div className="flex items-center gap-2">
         <input
           type="color"
+// no-eds-token: color-picker-default — value prop für <input type="color">, var() inkompatibel
           value={value.startsWith("#") ? value : "#000000"}
           onChange={(e) => onChange(e.target.value)}
           className="w-10 h-10 rounded-lg border border-[var(--eds-border)] cursor-pointer p-0.5"

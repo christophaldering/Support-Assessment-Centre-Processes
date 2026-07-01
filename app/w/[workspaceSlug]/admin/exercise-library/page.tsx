@@ -77,8 +77,9 @@ const SCOPE_LABELS: Record<string, string> = Object.fromEntries(
 const SCOPE_COLORS: Record<string, { background: string; color: string; border: string }> = {
   general:   { background: "var(--eds-bg-sunken)",        color: "var(--eds-text-secondary)",  border: "1px solid var(--eds-border)" },
   client:    { background: "var(--eds-status-blue-bg)",   color: "var(--eds-status-blue)",      border: "1px solid var(--eds-border-strong)" },
-  project:   { background: "#F5F3FF",                     color: "#7C3AED",                     border: "1px solid #DDD6FE" },
-  candidate: { background: "var(--eds-status-amber-bg)",  color: "var(--eds-status-amber)",     border: "1px solid #FDE68A" },
+// no-eds-token: --eds-type-roleplay-bg nicht in tokens.css definiert — CSS-Fallback-Wert
+  project:   { background: "var(--eds-type-roleplay-bg, #F5F3FF)",                     color: "var(--eds-type-roleplay)",                     border: "1px solid var(--eds-type-roleplay)" },
+  candidate: { background: "var(--eds-status-amber-bg)",  color: "var(--eds-status-amber)",     border: "1px solid var(--eds-status-amber-bg)" },
 };
 
 const EXERCISE_CATEGORIES: { key: string; label: string }[] = [
@@ -766,7 +767,7 @@ function DetailModal({
                   onClick={() => setEditDownloadAllowed(!editDownloadAllowed)}
                   className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
                   style={{
-                    backgroundColor: editDownloadAllowed ? ACCENT : "#cbd5e1",
+                    backgroundColor: editDownloadAllowed ? ACCENT : "var(--eds-border-strong)",
                     focusRingColor: ACCENT,
                   }}
                   data-testid="toggle-download-allowed"
@@ -1697,8 +1698,8 @@ export default function ExerciseLibraryPage() {
             onClick={() => { setActiveSzenarioFilter((v) => !v); setActiveScopeFilter(null); }}
             className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
             style={activeSzenarioFilter
-              ? { background: "#297587", color: "#fff" }
-              : { background: "#297587]/10", backgroundColor: "#EFF9FB", color: "#297587", border: "1px solid #B5D6DE" }}
+              ? { background: "var(--eds-lagune)", color: "var(--eds-bg-surface)" }
+              : { background: "var(--eds-lagune)]/10", backgroundColor: "var(--eds-lagune-light)", color: "var(--eds-lagune)", border: "1px solid var(--eds-lagune-md)" }}
             data-testid="button-scope-szenario"
           >
             Szenario-Baustein
@@ -1901,7 +1902,7 @@ export default function ExerciseLibraryPage() {
                               <Link
                                 href={`/w/${slug}/admin/case-studio/${item.scenarioId}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-[10px] font-medium text-[#297587] bg-[#297587]/10 border border-[#297587]/20 px-1.5 py-0.5 rounded hover:bg-[#297587]/20 transition-colors"
+                                className="text-[10px] font-medium text-[var(--eds-lagune)] bg-[var(--eds-lagune)]/10 border border-[var(--eds-lagune)]/20 px-1.5 py-0.5 rounded hover:bg-[var(--eds-lagune)]/20 transition-colors"
                                 data-testid={`badge-scenario-${item.id}`}
                               >
                                 Szenario-Baustein

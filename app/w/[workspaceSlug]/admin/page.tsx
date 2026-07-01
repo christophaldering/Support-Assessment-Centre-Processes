@@ -25,8 +25,11 @@ export default async function WorkspaceAdminDashboard({ params }: Props) {
   }
 
   const t = workspace.theme;
+  // no-eds-token: DB-Theming-Fallback — ensureHex() benötigt echten Hex-Wert, var() nicht kompatibel
   const primary = ensureHex(t?.primaryColor ?? "#A6473B");
+  // no-eds-token: DB-Theming-Fallback — ensureHex() benötigt echten Hex-Wert, var() nicht kompatibel
   const textColor = ensureHex(t?.textColor ?? "#1a1a1a");
+  // no-eds-token: DB-Theming-Fallback — ensureHex() benötigt echten Hex-Wert, var() nicht kompatibel
   const bgColor = ensureHex(t?.backgroundColor ?? "#ffffff");
   const headingFont = t?.fontFamilyHeading ?? "Satoshi";
 

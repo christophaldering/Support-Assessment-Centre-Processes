@@ -3450,7 +3450,7 @@ export default function AssessmentDetailPage() {
                                       {weight.toFixed(1)}
                                     </span>
                                   ) : (
-                                    <span className="text-[#e2e8f0]">–</span>
+                                    <span className="text-[var(--eds-border)]">–</span>
                                   )}
                                 </td>
                               );
@@ -3568,7 +3568,7 @@ export default function AssessmentDetailPage() {
                   <div className="space-y-1">
                     {observationSheets.map((sheet) => (
                       <div key={sheet.id} className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#94a3b8]"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--eds-text-tertiary)]"></span>
                         <span>{sheet.name}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           sheet.type === "ai" ? "bg-purple-50 text-purple-600" :
@@ -3589,7 +3589,7 @@ export default function AssessmentDetailPage() {
                   <div className="space-y-1">
                     {documents.map((doc) => (
                       <div key={doc.id} className="flex items-center gap-2 text-sm text-[var(--eds-text-primary)]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#94a3b8]"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--eds-text-tertiary)]"></span>
                         <span>{doc.name}</span>
                         <span className="text-xs text-[var(--eds-text-disabled)]">{formatFileSize(doc.fileSize)}</span>
                       </div>

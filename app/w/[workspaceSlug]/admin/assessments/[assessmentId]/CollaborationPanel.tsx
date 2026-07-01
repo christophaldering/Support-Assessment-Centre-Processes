@@ -275,7 +275,7 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
               data-testid={`tab-${tab.key}`}
               className="flex-1 py-2.5 text-xs font-medium text-center transition-colors relative"
               style={{
-                color: activeTab === tab.key ? ACCENT : "#64748b",
+                color: activeTab === tab.key ? ACCENT : "var(--eds-text-secondary)",
                 borderBottom: activeTab === tab.key ? `2px solid ${ACCENT}` : "2px solid transparent",
               }}
             >
@@ -339,9 +339,9 @@ export default function CollaborationPanel({ workspaceSlug, assessmentId, isOpen
               {Object.keys(typingUsers).length > 0 && (
                 <div className="flex items-center gap-2 text-xs text-[var(--eds-text-disabled)] italic py-1">
                   <span className="flex gap-0.5">
-                    <span className="w-1.5 h-1.5 bg-[#94a3b8] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 bg-[#94a3b8] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 bg-[#94a3b8] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <span className="w-1.5 h-1.5 bg-[var(--eds-text-tertiary)] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 bg-[var(--eds-text-tertiary)] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 bg-[var(--eds-text-tertiary)] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                   </span>
                   Jemand tippt...
                 </div>

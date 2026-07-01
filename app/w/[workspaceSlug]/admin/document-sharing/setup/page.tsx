@@ -53,8 +53,8 @@ function StatusRow({ label, ok, detail }: { label: string; ok: boolean; detail?:
     <div style={S.statusRow}>
       <CheckIcon ok={ok} />
       <div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: ok ? "#15803d" : "#92400e" }}>{label}</div>
-        {detail && <div style={{ fontSize: 12, color: "#7f8da3", marginTop: 2 }}>{detail}</div>}
+        <div style={{ fontSize: 13, fontWeight: 600, color: ok ? "var(--eds-status-green)" : "var(--eds-status-amber)" }}>{label}</div>
+        {detail && <div style={{ fontSize: 12, color: "var(--eds-text-tertiary)", marginTop: 2 }}>{detail}</div>}
       </div>
     </div>
   );
@@ -160,13 +160,13 @@ export default function DataRoomSetupPage() {
               />
             </div>
 
-            <div style={{ ...S.readyBox, background: status.ready ? "#f0fdf4" : "#fffbeb", borderColor: status.ready ? "#bbf7d0" : "#fde68a" }}>
+            <div style={{ ...S.readyBox, background: status.ready ? "var(--eds-status-green-bg)" : "var(--eds-status-amber-bg)", borderColor: status.ready ? "var(--eds-status-green-bg)" : "var(--eds-status-amber-bg)" }}>
               <span style={{ fontSize: 18 }}>{status.ready ? "✅" : "⏳"}</span>
               <div>
-                <div style={{ fontWeight: 700, color: status.ready ? "#15803d" : "#92400e", fontSize: 14 }}>
+                <div style={{ fontWeight: 700, color: status.ready ? "var(--eds-status-green)" : "var(--eds-status-amber)", fontSize: 14 }}>
                   {status.ready ? "Bereit — echte Datei ist korrekt eingerichtet" : "Noch nicht bereit — Schritte unten beachten"}
                 </div>
-                <div style={{ fontSize: 12, color: "#7f8da3", marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: "var(--eds-text-tertiary)", marginTop: 2 }}>
                   Geprüft: {new Date(status.checkedAt).toLocaleTimeString("de-DE")}
                 </div>
               </div>
@@ -194,9 +194,9 @@ export default function DataRoomSetupPage() {
             <li>Danach auf <strong>"↻ Aktualisieren"</strong> oben klicken und Datei-Status prüfen</li>
           </ol>
         </div>
-        <div style={{ ...S.infoBox, background: "#f0f9ff", borderColor: "#bae6fd" }}>
-          <div style={{ ...S.infoTitle, color: "#0369a1" }}>💡 Wichtig: <code style={S.inlineCode}>&lt;head&gt;</code>-Tag darf nicht fehlen</div>
-          <p style={{ fontSize: 13, margin: 0, color: "#334155" }}>
+        <div style={{ ...S.infoBox, background: "var(--eds-status-blue-bg)", borderColor: "var(--eds-status-blue-bg)" }}>
+          <div style={{ ...S.infoTitle, color: "var(--eds-status-blue)" }}>💡 Wichtig: <code style={S.inlineCode}>&lt;head&gt;</code>-Tag darf nicht fehlen</div>
+          <p style={{ fontSize: 13, margin: 0, color: "var(--eds-text-secondary)" }}>
             Der Route-Handler <code style={S.inlineCode}>app/dr/view/route.ts</code> injiziert{" "}
             <code style={S.inlineCode}>window.__DR_TOKEN</code> direkt nach dem öffnenden{" "}
             <code style={S.inlineCode}>&lt;head&gt;</code>-Tag. Hat die HTML-Datei keinen{" "}
@@ -226,9 +226,9 @@ export default function DataRoomSetupPage() {
             <li>In den <code style={S.inlineCode}>&lt;head&gt;</code> der echten ConVia-Datei einfügen (vor dem ersten <code style={S.inlineCode}>&lt;/head&gt;</code>)</li>
           </ol>
         </div>
-        <div style={{ ...S.infoBox, background: "#fefce8", borderColor: "#fde68a" }}>
-          <div style={{ ...S.infoTitle, color: "#92400e" }}>⚠️ Kein Token-Injection-Script notwendig</div>
-          <p style={{ fontSize: 13, margin: 0, color: "#334155" }}>
+        <div style={{ ...S.infoBox, background: "var(--eds-status-amber-bg)", borderColor: "var(--eds-status-amber-bg)" }}>
+          <div style={{ ...S.infoTitle, color: "var(--eds-status-amber)" }}>⚠️ Kein Token-Injection-Script notwendig</div>
+          <p style={{ fontSize: 13, margin: 0, color: "var(--eds-text-secondary)" }}>
             Du musst <strong>nicht</strong> selbst <code style={S.inlineCode}>window.__DR_TOKEN</code> setzen.
             Das erledigt automatisch der Server-Handler bevor die Seite ausgeliefert wird.
             Das Tracking-Script liest den Token beim Start aus <code style={S.inlineCode}>window.__DR_TOKEN</code>.
@@ -312,17 +312,17 @@ export default function DataRoomSetupPage() {
           <li>Den Test-Link anklicken → Events sollten in der Timeline sichtbar sein</li>
         </ol>
 
-        <div style={{ ...S.infoBox, background: "#f0fdf4", borderColor: "#bbf7d0" }}>
-          <div style={{ ...S.infoTitle, color: "#15803d" }}>✅ Erwartete Events</div>
+        <div style={{ ...S.infoBox, background: "var(--eds-status-green-bg)", borderColor: "var(--eds-status-green-bg)" }}>
+          <div style={{ ...S.infoTitle, color: "var(--eds-status-green)" }}>✅ Erwartete Events</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
             {["session_start", "open", "leave", "heartbeat", "search (optional)", "session_end"].map((e) => (
-              <code key={e} style={{ ...S.inlineCode, background: "#dcfce7", color: "#15803d" }}>{e}</code>
+              <code key={e} style={{ ...S.inlineCode, background: "var(--eds-status-green-bg)", color: "var(--eds-status-green)" }}>{e}</code>
             ))}
           </div>
         </div>
 
-        <div style={{ ...S.infoBox, background: "#fef2f2", borderColor: "#fecaca" }}>
-          <div style={{ ...S.infoTitle, color: "#991b1b" }}>🔍 Keine Events? Checkliste</div>
+        <div style={{ ...S.infoBox, background: "var(--eds-status-red-bg)", borderColor: "var(--eds-status-red-bg)" }}>
+          <div style={{ ...S.infoTitle, color: "var(--eds-status-red)" }}>🔍 Keine Events? Checkliste</div>
           <ul style={S.ul}>
             <li>Browser-Konsole öffnen (<kbd>F12</kbd>) — gibt es Fehler mit <code style={S.inlineCode}>/api/dr/track</code>?</li>
             <li>Ist <code style={S.inlineCode}>window.__DR_TOKEN</code> in der Konsole gesetzt? (<code style={S.inlineCode}>console.log(window.__DR_TOKEN)</code>)</li>
@@ -353,7 +353,7 @@ export default function DataRoomSetupPage() {
               <span style={{ fontSize: 20 }}>{icon}</span>
               <div>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{label}</div>
-                <div style={{ fontSize: 12, color: "#7f8da3" }}>{desc}</div>
+                <div style={{ fontSize: 12, color: "var(--eds-text-tertiary)" }}>{desc}</div>
               </div>
             </div>
           ))}
@@ -371,39 +371,39 @@ export default function DataRoomSetupPage() {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  wrap: { maxWidth: 900, margin: "0 auto", padding: "32px 24px", fontFamily: "var(--eds-font,'Satoshi',system-ui,sans-serif)", color: "var(--eds-text,#1a2332)", display: "flex", flexDirection: "column", gap: 20 },
+  wrap: { maxWidth: 900, margin: "0 auto", padding: "32px 24px", fontFamily: "var(--eds-font,'Satoshi',system-ui,sans-serif)", color: "var(--eds-text,var(--eds-text-primary))", display: "flex", flexDirection: "column", gap: 20 },
   breadcrumb: { marginBottom: 4 },
-  backBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--eds-accent,#A6473B)", fontWeight: 600, fontSize: 14, padding: 0 },
+  backBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--eds-accent,var(--eds-terracotta))", fontWeight: 600, fontSize: 14, padding: 0 },
   header: { marginBottom: 4 },
-  eyebrow: { fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--eds-accent,#A6473B)", fontWeight: 700 },
+  eyebrow: { fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--eds-accent,var(--eds-terracotta))", fontWeight: 700 },
   h1: { fontSize: 26, margin: "6px 0 4px", fontWeight: 700 },
-  sub: { fontSize: 14, color: "var(--eds-text-muted,#7f8da3)", margin: 0 },
-  card: { background: "#fff", border: "1px solid var(--eds-border,#e2e8f0)", borderRadius: 16, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,.04)", display: "flex", flexDirection: "column", gap: 14 },
+  sub: { fontSize: 14, color: "var(--eds-text-muted,var(--eds-text-tertiary))", margin: 0 },
+  card: { background: "var(--eds-bg-surface)", border: "1px solid var(--eds-border,var(--eds-border))", borderRadius: 16, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,.04)", display: "flex", flexDirection: "column", gap: 14 },
   cardHeaderRow: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   h2: { fontSize: 17, fontWeight: 700, margin: 0 },
-  h3: { fontSize: 14, fontWeight: 700, margin: "8px 0 4px", color: "var(--eds-text,#1a2332)" },
+  h3: { fontSize: 14, fontWeight: 700, margin: "8px 0 4px", color: "var(--eds-text,var(--eds-text-primary))" },
   stepHeader: { display: "flex", alignItems: "center", gap: 12 },
-  stepNum: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: "50%", background: "var(--eds-accent,#A6473B)", color: "#fff", fontSize: 13, fontWeight: 700, flexShrink: 0 },
-  muted: { fontSize: 13, color: "var(--eds-text-muted,#7f8da3)" },
+  stepNum: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: "50%", background: "var(--eds-accent,var(--eds-terracotta))", color: "var(--eds-bg-surface)", fontSize: 13, fontWeight: 700, flexShrink: 0 },
+  muted: { fontSize: 13, color: "var(--eds-text-muted,var(--eds-text-tertiary))" },
   statusGrid: { display: "flex", flexDirection: "column", gap: 10 },
   statusRow: { display: "flex", alignItems: "flex-start", gap: 10 },
   readyBox: { display: "flex", alignItems: "flex-start", gap: 12, borderRadius: 10, padding: "12px 16px", border: "1px solid transparent", marginTop: 4 },
-  para: { fontSize: 14, lineHeight: 1.65, color: "#334155", margin: 0 },
-  infoBox: { background: "var(--eds-surface,#f8fafc)", border: "1px solid var(--eds-border,#e2e8f0)", borderRadius: 10, padding: "14px 18px" },
-  infoTitle: { fontSize: 13, fontWeight: 700, marginBottom: 8, color: "#1a2332" },
-  ol: { paddingLeft: 20, margin: 0, fontSize: 13, lineHeight: 2, color: "#334155" },
-  ul: { paddingLeft: 20, margin: 0, fontSize: 13, lineHeight: 2, color: "#334155" },
-  inlineCode: { fontFamily: "monospace", fontSize: "0.88em", background: "#f1f5f9", borderRadius: 4, padding: "1px 5px", color: "#334155" },
-  codeWrap: { position: "relative", background: "#0f172a", borderRadius: 10, overflow: "hidden" },
-  pre: { margin: 0, padding: "14px 16px", fontSize: 12, lineHeight: 1.7, color: "#e2e8f0", overflowX: "auto" as const, fontFamily: "monospace" },
-  copyBtn: { position: "absolute", top: 8, right: 10, background: "#1e293b", color: "#94a3b8", border: "1px solid #334155", borderRadius: 5, fontSize: 11, padding: "3px 10px", cursor: "pointer" },
+  para: { fontSize: 14, lineHeight: 1.65, color: "var(--eds-text-secondary)", margin: 0 },
+  infoBox: { background: "var(--eds-surface,var(--eds-bg-app))", border: "1px solid var(--eds-border,var(--eds-border))", borderRadius: 10, padding: "14px 18px" },
+  infoTitle: { fontSize: 13, fontWeight: 700, marginBottom: 8, color: "var(--eds-text-primary)" },
+  ol: { paddingLeft: 20, margin: 0, fontSize: 13, lineHeight: 2, color: "var(--eds-text-secondary)" },
+  ul: { paddingLeft: 20, margin: 0, fontSize: 13, lineHeight: 2, color: "var(--eds-text-secondary)" },
+  inlineCode: { fontFamily: "monospace", fontSize: "0.88em", background: "var(--eds-bg-sunken)", borderRadius: 4, padding: "1px 5px", color: "var(--eds-text-secondary)" },
+  codeWrap: { position: "relative", background: "var(--eds-text-primary)", borderRadius: 10, overflow: "hidden" },
+  pre: { margin: 0, padding: "14px 16px", fontSize: 12, lineHeight: 1.7, color: "var(--eds-border)", overflowX: "auto" as const, fontFamily: "monospace" },
+  copyBtn: { position: "absolute", top: 8, right: 10, background: "var(--eds-text-primary)", color: "var(--eds-text-tertiary)", border: "1px solid var(--eds-text-secondary)", borderRadius: 5, fontSize: 11, padding: "3px 10px", cursor: "pointer" },
   hookGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 10 },
-  hookCard: { background: "var(--eds-surface,#f8fafc)", border: "1px solid var(--eds-border,#e2e8f0)", borderRadius: 10, padding: "10px 14px", display: "flex", flexDirection: "column", gap: 4 },
-  hookFn: { fontFamily: "monospace", fontSize: 12, color: "#A6473B", fontWeight: 700 },
-  hookDesc: { fontSize: 12, color: "#5a6a82" },
+  hookCard: { background: "var(--eds-surface,var(--eds-bg-app))", border: "1px solid var(--eds-border,var(--eds-border))", borderRadius: 10, padding: "10px 14px", display: "flex", flexDirection: "column", gap: 4 },
+  hookFn: { fontFamily: "monospace", fontSize: 12, color: "var(--eds-terracotta)", fontWeight: 700 },
+  hookDesc: { fontSize: 12, color: "var(--eds-text-secondary)" },
   featureList: { display: "flex", flexDirection: "column", gap: 10 },
   featureRow: { display: "flex", alignItems: "flex-start", gap: 12 },
-  btnPrimary: { alignSelf: "flex-start", background: "var(--eds-accent,#A6473B)", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
-  btnRefresh: { background: "#fff", border: "1px solid var(--eds-border,#e2e8f0)", borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "var(--eds-text,#1a2332)" },
-  linkBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--eds-accent,#A6473B)", fontWeight: 600, fontSize: 13, padding: 0, textDecoration: "underline" as const },
+  btnPrimary: { alignSelf: "flex-start", background: "var(--eds-accent,var(--eds-terracotta))", color: "var(--eds-bg-surface)", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  btnRefresh: { background: "var(--eds-bg-surface)", border: "1px solid var(--eds-border,var(--eds-border))", borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "var(--eds-text,var(--eds-text-primary))" },
+  linkBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--eds-accent,var(--eds-terracotta))", fontWeight: 600, fontSize: 13, padding: 0, textDecoration: "underline" as const },
 };

@@ -132,11 +132,11 @@ interface DiagnosticHypothesis {
 }
 
 const RISK_COLORS: Record<string, string> = {
-  execution_risk: "#ef4444",
-  stakeholder_risk: "#f59e0b",
-  resilience_risk: "#8b5cf6",
-  governance_risk: "#3b82f6",
-  transformation_risk: "#10b981",
+  execution_risk: "var(--eds-status-red)",
+  stakeholder_risk: "var(--eds-status-amber)",
+  resilience_risk: "var(--eds-type-roleplay)",
+  governance_risk: "var(--eds-status-blue)",
+  transformation_risk: "var(--eds-status-green)",
 };
 
 const RISK_LABELS: Record<string, string> = {
@@ -464,7 +464,7 @@ function PredictiveTab({ profile }: { profile: PredictiveProfile | undefined }) 
               <span className="text-xs font-medium text-[var(--eds-text-tertiary)]">{RISK_LABELS[risk.category] || risk.category}</span>
               <span
                 className="text-lg font-bold"
-                style={{ color: RISK_COLORS[risk.category] || "#64748b" }}
+                style={{ color: RISK_COLORS[risk.category] || "var(--eds-text-secondary)" }}
               >
                 {risk.score}
               </span>
@@ -474,7 +474,7 @@ function PredictiveTab({ profile }: { profile: PredictiveProfile | undefined }) 
                 className="h-2 rounded-full transition-all"
                 style={{
                   width: `${risk.score}%`,
-                  backgroundColor: RISK_COLORS[risk.category] || "#64748b",
+                  backgroundColor: RISK_COLORS[risk.category] || "var(--eds-text-secondary)",
                 }}
               />
             </div>

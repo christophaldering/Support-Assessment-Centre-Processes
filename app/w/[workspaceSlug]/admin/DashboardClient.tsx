@@ -80,10 +80,10 @@ interface Props {
 }
 
 const statusLabels: Record<string, { de: string; color: string; bg: string }> = {
-  draft: { de: "Entwurf", color: "#64748b", bg: "#f1f5f9" },
-  active: { de: "Aktiv", color: "#16a34a", bg: "#f0fdf4" },
-  completed: { de: "Abgeschlossen", color: "#2563eb", bg: "#eff6ff" },
-  archived: { de: "Archiviert", color: "#9ca3af", bg: "#f9fafb" },
+  draft: { de: "Entwurf", color: "var(--eds-text-secondary)", bg: "var(--eds-bg-sunken)" },
+  active: { de: "Aktiv", color: "var(--eds-status-green)", bg: "var(--eds-status-green-bg)" },
+  completed: { de: "Abgeschlossen", color: "var(--eds-status-blue)", bg: "var(--eds-status-blue-bg)" },
+  archived: { de: "Archiviert", color: "var(--eds-text-tertiary)", bg: "var(--eds-bg-app)" },
 };
 
 function formatDate(iso: string | null): string {
@@ -516,7 +516,7 @@ export default function DashboardClient({
   }
 
   function renderAssessmentRow(a: AssessmentItem) {
-    const st = statusLabels[a.status] ?? { de: a.status, color: "#94a3b8", bg: "#f9fafb" };
+    const st = statusLabels[a.status] ?? { de: a.status, color: "var(--eds-text-tertiary)", bg: "var(--eds-bg-app)" };
     const dm = designModeLabels[a.designMode] ?? { de: a.designMode, icon: "✋" };
     return (
       <div
@@ -800,34 +800,34 @@ export default function DashboardClient({
         <>
           <div className="grid md:grid-cols-5 gap-4" data-testid="kpi-grid">
                 <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-assessments">
-                  <p className="text-2xl font-bold" style={{ color: "#A6473B" }}>{localAssessments.length}</p>
+                  <p className="text-2xl font-bold" style={{ color: "var(--eds-terracotta)" }}>{localAssessments.length}</p>
                   <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Assessments</p>
                 </div>
                 <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-active">
-                  <p className="text-2xl font-bold" style={{ color: "#297587" }}>{activeCount}</p>
+                  <p className="text-2xl font-bold" style={{ color: "var(--eds-lagune)" }}>{activeCount}</p>
                   <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Aktiv</p>
                 </div>
                 <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-teilnehmer">
-                  <p className="text-2xl font-bold" style={{ color: "#5F1A11" }}>{totalCandidates}</p>
+                  <p className="text-2xl font-bold" style={{ color: "var(--eds-terracotta-dk)" }}>{totalCandidates}</p>
                   <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Teilnehmer</p>
                 </div>
                 <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-übungen">
-                  <p className="text-2xl font-bold" style={{ color: "#115560" }}>{totalExercises}</p>
+                  <p className="text-2xl font-bold" style={{ color: "var(--eds-lagune-dk)" }}>{totalExercises}</p>
                   <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Übungen</p>
                 </div>
                 <div className="bg-white border border-[var(--eds-border)] rounded-xl p-4 text-center" data-testid="kpi-team">
-                  <p className="text-2xl font-bold" style={{ color: "#297587" }}>{teamUsers.length}</p>
+                  <p className="text-2xl font-bold" style={{ color: "var(--eds-lagune)" }}>{teamUsers.length}</p>
                   <p className="text-xs text-[var(--eds-text-tertiary)] mt-1">Team</p>
                 </div>
               </div>
 
               <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-schnellzugriff">
-                <h3 className="text-sm font-semibold mb-3" style={{ color: "#A6473B" }}>Schnellzugriff</h3>
+                <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--eds-terracotta)" }}>Schnellzugriff</h3>
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => setShowCreate(true)}
                     className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-all"
-                    style={{ backgroundColor: "#A6473B" }}
+                    style={{ backgroundColor: "var(--eds-terracotta)" }}
                     data-testid="quick-action-new-assessment"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -848,7 +848,7 @@ export default function DashboardClient({
                   <Link
                     href={`${base}/gutachten`}
                     className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-all"
-                    style={{ backgroundColor: "#297587" }}
+                    style={{ backgroundColor: "var(--eds-lagune)" }}
                     data-testid="quick-action-gutachten"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -862,14 +862,14 @@ export default function DashboardClient({
               {renderAssessmentList()}
 
               <div className="bg-white border border-[var(--eds-border)] rounded-xl p-5" data-testid="section-activity-feed">
-                <h3 className="text-sm font-semibold mb-4" style={{ color: "#A6473B" }}>Letzte Aktivitäten</h3>
+                <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--eds-terracotta)" }}>Letzte Aktivitäten</h3>
                 <div className="space-y-3">
                   {localAssessments.slice(0, 5).map((a, i) => {
                     const actions = [
-                      { icon: "📋", text: `Assessment "${a.name}" erstellt`, time: formatDate(a.createdAt), accent: "#A6473B" },
-                      ...(a.candidateCount > 0 ? [{ icon: "👤", text: `${a.candidateCount} Kandidat${a.candidateCount > 1 ? "en" : ""} zugewiesen`, time: formatDate(a.createdAt), accent: "#297587" }] : []),
-                      ...(a.exerciseCount > 0 ? [{ icon: "📝", text: `${a.exerciseCount} Übung${a.exerciseCount > 1 ? "en" : ""} verknüpft`, time: formatDate(a.createdAt), accent: "#115560" }] : []),
-                      ...(a.ratingCount > 0 ? [{ icon: "⭐", text: `${a.ratingCount} Bewertung${a.ratingCount > 1 ? "en" : ""} erfasst`, time: formatDate(a.createdAt), accent: "#5F1A11" }] : []),
+                      { icon: "📋", text: `Assessment "${a.name}" erstellt`, time: formatDate(a.createdAt), accent: "var(--eds-terracotta)" },
+                      ...(a.candidateCount > 0 ? [{ icon: "👤", text: `${a.candidateCount} Kandidat${a.candidateCount > 1 ? "en" : ""} zugewiesen`, time: formatDate(a.createdAt), accent: "var(--eds-lagune)" }] : []),
+                      ...(a.exerciseCount > 0 ? [{ icon: "📝", text: `${a.exerciseCount} Übung${a.exerciseCount > 1 ? "en" : ""} verknüpft`, time: formatDate(a.createdAt), accent: "var(--eds-lagune-dk)" }] : []),
+                      ...(a.ratingCount > 0 ? [{ icon: "⭐", text: `${a.ratingCount} Bewertung${a.ratingCount > 1 ? "en" : ""} erfasst`, time: formatDate(a.createdAt), accent: "var(--eds-terracotta-dk)" }] : []),
                     ];
                     return actions.map((act, j) => (
                       <div key={`${i}-${j}`} className="flex items-start gap-3 py-2 border-b border-[var(--eds-border)] last:border-0">
@@ -903,7 +903,7 @@ export default function DashboardClient({
           {activeSection === "module-settings" && canSeeAll && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold" style={{ color: "#A6473B" }}>Modul-Freigabe</h2>
+                <h2 className="text-xl font-bold" style={{ color: "var(--eds-terracotta)" }}>Modul-Freigabe</h2>
                 <p className="text-sm text-[var(--eds-text-tertiary)] mt-1">
                   Steuern Sie, welche Module für Ihre Kollegen sichtbar und nutzbar sind.
                   Nicht freigegebene Module sind nur für Administratoren zugänglich.
@@ -917,7 +917,7 @@ export default function DashboardClient({
                     <div key={mod.moduleKey} className="flex items-center justify-between px-6 py-4" data-testid={`flag-row-${mod.moduleKey}`}>
                       <div className="flex items-center gap-4">
                         <div className="w-8 h-8 rounded-lg bg-[var(--eds-bg-sunken)] flex items-center justify-center shrink-0">
-                          <ModuleIcon icon={mod.icon} color={isOn ? "#3b82f6" : "#94a3b8"} />
+                          <ModuleIcon icon={mod.icon} color={isOn ? "var(--eds-status-blue)" : "var(--eds-text-tertiary)"} />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-[var(--eds-text-primary)]">{mod.title}</p>
@@ -926,7 +926,7 @@ export default function DashboardClient({
                       </div>
                       <button
                         onClick={() => setLocalFlags(prev => ({ ...prev, [mod.moduleKey]: !prev[mod.moduleKey] }))}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isOn ? "bg-[var(--eds-status-blue)]" : "bg-[#cbd5e1]"}`}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isOn ? "bg-[var(--eds-status-blue)]" : "bg-[var(--eds-border-strong)]"}`}
                         data-testid={`toggle-${mod.moduleKey}`}
                       >
                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${isOn ? "translate-x-6" : "translate-x-1"}`} />

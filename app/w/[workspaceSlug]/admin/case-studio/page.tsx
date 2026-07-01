@@ -379,10 +379,10 @@ export default function CaseStudyBuilderPage() {
 
   const statusBadge = (s: string) => {
     const map: Record<string, { label: string; color: string }> = {
-      draft: { label: "Entwurf", color: "#f59e0b" },
-      active: { label: "Aktiv", color: "#16a34a" },
+      draft: { label: "Entwurf", color: "var(--eds-status-amber)" },
+      active: { label: "Aktiv", color: "var(--eds-status-green)" },
     };
-    const info = map[s] || { label: s, color: "#6b7280" };
+    const info = map[s] || { label: s, color: "var(--eds-status-gray)" };
     return (
       <span
         className="text-[10px] font-bold text-white rounded-full px-2.5 py-1"
@@ -402,7 +402,7 @@ export default function CaseStudyBuilderPage() {
           <div className="flex items-center gap-3">
             <a
               href={`/w/${workspaceSlug}/admin/prompt-library`}
-              className="inline-flex items-center gap-1 text-xs text-[var(--eds-text-disabled)] hover:text-[#297587] transition-colors"
+              className="inline-flex items-center gap-1 text-xs text-[var(--eds-text-disabled)] hover:text-[var(--eds-lagune)] transition-colors"
               data-testid="link-prompt-library-case-studio"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -487,7 +487,7 @@ export default function CaseStudyBuilderPage() {
                             {statusBadge(cs.status)}
                             {cs.isOverarchingScenario && (
                               <span
-                                className="text-[10px] font-medium text-[#297587] bg-[#297587]/10 border border-[#297587]/20 rounded-full px-2 py-0.5"
+                                className="text-[10px] font-medium text-[var(--eds-lagune)] bg-[var(--eds-lagune)]/10 border border-[var(--eds-lagune)]/20 rounded-full px-2 py-0.5"
                                 data-testid={`badge-overarching-${cs.id}`}
                               >
                                 Rahmenszenario
@@ -559,7 +559,7 @@ export default function CaseStudyBuilderPage() {
                           <button
                             onClick={() => handleStatusChange(cs.id, "active")}
                             className="text-xs px-3 py-1.5 rounded-lg text-white hover:opacity-90 transition-colors"
-                            style={{ backgroundColor: "#16a34a" }}
+                            style={{ backgroundColor: "var(--eds-status-green)" }}
                             data-testid={`button-activate-${cs.id}`}
                           >
                             Aktivieren
@@ -619,14 +619,14 @@ export default function CaseStudyBuilderPage() {
             </p>
 
             <label
-              className="flex items-center gap-3 p-4 mb-6 rounded-lg border border-[var(--eds-border)] hover:border-[#297587] cursor-pointer transition-colors"
+              className="flex items-center gap-3 p-4 mb-6 rounded-lg border border-[var(--eds-border)] hover:border-[var(--eds-lagune)] cursor-pointer transition-colors"
               data-testid="toggle-overarching-scenario"
             >
               <input
                 type="checkbox"
                 checked={isOverarchingScenario}
                 onChange={(e) => setIsOverarchingScenario(e.target.checked)}
-                className="w-4 h-4 rounded border-[var(--eds-border-strong)] text-[#297587] focus:ring-[#297587]"
+                className="w-4 h-4 rounded border-[var(--eds-border-strong)] text-[var(--eds-lagune)] focus:ring-[var(--eds-lagune)]"
                 data-testid="checkbox-overarching-scenario"
               />
               <div>

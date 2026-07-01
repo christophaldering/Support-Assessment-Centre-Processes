@@ -551,7 +551,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
 
             {activeTab === "overview" && (
               <div className="space-y-8" data-testid="section-overview">
-                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#334155] p-8 text-white">
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[var(--eds-text-primary)] via-[var(--eds-text-primary)] to-[var(--eds-text-secondary)] p-8 text-white">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-200 border border-yellow-500/30 text-xs font-medium mb-4">
                     Strategic Review Required
                   </div>
@@ -602,7 +602,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                     <div className="space-y-3">
                       {localData.boardImpressions.map((bi, i) => (
                         <div key={i} className="rounded-xl border border-[var(--eds-border)] p-4 flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-[#1e293b] text-white flex items-center justify-center text-xs font-bold">{bi.topic}</div>
+                          <div className="w-8 h-8 rounded-full bg-[var(--eds-text-primary)] text-white flex items-center justify-center text-xs font-bold">{bi.topic}</div>
                           <div className="text-sm font-medium text-[var(--eds-text-primary)]">{bi.title}</div>
                         </div>
                       ))}
@@ -817,8 +817,8 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                             <span className="font-mono text-[var(--eds-text-tertiary)]">€{bu.revenue}bn / €{bu.ebitda}bn</span>
                           </div>
                           <div className="relative h-6 bg-[var(--eds-bg-sunken)] rounded-full overflow-hidden">
-                            <div className="absolute inset-y-0 left-0 bg-[#cbd5e1] rounded-full" style={{ width: `${(bu.revenue / maxRevenue) * 100}%` }} />
-                            <div className="absolute inset-y-0 left-0 bg-[#1e293b] rounded-full" style={{ width: `${(bu.ebitda / maxRevenue) * 100}%` }} />
+                            <div className="absolute inset-y-0 left-0 bg-[var(--eds-border-strong)] rounded-full" style={{ width: `${(bu.revenue / maxRevenue) * 100}%` }} />
+                            <div className="absolute inset-y-0 left-0 bg-[var(--eds-text-primary)] rounded-full" style={{ width: `${(bu.ebitda / maxRevenue) * 100}%` }} />
                           </div>
                           <div className="flex gap-4 text-[10px] text-[var(--eds-text-disabled)]">
                             <span>Margin: {bu.margin}%</span>
@@ -828,8 +828,8 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                       );
                     })}
                     <div className="flex items-center gap-4 text-[10px] text-[var(--eds-text-disabled)] mt-4 pt-4 border-t border-[var(--eds-border)]">
-                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#1e293b]" /> EBITDA</div>
-                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#cbd5e1]" /> Revenue</div>
+                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[var(--eds-text-primary)]" /> EBITDA</div>
+                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[var(--eds-border-strong)]" /> Revenue</div>
                     </div>
                   </div>
                 </div>
@@ -870,7 +870,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                           <td className="px-6 py-2 font-bold text-xs text-[var(--eds-text-primary)]">Total Current Assets</td>
                           <td className="text-right px-6 py-2 font-bold text-xs font-mono text-[var(--eds-text-primary)]">{formatCurrency(localData.detailedBalanceSheet.assets.current.reduce((s, i) => s + i.value, 0))}</td>
                         </tr>
-                        <tr className="bg-[#1e293b] text-white">
+                        <tr className="bg-[var(--eds-text-primary)] text-white">
                           <td className="px-6 py-2 font-bold text-xs">TOTAL ASSETS</td>
                           <td className="text-right px-6 py-2 font-bold text-xs font-mono">{formatCurrency([...localData.detailedBalanceSheet.assets.nonCurrent, ...localData.detailedBalanceSheet.assets.current].reduce((s, i) => s + i.value, 0))}</td>
                         </tr>
@@ -924,7 +924,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                           <td className="px-6 py-2 font-bold text-xs text-[var(--eds-text-primary)]">Total Current Liab.</td>
                           <td className="text-right px-6 py-2 font-bold text-xs font-mono text-[var(--eds-text-primary)]">{formatCurrency(localData.detailedBalanceSheet.equityLiabilities.currentLiabilities.reduce((s, i) => s + i.value, 0))}</td>
                         </tr>
-                        <tr className="bg-[#1e293b] text-white">
+                        <tr className="bg-[var(--eds-text-primary)] text-white">
                           <td className="px-6 py-2 font-bold text-xs">TOTAL EQUITY & LIAB.</td>
                           <td className="text-right px-6 py-2 font-bold text-xs font-mono">{formatCurrency([...localData.detailedBalanceSheet.equityLiabilities.equity, ...localData.detailedBalanceSheet.equityLiabilities.nonCurrentLiabilities, ...localData.detailedBalanceSheet.equityLiabilities.currentLiabilities].reduce((s, i) => s + i.value, 0))}</td>
                         </tr>
@@ -962,7 +962,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                             const isSubtotal = cf.item.startsWith("Net cash") || cf.item === "NET CHANGE IN CASH" || cf.item === "Closing cash balance" || cf.item === "Opening cash balance";
                             rows.push(
                               <tr key={i} className={`border-b border-[var(--eds-border)] ${isSubtotal ? "bg-[var(--eds-bg-sunken)] font-semibold" : ""}`}>
-                                <td className={`px-6 ${isSubtotal ? "" : "pl-10"} py-1.5 text-xs ${isSubtotal ? "text-[#0f172a]" : "text-[#475569]"}`}>{cf.item}</td>
+                                <td className={`px-6 ${isSubtotal ? "" : "pl-10"} py-1.5 text-xs ${isSubtotal ? "text-[var(--eds-text-primary)]" : "text-[var(--eds-text-secondary)]"}`}>{cf.item}</td>
                                 <td className={`text-right px-6 py-1.5 text-xs font-mono ${cf.value < 0 ? "text-[var(--eds-status-red)]" : "text-[var(--eds-text-primary)]"}`}>
                                   {cf.value >= 0 ? cf.value.toFixed(3) : cf.value.toFixed(3)}
                                 </td>
@@ -1071,7 +1071,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                             key={p.id}
                             onClick={() => setSelectedProtocolId(p.id)}
                             className={`flex flex-col w-full text-left p-4 border-b border-[var(--eds-border)] transition-colors hover:bg-[var(--eds-bg-sunken)] ${
-                              selectedProtocolId === p.id ? "bg-[var(--eds-bg-sunken)] border-l-4 border-l-[#1e293b]" : "border-l-4 border-l-transparent"
+                              selectedProtocolId === p.id ? "bg-[var(--eds-bg-sunken)] border-l-4 border-l-[var(--eds-text-primary)]" : "border-l-4 border-l-transparent"
                             }`}
                             data-testid={`button-protocol-${p.id}`}
                           >
@@ -1609,7 +1609,7 @@ export default function CaseStudyClient({ data, questions, workspaceSlug, logoUr
                         <h3 className="text-sm font-bold text-[var(--eds-text-primary)] mb-4 uppercase tracking-wider">Selected Anonymous Comments</h3>
                         <div className="space-y-3">
                           {localData.hrSurvey.comments.map((comment, i) => (
-                            <div key={i} className="bg-[var(--eds-bg-sunken)] rounded-lg p-4 border-l-4 border-l-[#94a3b8] text-sm italic text-[var(--eds-text-secondary)]">
+                            <div key={i} className="bg-[var(--eds-bg-sunken)] rounded-lg p-4 border-l-4 border-l-[var(--eds-text-tertiary)] text-sm italic text-[var(--eds-text-secondary)]">
                               &ldquo;{comment}&rdquo;
                             </div>
                           ))}
@@ -1701,7 +1701,7 @@ function EmailListPanel({
               key={email.id}
               onClick={() => onSelect(email.id)}
               className={`flex flex-col w-full text-left p-4 border-b border-[var(--eds-border)] transition-colors hover:bg-[var(--eds-bg-sunken)] ${
-                selectedEmailId === email.id ? "bg-[var(--eds-bg-sunken)] border-l-4 border-l-[#1e293b]" : "border-l-4 border-l-transparent"
+                selectedEmailId === email.id ? "bg-[var(--eds-bg-sunken)] border-l-4 border-l-[var(--eds-text-primary)]" : "border-l-4 border-l-transparent"
               }`}
               data-testid={`button-email-${email.id}`}
             >
@@ -1898,7 +1898,7 @@ function EmailListPanel({
                 {/* Docs without category */}
                 {drDocuments.filter((d) => !d.categoryId).length > 0 && (
                   <div className="rounded-xl border border-[var(--eds-border)] overflow-hidden">
-                    <div className="bg-[#334155] text-white px-5 py-3 flex items-center gap-3">
+                    <div className="bg-[var(--eds-text-secondary)] text-white px-5 py-3 flex items-center gap-3">
                       <span className="text-lg">📄</span>
                       <span className="font-semibold text-sm">Ohne Kategorie</span>
                     </div>
