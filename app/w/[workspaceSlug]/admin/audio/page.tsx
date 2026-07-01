@@ -1,6 +1,8 @@
 "use client";
 
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
+import { PageShell } from "@/components/shared/PageShell";
+import { FormSection } from "@/components/shared/FormSection";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 
@@ -188,26 +190,13 @@ export default function AudioRecordingsPage() {
   };
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-        <div className="mb-6">
-          <h1
-            className="text-2xl font-bold"
-            style={{ fontFamily: "'Playfair Display', serif", color: accentColor }}
-          >
-            Audioaufnahmen
-          </h1>
-          <p className="text-sm text-[var(--eds-text-tertiary)]">
-            Audioaufnahmen hochladen, transkribieren und zusammenfassen
-          </p>
-        </div>
-
-        <div className="bg-white border border-[var(--eds-border)] rounded-xl p-6 mb-8">
-          <h2
-            className="text-lg font-semibold mb-4"
-            style={{ fontFamily: "'Playfair Display', serif", color: accentColor }}
-          >
-            Audio hochladen
-          </h2>
+    <PageShell
+      breadcrumb={[{ label: "Audio & Transkription" }]}
+      title="Audioaufnahmen"
+      description="Audioaufnahmen hochladen, transkribieren und zusammenfassen"
+      maxWidth="wide"
+    >
+        <FormSection title="Audio hochladen" description="Audiodatei auswählen und Metadaten angeben">
 
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -309,9 +298,9 @@ export default function AudioRecordingsPage() {
           >
             {uploading ? "Wird hochgeladen…" : "Hochladen"}
           </button>
-        </div>
+        </FormSection>
 
-        <div className="mb-4">
+        <div className="mt-6 mb-4">
           <h2
             className="text-lg font-semibold"
             style={{ fontFamily: "'Playfair Display', serif", color: accentColor }}
@@ -515,6 +504,6 @@ export default function AudioRecordingsPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

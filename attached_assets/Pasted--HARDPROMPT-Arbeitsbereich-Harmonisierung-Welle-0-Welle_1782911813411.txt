@@ -1,0 +1,247 @@
+# HARDPROMPT — Arbeitsbereich-Harmonisierung: Welle 0 + Welle 1 (Fundament + Pilotseiten)
+
+DIES IST EINE VERBINDLICHE AUSFÜHRUNGSANWEISUNG, KEINE EMPFEHLUNG.
+
+Du führst die folgenden Phasen exakt in der angegebenen Reihenfolge aus.
+Bei Unklarheit: STOPP, fragen — NICHT improvisieren. Nach jeder Phase
+erstellst du exakt den angegebenen Commit. Keine Optionalität.
+
+DIES IST FUNKTIONS-ERHALTEND. Kein bestehendes Verhalten, kein API-Call,
+kein State darf sich ändern — nur die visuelle Struktur wird auf ein
+einheitliches System umgestellt. Wenn eine Umstellung Verhalten ändern
+würde: STOPP, melden.
+
+## Zielbild (bindend)
+
+Aufbau eines wiederverwendbaren Layout-Systems, in das sich künftig ALLE
+Content-Seiten einordnen. In dieser Welle: (0) die Fundament-Bausteine
+bauen, (1) exakt VIER Pilotseiten darauf umstellen — eine pro Archetyp —
+als sichtbarer Referenz-Standard. Der Vollausbau der restlichen Seiten ist
+NICHT Teil dieser Welle.
+
+## Bindende Tatsachenbasis (geprüft)
+
+- `components/shared/` enthält BEREITS: `PageHeader.tsx`
+  (`{ title, description, icon?, actions? }`), `Card.tsx`
+  (`{ variant: "primary" | "secondary", children, style?, className? }`),
+  `EmptyState.tsx` (`{ icon, title, description, action? }`),
+  `ModuleIcon.tsx`, `DocumentOriginBadge.tsx`. Diese werden GENUTZT und
+  von den neuen Bausteinen umschlossen — NICHT neu gebaut, NICHT verändert.
+- `styles/tokens.css` enthält alle `--eds-*`-Tokens inkl. Spacing-Skala
+  (`--eds-space-1` bis `-12`). Die neuen Bausteine nutzen ausschließlich
+  diese Tokens, KEINE rohen Werte, KEINE Hex-Farben.
+- Die vier Pilotseiten existieren:
+  `exercise-library/page.tsx` (Archetyp 1 — Collection),
+  `requirements/page.tsx` (Archetyp 2 — Master-Detail),
+  `competencies/page.tsx` (Archetyp 3 — Tabs),
+  `audio/page.tsx` (Archetyp 4 — Fokus-Formular).
+- Es gibt AKTUELL KEINE Breadcrumb-Komponente und KEINEN einheitlichen
+  Seitenrahmen. Beides wird hier neu geschaffen.
+
+## Nicht anfassen
+
+Geschäftslogik, State, API-Calls, Event-Handler in allen Dateien ·
+bestehende `components/shared/`-Komponenten (nur nutzen) ·
+`components/shell/` (linke Navigation ist fertig) · alle Seiten AUSSER den
+vier genannten Pilotseiten · Kandidatenportal · `app/master/`.
+
+Wenn eine Änderung mit einer Regel hier kollidiert: STOPP. Melden.
+
+---
+
+## PHASE 0.1 — Breadcrumb-Komponente
+
+1. Neue Datei `components/shared/Breadcrumb.tsx`. Props:
+   `{ items: { label: string; href?: string }[] }`.
+2. Rendert: `Executive Diagnostics Suite › [Bereich] › [Unterseite]`.
+   Letztes Item ohne Link (aktuelle Seite), vorherige als Links.
+   Trennzeichen `›` in `--eds-text-tertiary`. Text `--eds-text-sm`,
+   aktuelles Item `--eds-text-secondary`, Links `--eds-text-tertiary` mit
+   Hover `--eds-text-brand`.
+3. Rein präsentational, keine eigene Routing-Logik (Items kommen als Prop).
+
+**COMMIT (exakter Wortlaut):**
+`Layout-System: Breadcrumb-Komponente`
+
+---
+
+## PHASE 0.2 — PageShell (der einheitliche Seitenrahmen)
+
+1. Neue Datei `components/shared/PageShell.tsx`. Props:
+   ```
+   {
+     breadcrumb: { label: string; href?: string }[];
+     title: string;
+     description: string;
+     icon?: ReactNode;
+     primaryAction?: ReactNode;   // genau EINE Primäraktion
+     toolbar?: ReactNode;         // optionale Tab-/Filterleiste
+     children: ReactNode;         // Inhaltszone
+     maxWidth?: "standard" | "wide" | "narrow";
+   }
+   ```
+2. Aufbau von oben nach unten, GENAU diese Reihenfolge:
+   - `<Breadcrumb items={breadcrumb} />`
+   - `<PageHeader title description icon actions={primaryAction} />`
+     (die bestehende Komponente wiederverwenden)
+   - falls `toolbar`: eine abgesetzte Leiste unter dem Kopf mit
+     einheitlichem Abstand `--eds-space-6` darüber/darunter
+   - `children` in einem Container, dessen Maximalbreite `maxWidth`
+     bestimmt: `narrow` = `max-w-3xl`, `standard` = `max-w-5xl`,
+     `wide` = volle Breite. Default `standard`.
+3. Einheitliche vertikale Abstände zwischen allen Zonen über
+   `--eds-space-*`. Kein seiteneigenes Spacing mehr.
+4. `primaryAction` ist bewusst SINGULAR — die Ein-Aktion-Regel wird durch
+   das Interface erzwungen. Weitere Aktionen gehören in ein Overflow-Menü
+   (Phase 0.3), nicht als zweite Primäraktion.
+
+**COMMIT (exakter Wortlaut):**
+`Layout-System: PageShell als einheitlicher Seitenrahmen`
+
+---
+
+## PHASE 0.3 — Toolbar, ActionMenu, DataTable, CollectionGrid, MasterDetailLayout, FormSection
+
+Alle in `components/shared/`, alle nur mit `--eds-*`-Tokens, alle rein
+präsentational (Daten/Handler via Props):
+
+1. **`Toolbar.tsx`** — `{ tabs?: {key,label}[]; activeTab?; onTabChange?; filters?: ReactNode }`.
+   EIN einheitliches Design für Tab-Leiste UND Filter-Chip-Leiste. Tabs als
+   Unterstrich-Tabs (aktiver Tab: `--eds-text-brand` + Unterstrich in
+   `--eds-terracotta`), konsistent mit dem bereits vorhandenen Tab-Muster
+   in `competencies`.
+2. **`ActionMenu.tsx`** — `{ actions: {label, onClick, variant?}[] }`.
+   Overflow-Menü (Drei-Punkte-Button) für sekundäre Aktionen. Erzwingt,
+   dass nur EINE Primäraktion sichtbar bleibt.
+3. **`DataTable.tsx`** — `{ columns, rows, rowActions? }`. Standardtabelle
+   für Archetyp 1: einheitlicher Header (`--eds-bg-sunken`, `--eds-text-tertiary`,
+   `--eds-text-xs` uppercase), Zeilen mit Hover, optionale Zeilen-Aktionen
+   rechts.
+4. **`CollectionGrid.tsx`** — `{ children }`. Responsives Karten-Raster
+   (1/2/3 Spalten je Viewport) mit einheitlichem `gap` aus `--eds-space-4`.
+5. **`MasterDetailLayout.tsx`** — `{ list, detail }`. Schmale Liste links
+   (feste Breite, z. B. 320px), breiter Detail-/Editorbereich rechts,
+   einheitlicher Trenner.
+6. **`FormSection.tsx`** — `{ title?, description?, children }`. Gruppierte
+   Formularsektion in einer `Card`, für Archetyp 4.
+
+**COMMIT (exakter Wortlaut):**
+`Layout-System: Toolbar, ActionMenu, DataTable, CollectionGrid, MasterDetailLayout, FormSection`
+
+---
+
+## PHASE 1.1 — Pilot Archetyp 1 (Collection): `exercise-library/page.tsx`
+
+1. Seite in `<PageShell>` einwickeln: Breadcrumb
+   `[Suite, Übungsentwicklung, Baustein-Bibliothek]`, Titel/Beschreibung
+   aus bestehendem Kopf, `primaryAction` = der bestehende „Neue Fallstudie
+   erstellen"-Button (genau EINER; falls es mehrere gab, überzählige in
+   `ActionMenu`).
+2. Filter-Chips (Bereich: Alle/Allgemein/Kunde/...) in die `Toolbar`
+   (filters-Slot) verlagern.
+3. Die Übungsliste in `CollectionGrid` + `Card` pro Eintrag darstellen,
+   Leerzustand über `EmptyState`.
+4. Das rohe-HTML-Problem beheben: wo Beschreibungen als `<p>...</p>` im
+   Klartext erscheinen (z. B. „Testbeschreibung"), den HTML-Inhalt korrekt
+   rendern bzw. auf reinen Text strippen — KEINE rohen Tags mehr sichtbar.
+5. KEINE Änderung an Datenladung, Filterlogik, Upload-Funktion.
+
+**COMMIT (exakter Wortlaut):**
+`Pilot Collection: Baustein-Bibliothek auf Layout-System umgestellt`
+
+---
+
+## PHASE 1.2 — Pilot Archetyp 2 (Master-Detail): `requirements/page.tsx`
+
+1. In `<PageShell>` einwickeln (Breadcrumb
+   `[Suite, Diagnostik-Aufbau, Anforderungsanalyse]`, `maxWidth="wide"`).
+2. `MasterDetailLayout` nutzen: links die „Gespeicherte Analysen"-Liste
+   mit einheitlichem „+ Neue Anforderungsanalyse"-Button oben, rechts der
+   bestehende Input-/Editorbereich.
+3. Editorbereich-Sektionen (Kunde/Projekt, Datei-Upload, Transkript,
+   URLs) in `FormSection`-Blöcke gruppieren.
+4. KEINE Änderung an Upload, KI-Research, Speicherlogik.
+
+**COMMIT (exakter Wortlaut):**
+`Pilot Master-Detail: Anforderungsanalyse auf Layout-System umgestellt`
+
+---
+
+## PHASE 1.3 — Pilot Archetyp 3 (Tabs): `competencies/page.tsx`
+
+1. In `<PageShell>` einwickeln (Breadcrumb
+   `[Suite, Diagnostik-Aufbau, Kompetenzmanagement]`, `maxWidth="wide"`).
+2. Die vier Tabs (Kompetenzmodelle/Skalen/Gewichtungsprofile/MTMM-Matrix)
+   auf die einheitliche `Toolbar` (tabs-Slot) umstellen.
+3. **Ein-Aktion-Regel durchsetzen:** Die heute drei konkurrierenden bunten
+   Buttons („Modell hochladen" grün, „KI-Assistent" lila, „Neues Modell"
+   blau) werden zu: EINER Primäraktion „Neues Modell" (Terrakotta,
+   `primaryAction`-Slot) + „Modell hochladen" und „KI-Assistent" als
+   Einträge im `ActionMenu`. Die Funktionen bleiben identisch, nur die
+   visuelle Hierarchie ändert sich.
+4. Modell-Liste pro Tab in `Card`-Darstellung, Leerzustände über
+   `EmptyState`.
+
+**COMMIT (exakter Wortlaut):**
+`Pilot Tabs: Kompetenzmanagement auf Layout-System und Ein-Aktion-Regel umgestellt`
+
+---
+
+## PHASE 1.4 — Pilot Archetyp 4 (Fokus-Formular): `audio/page.tsx`
+
+1. In `<PageShell>` einwickeln (Breadcrumb
+   `[Suite, Auswertung, Audio & Transkription]`, `maxWidth="narrow"`).
+2. Upload-Formular in `FormSection`-Blöcke gruppieren, EINE Primäraktion
+   („Hochladen") oben rechts oder am Formularende — konsistent, nicht beides.
+3. Aufnahmen-Liste darunter über `CollectionGrid`/`Card` oder `DataTable`
+   (wähle das Muster, das zur bestehenden Darstellung passt), Leerzustand
+   über `EmptyState`.
+4. KEINE Änderung an Upload, Transkription, Aufbewahrungslogik.
+
+**COMMIT (exakter Wortlaut):**
+`Pilot Fokus-Formular: Audio & Transkription auf Layout-System umgestellt`
+
+---
+
+## PHASE 2 — Validierung (alle PASS erforderlich)
+
+Führe JEDEN Check aus, PASS/FAIL einzeln. Bei FAIL: STOPP, beheben.
+
+1. Alle vier Pilotseiten nutzen `PageShell` mit Breadcrumb. Kein eigenes
+   `<h1>` mehr auf diesen Seiten. PASS/FAIL pro Seite.
+2. Jede der vier Pilotseiten hat GENAU EINE visuell dominante Primäraktion,
+   oben rechts. Bei Kompetenzmanagement sind die früheren drei bunten
+   Buttons korrekt in Primär + ActionMenu aufgeteilt. PASS/FAIL.
+3. Breadcrumb erscheint auf allen vier Seiten korrekt. PASS/FAIL.
+4. Rohes HTML (`<p>Testbeschreibung</p>` o.ä.) erscheint auf der Bibliothek
+   NICHT mehr als sichtbarer Text. PASS/FAIL.
+5. KEINE funktionale Regression: auf jeder Pilotseite je ein vollständiger
+   Workflow (Bibliothek: filtern; Anforderungsanalyse: Eintrag öffnen;
+   Kompetenz: Tab wechseln + eine Aktion; Audio: Upload-Dialog öffnen).
+   PASS/FAIL pro Seite.
+6. Die acht neuen Bausteine nutzen ausschließlich `--eds-*`-Tokens
+   (`grep` nach rohen Hex/Tailwind-Farben in `components/shared/` der neuen
+   Dateien → null unbegründete Treffer). PASS/FAIL.
+7. `npm run lint` — null Fehler. PASS/FAIL.
+8. `npm run build` — null Fehler. PASS/FAIL.
+
+**COMMIT (exakter Wortlaut, nur wenn ALLE PASS):**
+`Arbeitsbereich-Harmonisierung Welle 0+1 abgeschlossen und validiert`
+
+---
+
+## Abschluss-Statement (Pflicht)
+
+Zusammenfassung: (a) Liste der acht neuen Bausteine, (b) die vier
+umgestellten Pilotseiten mit ihrem Archetyp, (c) bestätigen, dass die
+Ein-Aktion-Regel auf jeder Pilotseite gilt, (d) alle 8 Validierungspunkte
+mit PASS/FAIL. Keine Selbsteinschätzung wie „sieht besser aus" — nur
+verifizierte Ergebnisse. Screenshots je Pilotseite anhängen, sofern die
+Umgebung das unterstützt.
+
+## Hinweis (nicht Teil dieser Ausführung)
+
+Nach Abnahme der vier Pilotseiten folgt der Rollout der restlichen ~15
+Seiten (Wellen 2–4) sowie der Feinschliff (Wellen 5) als separate
+Hardprompts. Diese Welle liefert bewusst nur den Referenz-Standard zur
+Entscheidung, ob die Richtung stimmt.

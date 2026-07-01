@@ -2,7 +2,9 @@
 
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { resolveOriginForCompetencyModel } from "@/lib/document-origin";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
+import { Toolbar } from "@/components/shared/Toolbar";
+import { ActionMenu } from "@/components/shared/ActionMenu";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -135,34 +137,24 @@ export default function CompetencyManagementPage() {
   ];
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-        <PageHeader
-          title="Kompetenzmodelle"
-          description="Kompetenzrahmen, Dimensionen, Skalen und MTMM-Matrix verwalten"
+    <PageShell
+      breadcrumb={[{ label: "Kompetenzen" }]}
+      title="Kompetenzmodelle"
+      description="Kompetenzrahmen, Dimensionen, Skalen und MTMM-Matrix verwalten"
+      maxWidth="wide"
+      toolbar={
+        <Toolbar
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(k) => setActiveTab(k as TabKey)}
         />
-
-        <div className="flex gap-1 mb-6 border-b border-[var(--eds-border)]">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              data-testid={`tab-${tab.key}`}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                activeTab === tab.key
-                  ? "border-brand-blue text-brand-blue"
-                  : "border-transparent text-[var(--eds-text-tertiary)] hover:text-[var(--eds-text-primary)]"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === "models" && <ModelsTab workspaceSlug={workspaceSlug} router={router} />}
-        {activeTab === "scales" && <ScalesTab workspaceSlug={workspaceSlug} router={router} />}
-        {activeTab === "weights" && <WeightsTab workspaceSlug={workspaceSlug} router={router} />}
-        {activeTab === "mapping" && <MappingTab workspaceSlug={workspaceSlug} router={router} />}
-    </div>
+      }
+    >
+      {activeTab === "models" && <ModelsTab workspaceSlug={workspaceSlug} router={router} />}
+      {activeTab === "scales" && <ScalesTab workspaceSlug={workspaceSlug} router={router} />}
+      {activeTab === "weights" && <WeightsTab workspaceSlug={workspaceSlug} router={router} />}
+      {activeTab === "mapping" && <MappingTab workspaceSlug={workspaceSlug} router={router} />}
+    </PageShell>
   );
 }
 
@@ -340,18 +332,35 @@ function ModelsTab({ workspaceSlug, router }: { workspaceSlug: string; router: R
             </select>
           )}
         </div>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => { setUploadMode("uploading"); setUploadFile(null); setUploadResult(null); setUploadError(""); }}
-            data-testid="button-upload-model" 
-            className="rounded-lg bg-emerald-600 text-white text-sm font-medium px-4 py-2 hover:bg-emerald-700 transition-colors"
+        <div className="flex items-center gap-2">
+          <ActionMenu
+            actions={[
+              {
+                label: "Modell hochladen",
+                onClick: () => { setUploadMode("uploading"); setUploadFile(null); setUploadResult(null); setUploadError(""); },
+              },
+              {
+                label: "KI-Assistent: Modell generieren",
+                onClick: handleAiGenerate,
+              },
+            ]}
+          />
+          <button
+            onClick={() => setShowCreate(!showCreate)}
+            data-testid="button-create-model"
+            style={{
+              borderRadius: "var(--eds-radius-lg)",
+              backgroundColor: "var(--eds-terracotta)",
+              color: "white",
+              fontSize: "var(--eds-text-md)",
+              fontWeight: 500,
+              padding: "var(--eds-space-2) var(--eds-space-4)",
+              border: "none",
+              cursor: "pointer",
+              transition: "opacity var(--eds-transition-fast)",
+              fontFamily: "var(--eds-font-sans)",
+            }}
           >
-            Modell hochladen
-          </button>
-          <button onClick={handleAiGenerate} data-testid="button-ai-generate-model" className="rounded-lg bg-purple-600 text-white text-sm font-medium px-4 py-2 hover:bg-purple-700 transition-colors">
-            KI-Assistent: Modell generieren
-          </button>
-          <button onClick={() => setShowCreate(!showCreate)} data-testid="button-create-model" className={btnPrimary}>
             {showCreate ? "Abbrechen" : "Neues Modell"}
           </button>
         </div>

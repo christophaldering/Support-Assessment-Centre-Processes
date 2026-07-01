@@ -2,6 +2,7 @@
 
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { resolveOriginForRequirementsAnalysisInput, resolveOriginForRequirementsAnalysisOutput } from "@/lib/document-origin";
+import { PageShell } from "@/components/shared/PageShell";
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 
@@ -573,7 +574,12 @@ function RequirementsContent() {
   };
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
+    <PageShell
+      breadcrumb={[{ label: "Anforderungsanalyse" }]}
+      title="Anforderungsanalyse"
+      description="Stellenanforderungen per KI aus Dokumenten extrahieren"
+      maxWidth="wide"
+    >
       {assessmentId && (
         <div className="border-b bg-brand-navy/5 border-brand-navy/10">
           <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between">
@@ -1307,6 +1313,6 @@ function RequirementsContent() {
         </main>
       </div>
 
-    </div>
+    </PageShell>
   );
 }

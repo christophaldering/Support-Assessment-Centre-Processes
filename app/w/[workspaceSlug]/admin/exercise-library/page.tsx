@@ -2,7 +2,8 @@
 
 import { DocumentOriginBadge } from "@/components/shared/DocumentOriginBadge";
 import { resolveOriginForExerciseLibraryItem } from "@/lib/document-origin";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageShell } from "@/components/shared/PageShell";
+import { Toolbar } from "@/components/shared/Toolbar";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Card } from "@/components/shared/Card";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -1275,12 +1276,12 @@ export default function ExerciseLibraryPage() {
   const counts = categoryCounts();
 
   return (
-    <div className="py-8 px-6 lg:px-10 space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <PageHeader
-          title="Übungsbibliothek"
-          description="Verwalten Sie wiederverwendbare Übungen für Assessment-Center"
-        />
+    <PageShell
+      breadcrumb={[{ label: "Übungsentwicklung" }, { label: "Baustein-Bibliothek" }]}
+      title="Übungsbibliothek"
+      description="Verwalten Sie wiederverwendbare Übungen für Assessment-Center"
+      maxWidth="wide"
+      primaryAction={
         <Link
           href={`/w/${slug}/admin/case-studio`}
           className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg transition hover:opacity-90"
@@ -1290,7 +1291,55 @@ export default function ExerciseLibraryPage() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Neue Fallstudie erstellen
         </Link>
-      </div>
+      }
+      toolbar={
+        <Toolbar
+          filters={
+            <>
+              <span className="text-xs font-medium text-[var(--eds-text-tertiary)] mr-1">Bereich:</span>
+              <button
+                onClick={() => { setActiveScopeFilter(null); setActiveSzenarioFilter(false); }}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  activeScopeFilter === null && !activeSzenarioFilter
+                    ? "text-white"
+                    : "text-[var(--eds-text-secondary)] bg-[var(--eds-bg-sunken)] hover:bg-[var(--eds-border)]"
+                }`}
+                style={activeScopeFilter === null && !activeSzenarioFilter ? { backgroundColor: ACCENT } : undefined}
+                data-testid="button-scope-all"
+              >
+                Alle
+              </button>
+              {SCOPE_OPTIONS.map((scope) => {
+                const colors = SCOPE_COLORS[scope.key];
+                return (
+                  <button
+                    key={scope.key}
+                    onClick={() => { setActiveScopeFilter(scope.key); setActiveSzenarioFilter(false); }}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+                    style={activeScopeFilter === scope.key && !activeSzenarioFilter
+                      ? { background: ACCENT, color: "var(--eds-text-inverse)" }
+                      : colors}
+                    data-testid={`button-scope-${scope.key}`}
+                  >
+                    {scope.filterLabel}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => { setActiveSzenarioFilter((v) => !v); setActiveScopeFilter(null); }}
+                className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+                style={activeSzenarioFilter
+                  ? { background: "var(--eds-lagune)", color: "var(--eds-bg-surface)" }
+                  : { backgroundColor: "var(--eds-lagune-light)", color: "var(--eds-lagune)", border: "1px solid var(--eds-lagune-md)" }}
+                data-testid="button-scope-szenario"
+              >
+                Szenario-Baustein
+              </button>
+            </>
+          }
+        />
+      }
+    >
         {error && (
           <div
             className="mb-4 p-3 bg-[var(--eds-status-red-bg)] border border-[var(--eds-status-red-bg)] rounded-lg text-[var(--eds-status-red)] text-sm flex items-center justify-between"
@@ -1664,47 +1713,6 @@ export default function ExerciseLibraryPage() {
           )}
         </section>
 
-        <div className="flex items-center gap-2 mb-6 flex-wrap" data-testid="scope-filter-bar">
-          <span className="text-xs font-medium text-[var(--eds-text-tertiary)] mr-1">Bereich:</span>
-          <button
-            onClick={() => { setActiveScopeFilter(null); setActiveSzenarioFilter(false); }}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              activeScopeFilter === null && !activeSzenarioFilter
-                ? "text-white"
-                : "text-[var(--eds-text-secondary)] bg-[var(--eds-bg-sunken)] hover:bg-[var(--eds-border)]"
-            }`}
-            style={activeScopeFilter === null && !activeSzenarioFilter ? { backgroundColor: ACCENT } : undefined}
-            data-testid="button-scope-all"
-          >
-            Alle
-          </button>
-          {SCOPE_OPTIONS.map((scope) => {
-            const colors = SCOPE_COLORS[scope.key];
-            return (
-              <button
-                key={scope.key}
-                onClick={() => { setActiveScopeFilter(scope.key); setActiveSzenarioFilter(false); }}
-                className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-                style={activeScopeFilter === scope.key && !activeSzenarioFilter
-                  ? { background: ACCENT, color: "var(--eds-text-inverse)" }
-                  : colors}
-                data-testid={`button-scope-${scope.key}`}
-              >
-                {scope.filterLabel}
-              </button>
-            );
-          })}
-          <button
-            onClick={() => { setActiveSzenarioFilter((v) => !v); setActiveScopeFilter(null); }}
-            className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-            style={activeSzenarioFilter
-              ? { background: "var(--eds-lagune)", color: "var(--eds-bg-surface)" }
-              : { background: "var(--eds-lagune)]/10", backgroundColor: "var(--eds-lagune-light)", color: "var(--eds-lagune)", border: "1px solid var(--eds-lagune-md)" }}
-            data-testid="button-scope-szenario"
-          >
-            Szenario-Baustein
-          </button>
-        </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -1979,6 +1987,6 @@ export default function ExerciseLibraryPage() {
       {selectedItem && (
         <DetailModal item={selectedItem} slug={slug} onClose={handleModalClose} onUpdated={fetchItems} onItemUpdated={setSelectedItem} />
       )}
-    </div>
+    </PageShell>
   );
 }
